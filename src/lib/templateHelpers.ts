@@ -24,7 +24,7 @@ export function createObjectFromBoardTemplate(
     height: template.height * MM_TO_PX,
     rotation: 0,
     color: template.color,
-    image: template.image,
+    image: template.image ? `images/boards/${template.image}` : null,
   }
 }
 
@@ -47,6 +47,6 @@ export function createObjectFromDeviceTemplate(
     height: template.height * MM_TO_PX,
     rotation: 0,
     color: template.color,
-    image: template.image,
+    image: template.image ? `images/devices/${template.image}` : null,
   }
 }
