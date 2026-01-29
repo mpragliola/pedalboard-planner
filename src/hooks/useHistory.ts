@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 
-export function useHistory<T>(initialState: T, depth = 50) {
+export function useHistory<T>(initialState: T, depth = 200) {
   const [state, _setState] = useState<T>(initialState)
   const [past, setPast] = useState<T[]>([])
   const [future, setFuture] = useState<T[]>([])

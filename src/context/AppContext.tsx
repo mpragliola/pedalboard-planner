@@ -72,7 +72,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     redo,
     canUndo,
     canRedo,
-  } = useHistory<CanvasObjectType[]>(initialObjects, 50)
+  } = useHistory<CanvasObjectType[]>(initialObjects, 200)
 
   const [imageFailedIds, setImageFailedIds] = useState<Set<string>>(new Set())
   const [showGrid, setShowGrid] = useState(false)
