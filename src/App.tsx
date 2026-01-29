@@ -19,6 +19,10 @@ function AppContent() {
       <ZoomControls />
       <HistoryControls />
       <SelectionInfoPopup />
+      <footer className="copyright">
+        Pedalboard Planner — by{' '}
+        <a href="mailto:marcopragliola@gmail.com">Marco Pragliola</a>
+      </footer>
     </>
   )
 }

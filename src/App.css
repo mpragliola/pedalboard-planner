@@ -497,3 +497,22 @@
   opacity: 0.3;
   cursor: default;
 }
+
+.copyright {
+  position: fixed;
+  bottom: 8px;
+  left: 12px;
+  z-index: 100;
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+}
+
+.copyright a {
+  color: rgba(255, 255, 255, 0.75);
+  text-decoration: none;
+}
+
+.copyright a:hover {
+  text-decoration: underline;
+}
