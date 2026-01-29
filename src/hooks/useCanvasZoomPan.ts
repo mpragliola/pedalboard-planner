@@ -120,7 +120,7 @@ export function useCanvasZoomPan() {
     [spaceDown, pan.x, pan.y]
   )
 
-  const tileSize = 2400 * zoom
+  const tileSize = 1200 * zoom
 
   return {
     zoom,
