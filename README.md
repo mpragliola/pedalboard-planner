@@ -1,76 +1,73 @@
-# 🎸 Guitar Pedalboard Builder
+# 🎸 PedalBoard Builder
 
-A React-based drag-and-drop tool for building virtual guitar pedalboards. Drag objects from the library onto your pedalboard and arrange them to create your perfect signal chain.
+A professional, high-performance web application for planning and visualizing guitar pedalboard layouts.
 
-## Features
+## 🌟 Overview
 
-- 🎯 **Drag & Drop**: Intuitive drag-and-drop interface for adding objects
-- 🔄 **Reorder**: Drag objects within the pedalboard to reorder them
-- 🗑️ **Remove**: Click the × button to remove objects from your board
-- 🎨 **Beautiful UI**: Modern, responsive design with gradient backgrounds
-- 📱 **Responsive**: Works on desktop and mobile devices
-- 🎛️ **Multiple Object Types**: Support for effect pedals, power units, multieffects, expression pedals, and MIDI controllers
-- 🎨 **Visual Differentiation**: Each object type has unique visual styling
+PedalBoard Builder allows musicians to accurately plan their signal chains by providing a library of real-world pedalboards and effects units with precise dimensions. Users can drag, rotate, and arrange gear on a virtual canvas to ensure everything fits before committing to a physical build.
 
-## Getting Started
+## ✨ Features
+
+- 📏 **Accurate Dimensions**: Every board and device is modeled with real-world measurements in mm.
+- 🎯 **Interactive Canvas**: Drag-and-drop gear with pixel-perfect precision.
+- 🔄 **Orientation Control**: Rotate objects in 90-degree increments to find the perfect fit.
+- 🔍 **Dynamic Zoom & Pan**: Navigate large boards with intuitive mouse and keyboard controls.
+- 🌓 **Unit Switching**: Toggle between Metric (mm/cm) and Imperial (inches) units instantly.
+- 📋 **Detailed Info**: View precise dimensions of selected items in a real-time info popup.
+- 🖼️ **High-Quality Assets**: Visual representations for popular brands like Boss, MXR, Dunlop, Pedaltrain, and more.
+
+## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js (v16 or higher)
-- npm or yarn
+- **Node.js**: v18 or higher recommended
+- **npm**: v9 or higher
 
 ### Installation
 
-1. Install dependencies:
-```bash
-npm install
-```
+1.  **Clone the repository**:
+    ```bash
+    git clone https://github.com/yourusername/pedalboard-builder.git
+    cd pedalboard-builder
+    ```
 
-2. Start the development server:
-```bash
-npm run dev
-```
+2.  **Install dependencies**:
+    ```bash
+    npm install
+    ```
 
-3. Open your browser and navigate to the URL shown in the terminal (usually `http://localhost:5173`)
+3.  **Start the development server**:
+    ```bash
+    npm run dev
+    ```
 
-## Usage
+4.  **Open in browser**:
+    Navigate to `http://localhost:5173` (or the port specified in your terminal).
 
-1. **Add Objects**: Drag any object from the "Object Library" panel on the left onto the pedalboard
-2. **Reorder**: Drag objects within the pedalboard to change their order
-3. **Remove**: Hover over an object and click the × button in the top-right corner
+## 🛠️ Built With
 
-## Available Object Types
+- **React 18**: For a responsive and declarative UI.
+- **Vite**: For lightning-fast builds and HMR.
+- **TypeScript**: Ensuring robust data structures and type safety.
+- **CSS3**: Custom layouts with CSS Variables and Flexbox/Grid.
 
-### Effect Pedals
-- Distortion, Overdrive, Fuzz, Chorus, Delay, Reverb, Wah, Phaser, Flanger, Tremolo, Compressor, EQ
+## ⚖️ Legal Disclaimer
 
-### Power Units
-- Power Supply 1, Power Supply 2, Isolated Power
+**Trademark & Copyright Notice:**
 
-### Multieffects
-- Helix, GT-1000, Kemper, Axe-Fx
+This application is intended for personal, non-commercial planning purposes only. 
 
-### Expression Pedals
-- Expression Pedal, Volume Pedal, Wah Expression
+All product names, logos, brands, models, and trademarks mentioned or shown within this application are the property of their respective owners. These owners are not affiliated with this project, and their mention does not imply endorsement or sponsorship. 
 
-### MIDI Controllers
-- MIDI Controller, MIDI Footswitch, MIDI Looper
+- **Boss** and the Boss logo are registered trademarks of Roland Corporation.
+- **MXR**, **Dunlop**, and **Cry Baby** are registered trademarks of Dunlop Manufacturing, Inc.
+- **Pedaltrain** is a registered trademark of Pro-Stage Gear, LLC.
+- **Ibanez** is a registered trademark of Hoshino Gakki Co., Ltd.
+- **Strymon** is a registered trademark of Damage Control Engineering, LLC.
+- **Line 6** is a registered trademark of Yamaha Guitar Group, Inc.
 
-## Technologies Used
+All other trademarks and copyrights are the property of their respective owners.
 
-- **React** - UI framework
-- **Vite** - Build tool and dev server
-- **react-dnd** - Drag and drop functionality
-- **CSS3** - Styling with modern features
+## 📄 License
 
-## Build for Production
-
-```bash
-npm run build
-```
-
-The built files will be in the `dist` directory.
-
-## License
-
-MIT
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
