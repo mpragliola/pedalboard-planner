@@ -1,23 +1,19 @@
-interface ZoomControlsProps {
-  onZoomIn: () => void
-  onZoomOut: () => void
-  showGrid: boolean
-  onToggleGrid: () => void
-}
+import { useApp } from '../context/AppContext'
 
-export function ZoomControls({ onZoomIn, onZoomOut, showGrid, onToggleGrid }: ZoomControlsProps) {
+export function ZoomControls() {
+  const { zoomIn, zoomOut, showGrid, setShowGrid } = useApp()
   return (
     <div className="floating-controls zoom-controls">
-      <button type="button" className="zoom-btn zoom-in" onClick={onZoomIn} aria-label="Zoom in">
+      <button type="button" className="zoom-btn zoom-in" onClick={zoomIn} aria-label="Zoom in">
         +
       </button>
-      <button type="button" className="zoom-btn zoom-out" onClick={onZoomOut} aria-label="Zoom out">
+      <button type="button" className="zoom-btn zoom-out" onClick={zoomOut} aria-label="Zoom out">
         −
       </button>
       <button
         type="button"
         className={`zoom-btn grid-toggle ${showGrid ? 'active' : ''}`}
-        onClick={onToggleGrid}
+        onClick={() => setShowGrid((v) => !v)}
         aria-label="Toggle grid"
         title="Toggle grid"
       >

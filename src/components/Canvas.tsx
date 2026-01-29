@@ -1,57 +1,38 @@
 import { CanvasObject } from './CanvasObject'
 import { SelectionToolbar } from './SelectionToolbar'
-import type { CanvasObjectType } from '../types'
+import { useApp } from '../context/AppContext'
 
-interface CanvasProps {
-  zoom: number
-  pan: { x: number; y: number }
-  tileSize: number
-  showGrid: boolean
-  unit: 'mm' | 'in'
-  isPanning: boolean
-  spaceDown: boolean
-  canvasRef: React.RefObject<HTMLDivElement>
-  onCanvasMouseDown: (e: React.MouseEvent) => void
-  objects: CanvasObjectType[]
-  selectedObjectIds: string[]
-  imageFailedIds: Set<string>
-  draggingObjectId: string | null
-  onImageError: (id: string) => void
-  onObjectPointerDown: (id: string, e: React.PointerEvent) => void
-  onDragEnd: () => void
-  onDeleteObject: (id: string) => void
-  onRotateObject: (id: string) => void
-  onSendToBack: (id: string) => void
-}
+export function Canvas() {
+  const {
+    canvasRef,
+    zoom,
+    pan,
+    tileSize,
+    showGrid,
+    unit,
+    isPanning,
+    spaceDown,
+    handleCanvasMouseDown,
+    objects,
+    selectedObjectIds,
+    imageFailedIds,
+    draggingObjectId,
+    onImageError,
+    onObjectPointerDown,
+    onDragEnd,
+    onDeleteObject,
+    onRotateObject,
+    onSendToBack,
+  } = useApp()
 
-export function Canvas({
-  zoom,
-  pan,
-  tileSize,
-  showGrid,
-  unit,
-  isPanning,
-  spaceDown,
-  canvasRef,
-  onCanvasMouseDown,
-  objects,
-  selectedObjectIds,
-  imageFailedIds,
-  draggingObjectId,
-  onImageError,
-  onObjectPointerDown,
-  onDragEnd,
-  onDeleteObject,
-  onRotateObject,
-  onSendToBack,
-}: CanvasProps) {
-  const selectedObject = selectedObjectIds.length === 1 ? objects.find((o) => o.id === selectedObjectIds[0]) : null
+  const selectedObject =
+    selectedObjectIds.length === 1 ? objects.find((o) => o.id === selectedObjectIds[0]) : null
 
   return (
     <div
       className={`canvas ${isPanning ? 'canvas-grabbing' : spaceDown ? 'canvas-grab' : ''}`}
       ref={canvasRef}
-      onMouseDown={onCanvasMouseDown}
+      onMouseDown={handleCanvasMouseDown}
       onContextMenu={(e) => e.preventDefault()}
     >
       <div

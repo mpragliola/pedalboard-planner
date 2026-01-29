@@ -1,116 +1,86 @@
 import { forwardRef } from 'react'
 import { DEVICE_TYPE_ORDER, DEVICE_TYPE_LABEL } from '../constants'
-import type { BoardTemplate } from '../data/boards'
-import type { DeviceTemplate } from '../data/devices'
+import { useApp } from '../context/AppContext'
 
 export type CatalogMode = 'boards' | 'devices'
 
-interface DropdownsPanelProps {
-  catalogMode: CatalogMode
-  onCatalogModeChange: (mode: CatalogMode) => void
-  unit: 'mm' | 'in'
-  onUnitChange: (unit: 'mm' | 'in') => void
-  // Board
-  boardBrandFilter: string
-  setBoardBrandFilter: (v: string) => void
-  boardTextFilter: string
-  setBoardTextFilter: (v: string) => void
-  boardWidthMin: string
-  setBoardWidthMin: (v: string) => void
-  boardWidthMax: string
-  setBoardWidthMax: (v: string) => void
-  boardDepthMin: string
-  setBoardDepthMin: (v: string) => void
-  boardDepthMax: string
-  setBoardDepthMax: (v: string) => void
-  boardBrands: string[]
-  boardWidthRange: readonly [number, number]
-  boardDepthRange: readonly [number, number]
-  filteredBoards: BoardTemplate[]
-  selectedBoard: string
-  onBoardSelect: (templateId: string) => void
-  onResetBoardFilters: () => void
-  hasBoardFilters: boolean
-  // Device
-  deviceTypeFilter: string
-  setDeviceTypeFilter: (v: string) => void
-  deviceBrandFilter: string
-  setDeviceBrandFilter: (v: string) => void
-  deviceTextFilter: string
-  setDeviceTextFilter: (v: string) => void
-  deviceWidthMin: string
-  setDeviceWidthMin: (v: string) => void
-  deviceWidthMax: string
-  setDeviceWidthMax: (v: string) => void
-  deviceDepthMin: string
-  setDeviceDepthMin: (v: string) => void
-  deviceDepthMax: string
-  setDeviceDepthMax: (v: string) => void
-  deviceBrands: string[]
-  deviceWidthRange: readonly [number, number]
-  deviceDepthRange: readonly [number, number]
-  filteredDevices: DeviceTemplate[]
-  selectedDevice: string
-  onDeviceSelect: (templateId: string) => void
-  onResetDeviceFilters: () => void
-  hasDeviceFilters: boolean
-}
+export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel(_props, ref) {
+  const {
+    catalogMode,
+    setCatalogMode,
+    unit,
+    setUnit,
+    filters,
+    onBoardSelect,
+    onDeviceSelect,
+  } = useApp()
 
-export const DropdownsPanel = forwardRef<HTMLDivElement, DropdownsPanelProps>(function DropdownsPanel({
-  catalogMode,
-  onCatalogModeChange,
-  unit,
-  onUnitChange,
-  boardBrandFilter,
-  setBoardBrandFilter,
-  boardTextFilter,
-  setBoardTextFilter,
-  boardWidthMin,
-  setBoardWidthMin,
-  boardWidthMax,
-  setBoardWidthMax,
-  boardDepthMin,
-  setBoardDepthMin,
-  boardDepthMax,
-  setBoardDepthMax,
-  boardBrands,
-  boardWidthRange,
-  boardDepthRange,
-  filteredBoards,
-  selectedBoard,
-  onBoardSelect,
-  onResetBoardFilters,
-  hasBoardFilters,
-  deviceTypeFilter,
-  setDeviceTypeFilter,
-  deviceBrandFilter,
-  setDeviceBrandFilter,
-  deviceTextFilter,
-  setDeviceTextFilter,
-  deviceWidthMin,
-  setDeviceWidthMin,
-  deviceWidthMax,
-  setDeviceWidthMax,
-  deviceDepthMin,
-  setDeviceDepthMin,
-  deviceDepthMax,
-  setDeviceDepthMax,
-  deviceBrands,
-  deviceWidthRange,
-  deviceDepthRange,
-  filteredDevices,
-  selectedDevice,
-  onDeviceSelect,
-  onResetDeviceFilters,
-  hasDeviceFilters,
-}, ref) {
+  const {
+    boardBrandFilter,
+    setBoardBrandFilter,
+    boardTextFilter,
+    setBoardTextFilter,
+    boardWidthMin,
+    setBoardWidthMin,
+    boardWidthMax,
+    setBoardWidthMax,
+    boardDepthMin,
+    setBoardDepthMin,
+    boardDepthMax,
+    setBoardDepthMax,
+    boardBrands,
+    boardWidthRange,
+    boardDepthRange,
+    filteredBoards,
+    selectedBoard,
+    resetBoardFilters,
+    deviceTypeFilter,
+    setDeviceTypeFilter,
+    deviceBrandFilter,
+    setDeviceBrandFilter,
+    deviceTextFilter,
+    setDeviceTextFilter,
+    deviceWidthMin,
+    setDeviceWidthMin,
+    deviceWidthMax,
+    setDeviceWidthMax,
+    deviceDepthMin,
+    setDeviceDepthMin,
+    deviceDepthMax,
+    setDeviceDepthMax,
+    deviceBrands,
+    deviceWidthRange,
+    deviceDepthRange,
+    filteredDevices,
+    selectedDevice,
+    resetDeviceFilters,
+  } = filters
+
+  const hasBoardFilters = !!(
+    boardBrandFilter ||
+    boardTextFilter ||
+    boardWidthMin ||
+    boardWidthMax ||
+    boardDepthMin ||
+    boardDepthMax
+  )
+  const hasDeviceFilters = !!(
+    deviceBrandFilter ||
+    deviceTypeFilter ||
+    deviceTextFilter ||
+    deviceWidthMin ||
+    deviceWidthMax ||
+    deviceDepthMin ||
+    deviceDepthMax
+  )
+
   return (
     <div ref={ref} className="floating-controls floating-dropdowns">
       <div className="unit-switch" role="group" aria-label="Units">
         <button
           type="button"
           className={`unit-btn ${unit === 'mm' ? 'active' : ''}`}
-          onClick={() => onUnitChange('mm')}
+          onClick={() => setUnit('mm')}
           aria-pressed={unit === 'mm'}
           aria-label="Millimeters"
           title="Millimeters (grid 1 cm)"
@@ -120,7 +90,7 @@ export const DropdownsPanel = forwardRef<HTMLDivElement, DropdownsPanelProps>(fu
         <button
           type="button"
           className={`unit-btn ${unit === 'in' ? 'active' : ''}`}
-          onClick={() => onUnitChange('in')}
+          onClick={() => setUnit('in')}
           aria-pressed={unit === 'in'}
           aria-label="Inches"
           title="Inches (grid 1 in)"
@@ -132,7 +102,7 @@ export const DropdownsPanel = forwardRef<HTMLDivElement, DropdownsPanelProps>(fu
         <button
           type="button"
           className={`catalog-mode-btn ${catalogMode === 'boards' ? 'active' : ''}`}
-          onClick={() => onCatalogModeChange('boards')}
+          onClick={() => setCatalogMode('boards')}
           aria-pressed={catalogMode === 'boards'}
           aria-label="Boards"
         >
@@ -141,7 +111,7 @@ export const DropdownsPanel = forwardRef<HTMLDivElement, DropdownsPanelProps>(fu
         <button
           type="button"
           className={`catalog-mode-btn ${catalogMode === 'devices' ? 'active' : ''}`}
-          onClick={() => onCatalogModeChange('devices')}
+          onClick={() => setCatalogMode('devices')}
           aria-pressed={catalogMode === 'devices'}
           aria-label="Devices"
         >
@@ -281,7 +251,7 @@ export const DropdownsPanel = forwardRef<HTMLDivElement, DropdownsPanelProps>(fu
             <button
               type="button"
               className="filter-reset"
-              onClick={onResetBoardFilters}
+              onClick={resetBoardFilters}
               disabled={!hasBoardFilters}
               title={hasBoardFilters ? 'Clear board filters' : 'No filters active'}
             >
@@ -441,7 +411,7 @@ export const DropdownsPanel = forwardRef<HTMLDivElement, DropdownsPanelProps>(fu
             <button
               type="button"
               className="filter-reset"
-              onClick={onResetDeviceFilters}
+              onClick={resetDeviceFilters}
               disabled={!hasDeviceFilters}
               title={hasDeviceFilters ? 'Clear device filters' : 'No filters active'}
             >
