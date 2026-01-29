@@ -1,6 +1,7 @@
 import { Canvas } from './components/Canvas'
 import { DropdownsPanel } from './components/DropdownsPanel'
 import { ZoomControls } from './components/ZoomControls'
+import { SelectionInfoPopup } from './components/SelectionInfoPopup'
 import { AppProvider, useApp } from './context/AppContext'
 import './App.css'
 
@@ -15,9 +16,11 @@ function AppContent() {
       <Canvas />
       <DropdownsPanel ref={dropdownPanelRef} />
       <ZoomControls />
+      <SelectionInfoPopup />
     </>
   )
 }
+
 
 function App() {
   return (
