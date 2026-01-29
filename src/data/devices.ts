@@ -160,7 +160,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
   { id: 'device-boss-rc600', type: 'multifx', brand: 'Boss', model: 'RC-600', name: 'Boss RC-600', width: 435, depth: 163, height: 70, color: 'rgb(72, 72, 82)', image: 'boss/boss-rc-600.png' },
   { id: 'device-boss-sl2', type: 'pedal', brand: 'Boss', model: 'SL-2', name: 'Boss SL-2 Slicer', width: 73, depth: 129, height: 59, color: 'rgb(72, 72, 82)', image: 'boss/boss-sl-2_tn.png' },
   { id: 'device-boss-xs100', type: 'pedal', brand: 'Boss', model: 'XS-100 Poly Shifter', name: 'Boss XS-100 Poly Shifter', width: 192, depth: 248, height: 73, color: 'rgb(72, 72, 82)', image: 'boss/boss-xs-100_tn.png' },
-  { id: 'device-boss-sy1000', type: 'multifx', brand: 'Boss', model: 'SY-1000', name: 'Boss SY-1000', width: 460, depth: 250, height: 75, color: 'rgb(72, 72, 82)', image: 'boss/boss-sy-1000.png' },
+  { id: 'device-boss-sy1000', type: 'multifx', brand: 'Boss', model: 'SY-1000', name: 'Boss SY-1000', width: 345, depth: 245, height: 67, color: 'rgb(72, 72, 82)', image: 'boss/boss-sy-1000.png' },
   { id: 'device-boss-ve22', type: 'multifx', brand: 'Boss', model: 'VE-22', name: 'Boss VE-22 Vocal Performer', width: 218, depth: 143, height: 64, color: 'rgb(72, 72, 82)', image: 'boss/boss-ve-22.png' },
   { id: 'device-boss-ve500', type: 'multifx', brand: 'Boss', model: 'VE-500', name: 'Boss VE-500 Vocal Performer', width: 170, depth: 138, height: 62, color: 'rgb(72, 72, 82)', image: 'boss/boss-ve-500.png' },
   { id: 'device-boss-sy300', type: 'multifx', brand: 'Boss', model: 'SY-300', name: 'Boss SY-300', width: 420, depth: 240, height: 70, color: 'rgb(72, 72, 82)', image: 'boss/boss-sy_300_top_tn.png' },
