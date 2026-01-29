@@ -17,7 +17,8 @@ export interface CanvasObjectType {
   height: number
   /** Rotation in degrees. Default 0. */
   rotation?: number
-  color: string
+  /** Omitted when object has an image. */
+  color?: string
   image: string | null
   name: string
 }
