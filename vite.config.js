@@ -5,4 +5,5 @@ export default defineConfig({
   plugins: [react({
     include: /\.(jsx|tsx)$/,
   })],
+  base: "/pedalboard-planner/",
 })
