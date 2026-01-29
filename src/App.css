@@ -423,6 +423,7 @@
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -455,4 +456,44 @@
   color: #111;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+
+.history-controls {
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 12px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 30px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.history-btn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  font-size: 1.4rem;
+  color: #333;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, transform 0.1s, opacity 0.15s;
+}
+
+.history-btn:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.history-btn:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
+.history-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
 }

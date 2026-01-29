@@ -4,6 +4,7 @@ import {
   useState,
   useCallback,
   useRef,
+  useEffect,
   type ReactNode,
 } from 'react'
 import { BOARD_TEMPLATES } from '../data/boards'
@@ -13,6 +14,7 @@ import { createObjectFromBoardTemplate, createObjectFromDeviceTemplate } from '.
 import { useCanvasZoomPan } from '../hooks/useCanvasZoomPan'
 import { useObjectDrag } from '../hooks/useObjectDrag'
 import { useBoardDeviceFilters } from '../hooks/useBoardDeviceFilters'
+import { useHistory } from '../hooks/useHistory'
 import type { CanvasObjectType } from '../types'
 
 type CatalogMode = 'boards' | 'devices'
@@ -36,7 +38,7 @@ interface AppContextValue {
   handleCanvasMouseDown: (e: React.MouseEvent) => void
   // Objects
   objects: CanvasObjectType[]
-  setObjects: React.Dispatch<React.SetStateAction<CanvasObjectType[]>>
+  setObjects: (action: CanvasObjectType[] | ((prev: CanvasObjectType[]) => CanvasObjectType[]), saveToHistory?: boolean) => void
   selectedObjectIds: string[]
   setSelectedObjectIds: React.Dispatch<React.SetStateAction<string[]>>
   imageFailedIds: Set<string>
@@ -47,6 +49,11 @@ interface AppContextValue {
   onDeleteObject: (id: string) => void
   onRotateObject: (id: string) => void
   onSendToBack: (id: string) => void
+  // History
+  undo: () => void
+  redo: () => void
+  canUndo: boolean
+  canRedo: boolean
   // Catalog
   catalogMode: CatalogMode
   setCatalogMode: (mode: CatalogMode) => void
@@ -58,9 +65,15 @@ interface AppContextValue {
 const AppContext = createContext<AppContextValue | null>(null)
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [objects, setObjects] = useState<CanvasObjectType[]>(initialObjects)
-  const setObjectsRef = useRef(setObjects)
-  setObjectsRef.current = setObjects
+  const {
+    state: objects,
+    setState: setObjects,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+  } = useHistory<CanvasObjectType[]>(initialObjects, 50)
+
   const [imageFailedIds, setImageFailedIds] = useState<Set<string>>(new Set())
   const [showGrid, setShowGrid] = useState(false)
   const [unit, setUnit] = useState<'mm' | 'in'>('mm')
@@ -133,9 +146,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setSelectedBoard(id)
       const { x, y } = getPlacementBesideDropdown()
       const newObj = createObjectFromBoardTemplate(template, x, y)
-      setObjectsRef.current((prev) => [...prev, newObj])
+      setObjects((prev) => [...prev, newObj])
     },
-    [setSelectedBoard, getPlacementBesideDropdown]
+    [setSelectedBoard, getPlacementBesideDropdown, setObjects]
   )
 
   const handleDeviceSelect = useCallback(
@@ -147,15 +160,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setSelectedDevice(id)
       const { x, y } = getPlacementBesideDropdown()
       const newObj = createObjectFromDeviceTemplate(template, x, y)
-      setObjectsRef.current((prev) => [...prev, newObj])
+      setObjects((prev) => [...prev, newObj])
     },
-    [setSelectedDevice, getPlacementBesideDropdown]
+    [setSelectedDevice, getPlacementBesideDropdown, setObjects]
   )
 
   const handleDeleteObject = useCallback((id: string) => {
     setObjects((prev) => prev.filter((o) => o.id !== id))
     setSelectedObjectIds((prev) => prev.filter((sid) => sid !== id))
-  }, [])
+  }, [setObjects])
 
   const handleRotateObject = useCallback((id: string) => {
     setObjects((prev) =>
@@ -163,17 +176,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
         o.id === id ? { ...o, rotation: ((o.rotation ?? 0) + 90) % 360 } : o
       )
     )
-  }, [])
+  }, [setObjects])
 
   const handleSendToBack = useCallback((id: string) => {
-    setObjectsRef.current((prev) => {
+    setObjects((prev) => {
       const i = prev.findIndex((o) => o.id === id)
       if (i <= 0) return prev
       const obj = prev[i]
       const next = prev.slice(0, i).concat(prev.slice(i + 1))
       return [obj, ...next]
     })
-  }, [])
+  }, [setObjects])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        if (e.shiftKey) {
+          redo()
+        } else {
+          undo()
+        }
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+        redo()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [undo, redo])
 
   const value: AppContextValue = {
     canvasRef,
@@ -202,6 +231,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     onDeleteObject: handleDeleteObject,
     onRotateObject: handleRotateObject,
     onSendToBack: handleSendToBack,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
     catalogMode,
     setCatalogMode,
     filters,
