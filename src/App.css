@@ -162,19 +162,19 @@
 
 .catalog-mode-switch {
   display: flex;
-  border-radius: 8px;
+  border-radius: 6px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   background: rgba(255, 255, 255, 0.9);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .catalog-mode-btn {
   flex: 1;
-  padding: 8px 14px;
+  padding: 5px 10px;
   border: none;
   background: transparent;
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   font-weight: 600;
   color: #666;
   cursor: pointer;
@@ -253,9 +253,11 @@
   color: #555;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  font-family: 'Open Sans', sans-serif;
 }
 
 .dropdown {
+  font-family: 'Open Sans', sans-serif;
   width: 145px;
   max-width: 145px;
   padding: 4px 20px 4px 6px;
@@ -331,21 +333,22 @@
 
 .unit-switch {
   display: flex;
-  border-radius: 8px;
+  width: fit-content;
+  border-radius: 6px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   background: rgba(255, 255, 255, 0.9);
 }
 
 .floating-dropdowns .unit-switch {
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .unit-btn {
-  padding: 6px 12px;
+  padding: 4px 10px;
   border: none;
   background: transparent;
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   font-weight: 600;
   color: #666;
   cursor: pointer;
@@ -463,20 +466,20 @@
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 12px;
-  padding: 8px;
+  gap: 6px;
+  padding: 4px;
   background: rgba(255, 255, 255, 0.9);
-  border-radius: 30px;
+  border-radius: 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .history-btn {
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
   border: none;
   border-radius: 50%;
   background: transparent;
-  font-size: 1.4rem;
+  font-size: 1.1rem;
   color: #333;
   cursor: pointer;
   display: flex;
@@ -503,7 +506,7 @@
   bottom: 8px;
   left: 12px;
   z-index: 100;
-  font-size: 0.65rem;
+  font-size: 0.72rem;
   color: rgba(255, 255, 255, 0.6);
   font-weight: 500;
 }
