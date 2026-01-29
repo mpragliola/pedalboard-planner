@@ -74,6 +74,10 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
     deviceDepthMax
   )
 
+  const formatSliderValue = (mm: number) =>
+    unit === 'in' ? (mm / 25.4).toFixed(2) : String(Math.round(mm))
+  const unitLabel = unit === 'in' ? 'in' : 'mm'
+
   return (
     <div ref={ref} className="floating-controls floating-dropdowns">
       <div className="unit-switch" role="group" aria-label="Units">
@@ -145,9 +149,9 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
             />
             <div className="size-filters">
               <div className="size-filter-row">
-                <label className="dropdown-label">Width (mm)</label>
+                <label className="dropdown-label">Width ({unitLabel})</label>
                 <span className="size-bounds" aria-live="polite">
-                  {boardWidthMin ? Number(boardWidthMin) : boardWidthRange[0]} – {boardWidthMax ? Number(boardWidthMax) : boardWidthRange[1]}
+                  {formatSliderValue(boardWidthMin ? Number(boardWidthMin) : boardWidthRange[0])} – {formatSliderValue(boardWidthMax ? Number(boardWidthMax) : boardWidthRange[1])}
                 </span>
               </div>
               <div className="size-slider-row">
@@ -167,7 +171,7 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
                     const maxVal = boardWidthMax ? Number(boardWidthMax) : boardWidthRange[1]
                     if (!isLow && num > maxVal) setBoardWidthMax(v)
                   }}
-                  aria-label="Min width (mm)"
+                  aria-label={`Min width (${unitLabel})`}
                 />
                 <input
                   id="board-width-max"
@@ -185,13 +189,13 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
                     const minVal = boardWidthMin ? Number(boardWidthMin) : boardWidthRange[0]
                     if (!isHigh && num < minVal) setBoardWidthMin(v)
                   }}
-                  aria-label="Max width (mm)"
+                  aria-label={`Max width (${unitLabel})`}
                 />
               </div>
               <div className="size-filter-row">
-                <label className="dropdown-label">Depth (mm)</label>
+                <label className="dropdown-label">Depth ({unitLabel})</label>
                 <span className="size-bounds" aria-live="polite">
-                  {boardDepthMin ? Number(boardDepthMin) : boardDepthRange[0]} – {boardDepthMax ? Number(boardDepthMax) : boardDepthRange[1]}
+                  {formatSliderValue(boardDepthMin ? Number(boardDepthMin) : boardDepthRange[0])} – {formatSliderValue(boardDepthMax ? Number(boardDepthMax) : boardDepthRange[1])}
                 </span>
               </div>
               <div className="size-slider-row">
@@ -211,7 +215,7 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
                     const maxVal = boardDepthMax ? Number(boardDepthMax) : boardDepthRange[1]
                     if (!isLow && num > maxVal) setBoardDepthMax(v)
                   }}
-                  aria-label="Min depth (mm)"
+                  aria-label={`Min depth (${unitLabel})`}
                 />
                 <input
                   id="board-depth-max"
@@ -229,7 +233,7 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
                     const minVal = boardDepthMin ? Number(boardDepthMin) : boardDepthRange[0]
                     if (!isHigh && num < minVal) setBoardDepthMin(v)
                   }}
-                  aria-label="Max depth (mm)"
+                  aria-label={`Max depth (${unitLabel})`}
                 />
               </div>
             </div>
@@ -297,9 +301,9 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
             />
             <div className="size-filters">
               <div className="size-filter-row">
-                <label className="dropdown-label">Width (mm)</label>
+                <label className="dropdown-label">Width ({unitLabel})</label>
                 <span className="size-bounds" aria-live="polite">
-                  {deviceWidthMin ? Number(deviceWidthMin) : deviceWidthRange[0]} – {deviceWidthMax ? Number(deviceWidthMax) : deviceWidthRange[1]}
+                  {formatSliderValue(deviceWidthMin ? Number(deviceWidthMin) : deviceWidthRange[0])} – {formatSliderValue(deviceWidthMax ? Number(deviceWidthMax) : deviceWidthRange[1])}
                 </span>
               </div>
               <div className="size-slider-row">
@@ -319,7 +323,7 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
                     const maxVal = deviceWidthMax ? Number(deviceWidthMax) : deviceWidthRange[1]
                     if (!isLow && num > maxVal) setDeviceWidthMax(v)
                   }}
-                  aria-label="Min width (mm)"
+                  aria-label={`Min width (${unitLabel})`}
                 />
                 <input
                   id="device-width-max"
@@ -337,13 +341,13 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
                     const minVal = deviceWidthMin ? Number(deviceWidthMin) : deviceWidthRange[0]
                     if (!isHigh && num < minVal) setDeviceWidthMin(v)
                   }}
-                  aria-label="Max width (mm)"
+                  aria-label={`Max width (${unitLabel})`}
                 />
               </div>
               <div className="size-filter-row">
-                <label className="dropdown-label">Depth (mm)</label>
+                <label className="dropdown-label">Depth ({unitLabel})</label>
                 <span className="size-bounds" aria-live="polite">
-                  {deviceDepthMin ? Number(deviceDepthMin) : deviceDepthRange[0]} – {deviceDepthMax ? Number(deviceDepthMax) : deviceDepthRange[1]}
+                  {formatSliderValue(deviceDepthMin ? Number(deviceDepthMin) : deviceDepthRange[0])} – {formatSliderValue(deviceDepthMax ? Number(deviceDepthMax) : deviceDepthRange[1])}
                 </span>
               </div>
               <div className="size-slider-row">
@@ -363,7 +367,7 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
                     const maxVal = deviceDepthMax ? Number(deviceDepthMax) : deviceDepthRange[1]
                     if (!isLow && num > maxVal) setDeviceDepthMax(v)
                   }}
-                  aria-label="Min depth (mm)"
+                  aria-label={`Min depth (${unitLabel})`}
                 />
                 <input
                   id="device-depth-max"
@@ -381,7 +385,7 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
                     const minVal = deviceDepthMin ? Number(deviceDepthMin) : deviceDepthRange[0]
                     if (!isHigh && num < minVal) setDeviceDepthMin(v)
                   }}
-                  aria-label="Max depth (mm)"
+                  aria-label={`Max depth (${unitLabel})`}
                 />
               </div>
             </div>
