@@ -76,13 +76,13 @@
 }
 
 .canvas-object.canvas-object-dragging {
-  z-index: 100;
+  /* z-index set on wrapper from stackIndex */
 }
 
 .canvas-object.canvas-object-selected {
   outline: 2px solid var(--selection-color, #0a84ff);
   outline-offset: 2px;
-  z-index: 10;
+  /* z-index set on wrapper from stackIndex */
 }
 
 .canvas-object.has-color {
@@ -106,7 +106,8 @@
 
 .selection-toolbar {
   position: absolute;
-  z-index: 50;
+  z-index: 50000;
+  /* above all canvas objects (STACK_DRAGGING + index) */
   display: flex;
   align-items: center;
   gap: 4px;

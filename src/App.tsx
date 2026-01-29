@@ -168,6 +168,18 @@ function App() {
     )
   }, [])
 
+  const handleReorder = useCallback((id: string, direction: 'forward' | 'backward') => {
+    setObjectsRef.current((prev) => {
+      const i = prev.findIndex((o) => o.id === id)
+      const j = direction === 'forward' ? i + 1 : i - 1
+      if (i < 0 || j < 0 || j >= prev.length) return prev
+      const next = prev.slice()
+      next[i] = prev[j]
+      next[j] = prev[i]
+      return next
+    })
+  }, [])
+
   return (
     <>
       <Canvas
@@ -189,6 +201,7 @@ function App() {
         onDragEnd={clearDragState}
         onDeleteObject={handleDeleteObject}
         onRotateObject={handleRotateObject}
+        onReorder={handleReorder}
       />
       <DropdownsPanel
         ref={dropdownPanelRef}

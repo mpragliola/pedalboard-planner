@@ -21,6 +21,7 @@ interface CanvasProps {
   onDragEnd: () => void
   onDeleteObject: (id: string) => void
   onRotateObject: (id: string) => void
+  onReorder: (id: string, direction: 'forward' | 'backward') => void
 }
 
 export function Canvas({
@@ -42,6 +43,7 @@ export function Canvas({
   onDragEnd,
   onDeleteObject,
   onRotateObject,
+  onReorder,
 }: CanvasProps) {
   const selectedObject = selectedObjectIds.length === 1 ? objects.find((o) => o.id === selectedObjectIds[0]) : null
 
@@ -80,12 +82,14 @@ export function Canvas({
             obj={selectedObject}
             onDelete={onDeleteObject}
             onRotate={onRotateObject}
+            onReorder={onReorder}
           />
         )}
-        {objects.map((obj) => (
+        {objects.map((obj, index) => (
           <CanvasObject
             key={obj.id}
             obj={obj}
+            stackIndex={index}
             useImage={obj.image !== null && !imageFailedIds.has(obj.id)}
             isDragging={draggingObjectId === obj.id}
             isSelected={selectedObjectIds.includes(obj.id)}
