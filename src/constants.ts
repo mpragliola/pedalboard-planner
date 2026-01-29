@@ -16,21 +16,5 @@ export const DEVICE_TYPE_LABEL: Record<DeviceType, string> = {
   controller: 'Controllers',
 }
 
-export const initialObjects: CanvasObjectType[] = [
-  {
-    id: 'obj-1',
-    subtype: 'device',
-    type: 'pedal',
-    brand: '',
-    model: 'Overdrive',
-    name: 'Overdrive',
-    x: 200,
-    y: 150,
-    width: 120,
-    depth: 95,
-    height: 60,
-    color: 'rgb(180, 160, 140)',
-    image: null,
-  },
-]
+export const initialObjects: CanvasObjectType[] = []
 
