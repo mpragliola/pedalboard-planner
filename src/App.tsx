@@ -168,15 +168,13 @@ function App() {
     )
   }, [])
 
-  const handleReorder = useCallback((id: string, direction: 'forward' | 'backward') => {
+  const handleSendToBack = useCallback((id: string) => {
     setObjectsRef.current((prev) => {
       const i = prev.findIndex((o) => o.id === id)
-      const j = direction === 'forward' ? i + 1 : i - 1
-      if (i < 0 || j < 0 || j >= prev.length) return prev
-      const next = prev.slice()
-      next[i] = prev[j]
-      next[j] = prev[i]
-      return next
+      if (i <= 0) return prev
+      const obj = prev[i]
+      const next = prev.slice(0, i).concat(prev.slice(i + 1))
+      return [obj, ...next]
     })
   }, [])
 
@@ -201,7 +199,7 @@ function App() {
         onDragEnd={clearDragState}
         onDeleteObject={handleDeleteObject}
         onRotateObject={handleRotateObject}
-        onReorder={handleReorder}
+        onSendToBack={handleSendToBack}
       />
       <DropdownsPanel
         ref={dropdownPanelRef}

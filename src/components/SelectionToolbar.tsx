@@ -4,13 +4,13 @@ interface SelectionToolbarProps {
   obj: CanvasObjectType
   onDelete: (id: string) => void
   onRotate: (id: string) => void
-  onReorder: (id: string, direction: 'forward' | 'backward') => void
+  onSendToBack: (id: string) => void
 }
 
 const TOOLBAR_GAP = 8
 const TOOLBAR_HEIGHT = 36
 
-export function SelectionToolbar({ obj, onDelete, onRotate, onReorder }: SelectionToolbarProps) {
+export function SelectionToolbar({ obj, onDelete, onRotate, onSendToBack }: SelectionToolbarProps) {
   const centerX = obj.x + obj.width / 2
   const centerY = obj.y + obj.depth / 2
   const left = centerX
@@ -26,15 +26,10 @@ export function SelectionToolbar({ obj, onDelete, onRotate, onReorder }: Selecti
     e.preventDefault()
     onRotate(obj.id)
   }
-  const handleSendBackward = (e: React.MouseEvent) => {
+  const handleSendToBack = (e: React.MouseEvent) => {
     e.stopPropagation()
     e.preventDefault()
-    onReorder(obj.id, 'backward')
-  }
-  const handleBringForward = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    e.preventDefault()
-    onReorder(obj.id, 'forward')
+    onSendToBack(obj.id)
   }
 
   return (
@@ -65,25 +60,13 @@ export function SelectionToolbar({ obj, onDelete, onRotate, onReorder }: Selecti
       <button
         type="button"
         className="selection-toolbar-btn"
-        title="Send backward"
-        onClick={handleSendBackward}
-        aria-label="Send backward"
+        title="Send to back"
+        onClick={handleSendToBack}
+        aria-label="Send to back"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          <rect x="8" y="8" width="12" height="12" rx="1" />
-          <rect x="4" y="4" width="12" height="12" rx="1" />
-        </svg>
-      </button>
-      <button
-        type="button"
-        className="selection-toolbar-btn"
-        title="Bring forward"
-        onClick={handleBringForward}
-        aria-label="Bring forward"
-      >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          <rect x="4" y="4" width="12" height="12" rx="1" />
-          <rect x="8" y="8" width="12" height="12" rx="1" />
+          <path d="M12 5v14" />
+          <path d="M19 12l-7 7-7-7" />
         </svg>
       </button>
       <button
