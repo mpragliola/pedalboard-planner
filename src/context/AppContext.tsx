@@ -5,6 +5,7 @@ import {
   useCallback,
   useRef,
   useEffect,
+  useMemo,
   type ReactNode,
 } from 'react'
 import { BOARD_TEMPLATES } from '../data/boards'
@@ -16,6 +17,75 @@ import { useObjectDrag } from '../hooks/useObjectDrag'
 import { useBoardDeviceFilters } from '../hooks/useBoardDeviceFilters'
 import { useHistory } from '../hooks/useHistory'
 import type { CanvasObjectType } from '../types'
+
+const STORAGE_KEY = 'pedal/state'
+
+interface SavedState {
+  objects: CanvasObjectType[]
+  past?: CanvasObjectType[][]
+  future?: CanvasObjectType[][]
+  zoom?: number
+  pan?: { x: number; y: number }
+  showGrid?: boolean
+  unit?: 'mm' | 'in'
+}
+
+function isValidObject(o: unknown): o is CanvasObjectType {
+  if (typeof o !== 'object' || o === null) return false
+  const t = o as Record<string, unknown>
+  return (
+    typeof t.id === 'string' &&
+    typeof t.subtype === 'string' &&
+    typeof t.x === 'number' &&
+    typeof t.y === 'number' &&
+    typeof t.width === 'number' &&
+    typeof t.depth === 'number' &&
+    typeof t.height === 'number' &&
+    typeof t.name === 'string'
+  )
+}
+
+function isValidObjectArray(arr: unknown): arr is CanvasObjectType[] {
+  return Array.isArray(arr) && arr.every(isValidObject)
+}
+
+function loadFromStorage(): SavedState | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return null
+    const data = JSON.parse(raw) as unknown
+    if (typeof data !== 'object' || data === null || !('objects' in data)) return null
+    const objects = (data as SavedState).objects
+    if (!isValidObjectArray(objects)) return null
+    const past = (data as SavedState).past
+    const future = (data as SavedState).future
+    return {
+      objects,
+      past: Array.isArray(past) && past.every(isValidObjectArray) ? past : undefined,
+      future: Array.isArray(future) && future.every(isValidObjectArray) ? future : undefined,
+      zoom: typeof (data as SavedState).zoom === 'number' ? (data as SavedState).zoom : undefined,
+      pan:
+        typeof (data as SavedState).pan === 'object' &&
+          (data as SavedState).pan !== null &&
+          'x' in (data as SavedState).pan! &&
+          'y' in (data as SavedState).pan!
+          ? (data as SavedState).pan
+          : undefined,
+      showGrid: typeof (data as SavedState).showGrid === 'boolean' ? (data as SavedState).showGrid : undefined,
+      unit: (data as SavedState).unit === 'mm' || (data as SavedState).unit === 'in' ? (data as SavedState).unit : undefined,
+    }
+  } catch {
+    return null
+  }
+}
+
+function saveToStorage(state: SavedState) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+  } catch {
+    // quota or disabled
+  }
+}
 
 type CatalogMode = 'boards' | 'devices'
 
@@ -65,6 +135,17 @@ interface AppContextValue {
 const AppContext = createContext<AppContextValue | null>(null)
 
 export function AppProvider({ children }: { children: ReactNode }) {
+  const [savedState] = useState<SavedState | null>(() => loadFromStorage())
+
+  const historyInitial = useMemo(
+    () => ({
+      objects: savedState?.objects ?? initialObjects,
+      past: savedState?.past ?? [],
+      future: savedState?.future ?? [],
+    }),
+    [] // eslint-disable-line react-hooks/exhaustive-deps -- only on mount
+  )
+
   const {
     state: objects,
     setState: setObjects,
@@ -72,11 +153,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     redo,
     canUndo,
     canRedo,
-  } = useHistory<CanvasObjectType[]>(initialObjects, 200)
+    past,
+    future,
+  } = useHistory<CanvasObjectType[]>(historyInitial.objects, 200, {
+    initialPast: historyInitial.past,
+    initialFuture: historyInitial.future,
+  })
 
   const [imageFailedIds, setImageFailedIds] = useState<Set<string>>(new Set())
-  const [showGrid, setShowGrid] = useState(false)
-  const [unit, setUnit] = useState<'mm' | 'in'>('mm')
+  const [showGrid, setShowGrid] = useState(savedState?.showGrid ?? false)
+  const [unit, setUnit] = useState<'mm' | 'in'>(savedState?.unit ?? 'mm')
   const [catalogMode, setCatalogMode] = useState<CatalogMode>('boards')
   const [selectedObjectIds, setSelectedObjectIds] = useState<string[]>([])
   const dropdownPanelRef = useRef<HTMLDivElement>(null)
@@ -91,7 +177,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     zoomOut,
     handleCanvasPointerDown: canvasPanPointerDown,
     tileSize,
-  } = useCanvasZoomPan()
+  } = useCanvasZoomPan({
+    initialZoom: savedState?.zoom,
+    initialPan: savedState?.pan,
+  })
 
   const { draggingObjectId, handleObjectDragStart, clearDragState } = useObjectDrag(
     objects,
@@ -203,6 +292,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [undo, redo])
+
+  // Persist state (and undo history) to localStorage, debounced
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+    saveTimeoutRef.current = setTimeout(() => {
+      saveTimeoutRef.current = null
+      saveToStorage({
+        objects,
+        past,
+        future,
+        zoom,
+        pan,
+        showGrid,
+        unit,
+      })
+    }, 400)
+    return () => {
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+    }
+  }, [objects, past, future, zoom, pan, showGrid, unit])
 
   const value: AppContextValue = {
     canvasRef,

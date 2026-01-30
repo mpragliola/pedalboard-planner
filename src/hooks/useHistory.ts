@@ -1,9 +1,14 @@
 import { useState, useCallback } from 'react'
 
-export function useHistory<T>(initialState: T, depth = 200) {
+export interface UseHistoryOptions<T> {
+  initialPast?: T[]
+  initialFuture?: T[]
+}
+
+export function useHistory<T>(initialState: T, depth = 200, options?: UseHistoryOptions<T>) {
   const [state, _setState] = useState<T>(initialState)
-  const [past, setPast] = useState<T[]>([])
-  const [future, setFuture] = useState<T[]>([])
+  const [past, setPast] = useState<T[]>(options?.initialPast ?? [])
+  const [future, setFuture] = useState<T[]>(options?.initialFuture ?? [])
 
   const setState = useCallback((action: T | ((prev: T) => T), saveToHistory = true) => {
     _setState((prev) => {
@@ -59,5 +64,7 @@ export function useHistory<T>(initialState: T, depth = 200) {
     redo,
     canUndo: past.length > 0,
     canRedo: future.length > 0,
+    past,
+    future,
   }
 }

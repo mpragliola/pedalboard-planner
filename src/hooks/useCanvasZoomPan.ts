@@ -9,9 +9,14 @@ function center(a: { clientX: number; clientY: number }, b: { clientX: number; c
   return { x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 }
 }
 
-export function useCanvasZoomPan() {
-  const [zoom, setZoom] = useState<number>(1)
-  const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
+export interface UseCanvasZoomPanOptions {
+  initialZoom?: number
+  initialPan?: { x: number; y: number }
+}
+
+export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
+  const [zoom, setZoom] = useState<number>(options?.initialZoom ?? 1)
+  const [pan, setPan] = useState<{ x: number; y: number }>(options?.initialPan ?? { x: 0, y: 0 })
   const [isPanning, setIsPanning] = useState(false)
   const [spaceDown, setSpaceDown] = useState(false)
   const panStartRef = useRef<{ mouseX: number; mouseY: number; panX: number; panY: number; pointerId: number } | null>(null)
