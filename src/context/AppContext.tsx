@@ -45,6 +45,7 @@ interface AppContextValue {
   spaceDown: boolean
   zoomIn: () => void
   zoomOut: () => void
+  centerView: () => void
   handleCanvasPointerDown: (e: React.PointerEvent) => void
   // Objects
   objects: CanvasObjectType[]
@@ -124,6 +125,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     spaceDown,
     zoomIn,
     zoomOut,
+    setPan,
     handleCanvasPointerDown: canvasPanPointerDown,
     tileSize,
   } = useCanvasZoomPan({
@@ -174,6 +176,36 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const canvasY = (dropdownRect.top + dropdownRect.height / 2 - canvasRect.top - pan.y) / zoom
     return { x: Math.round(canvasX), y: Math.round(canvasY) }
   }, [pan.x, pan.y, zoom, canvasRef])
+
+  /** Axis-aligned bbox center of all objects (same bbox logic as CanvasObject). */
+  const centerView = useCallback(() => {
+    const el = canvasRef.current
+    if (!el || objects.length === 0) return
+    const normalizeRotation = (r: number) => ((r % 360) + 360) % 360
+    let minX = Infinity
+    let minY = Infinity
+    let maxX = -Infinity
+    let maxY = -Infinity
+    for (const obj of objects) {
+      const rotation = normalizeRotation(obj.rotation ?? 0)
+      const is90or270 = rotation === 90 || rotation === 270
+      const bboxW = is90or270 ? obj.depth : obj.width
+      const bboxH = is90or270 ? obj.width : obj.depth
+      const wrapperLeft = obj.x + (obj.width - bboxW) / 2
+      const wrapperTop = obj.y + (obj.depth - bboxH) / 2
+      minX = Math.min(minX, wrapperLeft)
+      minY = Math.min(minY, wrapperTop)
+      maxX = Math.max(maxX, wrapperLeft + bboxW)
+      maxY = Math.max(maxY, wrapperTop + bboxH)
+    }
+    const cx = (minX + maxX) / 2
+    const cy = (minY + maxY) / 2
+    const rect = el.getBoundingClientRect()
+    setPan({
+      x: rect.width / 2 - cx * zoom,
+      y: rect.height / 2 - cy * zoom,
+    })
+  }, [objects, zoom, setPan, canvasRef])
 
   const handleBoardSelect = useCallback(
     (templateId: string) => {
@@ -281,6 +313,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     spaceDown,
     zoomIn,
     zoomOut,
+    centerView,
     handleCanvasPointerDown,
     objects,
     setObjects,

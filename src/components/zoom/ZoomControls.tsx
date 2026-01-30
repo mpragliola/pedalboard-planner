@@ -3,7 +3,7 @@ import { ZoomButton } from './ZoomButton'
 import './ZoomControls.css'
 
 export function ZoomControls() {
-  const { zoomIn, zoomOut, showGrid, setShowGrid, xray, setXray } = useApp()
+  const { zoomIn, zoomOut, showGrid, setShowGrid, xray, setXray, centerView } = useApp()
   return (
     <div className="floating-controls zoom-controls">
       <ZoomButton
@@ -19,6 +19,13 @@ export function ZoomControls() {
         icon="−"
         onClick={zoomOut}
         className="zoom-out"
+      />
+      <ZoomButton
+        label="Center view"
+        title="Center view on all objects"
+        icon="⊕"
+        onClick={centerView}
+        className="center-view"
       />
       <ZoomButton
         label="Toggle grid"
