@@ -3,7 +3,27 @@ import type { CanvasObjectType } from '../types'
 import type { BoardTemplate } from '../data/boards'
 import type { DeviceTemplate } from '../data/devices'
 
-let nextObjectId = 2
+/** Next counter per template id so IDs are templateId-1, templateId-2, … */
+const nextCounterByTemplate = new Map<string, number>()
+
+function getNextCounter(templateId: string): number {
+  const n = (nextCounterByTemplate.get(templateId) ?? 1)
+  nextCounterByTemplate.set(templateId, n + 1)
+  return n
+}
+
+/** Call when restoring state so new objects never get IDs that collide with existing ones. */
+export function initNextObjectIdFromObjects(objects: CanvasObjectType[]): void {
+  for (const o of objects) {
+    const m = o.id.match(/-(\d+)$/)
+    if (m) {
+      const base = o.id.slice(0, -m[0].length)
+      const n = parseInt(m[1], 10) + 1
+      const prev = nextCounterByTemplate.get(base) ?? 1
+      nextCounterByTemplate.set(base, Math.max(prev, n))
+    }
+  }
+}
 
 export function createObjectFromBoardTemplate(
   template: BoardTemplate,
@@ -11,7 +31,7 @@ export function createObjectFromBoardTemplate(
   y: number
 ): CanvasObjectType {
   return {
-    id: `obj-${nextObjectId++}`,
+    id: `${template.id}-${getNextCounter(template.id)}`,
     subtype: 'board',
     type: template.type,
     brand: template.brand,
@@ -34,7 +54,7 @@ export function createObjectFromDeviceTemplate(
   y: number
 ): CanvasObjectType {
   return {
-    id: `obj-${nextObjectId++}`,
+    id: `${template.id}-${getNextCounter(template.id)}`,
     subtype: 'device',
     type: template.type,
     brand: template.brand,

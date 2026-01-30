@@ -11,7 +11,11 @@ import {
 import { BOARD_TEMPLATES } from '../data/boards'
 import { DEVICE_TEMPLATES } from '../data/devices'
 import { initialObjects } from '../constants'
-import { createObjectFromBoardTemplate, createObjectFromDeviceTemplate } from '../lib/templateHelpers'
+import {
+  createObjectFromBoardTemplate,
+  createObjectFromDeviceTemplate,
+  initNextObjectIdFromObjects,
+} from '../lib/templateHelpers'
 import { useCanvasZoomPan } from '../hooks/useCanvasZoomPan'
 import { useObjectDrag } from '../hooks/useObjectDrag'
 import { useBoardDeviceFilters } from '../hooks/useBoardDeviceFilters'
@@ -138,7 +142,11 @@ interface AppContextValue {
 const AppContext = createContext<AppContextValue | null>(null)
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [savedState] = useState<SavedState | null>(() => loadFromStorage())
+  const [savedState] = useState<SavedState | null>(() => {
+    const state = loadFromStorage()
+    if (state?.objects?.length) initNextObjectIdFromObjects(state.objects)
+    return state
+  })
 
   const historyInitial = useMemo(
     () => ({
