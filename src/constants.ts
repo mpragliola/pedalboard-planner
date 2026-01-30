@@ -18,3 +18,6 @@ export const DEVICE_TYPE_LABEL: Record<DeviceType, string> = {
 
 export const initialObjects: CanvasObjectType[] = []
 
+/** Default fill color when a board or device has no image (and no custom color). */
+export const DEFAULT_OBJECT_COLOR = 'rgb(72, 72, 82)'
+

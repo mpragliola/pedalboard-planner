@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import { DEFAULT_OBJECT_COLOR } from '../../constants'
 import { useApp } from '../../context/AppContext'
 import type { BoardTemplate } from '../../data/boards'
 import type { DeviceTemplate } from '../../data/devices'
@@ -135,7 +136,7 @@ function CatalogModal({ open, onClose }: CatalogModalProps) {
                     <span
                       className="catalog-modal-card-placeholder"
                       style={{
-                        backgroundColor: (item as { color?: string }).color ?? '#444',
+                        backgroundColor: (item as { color?: string }).color ?? DEFAULT_OBJECT_COLOR,
                       }}
                     />
                   )}

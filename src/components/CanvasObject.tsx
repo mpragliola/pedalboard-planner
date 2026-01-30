@@ -1,4 +1,5 @@
 import type { RefObject } from 'react'
+import { DEFAULT_OBJECT_COLOR } from '../constants'
 import type { CanvasObjectType } from '../types'
 import './CanvasObject.css'
 
@@ -76,7 +77,7 @@ export function CanvasObject({ obj, stackIndex, useImage, isDragging, isSelected
           height: obj.depth,
           transform: `rotate(${rotation}deg)`,
           transformOrigin: '50% 50%',
-          backgroundColor: useImage ? 'transparent' : (obj.color ?? 'rgb(200, 200, 200)'),
+          backgroundColor: useImage ? 'transparent' : (obj.color ?? DEFAULT_OBJECT_COLOR),
         }}
       >
         {useImage && obj.image ? (
