@@ -1,6 +1,7 @@
 import { Canvas } from './components/Canvas'
 import { DropdownsPanel } from './components/catalog/DropdownsPanel'
 import { GptButton } from './components/gpt/GptButton'
+import { InfoButton } from './components/info/InfoButton'
 import { ZoomControls } from './components/zoom/ZoomControls'
 import { SelectionInfoPopup } from './components/selection/SelectionInfoPopup'
 import { HistoryControls } from './components/history/HistoryControls'
@@ -28,6 +29,7 @@ function AppContent() {
             {floatingUiVisible ? '▲' : '▼'} Catalog
           </button>
           <GptButton />
+          <InfoButton />
         </div>
         <div className={`catalog-panel-body ${floatingUiVisible ? '' : 'minimized'}`}>
           <DropdownsPanel ref={dropdownPanelRef} />
