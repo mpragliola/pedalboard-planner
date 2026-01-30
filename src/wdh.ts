@@ -3,7 +3,7 @@ export type Wdh = [number, number, number]
 
 // ——— Device (pedal) dimensions ———
 /** Boss compact pedal (e.g. DS-1, TU-3, RC-1). */
-export const WDH_BOSS_COMPACT: Wdh = [73, 129, 59]
+export const WDH_BOSS_COMPACT: Wdh = [75, 132, 59]
 /** MXR standard (e.g. Phase 90, Carbon Copy). */
 export const WDH_MXR_STANDARD: Wdh = [60, 110, 50]
 /** MXR bass / double (e.g. Bass D.I.+, Dime Distortion). */
