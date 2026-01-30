@@ -11,11 +11,26 @@ export type { DeviceType } from './data/devices'
 export type { CanvasObjectType, ObjectSubtype } from './types'
 
 function AppContent() {
-  const { dropdownPanelRef } = useApp()
+  const { dropdownPanelRef, floatingUiVisible, setFloatingUiVisible } = useApp()
   return (
     <>
       <Canvas />
-      <DropdownsPanel ref={dropdownPanelRef} />
+      <div className="catalog-panel">
+        <div className="catalog-panel-head">
+          <button
+            type="button"
+            className="catalog-panel-toggle"
+            onClick={() => setFloatingUiVisible((v) => !v)}
+            title={floatingUiVisible ? 'Minimize catalog' : 'Expand catalog'}
+            aria-label={floatingUiVisible ? 'Minimize catalog' : 'Expand catalog'}
+          >
+            {floatingUiVisible ? '▲' : '▼'} Catalog
+          </button>
+        </div>
+        <div className={`catalog-panel-body ${floatingUiVisible ? '' : 'minimized'}`}>
+          <DropdownsPanel ref={dropdownPanelRef} />
+        </div>
+      </div>
       <ZoomControls />
       <HistoryControls />
       <SelectionInfoPopup />

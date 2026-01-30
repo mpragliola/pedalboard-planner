@@ -130,6 +130,9 @@ interface AppContextValue {
   filters: ReturnType<typeof useBoardDeviceFilters>
   onBoardSelect: (templateId: string) => void
   onDeviceSelect: (templateId: string) => void
+  // Floating UI visibility
+  floatingUiVisible: boolean
+  setFloatingUiVisible: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 const AppContext = createContext<AppContextValue | null>(null)
@@ -165,6 +168,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [unit, setUnit] = useState<'mm' | 'in'>(savedState?.unit ?? 'mm')
   const [catalogMode, setCatalogMode] = useState<CatalogMode>('boards')
   const [selectedObjectIds, setSelectedObjectIds] = useState<string[]>([])
+  const [floatingUiVisible, setFloatingUiVisible] = useState(true)
   const dropdownPanelRef = useRef<HTMLDivElement>(null)
 
   const {
@@ -350,6 +354,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     filters,
     onBoardSelect: handleBoardSelect,
     onDeviceSelect: handleDeviceSelect,
+    floatingUiVisible,
+    setFloatingUiVisible,
   }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
