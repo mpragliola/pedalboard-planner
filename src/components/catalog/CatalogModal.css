@@ -171,3 +171,19 @@
   width: 100%;
   pointer-events: none;
 }
+
+/* Small mobile landscape: full-screen modal (covering filters is OK) */
+@media (max-width: 767px) and (orientation: landscape) {
+  .catalog-modal-backdrop {
+    padding: 0;
+    align-items: stretch;
+  }
+
+  .catalog-modal-backdrop .catalog-modal {
+    flex: 1;
+    min-width: 0;
+    max-width: none;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+}
