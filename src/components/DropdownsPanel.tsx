@@ -1,6 +1,21 @@
-import { forwardRef } from 'react'
+import { forwardRef, useState, useEffect } from 'react'
 import { DEVICE_TYPE_ORDER, DEVICE_TYPE_LABEL } from '../constants'
 import { useApp } from '../context/AppContext'
+
+const PHONE_MEDIA = '(max-width: 767px)'
+
+function useIsPhone() {
+  const [isPhone, setIsPhone] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia(PHONE_MEDIA).matches
+  )
+  useEffect(() => {
+    const m = window.matchMedia(PHONE_MEDIA)
+    const fn = () => setIsPhone(m.matches)
+    m.addEventListener('change', fn)
+    return () => m.removeEventListener('change', fn)
+  }, [])
+  return isPhone
+}
 
 export type CatalogMode = 'boards' | 'devices'
 
@@ -55,6 +70,9 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
     selectedDevice,
     resetDeviceFilters,
   } = filters
+
+  const isPhone = useIsPhone()
+  const listSize = isPhone ? 1 : 5
 
   const hasBoardFilters = !!(
     boardBrandFilter ||
@@ -241,7 +259,7 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
             <select
               id="boards-select"
               className="dropdown dropdown-list"
-              size={5}
+              size={listSize}
               value={selectedBoard}
               onChange={(e) => {
                 const value = e.currentTarget.value
@@ -393,7 +411,7 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
             <select
               id="devices-select"
               className="dropdown dropdown-list"
-              size={5}
+              size={listSize}
               value={selectedDevice}
               onChange={(e) => {
                 const value = e.currentTarget.value
