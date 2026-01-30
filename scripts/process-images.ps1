@@ -39,7 +39,7 @@ if (-not $noBorders) {
         $baseName = $file.BaseName
         $borderedPath = Join-Path $tempBorderDir ($baseName + ".png")
 
-        if ($ext -eq ".png" -or $ext -in ".jpg", ".jpeg", ".webp") {
+        if ($ext -eq ".png" -or $ext -in ".jpg", ".jpeg", ".webp", ".avif") {
             Write-Host " - Processing: $($file.Name)"
             if (-not $dryRun) {
                 # Convert to PNG and add border in one go
@@ -50,7 +50,7 @@ if (-not $noBorders) {
 }
 else {
     Write-Host "PHASE 1: Skipped (--no-borders)."
-}
+}          
 
 # PHASE 2: Background Removal (Bulk)
 $rembgInputDir = if ($noBorders) { $targetDir } else { $tempBorderDir }
