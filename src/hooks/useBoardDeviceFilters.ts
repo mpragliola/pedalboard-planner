@@ -31,19 +31,19 @@ export function useBoardDeviceFilters() {
   }, [])
 
   const boardWidthRange = useMemo(() => {
-    const widths = BOARD_TEMPLATES.map((t) => t.width)
+    const widths = BOARD_TEMPLATES.map((t) => t.wdh[0])
     return [Math.min(...widths), Math.max(...widths)] as const
   }, [])
   const boardDepthRange = useMemo(() => {
-    const depths = BOARD_TEMPLATES.map((t) => t.depth)
+    const depths = BOARD_TEMPLATES.map((t) => t.wdh[1])
     return [Math.min(...depths), Math.max(...depths)] as const
   }, [])
   const deviceWidthRange = useMemo(() => {
-    const widths = DEVICE_TEMPLATES.map((t) => t.width)
+    const widths = DEVICE_TEMPLATES.map((t) => t.wdh[0])
     return [Math.min(...widths), Math.max(...widths)] as const
   }, [])
   const deviceDepthRange = useMemo(() => {
-    const depths = DEVICE_TEMPLATES.map((t) => t.depth)
+    const depths = DEVICE_TEMPLATES.map((t) => t.wdh[1])
     return [Math.min(...depths), Math.max(...depths)] as const
   }, [])
 
@@ -61,10 +61,10 @@ export function useBoardDeviceFilters() {
     const wMax = parseNum(boardWidthMax)
     const dMin = parseNum(boardDepthMin)
     const dMax = parseNum(boardDepthMax)
-    if (wMin != null) list = list.filter((t) => t.width >= wMin)
-    if (wMax != null) list = list.filter((t) => t.width <= wMax)
-    if (dMin != null) list = list.filter((t) => t.depth >= dMin)
-    if (dMax != null) list = list.filter((t) => t.depth <= dMax)
+    if (wMin != null) list = list.filter((t) => t.wdh[0] >= wMin)
+    if (wMax != null) list = list.filter((t) => t.wdh[0] <= wMax)
+    if (dMin != null) list = list.filter((t) => t.wdh[1] >= dMin)
+    if (dMax != null) list = list.filter((t) => t.wdh[1] <= dMax)
     return [...list].sort((a, b) => {
       const byType = (a.type ?? '').localeCompare(b.type ?? '')
       if (byType !== 0) return byType
@@ -86,10 +86,10 @@ export function useBoardDeviceFilters() {
     const wMax = parseNum(deviceWidthMax)
     const dMin = parseNum(deviceDepthMin)
     const dMax = parseNum(deviceDepthMax)
-    if (wMin != null) list = list.filter((t) => t.width >= wMin)
-    if (wMax != null) list = list.filter((t) => t.width <= wMax)
-    if (dMin != null) list = list.filter((t) => t.depth >= dMin)
-    if (dMax != null) list = list.filter((t) => t.depth <= dMax)
+    if (wMin != null) list = list.filter((t) => t.wdh[0] >= wMin)
+    if (wMax != null) list = list.filter((t) => t.wdh[0] <= wMax)
+    if (dMin != null) list = list.filter((t) => t.wdh[1] >= dMin)
+    if (dMax != null) list = list.filter((t) => t.wdh[1] <= dMax)
     return [...list].sort((a, b) => {
       const typeA = DEVICE_TYPE_ORDER.indexOf(a.type)
       const typeB = DEVICE_TYPE_ORDER.indexOf(b.type)
