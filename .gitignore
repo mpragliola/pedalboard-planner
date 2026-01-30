@@ -1,6 +1,9 @@
 # Dependencies
 node_modules
 
+# 
+public/images/devices/_
+
 # Build
 dist
 dist-ssr
