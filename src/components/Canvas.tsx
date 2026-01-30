@@ -11,6 +11,7 @@ export function Canvas() {
     pan,
     tileSize,
     showGrid,
+    xray,
     unit,
     isPanning,
     spaceDown,
@@ -74,6 +75,7 @@ export function Canvas() {
             useImage={obj.image !== null && !imageFailedIds.has(obj.id)}
             isDragging={draggingObjectId === obj.id}
             isSelected={selectedObjectIds.includes(obj.id)}
+            opacity={xray ? 0.5 : 1}
             canvasRef={canvasRef}
             onImageError={() => onImageError(obj.id)}
             onPointerDown={(e) => onObjectPointerDown(obj.id, e)}

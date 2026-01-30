@@ -9,6 +9,7 @@ interface CanvasObjectProps {
   useImage: boolean
   isDragging: boolean
   isSelected: boolean
+  opacity: number
   canvasRef: RefObject<HTMLDivElement | null>
   onImageError: () => void
   onPointerDown: (e: React.PointerEvent) => void
@@ -29,7 +30,7 @@ const normalizeRotation = (r: number) => ((r % 360) + 360) % 360
 const STACK_BASE = 1
 const STACK_DRAGGING = 10000
 
-export function CanvasObject({ obj, stackIndex, useImage, isDragging, isSelected, canvasRef, onImageError, onPointerDown, onDragEnd }: CanvasObjectProps) {
+export function CanvasObject({ obj, stackIndex, useImage, isDragging, isSelected, opacity, canvasRef, onImageError, onPointerDown, onDragEnd }: CanvasObjectProps) {
   const rotation = normalizeRotation(obj.rotation ?? 0)
   const is90or270 = rotation === 90 || rotation === 270
   const bboxW = is90or270 ? obj.depth : obj.width
@@ -62,6 +63,7 @@ export function CanvasObject({ obj, stackIndex, useImage, isDragging, isSelected
         width: bboxW,
         height: bboxH,
         zIndex,
+        opacity,
       }}
       title={tooltipText(obj)}
       onPointerDown={handlePointerDown}

@@ -3,7 +3,7 @@ import { ZoomButton } from './ZoomButton'
 import './ZoomControls.css'
 
 export function ZoomControls() {
-  const { zoomIn, zoomOut, showGrid, setShowGrid } = useApp()
+  const { zoomIn, zoomOut, showGrid, setShowGrid, xray, setXray } = useApp()
   return (
     <div className="floating-controls zoom-controls">
       <ZoomButton
@@ -27,6 +27,14 @@ export function ZoomControls() {
         onClick={() => setShowGrid((v) => !v)}
         active={showGrid}
         className="grid-toggle"
+      />
+      <ZoomButton
+        label="X-ray"
+        title="Make all objects 50% transparent"
+        icon="◎"
+        onClick={() => setXray((v) => !v)}
+        active={xray}
+        className="xray-toggle"
       />
     </div>
   )

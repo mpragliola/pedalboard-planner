@@ -37,6 +37,8 @@ interface AppContextValue {
   tileSize: number
   showGrid: boolean
   setShowGrid: (fn: (v: boolean) => boolean) => void
+  xray: boolean
+  setXray: (fn: (v: boolean) => boolean) => void
   unit: 'mm' | 'in'
   setUnit: (u: 'mm' | 'in') => void
   isPanning: boolean
@@ -107,6 +109,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const [imageFailedIds, setImageFailedIds] = useState<Set<string>>(new Set())
   const [showGrid, setShowGrid] = useState(false)
+  const [xray, setXray] = useState(false)
   const [unit, setUnit] = useState<'mm' | 'in'>(savedState?.unit ?? 'mm')
   const [catalogMode, setCatalogMode] = useState<CatalogMode>('boards')
   const [selectedObjectIds, setSelectedObjectIds] = useState<string[]>([])
@@ -270,6 +273,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     tileSize,
     showGrid,
     setShowGrid,
+    xray,
+    setXray,
     unit,
     setUnit,
     isPanning,
