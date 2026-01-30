@@ -38,3 +38,7 @@
   transform-origin: 0 0;
   transition: transform 0.25s ease-out;
 }
+
+.canvas-viewport.canvas-viewport-zooming {
+  pointer-events: none;
+}

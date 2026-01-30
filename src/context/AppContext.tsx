@@ -40,6 +40,7 @@ interface AppContextValue {
   unit: 'mm' | 'in'
   setUnit: (u: 'mm' | 'in') => void
   isPanning: boolean
+  isZooming: boolean
   spaceDown: boolean
   zoomIn: () => void
   zoomOut: () => void
@@ -118,6 +119,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     pan,
     canvasRef,
     isPanning,
+    isZooming,
     spaceDown,
     zoomIn,
     zoomOut,
@@ -273,6 +275,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     unit,
     setUnit,
     isPanning,
+    isZooming,
     spaceDown,
     zoomIn,
     zoomOut,
