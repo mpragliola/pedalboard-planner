@@ -6,6 +6,8 @@
   min-height: 100vh;
   overflow: hidden;
   cursor: default;
+  touch-action: none;
+  /* we handle pan and pinch */
 }
 
 .canvas.canvas-grab {
@@ -59,6 +61,8 @@
   overflow: visible;
   cursor: move;
   user-select: none;
+  touch-action: none;
+  /* allow drag on touch */
 }
 
 .canvas-object-wrapper.canvas-object-wrapper-dragging {

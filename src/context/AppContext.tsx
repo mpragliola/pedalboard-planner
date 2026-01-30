@@ -35,7 +35,7 @@ interface AppContextValue {
   spaceDown: boolean
   zoomIn: () => void
   zoomOut: () => void
-  handleCanvasMouseDown: (e: React.MouseEvent) => void
+  handleCanvasPointerDown: (e: React.PointerEvent) => void
   // Objects
   objects: CanvasObjectType[]
   setObjects: (action: CanvasObjectType[] | ((prev: CanvasObjectType[]) => CanvasObjectType[]), saveToHistory?: boolean) => void
@@ -89,7 +89,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     spaceDown,
     zoomIn,
     zoomOut,
-    handleCanvasMouseDown: canvasPanMouseDown,
+    handleCanvasPointerDown: canvasPanPointerDown,
     tileSize,
   } = useCanvasZoomPan()
 
@@ -111,14 +111,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [handleObjectDragStart]
   )
 
-  const handleCanvasMouseDown = useCallback(
-    (e: React.MouseEvent) => {
+  const handleCanvasPointerDown = useCallback(
+    (e: React.PointerEvent) => {
       if (e.button === 0 && !spaceDown && !(e.target as Element).closest('.canvas-object-wrapper')) {
         setSelectedObjectIds([])
       }
-      canvasPanMouseDown(e)
+      canvasPanPointerDown(e)
     },
-    [spaceDown, canvasPanMouseDown]
+    [spaceDown, canvasPanPointerDown]
   )
 
   const handleImageError = useCallback((id: string) => {
@@ -218,7 +218,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     spaceDown,
     zoomIn,
     zoomOut,
-    handleCanvasMouseDown,
+    handleCanvasPointerDown,
     objects,
     setObjects,
     selectedObjectIds,

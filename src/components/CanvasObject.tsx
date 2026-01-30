@@ -39,6 +39,7 @@ export function CanvasObject({ obj, stackIndex, useImage, isDragging, isSelected
 
   const handlePointerDown = (e: React.PointerEvent) => {
     if (e.button !== 0) return
+    e.preventDefault() /* prevent scroll/zoom on touch so drag works */
     e.currentTarget.setPointerCapture(e.pointerId)
     onPointerDown(e)
   }

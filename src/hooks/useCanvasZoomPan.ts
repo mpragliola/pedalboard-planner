@@ -1,12 +1,21 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { ZOOM_MIN, ZOOM_MAX, ZOOM_STEP } from '../constants'
 
+function dist(a: { clientX: number; clientY: number }, b: { clientX: number; clientY: number }) {
+  return Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY)
+}
+
+function center(a: { clientX: number; clientY: number }, b: { clientX: number; clientY: number }) {
+  return { x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 }
+}
+
 export function useCanvasZoomPan() {
   const [zoom, setZoom] = useState<number>(1)
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
   const [isPanning, setIsPanning] = useState(false)
   const [spaceDown, setSpaceDown] = useState(false)
-  const panStartRef = useRef<{ mouseX: number; mouseY: number; panX: number; panY: number } | null>(null)
+  const panStartRef = useRef<{ mouseX: number; mouseY: number; panX: number; panY: number; pointerId: number } | null>(null)
+  const pinchRef = useRef<{ initialDistance: number; initialZoom: number; initialPan: { x: number; y: number }; centerX: number; centerY: number } | null>(null)
   const canvasRef = useRef<HTMLDivElement>(null)
   const zoomRef = useRef(zoom)
   const panRef = useRef(pan)
@@ -56,6 +65,49 @@ export function useCanvasZoomPan() {
     return () => el.removeEventListener('wheel', handleWheelZoom)
   }, [handleWheelZoom])
 
+  /* Pinch-to-zoom (touch) */
+  useEffect(() => {
+    const el = canvasRef.current
+    if (!el) return
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        e.preventDefault()
+        setIsPanning(false)
+        panStartRef.current = null
+        const c = center(e.touches[0], e.touches[1])
+        pinchRef.current = {
+          initialDistance: dist(e.touches[0], e.touches[1]),
+          initialZoom: zoomRef.current,
+          initialPan: { ...panRef.current },
+          centerX: c.x,
+          centerY: c.y,
+        }
+      }
+    }
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 2 && pinchRef.current) {
+        e.preventDefault()
+        const d = dist(e.touches[0], e.touches[1])
+        const scale = d / pinchRef.current.initialDistance
+        const newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, pinchRef.current.initialZoom * scale))
+        zoomToward(newZoom, pinchRef.current.centerX, pinchRef.current.centerY)
+      }
+    }
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length < 2) pinchRef.current = null
+    }
+    el.addEventListener('touchstart', handleTouchStart, { passive: false })
+    el.addEventListener('touchmove', handleTouchMove, { passive: false })
+    el.addEventListener('touchend', handleTouchEnd, { passive: true })
+    el.addEventListener('touchcancel', handleTouchEnd, { passive: true })
+    return () => {
+      el.removeEventListener('touchstart', handleTouchStart)
+      el.removeEventListener('touchmove', handleTouchMove)
+      el.removeEventListener('touchend', handleTouchEnd)
+      el.removeEventListener('touchcancel', handleTouchEnd)
+    }
+  }, [zoomToward])
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Space') {
@@ -83,8 +135,8 @@ export function useCanvasZoomPan() {
 
   useEffect(() => {
     if (!isPanning) return
-    const handleMouseMove = (e: MouseEvent) => {
-      if (panStartRef.current) {
+    const handlePointerMove = (e: PointerEvent) => {
+      if (panStartRef.current && e.pointerId === panStartRef.current.pointerId) {
         const dx = e.clientX - panStartRef.current.mouseX
         const dy = e.clientY - panStartRef.current.mouseY
         setPan({
@@ -93,28 +145,42 @@ export function useCanvasZoomPan() {
         })
       }
     }
-    const handleMouseUp = () => {
-      setIsPanning(false)
-      panStartRef.current = null
+    const handlePointerUp = (e: PointerEvent) => {
+      if (panStartRef.current && e.pointerId === panStartRef.current.pointerId) {
+        setIsPanning(false)
+        panStartRef.current = null
+      }
     }
-    window.addEventListener('mousemove', handleMouseMove)
-    window.addEventListener('mouseup', handleMouseUp)
+    window.addEventListener('pointermove', handlePointerMove, { capture: true })
+    window.addEventListener('pointerup', handlePointerUp, { capture: true })
+    window.addEventListener('pointercancel', handlePointerUp, { capture: true })
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove)
-      window.removeEventListener('mouseup', handleMouseUp)
+      window.removeEventListener('pointermove', handlePointerMove, { capture: true })
+      window.removeEventListener('pointerup', handlePointerUp, { capture: true })
+      window.removeEventListener('pointercancel', handlePointerUp, { capture: true })
     }
   }, [isPanning])
 
-  const handleCanvasMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      if (e.button === 1) {
+  const handleCanvasPointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      const onObject = (e.target as Element).closest('.canvas-object-wrapper')
+      const isTouch = e.pointerType === 'touch'
+      const coarsePointer = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
+      const startPan =
+        !onObject &&
+        (e.button === 1 ||
+          (e.button === 0 && spaceDown) ||
+          (e.button === 0 && (isTouch || coarsePointer)))
+      if (startPan) {
         e.preventDefault()
         setIsPanning(true)
-        panStartRef.current = { mouseX: e.clientX, mouseY: e.clientY, panX: pan.x, panY: pan.y }
-      } else if (e.button === 0 && spaceDown) {
-        e.preventDefault()
-        setIsPanning(true)
-        panStartRef.current = { mouseX: e.clientX, mouseY: e.clientY, panX: pan.x, panY: pan.y }
+        panStartRef.current = {
+          mouseX: e.clientX,
+          mouseY: e.clientY,
+          panX: pan.x,
+          panY: pan.y,
+          pointerId: e.pointerId,
+        }
       }
     },
     [spaceDown, pan.x, pan.y]
@@ -134,7 +200,7 @@ export function useCanvasZoomPan() {
     zoomOut,
     zoomToward,
     setPan,
-    handleCanvasMouseDown,
+    handleCanvasPointerDown,
     tileSize,
   }
 }

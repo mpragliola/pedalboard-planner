@@ -12,7 +12,7 @@ export function Canvas() {
     unit,
     isPanning,
     spaceDown,
-    handleCanvasMouseDown,
+    handleCanvasPointerDown,
     objects,
     selectedObjectIds,
     imageFailedIds,
@@ -32,7 +32,7 @@ export function Canvas() {
     <div
       className={`canvas ${isPanning ? 'canvas-grabbing' : spaceDown ? 'canvas-grab' : ''}`}
       ref={canvasRef}
-      onMouseDown={handleCanvasMouseDown}
+      onPointerDown={handleCanvasPointerDown}
       onContextMenu={(e) => e.preventDefault()}
     >
       <div
