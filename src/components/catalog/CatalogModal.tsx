@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useApp } from '../../context/AppContext'
 import type { BoardTemplate } from '../../data/boards'
 import type { DeviceTemplate } from '../../data/devices'
@@ -94,7 +95,7 @@ function CatalogModal({ open, onClose }: CatalogModalProps) {
   // Original images (same as canvas objects); thumbnail system can be added later
   const imageBase = catalogMode === 'boards' ? 'images/boards/' : 'images/devices/'
 
-  return (
+  const modal = (
     <div className="catalog-modal-backdrop" aria-hidden>
       <div
         className="catalog-modal"
@@ -150,6 +151,7 @@ function CatalogModal({ open, onClose }: CatalogModalProps) {
       </div>
     </div>
   )
+  return createPortal(modal, document.body)
 }
 
 export { CatalogModal }

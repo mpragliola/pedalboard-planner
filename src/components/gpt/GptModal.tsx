@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useApp } from '../../context/AppContext'
 import { LocationLoader } from '../../lib/locationLoader'
 import { PromptBuilder } from '../../lib/promptBuilder'
@@ -75,7 +76,7 @@ export function GptModal({ open, onClose }: GptModalProps) {
 
   if (!open) return null
 
-  return (
+  const modal = (
     <div
       className="gpt-modal-backdrop"
       aria-hidden
@@ -172,4 +173,5 @@ export function GptModal({ open, onClose }: GptModalProps) {
       </div>
     </div>
   )
+  return createPortal(modal, document.body)
 }
