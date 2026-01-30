@@ -164,7 +164,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   })
 
   const [imageFailedIds, setImageFailedIds] = useState<Set<string>>(new Set())
-  const [showGrid, setShowGrid] = useState(savedState?.showGrid ?? false)
+  const [showGrid, setShowGrid] = useState(false)
   const [unit, setUnit] = useState<'mm' | 'in'>(savedState?.unit ?? 'mm')
   const [catalogMode, setCatalogMode] = useState<CatalogMode>('boards')
   const [selectedObjectIds, setSelectedObjectIds] = useState<string[]>([])
