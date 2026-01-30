@@ -5,6 +5,7 @@
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   background: rgba(255, 255, 255, 0.9);
+  font-family: 'Open Sans', sans-serif;
 }
 
 .floating-dropdowns .unit-switch {
@@ -12,6 +13,7 @@
 }
 
 .unit-btn {
+  flex: 0 0 auto;
   padding: 4px 10px;
   border: none;
   background: transparent;
@@ -35,5 +37,7 @@
 @media (max-width: 768px) {
   .unit-btn {
     font-size: 0.91rem;
+    min-width: 2.5em;
+    box-sizing: border-box;
   }
 }

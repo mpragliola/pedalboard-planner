@@ -184,8 +184,10 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
 
   return (
     <div ref={ref} className="floating-controls floating-dropdowns">
-      <UnitSwitch value={unit} onChange={setUnit} />
-      <CatalogModeSwitch value={catalogMode} onChange={setCatalogMode} />
+      <div className="catalog-switches-row">
+        <UnitSwitch value={unit} onChange={setUnit} />
+        <CatalogModeSwitch value={catalogMode} onChange={setCatalogMode} />
+      </div>
 
       <div className="dropdown-group catalog-content">
         {catalogMode === 'boards' && (
@@ -261,38 +263,44 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
 
         {catalogMode === 'devices' && (
           <>
-            <label htmlFor="device-type-filter" className="dropdown-label">
-              Type
-            </label>
-            <select
-              id="device-type-filter"
-              className="dropdown dropdown-filter"
-              value={deviceTypeFilter}
-              onChange={(e) => setDeviceTypeFilter(e.target.value)}
-            >
-              <option value="">All types</option>
-              {DEVICE_TYPE_ORDER.map((type) => (
-                <option key={type} value={type}>
-                  {DEVICE_TYPE_LABEL[type]}
-                </option>
-              ))}
-            </select>
-            <label htmlFor="device-brand-filter" className="dropdown-label">
-              Brand
-            </label>
-            <select
-              id="device-brand-filter"
-              className="dropdown dropdown-filter"
-              value={deviceBrandFilter}
-              onChange={(e) => setDeviceBrandFilter(e.target.value)}
-            >
-              <option value="">All brands</option>
-              {deviceBrands.map((brand) => (
-                <option key={brand} value={brand}>
-                  {brand}
-                </option>
-              ))}
-            </select>
+            <div className="device-type-brand-row">
+              <div className="device-filter-field">
+                <label htmlFor="device-type-filter" className="dropdown-label">
+                  Type
+                </label>
+                <select
+                  id="device-type-filter"
+                  className="dropdown dropdown-filter"
+                  value={deviceTypeFilter}
+                  onChange={(e) => setDeviceTypeFilter(e.target.value)}
+                >
+                  <option value="">All types</option>
+                  {DEVICE_TYPE_ORDER.map((type) => (
+                    <option key={type} value={type}>
+                      {DEVICE_TYPE_LABEL[type]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="device-filter-field">
+                <label htmlFor="device-brand-filter" className="dropdown-label">
+                  Brand
+                </label>
+                <select
+                  id="device-brand-filter"
+                  className="dropdown dropdown-filter"
+                  value={deviceBrandFilter}
+                  onChange={(e) => setDeviceBrandFilter(e.target.value)}
+                >
+                  <option value="">All brands</option>
+                  {deviceBrands.map((brand) => (
+                    <option key={brand} value={brand}>
+                      {brand}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
             <TextFilter
               id="device-text-filter"
               label="Search"

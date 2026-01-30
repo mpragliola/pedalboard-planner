@@ -63,6 +63,16 @@
   }
 }
 
+/* Mobile portrait: wider catalog panel */
+@media (max-width: 767px) and (orientation: portrait) {
+  .catalog-panel {
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-width: none;
+  }
+}
+
 /* Footer */
 .copyright {
   position: fixed;
