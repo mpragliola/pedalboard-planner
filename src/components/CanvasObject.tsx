@@ -1,5 +1,6 @@
 import type { RefObject } from 'react'
 import type { CanvasObjectType } from '../types'
+import './CanvasObject.css'
 
 interface CanvasObjectProps {
   obj: CanvasObjectType

@@ -1,0 +1,40 @@
+.zoom-btn {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  font-size: 1.5rem;
+  font-weight: 300;
+  line-height: 1;
+  cursor: pointer;
+  color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.zoom-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.zoom-btn:active {
+  transform: scale(0.96);
+}
+
+.zoom-btn.active {
+  background: rgba(100, 120, 200, 0.25);
+  color: #334;
+}
+
+.zoom-btn.zoom-in {
+  padding-bottom: 2px;
+}
+
+.zoom-btn.zoom-out {
+  font-size: 2rem;
+  padding-bottom: 4px;
+}

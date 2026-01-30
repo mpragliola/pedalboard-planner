@@ -1,0 +1,6 @@
+/* Override for text input (no dropdown arrow). Parent or shared CSS should provide .dropdown base. */
+.dropdown.text-filter {
+  padding: 4px 6px;
+  background-image: none;
+  cursor: text;
+}

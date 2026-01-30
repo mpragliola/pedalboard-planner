@@ -1,0 +1,39 @@
+.unit-switch {
+  display: flex;
+  width: fit-content;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.floating-dropdowns .unit-switch {
+  margin-bottom: 6px;
+}
+
+.unit-btn {
+  padding: 4px 10px;
+  border: none;
+  background: transparent;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.unit-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #333;
+}
+
+.unit-btn.active {
+  background: rgba(100, 120, 200, 0.25);
+  color: #334;
+}
+
+@media (max-width: 768px) {
+  .unit-btn {
+    font-size: 0.91rem;
+  }
+}

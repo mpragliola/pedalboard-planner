@@ -1,0 +1,313 @@
+import { forwardRef, useState, useEffect } from 'react'
+import { DEVICE_TYPE_ORDER, DEVICE_TYPE_LABEL } from '../../constants'
+import { useApp } from '../../context/AppContext'
+import { UnitSwitch } from './UnitSwitch'
+import { CatalogModeSwitch } from './CatalogModeSwitch'
+import { TextFilter } from './TextFilter'
+import { CatalogList, CatalogListGrouped } from './CatalogList'
+import { SizeFilters } from './SizeFilters'
+import './DropdownsPanel.css'
+
+export type { CatalogMode } from './CatalogModeSwitch'
+
+const PHONE_MEDIA = '(max-width: 767px)'
+
+function useIsPhone() {
+  const [isPhone, setIsPhone] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia(PHONE_MEDIA).matches
+  )
+  useEffect(() => {
+    const m = window.matchMedia(PHONE_MEDIA)
+    const fn = () => setIsPhone(m.matches)
+    m.addEventListener('change', fn)
+    return () => m.removeEventListener('change', fn)
+  }, [])
+  return isPhone
+}
+
+export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel(_props, ref) {
+  const {
+    catalogMode,
+    setCatalogMode,
+    unit,
+    setUnit,
+    filters,
+    onBoardSelect,
+    onDeviceSelect,
+  } = useApp()
+
+  const {
+    boardBrandFilter,
+    setBoardBrandFilter,
+    boardTextFilter,
+    setBoardTextFilter,
+    boardWidthMin,
+    setBoardWidthMin,
+    boardWidthMax,
+    setBoardWidthMax,
+    boardDepthMin,
+    setBoardDepthMin,
+    boardDepthMax,
+    setBoardDepthMax,
+    boardBrands,
+    boardWidthRange,
+    boardDepthRange,
+    filteredBoards,
+    selectedBoard,
+    resetBoardFilters,
+    deviceTypeFilter,
+    setDeviceTypeFilter,
+    deviceBrandFilter,
+    setDeviceBrandFilter,
+    deviceTextFilter,
+    setDeviceTextFilter,
+    deviceWidthMin,
+    setDeviceWidthMin,
+    deviceWidthMax,
+    setDeviceWidthMax,
+    deviceDepthMin,
+    setDeviceDepthMin,
+    deviceDepthMax,
+    setDeviceDepthMax,
+    deviceBrands,
+    deviceWidthRange,
+    deviceDepthRange,
+    filteredDevices,
+    selectedDevice,
+    resetDeviceFilters,
+  } = filters
+
+  const isPhone = useIsPhone()
+  const listSize = isPhone ? 1 : 5
+
+  const hasBoardFilters = !!(
+    boardBrandFilter ||
+    boardTextFilter ||
+    boardWidthMin ||
+    boardWidthMax ||
+    boardDepthMin ||
+    boardDepthMax
+  )
+  const hasDeviceFilters = !!(
+    deviceBrandFilter ||
+    deviceTypeFilter ||
+    deviceTextFilter ||
+    deviceWidthMin ||
+    deviceWidthMax ||
+    deviceDepthMin ||
+    deviceDepthMax
+  )
+
+  const formatSliderValue = (mm: number) =>
+    unit === 'in' ? (mm / 25.4).toFixed(2) : String(Math.round(mm))
+  const unitLabel = unit === 'in' ? 'in' : 'mm'
+
+  const handleBoardWidthMin = (v: string) => {
+    const isLow = v === String(boardWidthRange[0])
+    setBoardWidthMin(isLow ? '' : v)
+    const num = Number(v)
+    const maxVal = boardWidthMax ? Number(boardWidthMax) : boardWidthRange[1]
+    if (!isLow && num > maxVal) setBoardWidthMax(v)
+  }
+  const handleBoardWidthMax = (v: string) => {
+    const isHigh = v === String(boardWidthRange[1])
+    setBoardWidthMax(isHigh ? '' : v)
+    const num = Number(v)
+    const minVal = boardWidthMin ? Number(boardWidthMin) : boardWidthRange[0]
+    if (!isHigh && num < minVal) setBoardWidthMin(v)
+  }
+  const handleBoardDepthMin = (v: string) => {
+    const isLow = v === String(boardDepthRange[0])
+    setBoardDepthMin(isLow ? '' : v)
+    const num = Number(v)
+    const maxVal = boardDepthMax ? Number(boardDepthMax) : boardDepthRange[1]
+    if (!isLow && num > maxVal) setBoardDepthMax(v)
+  }
+  const handleBoardDepthMax = (v: string) => {
+    const isHigh = v === String(boardDepthRange[1])
+    setBoardDepthMax(isHigh ? '' : v)
+    const num = Number(v)
+    const minVal = boardDepthMin ? Number(boardDepthMin) : boardDepthRange[0]
+    if (!isHigh && num < minVal) setBoardDepthMin(v)
+  }
+  const handleDeviceWidthMin = (v: string) => {
+    const isLow = v === String(deviceWidthRange[0])
+    setDeviceWidthMin(isLow ? '' : v)
+    const num = Number(v)
+    const maxVal = deviceWidthMax ? Number(deviceWidthMax) : deviceWidthRange[1]
+    if (!isLow && num > maxVal) setDeviceWidthMax(v)
+  }
+  const handleDeviceWidthMax = (v: string) => {
+    const isHigh = v === String(deviceWidthRange[1])
+    setDeviceWidthMax(isHigh ? '' : v)
+    const num = Number(v)
+    const minVal = deviceWidthMin ? Number(deviceWidthMin) : deviceWidthRange[0]
+    if (!isHigh && num < minVal) setDeviceWidthMin(v)
+  }
+  const handleDeviceDepthMin = (v: string) => {
+    const isLow = v === String(deviceDepthRange[0])
+    setDeviceDepthMin(isLow ? '' : v)
+    const num = Number(v)
+    const maxVal = deviceDepthMax ? Number(deviceDepthMax) : deviceDepthRange[1]
+    if (!isLow && num > maxVal) setDeviceDepthMax(v)
+  }
+  const handleDeviceDepthMax = (v: string) => {
+    const isHigh = v === String(deviceDepthRange[1])
+    setDeviceDepthMax(isHigh ? '' : v)
+    const num = Number(v)
+    const minVal = deviceDepthMin ? Number(deviceDepthMin) : deviceDepthRange[0]
+    if (!isHigh && num < minVal) setDeviceDepthMin(v)
+  }
+
+  const deviceGroups = DEVICE_TYPE_ORDER.map((deviceType) => {
+    const templates = filteredDevices.filter((t) => t.type === deviceType)
+    if (templates.length === 0) return null
+    return {
+      label: DEVICE_TYPE_LABEL[deviceType],
+      options: templates.map((t) => ({ id: t.id, name: t.name, type: t.type })),
+    }
+  }).filter(Boolean) as { label: string; options: { id: string; name: string; type: string }[] }[]
+
+  return (
+    <div ref={ref} className="floating-controls floating-dropdowns">
+      <UnitSwitch value={unit} onChange={setUnit} />
+      <CatalogModeSwitch value={catalogMode} onChange={setCatalogMode} />
+
+      <div className="dropdown-group catalog-content">
+        {catalogMode === 'boards' && (
+          <>
+            <label htmlFor="board-brand-filter" className="dropdown-label">
+              Brand
+            </label>
+            <select
+              id="board-brand-filter"
+              className="dropdown dropdown-filter"
+              value={boardBrandFilter}
+              onChange={(e) => setBoardBrandFilter(e.target.value)}
+            >
+              <option value="">All brands</option>
+              {boardBrands.map((brand) => (
+                <option key={brand} value={brand}>
+                  {brand}
+                </option>
+              ))}
+            </select>
+            <TextFilter
+              id="board-text-filter"
+              label="Search"
+              placeholder="Name, brand, model…"
+              value={boardTextFilter}
+              onChange={setBoardTextFilter}
+            />
+            <SizeFilters
+              unitLabel={unitLabel}
+              widthRange={boardWidthRange}
+              widthMin={boardWidthMin ?? ''}
+              widthMax={boardWidthMax ?? ''}
+              onWidthMinChange={handleBoardWidthMin}
+              onWidthMaxChange={handleBoardWidthMax}
+              depthRange={boardDepthRange}
+              depthMin={boardDepthMin ?? ''}
+              depthMax={boardDepthMax ?? ''}
+              onDepthMinChange={handleBoardDepthMin}
+              onDepthMaxChange={handleBoardDepthMax}
+              formatSliderValue={formatSliderValue}
+            />
+            <CatalogList
+              id="boards-select"
+              label="Add board"
+              size={listSize}
+              value={selectedBoard}
+              options={filteredBoards.map((t) => ({ id: t.id, name: t.name }))}
+              onChange={onBoardSelect}
+            />
+            <button
+              type="button"
+              className="filter-reset"
+              onClick={resetBoardFilters}
+              disabled={!hasBoardFilters}
+              title={hasBoardFilters ? 'Clear board filters' : 'No filters active'}
+            >
+              Reset filters
+            </button>
+          </>
+        )}
+
+        {catalogMode === 'devices' && (
+          <>
+            <label htmlFor="device-type-filter" className="dropdown-label">
+              Type
+            </label>
+            <select
+              id="device-type-filter"
+              className="dropdown dropdown-filter"
+              value={deviceTypeFilter}
+              onChange={(e) => setDeviceTypeFilter(e.target.value)}
+            >
+              <option value="">All types</option>
+              {DEVICE_TYPE_ORDER.map((type) => (
+                <option key={type} value={type}>
+                  {DEVICE_TYPE_LABEL[type]}
+                </option>
+              ))}
+            </select>
+            <label htmlFor="device-brand-filter" className="dropdown-label">
+              Brand
+            </label>
+            <select
+              id="device-brand-filter"
+              className="dropdown dropdown-filter"
+              value={deviceBrandFilter}
+              onChange={(e) => setDeviceBrandFilter(e.target.value)}
+            >
+              <option value="">All brands</option>
+              {deviceBrands.map((brand) => (
+                <option key={brand} value={brand}>
+                  {brand}
+                </option>
+              ))}
+            </select>
+            <TextFilter
+              id="device-text-filter"
+              label="Search"
+              placeholder="Name, brand, model…"
+              value={deviceTextFilter}
+              onChange={setDeviceTextFilter}
+            />
+            <SizeFilters
+              unitLabel={unitLabel}
+              widthRange={deviceWidthRange}
+              widthMin={deviceWidthMin ?? ''}
+              widthMax={deviceWidthMax ?? ''}
+              onWidthMinChange={handleDeviceWidthMin}
+              onWidthMaxChange={handleDeviceWidthMax}
+              depthRange={deviceDepthRange}
+              depthMin={deviceDepthMin ?? ''}
+              depthMax={deviceDepthMax ?? ''}
+              onDepthMinChange={handleDeviceDepthMin}
+              onDepthMaxChange={handleDeviceDepthMax}
+              formatSliderValue={formatSliderValue}
+            />
+            <CatalogListGrouped
+              id="devices-select"
+              label="Add device"
+              size={listSize}
+              value={selectedDevice}
+              groups={deviceGroups}
+              onChange={onDeviceSelect}
+            />
+            <button
+              type="button"
+              className="filter-reset"
+              onClick={resetDeviceFilters}
+              disabled={!hasDeviceFilters}
+              title={hasDeviceFilters ? 'Clear device filters' : 'No filters active'}
+            >
+              Reset filters
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  )
+})

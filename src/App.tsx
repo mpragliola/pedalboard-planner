@@ -1,8 +1,8 @@
 import { Canvas } from './components/Canvas'
-import { DropdownsPanel } from './components/DropdownsPanel'
-import { ZoomControls } from './components/ZoomControls'
-import { SelectionInfoPopup } from './components/SelectionInfoPopup'
-import { HistoryControls } from './components/HistoryControls'
+import { DropdownsPanel } from './components/catalog/DropdownsPanel'
+import { ZoomControls } from './components/zoom/ZoomControls'
+import { SelectionInfoPopup } from './components/selection/SelectionInfoPopup'
+import { HistoryControls } from './components/history/HistoryControls'
 import { AppProvider, useApp } from './context/AppContext'
 import './App.css'
 

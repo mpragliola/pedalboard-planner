@@ -1,6 +1,8 @@
 import { CanvasObject } from './CanvasObject'
-import { SelectionToolbar } from './SelectionToolbar'
+import { Grid } from './zoom/Grid'
+import { SelectionToolbar } from './selection/SelectionToolbar'
 import { useApp } from '../context/AppContext'
+import './Canvas.css'
 
 export function Canvas() {
   const {
@@ -28,6 +30,9 @@ export function Canvas() {
   const selectedObject =
     selectedObjectIds.length === 1 ? objects.find((o) => o.id === selectedObjectIds[0]) : null
 
+  const gridTransform = `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`
+  const gridSizeCss = unit === 'mm' ? '1cm' : '1in'
+
   return (
     <div
       className={`canvas ${isPanning ? 'canvas-grabbing' : spaceDown ? 'canvas-grab' : ''}`}
@@ -42,16 +47,11 @@ export function Canvas() {
           backgroundPosition: `${pan.x}px ${pan.y}px`,
         }}
       />
-      {showGrid && (
-        <div
-          className="canvas-grid"
-          style={{
-            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-            ['--grid-size' as string]: unit === 'mm' ? '1cm' : '1in',
-          }}
-          aria-hidden
-        />
-      )}
+      <Grid
+        visible={showGrid}
+        gridSizeCss={gridSizeCss}
+        transform={gridTransform}
+      />
       <div
         className="canvas-viewport"
         style={{

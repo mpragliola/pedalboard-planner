@@ -1,0 +1,13 @@
+.zoom-controls.floating-controls {
+  position: fixed;
+  z-index: 100;
+}
+
+.zoom-controls {
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}

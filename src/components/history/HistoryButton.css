@@ -1,0 +1,27 @@
+.history-btn {
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  font-size: 1.1rem;
+  color: #333;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, transform 0.1s, opacity 0.15s;
+}
+
+.history-btn:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.history-btn:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
+.history-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
