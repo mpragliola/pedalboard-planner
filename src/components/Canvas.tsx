@@ -30,8 +30,9 @@ export function Canvas() {
   const selectedObject =
     selectedObjectIds.length === 1 ? objects.find((o) => o.id === selectedObjectIds[0]) : null
 
-  const gridTransform = `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`
-  const gridSizeCss = unit === 'mm' ? '1cm' : '1in'
+  // Application units: 1 mm = 1 px; 1 cm = 10 px, 1 in = 25.4 px (match board dimensions)
+  const gridSizePx = unit === 'mm' ? 10 : 25.4
+  const gridSizeCss = `${gridSizePx}px`
 
   return (
     <div
@@ -47,17 +48,16 @@ export function Canvas() {
           backgroundPosition: `${pan.x}px ${pan.y}px`,
         }}
       />
-      <Grid
-        visible={showGrid}
-        gridSizeCss={gridSizeCss}
-        transform={gridTransform}
-      />
       <div
         className="canvas-viewport"
         style={{
           transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
         }}
       >
+        <Grid
+          visible={showGrid}
+          gridSizeCss={gridSizeCss}
+        />
         {selectedObject && (
           <SelectionToolbar
             obj={selectedObject}

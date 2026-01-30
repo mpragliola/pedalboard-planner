@@ -1,15 +1,23 @@
+/* Grid lives inside canvas-viewport so it shares the same transform/scale as objects (1 px = 1 mm). */
+/* Thin lines every 1 unit; slightly thicker line every 10 units. */
 .canvas-grid {
   position: absolute;
   left: 0;
   top: 0;
   width: 100%;
   height: 100%;
-  transform-origin: 0 0;
-  transition: transform 0.25s ease-out;
   pointer-events: none;
-  --grid-size: 1cm;
+  --grid-size: 10px;
   background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.5) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
-  background-size: var(--grid-size) var(--grid-size);
+    /* major: every 10 lines */
+    linear-gradient(to right, rgba(255, 255, 255, 0.35) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.35) 1px, transparent 1px),
+    /* fine: every line, thinner */
+    linear-gradient(to right, rgba(255, 255, 255, 0.18) 0.5px, transparent 0.5px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.18) 0.5px, transparent 0.5px);
+  background-size:
+    calc(10 * var(--grid-size)) calc(10 * var(--grid-size)),
+    calc(10 * var(--grid-size)) calc(10 * var(--grid-size)),
+    var(--grid-size) var(--grid-size),
+    var(--grid-size) var(--grid-size);
 }
