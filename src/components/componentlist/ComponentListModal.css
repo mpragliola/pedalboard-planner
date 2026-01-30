@@ -1,0 +1,426 @@
+.component-list-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60000;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: component-list-modal-fade-in 0.15s ease-out;
+}
+
+@keyframes component-list-modal-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.component-list-modal {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 0.7rem;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  min-width: 320px;
+  max-width: min(95vw, 920px);
+  max-height: min(92vh, 860px);
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  animation: component-list-modal-scale-in 0.2s ease-out;
+}
+
+@keyframes component-list-modal-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.component-list-modal-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.component-list-modal-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #222;
+  margin: 0;
+}
+
+.component-list-modal-close {
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 1.2rem;
+  line-height: 1;
+  color: #555;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+
+.component-list-modal-close:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #222;
+}
+
+.component-list-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px 14px;
+}
+
+.component-list-modal-empty {
+  margin: 0;
+  color: #666;
+  font-size: 0.7rem;
+}
+
+.component-list-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.68rem;
+}
+
+.component-list-table th,
+.component-list-table td {
+  padding: 6px 8px;
+  text-align: left;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.component-list-table th {
+  font-weight: 600;
+  color: #444;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.component-list-table tbody tr:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.component-list-table td {
+  color: #333;
+}
+
+.component-list-table .component-list-actions {
+  white-space: nowrap;
+}
+
+.component-list-remove-btn {
+  padding: 3px 8px;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.62rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: rgba(200, 80, 80, 0.1);
+  color: #733;
+  transition: background 0.15s, color 0.15s;
+}
+
+.component-list-remove-btn:hover {
+  background: rgba(200, 80, 80, 0.2);
+}
+
+/* Connectors section */
+.connectors-section {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.connectors-section-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #222;
+  margin: 0 0 8px 0;
+}
+
+.connectors-empty {
+  margin: 0 0 8px 0;
+  color: #666;
+  font-size: 0.68rem;
+}
+
+.connectors-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.65rem;
+  margin-bottom: 10px;
+}
+
+.connectors-table th,
+.connectors-table td {
+  padding: 5px 6px;
+  text-align: left;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.connectors-table th {
+  font-weight: 600;
+  color: #444;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.connectors-table tbody tr:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.connectors-table .connectors-actions {
+  white-space: nowrap;
+}
+
+.connectors-icons-cell {
+  padding: 4px 6px !important;
+}
+
+.connectors-icons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.connector-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.connectors-btn {
+  padding: 3px 8px;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.62rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  margin-right: 4px;
+}
+
+.connectors-btn-edit {
+  background: rgba(100, 120, 200, 0.15);
+  color: #334;
+}
+
+.connectors-btn-edit:hover {
+  background: rgba(100, 120, 200, 0.25);
+}
+
+.connectors-btn-remove {
+  background: rgba(200, 80, 80, 0.1);
+  color: #733;
+}
+
+.connectors-btn-remove:hover {
+  background: rgba(200, 80, 80, 0.2);
+}
+
+.connectors-form {
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 6px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+}
+
+.connectors-form-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 10px 0;
+}
+
+.connectors-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px 16px;
+  margin-bottom: 10px;
+}
+
+.connectors-form-row {
+  display: flex;
+  flex-direction: column;
+}
+
+.connectors-form-row label {
+  display: block;
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.connectors-form-row select {
+  width: 100%;
+  padding: 5px 8px;
+  font-size: 0.7rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  font-family: inherit;
+}
+
+.connectors-form-row select:focus {
+  outline: none;
+  border-color: #6478c8;
+}
+
+.connectors-form-section-title {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #666;
+  margin: 8px 0 6px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.connector-visual-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.connector-visual-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 6px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.connector-visual-option:hover {
+  border-color: #aaa;
+  background: #f9f9f9;
+}
+
+.connector-visual-option.selected {
+  border-color: #6478c8;
+  background: rgba(100, 120, 200, 0.08);
+  box-shadow: 0 0 0 1px rgba(100, 120, 200, 0.2);
+}
+
+.connector-visual-icon {
+  width: 100%;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+}
+
+.connector-visual-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+
+.connector-visual-option:hover .connector-visual-icon img {
+  opacity: 0.85;
+}
+
+.connector-visual-option.selected .connector-visual-icon img {
+  opacity: 1;
+}
+
+.connector-visual-label {
+  font-size: 0.58rem;
+  color: #555;
+  text-align: center;
+  line-height: 1.1;
+  font-weight: 500;
+}
+
+.connector-visual-option.selected .connector-visual-label {
+  color: #334;
+  font-weight: 600;
+}
+
+.connectors-form-actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 6px;
+}
+
+.connectors-btn-primary {
+  background: #6478c8;
+  color: #fff;
+}
+
+.connectors-btn-primary:hover:not(:disabled) {
+  background: #5568b0;
+}
+
+.connectors-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.connectors-btn-secondary {
+  background: rgba(0, 0, 0, 0.08);
+  color: #333;
+}
+
+.connectors-btn-secondary:hover {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.connectors-add-btn {
+  padding: 5px 10px;
+  border: 1px dashed #999;
+  border-radius: 4px;
+  background: transparent;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #555;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.connectors-add-btn:hover:not(:disabled) {
+  border-color: #6478c8;
+  color: #6478c8;
+  background: rgba(100, 120, 200, 0.06);
+}
+
+.connectors-add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

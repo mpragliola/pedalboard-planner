@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" stroke="#2c2c2c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  <!-- 1/4" TS plug side view: sleeve barrel + tip -->
+  <rect x="8" y="18" width="22" height="12" rx="2" fill="#4a4a4a" stroke="#2c2c2c"/>
+  <line x1="14" y1="18" x2="14" y2="30" stroke="#2c2c2c" stroke-width="1.2"/>
+  <circle cx="36" cy="24" r="5" fill="#555" stroke="#2c2c2c"/>
+  <circle cx="36" cy="24" r="2.5" fill="#2c2c2c"/>
+</svg>
