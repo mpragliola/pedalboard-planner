@@ -236,10 +236,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (!id) return
       const template = BOARD_TEMPLATES.find((t) => t.id === id)
       if (!template) return
-      setSelectedBoard(id)
       const { x, y } = getPlacementBesideDropdown()
       const newObj = createObjectFromBoardTemplate(template, x, y)
       setObjects((prev) => [...prev, newObj])
+      setSelectedBoard('')
     },
     [setSelectedBoard, getPlacementBesideDropdown, setObjects]
   )
@@ -250,10 +250,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (!id) return
       const template = DEVICE_TEMPLATES.find((t) => t.id === id)
       if (!template) return
-      setSelectedDevice(id)
       const { x, y } = getPlacementBesideDropdown()
       const newObj = createObjectFromDeviceTemplate(template, x, y)
       setObjects((prev) => [...prev, newObj])
+      setSelectedDevice('')
     },
     [setSelectedDevice, getPlacementBesideDropdown, setObjects]
   )
