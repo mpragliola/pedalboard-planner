@@ -13,7 +13,6 @@ export function Canvas() {
     showGrid,
     unit,
     isPanning,
-    isZooming,
     spaceDown,
     handleCanvasPointerDown,
     objects,
@@ -50,7 +49,7 @@ export function Canvas() {
         }}
       />
       <div
-        className={`canvas-viewport${isZooming ? ' canvas-viewport-zooming' : ''}`}
+        className="canvas-viewport"
         style={{
           transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
         }}

@@ -24,10 +24,6 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
   const canvasRef = useRef<HTMLDivElement>(null)
   const zoomRef = useRef(zoom)
   const panRef = useRef(pan)
-  const zoomLockTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const ZOOM_LOCK_MS = 250
-
-  const [isZooming, setIsZooming] = useState(false)
 
   useEffect(() => {
     zoomRef.current = zoom
@@ -42,12 +38,6 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
     const clampedZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, newZoom))
     const newPanX = pivotX - ((pivotX - p.x) * clampedZoom) / z
     const newPanY = pivotY - ((pivotY - p.y) * clampedZoom) / z
-    setIsZooming(true)
-    if (zoomLockTimeoutRef.current) clearTimeout(zoomLockTimeoutRef.current)
-    zoomLockTimeoutRef.current = setTimeout(() => {
-      zoomLockTimeoutRef.current = null
-      setIsZooming(false)
-    }, ZOOM_LOCK_MS)
     setZoom(clampedZoom)
     setPan({ x: newPanX, y: newPanY })
   }, [])
@@ -211,7 +201,6 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
     canvasRef,
     isPanning,
     spaceDown,
-    isZooming,
     zoomIn,
     zoomOut,
     zoomToward,
