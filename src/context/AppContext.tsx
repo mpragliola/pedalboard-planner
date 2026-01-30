@@ -240,8 +240,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const newObj = createObjectFromBoardTemplate(template, x, y)
       setObjects((prev) => [...prev, newObj])
       setSelectedBoard('')
+      setSelectedObjectIds([])
     },
-    [setSelectedBoard, getPlacementBesideDropdown, setObjects]
+    [setSelectedBoard, setSelectedObjectIds, getPlacementBesideDropdown, setObjects]
   )
 
   const handleDeviceSelect = useCallback(
@@ -254,8 +255,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const newObj = createObjectFromDeviceTemplate(template, x, y)
       setObjects((prev) => [...prev, newObj])
       setSelectedDevice('')
+      setSelectedObjectIds([])
     },
-    [setSelectedDevice, getPlacementBesideDropdown, setObjects]
+    [setSelectedDevice, setSelectedObjectIds, getPlacementBesideDropdown, setObjects]
   )
 
   const handleDeleteObject = useCallback((id: string) => {

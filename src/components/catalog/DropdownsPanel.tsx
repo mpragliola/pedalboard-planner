@@ -5,6 +5,7 @@ import { UnitSwitch } from './UnitSwitch'
 import { CatalogModeSwitch } from './CatalogModeSwitch'
 import { TextFilter } from './TextFilter'
 import { CatalogList, CatalogListGrouped } from './CatalogList'
+import { CatalogModal, type CatalogModalMode } from './CatalogModal'
 import { SizeFilters } from './SizeFilters'
 import './DropdownsPanel.css'
 
@@ -79,6 +80,19 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
 
   const isPhone = useIsPhone()
   const listSize = isPhone ? 1 : 5
+
+  const [catalogModalOpen, setCatalogModalOpen] = useState(false)
+  const { setSelectedBoard, setSelectedDevice } = filters
+
+  useEffect(() => {
+    setSelectedBoard('')
+    setSelectedDevice('')
+  }, [setSelectedBoard, setSelectedDevice])
+
+  const openCatalogModal = (mode: CatalogModalMode) => {
+    setCatalogMode(mode)
+    setCatalogModalOpen(true)
+  }
 
   const hasBoardFilters = !!(
     boardBrandFilter ||
@@ -213,9 +227,21 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
               onDepthMaxChange={handleBoardDepthMax}
               formatSliderValue={formatSliderValue}
             />
+            <div className="catalog-add-row">
+              <label className="dropdown-label">Add board</label>
+              <button
+                type="button"
+                className="catalog-browse-btn"
+                onClick={() => openCatalogModal('boards')}
+                title="Browse boards with images"
+                aria-label="Browse boards with images"
+              >
+                <span className="catalog-browse-icon" aria-hidden>▦</span>
+              </button>
+            </div>
             <CatalogList
               id="boards-select"
-              label="Add board"
+              label=""
               size={listSize}
               value={selectedBoard}
               options={filteredBoards.map((t) => ({ id: t.id, name: t.name }))}
@@ -288,9 +314,21 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
               onDepthMaxChange={handleDeviceDepthMax}
               formatSliderValue={formatSliderValue}
             />
+            <div className="catalog-add-row">
+              <label className="dropdown-label">Add device</label>
+              <button
+                type="button"
+                className="catalog-browse-btn"
+                onClick={() => openCatalogModal('devices')}
+                title="Browse devices with images"
+                aria-label="Browse devices with images"
+              >
+                <span className="catalog-browse-icon" aria-hidden>▦</span>
+              </button>
+            </div>
             <CatalogListGrouped
               id="devices-select"
-              label="Add device"
+              label=""
               size={listSize}
               value={selectedDevice}
               groups={deviceGroups}
@@ -308,6 +346,10 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
           </>
         )}
       </div>
+      <CatalogModal
+        open={catalogModalOpen}
+        onClose={() => setCatalogModalOpen(false)}
+      />
     </div>
   )
 })

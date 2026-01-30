@@ -24,18 +24,17 @@ export function CatalogList({
 }: CatalogListProps) {
   return (
     <>
-      <label htmlFor={id} className="dropdown-label">
-        {label}
-      </label>
+      {label ? (
+        <label htmlFor={id} className="dropdown-label">
+          {label}
+        </label>
+      ) : null}
       <select
         id={id}
         className="dropdown dropdown-list"
         size={size}
         value={value}
-        onChange={(e) => {
-          const v = e.currentTarget.value
-          if (v) onChange(v)
-        }}
+        onChange={(e) => onChange(e.currentTarget.value)}
       >
         {options.map((opt) => (
           <option key={opt.id} value={opt.id}>
@@ -72,18 +71,17 @@ export function CatalogListGrouped({
 }: CatalogListGroupedProps) {
   return (
     <>
-      <label htmlFor={id} className="dropdown-label">
-        {label}
-      </label>
+      {label ? (
+        <label htmlFor={id} className="dropdown-label">
+          {label}
+        </label>
+      ) : null}
       <select
         id={id}
         className="dropdown dropdown-list"
         size={size}
         value={value}
-        onChange={(e) => {
-          const v = e.currentTarget.value
-          if (v) onChange(v)
-        }}
+        onChange={(e) => onChange(e.currentTarget.value)}
       >
         {groups.map(({ label: groupLabel, options: groupOptions }) => (
           <optgroup key={groupLabel} label={groupLabel}>
