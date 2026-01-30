@@ -231,7 +231,7 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
               <label className="dropdown-label">Add board</label>
               <button
                 type="button"
-                className="catalog-browse-btn"
+                className={`catalog-browse-btn${catalogModalOpen && catalogMode === 'boards' ? ' open' : ''}`}
                 onClick={() => openCatalogModal('boards')}
                 title="Browse boards with images"
                 aria-label="Browse boards with images"
@@ -318,7 +318,7 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
               <label className="dropdown-label">Add device</label>
               <button
                 type="button"
-                className="catalog-browse-btn"
+                className={`catalog-browse-btn${catalogModalOpen && catalogMode === 'devices' ? ' open' : ''}`}
                 onClick={() => openCatalogModal('devices')}
                 title="Browse devices with images"
                 aria-label="Browse devices with images"

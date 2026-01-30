@@ -139,6 +139,14 @@
   color: #333;
 }
 
+.catalog-browse-btn.open {
+  color: #999;
+}
+
+.catalog-browse-btn.open:hover {
+  color: #888;
+}
+
 .catalog-browse-icon {
   font-size: 0.9rem;
   line-height: 1;
