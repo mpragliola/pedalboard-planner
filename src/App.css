@@ -362,6 +362,49 @@
   }
 }
 
+/* Tablet and below (768px threshold): catalog text 30% bigger, selection toolbar 50% bigger */
+@media (max-width: 768px) {
+  .catalog-panel-toggle {
+    font-size: 0.975rem;
+    /* 0.75rem * 1.3 */
+  }
+
+  .catalog-mode-btn {
+    font-size: 0.91rem;
+    /* 0.7rem * 1.3 */
+  }
+
+  .dropdown-label {
+    font-size: 0.845rem;
+    /* 0.65rem * 1.3 */
+  }
+
+  .dropdown {
+    font-size: 0.845rem;
+    /* 0.65rem * 1.3 */
+  }
+
+  .size-bounds {
+    font-size: 0.91rem;
+    /* 0.7rem * 1.3 */
+  }
+
+  .filter-reset {
+    font-size: 0.845rem;
+    /* 0.65rem * 1.3 */
+  }
+
+  .unit-btn {
+    font-size: 0.91rem;
+    /* 0.7rem * 1.3 */
+  }
+
+  .selection-toolbar {
+    transform: scale(1.5);
+    transform-origin: center center;
+  }
+}
+
 .dropdown:hover {
   border-color: #999;
 }

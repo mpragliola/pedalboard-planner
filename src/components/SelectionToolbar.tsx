@@ -1,4 +1,7 @@
+import { useEffect, useState } from 'react'
 import type { CanvasObjectType } from '../types'
+
+const TABLET_MEDIA = '(max-width: 768px)'
 
 interface SelectionToolbarProps {
   obj: CanvasObjectType
@@ -11,6 +14,16 @@ const TOOLBAR_GAP = 8
 const TOOLBAR_HEIGHT = 36
 
 export function SelectionToolbar({ obj, onDelete, onRotate, onSendToBack }: SelectionToolbarProps) {
+  const [scaleUp, setScaleUp] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia(TABLET_MEDIA).matches
+  )
+  useEffect(() => {
+    const m = window.matchMedia(TABLET_MEDIA)
+    const onChange = () => setScaleUp(m.matches)
+    m.addEventListener('change', onChange)
+    return () => m.removeEventListener('change', onChange)
+  }, [])
+
   const centerX = obj.x + obj.width / 2
   const centerY = obj.y + obj.depth / 2
   const left = centerX
@@ -38,7 +51,8 @@ export function SelectionToolbar({ obj, onDelete, onRotate, onSendToBack }: Sele
       style={{
         left: `${left}px`,
         top: `${top}px`,
-        transform: 'translate(-50%, 0)',
+        transform: scaleUp ? 'translate(-50%, 0) scale(1.5)' : 'translate(-50%, 0)',
+        transformOrigin: 'center center',
       }}
       onPointerDown={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
