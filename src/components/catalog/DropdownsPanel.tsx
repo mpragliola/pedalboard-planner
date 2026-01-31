@@ -35,6 +35,8 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
     filters,
     onBoardSelect,
     onDeviceSelect,
+    onCustomBoardCreate,
+    onCustomDeviceCreate,
   } = useApp()
 
   const {
@@ -83,6 +85,19 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
 
   const [catalogModalOpen, setCatalogModalOpen] = useState(false)
   const { setSelectedBoard, setSelectedDevice } = filters
+
+  const [customBoardForm, setCustomBoardForm] = useState({
+    widthMm: 400,
+    depthMm: 200,
+    color: '#484852',
+    name: '',
+  })
+  const [customDeviceForm, setCustomDeviceForm] = useState({
+    widthMm: 75,
+    depthMm: 120,
+    color: '#484852',
+    name: '',
+  })
 
   useEffect(() => {
     setSelectedBoard('')
@@ -258,6 +273,84 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
             >
               Reset filters
             </button>
+            <div className="custom-section">
+              <h3 className="custom-section-title">Custom board</h3>
+              <div className="custom-form-row">
+                <label htmlFor="custom-board-width" className="dropdown-label">
+                  Width ({unitLabel})
+                </label>
+                <input
+                  id="custom-board-width"
+                  type="number"
+                  min={1}
+                  max={2000}
+                  className="custom-input"
+                  value={unit === 'in' ? (customBoardForm.widthMm / 25.4).toFixed(2) : String(customBoardForm.widthMm)}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    const num = unit === 'in' ? Math.round(parseFloat(v || '0') * 25.4) : parseInt(v || '0', 10)
+                    if (!Number.isNaN(num)) setCustomBoardForm((f) => ({ ...f, widthMm: Math.max(1, num) }))
+                  }}
+                />
+              </div>
+              <div className="custom-form-row">
+                <label htmlFor="custom-board-depth" className="dropdown-label">
+                  Depth ({unitLabel})
+                </label>
+                <input
+                  id="custom-board-depth"
+                  type="number"
+                  min={1}
+                  max={2000}
+                  className="custom-input"
+                  value={unit === 'in' ? (customBoardForm.depthMm / 25.4).toFixed(2) : String(customBoardForm.depthMm)}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    const num = unit === 'in' ? Math.round(parseFloat(v || '0') * 25.4) : parseInt(v || '0', 10)
+                    if (!Number.isNaN(num)) setCustomBoardForm((f) => ({ ...f, depthMm: Math.max(1, num) }))
+                  }}
+                />
+              </div>
+              <div className="custom-form-row">
+                <label htmlFor="custom-board-color" className="dropdown-label">
+                  Color
+                </label>
+                <input
+                  id="custom-board-color"
+                  type="color"
+                  className="custom-color-input"
+                  value={customBoardForm.color}
+                  onChange={(e) => setCustomBoardForm((f) => ({ ...f, color: e.target.value }))}
+                />
+              </div>
+              <div className="custom-form-row">
+                <label htmlFor="custom-board-name" className="dropdown-label">
+                  Name
+                </label>
+                <input
+                  id="custom-board-name"
+                  type="text"
+                  className="custom-input"
+                  placeholder="Custom board"
+                  value={customBoardForm.name}
+                  onChange={(e) => setCustomBoardForm((f) => ({ ...f, name: e.target.value }))}
+                />
+              </div>
+              <button
+                type="button"
+                className="custom-create-btn"
+                onClick={() => {
+                  onCustomBoardCreate({
+                    widthMm: customBoardForm.widthMm,
+                    depthMm: customBoardForm.depthMm,
+                    color: customBoardForm.color,
+                    name: customBoardForm.name,
+                  })
+                }}
+              >
+                Create
+              </button>
+            </div>
           </>
         )}
 
@@ -351,6 +444,84 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
             >
               Reset filters
             </button>
+            <div className="custom-section">
+              <h3 className="custom-section-title">Custom device</h3>
+              <div className="custom-form-row">
+                <label htmlFor="custom-device-width" className="dropdown-label">
+                  Width ({unitLabel})
+                </label>
+                <input
+                  id="custom-device-width"
+                  type="number"
+                  min={1}
+                  max={2000}
+                  className="custom-input"
+                  value={unit === 'in' ? (customDeviceForm.widthMm / 25.4).toFixed(2) : String(customDeviceForm.widthMm)}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    const num = unit === 'in' ? Math.round(parseFloat(v || '0') * 25.4) : parseInt(v || '0', 10)
+                    if (!Number.isNaN(num)) setCustomDeviceForm((f) => ({ ...f, widthMm: Math.max(1, num) }))
+                  }}
+                />
+              </div>
+              <div className="custom-form-row">
+                <label htmlFor="custom-device-depth" className="dropdown-label">
+                  Depth ({unitLabel})
+                </label>
+                <input
+                  id="custom-device-depth"
+                  type="number"
+                  min={1}
+                  max={2000}
+                  className="custom-input"
+                  value={unit === 'in' ? (customDeviceForm.depthMm / 25.4).toFixed(2) : String(customDeviceForm.depthMm)}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    const num = unit === 'in' ? Math.round(parseFloat(v || '0') * 25.4) : parseInt(v || '0', 10)
+                    if (!Number.isNaN(num)) setCustomDeviceForm((f) => ({ ...f, depthMm: Math.max(1, num) }))
+                  }}
+                />
+              </div>
+              <div className="custom-form-row">
+                <label htmlFor="custom-device-color" className="dropdown-label">
+                  Color
+                </label>
+                <input
+                  id="custom-device-color"
+                  type="color"
+                  className="custom-color-input"
+                  value={customDeviceForm.color}
+                  onChange={(e) => setCustomDeviceForm((f) => ({ ...f, color: e.target.value }))}
+                />
+              </div>
+              <div className="custom-form-row">
+                <label htmlFor="custom-device-name" className="dropdown-label">
+                  Name
+                </label>
+                <input
+                  id="custom-device-name"
+                  type="text"
+                  className="custom-input"
+                  placeholder="Custom device"
+                  value={customDeviceForm.name}
+                  onChange={(e) => setCustomDeviceForm((f) => ({ ...f, name: e.target.value }))}
+                />
+              </div>
+              <button
+                type="button"
+                className="custom-create-btn"
+                onClick={() => {
+                  onCustomDeviceCreate({
+                    widthMm: customDeviceForm.widthMm,
+                    depthMm: customDeviceForm.depthMm,
+                    color: customDeviceForm.color,
+                    name: customDeviceForm.name,
+                  })
+                }}
+              >
+                Create
+              </button>
+            </div>
           </>
         )}
       </div>

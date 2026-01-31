@@ -14,6 +14,8 @@ import { initialObjects } from '../constants'
 import {
   createObjectFromBoardTemplate,
   createObjectFromDeviceTemplate,
+  createObjectFromCustomBoard,
+  createObjectFromCustomDevice,
   initNextObjectIdFromObjects,
 } from '../lib/templateHelpers'
 import { StateManager, type SavedState } from '../lib/stateManager'
@@ -75,6 +77,8 @@ interface AppContextValue {
   filters: ReturnType<typeof useBoardDeviceFilters>
   onBoardSelect: (templateId: string) => void
   onDeviceSelect: (templateId: string) => void
+  onCustomBoardCreate: (params: { widthMm: number; depthMm: number; color: string; name: string }) => void
+  onCustomDeviceCreate: (params: { widthMm: number; depthMm: number; color: string; name: string }) => void
   // Floating UI visibility
   floatingUiVisible: boolean
   setFloatingUiVisible: React.Dispatch<React.SetStateAction<boolean>>
@@ -246,6 +250,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [setSelectedDevice, setSelectedObjectIds, getPlacementBesideDropdown, setObjects]
   )
 
+  const handleCustomBoardCreate = useCallback(
+    (params: { widthMm: number; depthMm: number; color: string; name: string }) => {
+      const { x, y } = getPlacementBesideDropdown()
+      const newObj = createObjectFromCustomBoard(params, x, y)
+      setObjects((prev) => [...prev, newObj])
+      setSelectedBoard('')
+      setSelectedObjectIds([])
+    },
+    [setSelectedBoard, setSelectedObjectIds, getPlacementBesideDropdown, setObjects]
+  )
+
+  const handleCustomDeviceCreate = useCallback(
+    (params: { widthMm: number; depthMm: number; color: string; name: string }) => {
+      const { x, y } = getPlacementBesideDropdown()
+      const newObj = createObjectFromCustomDevice(params, x, y)
+      setObjects((prev) => [...prev, newObj])
+      setSelectedDevice('')
+      setSelectedObjectIds([])
+    },
+    [setSelectedDevice, setSelectedObjectIds, getPlacementBesideDropdown, setObjects]
+  )
+
   const handleDeleteObject = useCallback((id: string) => {
     setObjects((prev) => prev.filter((o) => o.id !== id))
     setSelectedObjectIds((prev) => prev.filter((sid) => sid !== id))
@@ -351,6 +377,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     filters,
     onBoardSelect: handleBoardSelect,
     onDeviceSelect: handleDeviceSelect,
+    onCustomBoardCreate: handleCustomBoardCreate,
+    onCustomDeviceCreate: handleCustomDeviceCreate,
     floatingUiVisible,
     setFloatingUiVisible,
     connectors,

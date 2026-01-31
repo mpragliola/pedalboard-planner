@@ -40,7 +40,8 @@
 
 .catalog-panel-body {
   max-height: 75vh;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   transition: max-height 0.3s ease-out;
 }
 
