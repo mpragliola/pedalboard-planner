@@ -78,14 +78,36 @@
 
 .component-list-table th,
 .component-list-table td {
-  padding: 8px 10px;
+  padding: 2px 6px;
   text-align: left;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  border-right: 1px solid rgba(0, 0, 0, 0.12);
+  font-size: 0.7rem;
+}
+
+.component-list-table th:last-child,
+.component-list-table td:last-child {
+  border-right: none;
 }
 
 .component-list-table th {
+  font-family: 'Open Sans', sans-serif;
   font-weight: 600;
   color: #444;
+  background: #e8e8e8;
+}
+
+.component-list-table tbody tr:nth-child(odd) td {
+  background: #fff;
+  font-family: 'Roboto', sans-serif;
+}
+
+.component-list-table tbody tr:nth-child(even) td {
+  background: #f5f5f5;
+  font-family: 'Roboto', sans-serif;
+}
+
+.component-list-table tbody tr:hover td {
+  background: #e8f0f8;
 }
 
 .component-list-actions {
@@ -102,6 +124,18 @@
   color: #c00;
   cursor: pointer;
   transition: background 0.15s;
+}
+
+.component-list-remove-btn-icon {
+  padding: 2px 4px;
+  min-width: 24px;
+  line-height: 1;
+  font-size: 1rem;
+}
+
+.component-list-remove-btn-icon span {
+  display: inline-block;
+  line-height: 1;
 }
 
 .component-list-remove-btn:hover {
@@ -132,14 +166,36 @@
 
 .connectors-table th,
 .connectors-table td {
-  padding: 6px 8px;
+  padding: 2px 6px;
   text-align: left;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  border-right: 1px solid rgba(0, 0, 0, 0.12);
+  font-size: 0.7rem;
+}
+
+.connectors-table th:last-child,
+.connectors-table td:last-child {
+  border-right: none;
 }
 
 .connectors-table th {
+  font-family: 'Open Sans', sans-serif;
   font-weight: 600;
   color: #444;
+  background: #e8e8e8;
+}
+
+.connectors-table tbody tr:nth-child(odd) td {
+  background: #fff;
+  font-family: 'Roboto', sans-serif;
+}
+
+.connectors-table tbody tr:nth-child(even) td {
+  background: #f5f5f5;
+  font-family: 'Roboto', sans-serif;
+}
+
+.connectors-table tbody tr:hover td {
+  background: #e8f0f8;
 }
 
 .connectors-icons-cell {
@@ -178,6 +234,18 @@
 
 .connectors-btn:hover {
   background: #eee;
+}
+
+.connectors-btn-icon {
+  padding: 2px 4px;
+  min-width: 24px;
+  line-height: 1;
+  font-size: 0.95rem;
+}
+
+.connectors-btn-icon span {
+  display: inline-block;
+  line-height: 1;
 }
 
 .connectors-btn-remove {

@@ -137,24 +137,27 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
                 </tr>
               </thead>
               <tbody>
-                {objects.map((obj) => (
+                {objects.map((obj) => {
+                  const isCustom = obj.id.startsWith('board-custom-') || obj.id.startsWith('device-custom-')
+                  return (
                   <tr key={obj.id}>
                     <td>{obj.brand || '—'}</td>
-                    <td>{obj.model || '—'}</td>
+                    <td>{isCustom ? (obj.name || '—') : (obj.model || '—')}</td>
                     <td>{obj.type || '—'}</td>
                     <td className="component-list-actions">
                       <button
                         type="button"
-                        className="component-list-remove-btn"
+                        className="component-list-remove-btn component-list-remove-btn-icon"
                         onClick={() => onDeleteObject(obj.id)}
                         aria-label={`Remove ${obj.name}`}
                         title="Remove from canvas"
                       >
-                        Remove
+                        <span aria-hidden>×</span>
                       </button>
                     </td>
                   </tr>
-                ))}
+                  )
+                })}
               </tbody>
             </table>
           )}
@@ -200,19 +203,21 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
                       <td className="connectors-actions">
                         <button
                           type="button"
-                          className="connectors-btn connectors-btn-edit"
+                          className="connectors-btn connectors-btn-icon connectors-btn-edit"
                           onClick={() => startEdit(c)}
+                          title="Edit connector"
                           aria-label="Edit connector"
                         >
-                          Edit
+                          <span aria-hidden>✎</span>
                         </button>
                         <button
                           type="button"
-                          className="connectors-btn connectors-btn-remove"
+                          className="connectors-btn connectors-btn-icon connectors-btn-remove"
                           onClick={() => removeConnector(c.id)}
+                          title="Remove connector"
                           aria-label="Remove connector"
                         >
-                          Remove
+                          <span aria-hidden>×</span>
                         </button>
                       </td>
                     </tr>
