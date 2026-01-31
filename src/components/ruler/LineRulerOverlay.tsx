@@ -17,10 +17,8 @@ type Segment = { x1: number; y1: number; x2: number; y2: number }
 export function LineRulerOverlay() {
   const { canvasRef, zoom, pan, unit, setLineRuler } = useApp()
   const [segments, setSegments] = useState<Segment[]>([])
+  const [segmentStart, setSegmentStart] = useState<{ x: number; y: number } | null>(null)
   const [currentEnd, setCurrentEnd] = useState<{ x: number; y: number } | null>(null)
-  const [isDragging, setIsDragging] = useState(false)
-  const dragStartRef = useRef<{ x: number; y: number } | null>(null)
-  const currentEndRef = useRef<{ x: number; y: number } | null>(null)
   const overlayRef = useRef<HTMLDivElement>(null)
 
   const exitMode = useCallback(() => {
@@ -43,49 +41,36 @@ export function LineRulerOverlay() {
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
       if (e.button !== 0) return
+      if ((e.nativeEvent as MouseEvent).detail === 2) {
+        exitMode()
+        return
+      }
       e.preventDefault()
       e.stopPropagation()
       const { x, y } = clientToCanvas(e.clientX, e.clientY)
-      const start = segments.length > 0
-        ? { x: segments[segments.length - 1].x2, y: segments[segments.length - 1].y2 }
-        : { x, y }
-      dragStartRef.current = start
-      currentEndRef.current = { x, y }
-      setCurrentEnd({ x, y })
-      setIsDragging(true)
-      overlayRef.current?.setPointerCapture(e.pointerId)
+      const point = { x, y }
+      if (!segmentStart) {
+        setSegmentStart(point)
+        setCurrentEnd(point)
+      } else {
+        const len = Math.hypot(point.x - segmentStart.x, point.y - segmentStart.y)
+        if (len > 0.5) {
+          setSegments((prev) => [...prev, { x1: segmentStart.x, y1: segmentStart.y, x2: point.x, y2: point.y }])
+        }
+        setSegmentStart(point)
+        setCurrentEnd(point)
+      }
     },
-    [clientToCanvas, segments]
+    [clientToCanvas, segmentStart, exitMode]
   )
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent) => {
-      if (!dragStartRef.current) return
+      if (!segmentStart) return
       const { x, y } = clientToCanvas(e.clientX, e.clientY)
-      currentEndRef.current = { x, y }
       setCurrentEnd({ x, y })
     },
-    [clientToCanvas]
-  )
-
-  const handlePointerUp = useCallback(
-    (e: React.PointerEvent) => {
-      if (e.button !== 0) return
-      overlayRef.current?.releasePointerCapture(e.pointerId)
-      const end = currentEndRef.current
-      if (dragStartRef.current && end) {
-        const start = dragStartRef.current
-        const len = Math.hypot(end.x - start.x, end.y - start.y)
-        if (len > 0.5) {
-          setSegments((prev) => [...prev, { x1: start.x, y1: start.y, x2: end.x, y2: end.y }])
-        }
-      }
-      dragStartRef.current = null
-      currentEndRef.current = null
-      setCurrentEnd(null)
-      setIsDragging(false)
-    },
-    []
+    [clientToCanvas, segmentStart]
   )
 
   const handleDoubleClick = useCallback(
@@ -98,28 +83,6 @@ export function LineRulerOverlay() {
   )
 
   useEffect(() => {
-    if (!isDragging) return
-    const handlePointerUpGlobal = (e: PointerEvent) => {
-      if (e.button === 0) {
-        const end = currentEndRef.current
-        if (dragStartRef.current && end) {
-          const start = dragStartRef.current
-          const len = Math.hypot(end.x - start.x, end.y - start.y)
-          if (len > 0.5) {
-            setSegments((prev) => [...prev, { x1: start.x, y1: start.y, x2: end.x, y2: end.y }])
-          }
-        }
-        dragStartRef.current = null
-        currentEndRef.current = null
-        setCurrentEnd(null)
-        setIsDragging(false)
-      }
-    }
-    window.addEventListener('pointerup', handlePointerUpGlobal)
-    return () => window.removeEventListener('pointerup', handlePointerUpGlobal)
-  }, [isDragging])
-
-  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') exitMode()
     }
@@ -129,12 +92,13 @@ export function LineRulerOverlay() {
 
   const committedLength = segments.reduce((sum, s) => sum + Math.hypot(s.x2 - s.x1, s.y2 - s.y1), 0)
   const currentLength =
-    dragStartRef.current && currentEnd
-      ? Math.hypot(currentEnd.x - dragStartRef.current.x, currentEnd.y - dragStartRef.current.y)
+    segmentStart && currentEnd
+      ? Math.hypot(currentEnd.x - segmentStart.x, currentEnd.y - segmentStart.y)
       : 0
   const totalLength = committedLength + currentLength
 
   const hasSegments = segments.length > 0
+  const hasPreview = segmentStart && currentEnd
 
   const toScreen = (x: number, y: number) => ({
     x: pan.x + x * zoom,
@@ -142,11 +106,11 @@ export function LineRulerOverlay() {
   })
 
   const popupCenter = (() => {
-    if (isDragging && dragStartRef.current && currentEnd) {
-      const start = dragStartRef.current
+    if (hasPreview) {
+      const start = segmentStart!
       return {
-        x: pan.x + (start.x + currentEnd.x) / 2 * zoom,
-        y: pan.y + (start.y + currentEnd.y) / 2 * zoom,
+        x: pan.x + (start.x + currentEnd!.x) / 2 * zoom,
+        y: pan.y + (start.y + currentEnd!.y) / 2 * zoom,
       }
     }
     if (segments.length > 0) {
@@ -165,8 +129,6 @@ export function LineRulerOverlay() {
       className="ruler-overlay line-ruler-overlay"
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerLeave={handlePointerUp}
       onDoubleClick={handleDoubleClick}
     >
       <svg className="ruler-diagonal" style={{ left: 0, top: 0 }}>
@@ -185,18 +147,19 @@ export function LineRulerOverlay() {
             />
           )
         })}
-        {dragStartRef.current && currentEnd && (
+        {hasPreview && (
           <line
-            x1={toScreen(dragStartRef.current.x, dragStartRef.current.y).x}
-            y1={toScreen(dragStartRef.current.x, dragStartRef.current.y).y}
-            x2={toScreen(currentEnd.x, currentEnd.y).x}
-            y2={toScreen(currentEnd.x, currentEnd.y).y}
-            stroke="#22c55e"
+            x1={toScreen(segmentStart!.x, segmentStart!.y).x}
+            y1={toScreen(segmentStart!.x, segmentStart!.y).y}
+            x2={toScreen(currentEnd!.x, currentEnd!.y).x}
+            y2={toScreen(currentEnd!.x, currentEnd!.y).y}
+            stroke="#f97316"
             strokeWidth="2"
+            strokeOpacity="0.85"
           />
         )}
       </svg>
-      {((hasSegments || isDragging) && popupCenter && totalLength > 0) && (
+      {((hasSegments || hasPreview) && popupCenter && totalLength > 0) && (
         <div
           className="ruler-popup"
           style={{

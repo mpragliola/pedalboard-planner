@@ -59,7 +59,7 @@ export function ZoomControls() {
       />
       <ZoomButton
         label="Line ruler"
-        title="Measure polyline length (drag segments, double-click or ESC to exit)"
+        title="Measure polyline length (click to add points, double-click or ESC to exit)"
         icon="∿"
         onClick={() => {
           setRuler(() => false)
