@@ -24,6 +24,22 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
   const canvasRef = useRef<HTMLDivElement>(null)
   const zoomRef = useRef(zoom)
   const panRef = useRef(pan)
+  const [animating, setAnimating] = useState(false)
+  const wheelPivotRef = useRef<{ x: number; y: number; at: number } | null>(null)
+  const WHEEL_PIVOT_MS = 120
+  const lastWheelApplyRef = useRef(0)
+  const wheelApplyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const wheelEndTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingZoomRef = useRef(zoomRef.current)
+  const pendingPivotRef = useRef({ x: 0, y: 0 })
+  const WHEEL_THROTTLE_MS = 50
+  const WHEEL_TRANSITION_MS = 250
+  /* Keep pending in sync when we apply from buttons/center so wheel uses correct base */
+  useEffect(() => {
+    if (!animating) {
+      pendingZoomRef.current = zoomRef.current
+    }
+  }, [zoom, animating])
 
   useEffect(() => {
     zoomRef.current = zoom
@@ -38,30 +54,75 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
     const clampedZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, newZoom))
     const newPanX = pivotX - ((pivotX - p.x) * clampedZoom) / z
     const newPanY = pivotY - ((pivotY - p.y) * clampedZoom) / z
+    zoomRef.current = clampedZoom
+    panRef.current = { x: newPanX, y: newPanY }
     setZoom(clampedZoom)
     setPan({ x: newPanX, y: newPanY })
   }, [])
 
   const zoomIn = useCallback(() => {
+    setAnimating(true)
     const el = canvasRef.current
     const centerX = el ? el.getBoundingClientRect().left + el.offsetWidth / 2 : window.innerWidth / 2
     const centerY = el ? el.getBoundingClientRect().top + el.offsetHeight / 2 : window.innerHeight / 2
-    zoomToward(zoomRef.current + ZOOM_STEP, centerX, centerY)
+    /* Defer so CSS sees old transform first, then new → transition runs */
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => zoomToward(zoomRef.current + ZOOM_STEP, centerX, centerY))
+    })
   }, [zoomToward])
 
   const zoomOut = useCallback(() => {
+    setAnimating(true)
     const el = canvasRef.current
     const centerX = el ? el.getBoundingClientRect().left + el.offsetWidth / 2 : window.innerWidth / 2
     const centerY = el ? el.getBoundingClientRect().top + el.offsetHeight / 2 : window.innerHeight / 2
-    zoomToward(zoomRef.current - ZOOM_STEP, centerX, centerY)
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => zoomToward(zoomRef.current - ZOOM_STEP, centerX, centerY))
+    })
   }, [zoomToward])
 
-  const handleWheelZoom = useCallback((e: WheelEvent) => {
-    e.preventDefault()
-    const delta = -Math.sign(e.deltaY) * ZOOM_STEP
-    const newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, zoomRef.current + delta))
-    zoomToward(newZoom, e.clientX, e.clientY)
-  }, [zoomToward])
+  const handleWheelZoom = useCallback(
+    (e: WheelEvent) => {
+      e.preventDefault()
+      setAnimating(true) /* CSS transition for smooth wheel zoom */
+      const now = performance.now()
+      let pivot = wheelPivotRef.current
+      if (!pivot || now - pivot.at > WHEEL_PIVOT_MS) {
+        pivot = { x: e.clientX, y: e.clientY, at: now }
+        wheelPivotRef.current = pivot
+      }
+      const normalizedDelta = e.deltaMode === 1 ? -e.deltaY * 32 : -e.deltaY
+      const factor = 1 + normalizedDelta * 0.002
+      /* Accumulate so multiple wheel events before apply compound */
+      pendingZoomRef.current = Math.max(
+        ZOOM_MIN,
+        Math.min(ZOOM_MAX, pendingZoomRef.current * factor)
+      )
+      pendingPivotRef.current = { x: pivot.x, y: pivot.y }
+      const lastApply = lastWheelApplyRef.current
+      const elapsed = lastApply === 0 ? WHEEL_THROTTLE_MS : now - lastApply
+      const applyPending = () => {
+        zoomToward(pendingZoomRef.current, pendingPivotRef.current.x, pendingPivotRef.current.y)
+        lastWheelApplyRef.current = performance.now()
+        wheelApplyTimeoutRef.current = null
+        if (wheelEndTimeoutRef.current !== null) clearTimeout(wheelEndTimeoutRef.current)
+        wheelEndTimeoutRef.current = setTimeout(() => {
+          setAnimating(false)
+          lastWheelApplyRef.current = 0
+        }, WHEEL_TRANSITION_MS)
+      }
+      if (lastApply === 0 || elapsed >= WHEEL_THROTTLE_MS) {
+        if (wheelApplyTimeoutRef.current !== null) {
+          clearTimeout(wheelApplyTimeoutRef.current)
+          wheelApplyTimeoutRef.current = null
+        }
+        applyPending()
+      } else if (wheelApplyTimeoutRef.current === null) {
+        wheelApplyTimeoutRef.current = setTimeout(applyPending, WHEEL_THROTTLE_MS - elapsed)
+      }
+    },
+    [zoomToward]
+  )
 
   useEffect(() => {
     const el = canvasRef.current
@@ -178,6 +239,7 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
           (e.button === 0 && (isTouch || coarsePointer)))
       if (startPan) {
         e.preventDefault()
+        setAnimating(false) /* no CSS transition during drag */
         setIsPanning(true)
         panStartRef.current = {
           mouseX: e.clientX,
@@ -196,6 +258,8 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
   return {
     zoom,
     pan,
+    animating,
+    setAnimating,
     zoomRef,
     panRef,
     canvasRef,

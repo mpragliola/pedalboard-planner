@@ -1,3 +1,4 @@
+import { useRef, useEffect } from 'react'
 import { CanvasObject } from './CanvasObject'
 import { Grid } from './zoom/Grid'
 import { RulerOverlay } from './ruler/RulerOverlay'
@@ -7,6 +8,7 @@ import { useApp } from '../context/AppContext'
 import './Canvas.css'
 
 export function Canvas() {
+  const viewportRef = useRef<HTMLDivElement>(null)
   const {
     canvasRef,
     zoom,
@@ -19,6 +21,8 @@ export function Canvas() {
     unit,
     isPanning,
     spaceDown,
+    canvasAnimating,
+    setCanvasAnimating,
     handleCanvasPointerDown,
     objects,
     selectedObjectIds,
@@ -32,6 +36,14 @@ export function Canvas() {
     onSendToBack,
   } = useApp()
 
+  useEffect(() => {
+    if (!canvasAnimating || !viewportRef.current) return
+    const el = viewportRef.current
+    const onEnd = () => setCanvasAnimating(false)
+    el.addEventListener('transitionend', onEnd)
+    return () => el.removeEventListener('transitionend', onEnd)
+  }, [canvasAnimating, setCanvasAnimating])
+
   const selectedObject =
     selectedObjectIds.length === 1 ? objects.find((o) => o.id === selectedObjectIds[0]) : null
 
@@ -41,7 +53,7 @@ export function Canvas() {
 
   return (
     <div
-      className={`canvas ${isPanning ? 'canvas-grabbing' : spaceDown ? 'canvas-grab' : ''}`}
+      className={`canvas ${isPanning ? 'canvas-grabbing' : spaceDown ? 'canvas-grab' : ''} ${canvasAnimating ? 'canvas-animating' : ''}`}
       ref={canvasRef}
       onPointerDown={handleCanvasPointerDown}
       onContextMenu={(e) => e.preventDefault()}
@@ -54,11 +66,11 @@ export function Canvas() {
         }}
       />
       <div
+        ref={viewportRef}
         className="canvas-viewport"
-        style={{
-          transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-        }}
+        style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }}
       >
+        <div className="canvas-viewport-zoom">
         <Grid
           visible={showGrid}
           gridSizeCss={gridSizeCss}
@@ -86,6 +98,7 @@ export function Canvas() {
             onDragEnd={onDragEnd}
           />
         ))}
+        </div>
       </div>
       {ruler && <RulerOverlay />}
       {lineRuler && <LineRulerOverlay />}

@@ -52,6 +52,8 @@ interface AppContextValue {
   zoomIn: () => void
   zoomOut: () => void
   centerView: () => void
+  canvasAnimating: boolean
+  setCanvasAnimating: (v: boolean) => void
   handleCanvasPointerDown: (e: React.PointerEvent) => void
   // Objects
   objects: CanvasObjectType[]
@@ -133,6 +135,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const {
     zoom,
     pan,
+    animating: canvasAnimating,
+    setAnimating: setCanvasAnimating,
     canvasRef,
     isPanning,
     spaceDown,
@@ -190,7 +194,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return { x: Math.round(canvasX), y: Math.round(canvasY) }
   }, [pan.x, pan.y, zoom, canvasRef])
 
-  /** Axis-aligned bbox center of all objects (same bbox logic as CanvasObject). */
+  /** Axis-aligned bbox center of all objects. One setPan + CSS transition. */
   const centerView = useCallback(() => {
     const el = canvasRef.current
     if (!el || objects.length === 0) return
@@ -214,11 +218,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const cx = (minX + maxX) / 2
     const cy = (minY + maxY) / 2
     const rect = el.getBoundingClientRect()
-    setPan({
+    const targetPan = {
       x: rect.width / 2 - cx * zoom,
       y: rect.height / 2 - cy * zoom,
+    }
+    setCanvasAnimating(true)
+    /* Defer so CSS sees old pan first, then new → transition runs */
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => setPan(targetPan))
     })
-  }, [objects, zoom, setPan, canvasRef])
+  }, [objects, zoom, setPan, setCanvasAnimating, canvasRef])
 
   const handleBoardSelect = useCallback(
     (templateId: string) => {
@@ -355,6 +364,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     zoomIn,
     zoomOut,
     centerView,
+    canvasAnimating,
+    setCanvasAnimating,
     handleCanvasPointerDown,
     objects,
     setObjects,
