@@ -1,9 +1,11 @@
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import './ZoomButton.css'
 
 interface ZoomButtonProps {
   label: string
   title: string
-  icon: string
+  icon: IconDefinition
   onClick: () => void
   active?: boolean
   className?: string
@@ -25,7 +27,7 @@ export function ZoomButton({
       aria-label={label}
       title={title}
     >
-      {icon}
+      <FontAwesomeIcon icon={icon} />
     </button>
   )
 }

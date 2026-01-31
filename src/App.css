@@ -38,6 +38,10 @@
   background: rgba(0, 0, 0, 0.06);
 }
 
+.catalog-panel-toggle-icon {
+  margin-right: 4px;
+}
+
 .catalog-panel-body {
   max-height: 75vh;
   overflow-y: auto;

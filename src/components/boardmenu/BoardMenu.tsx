@@ -1,3 +1,5 @@
+import { faFloppyDisk, faFolderOpen, faPlus } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useRef } from 'react'
 import { useApp } from '../../context/AppContext'
 import './BoardMenu.css'
@@ -27,7 +29,7 @@ export function BoardMenu() {
         title="New pedalboard (clear current)"
         aria-label="New pedalboard"
       >
-        ＋
+        <FontAwesomeIcon icon={faPlus} />
       </button>
       <button
         type="button"
@@ -36,7 +38,7 @@ export function BoardMenu() {
         title="Load pedalboard from JSON file"
         aria-label="Load pedalboard"
       >
-        ↗
+        <FontAwesomeIcon icon={faFolderOpen} />
       </button>
       <input
         ref={fileInputRef}
@@ -54,7 +56,7 @@ export function BoardMenu() {
         title="Save pedalboard to JSON file"
         aria-label="Save pedalboard"
       >
-        ↓
+        <FontAwesomeIcon icon={faFloppyDisk} />
       </button>
     </div>
   )

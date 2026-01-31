@@ -1,7 +1,9 @@
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import './HistoryButton.css'
 
 interface HistoryButtonProps {
-  icon: string
+  icon: IconDefinition
   title: string
   ariaLabel: string
   onClick: () => void
@@ -24,7 +26,7 @@ export function HistoryButton({
       title={title}
       aria-label={ariaLabel}
     >
-      {icon}
+      <FontAwesomeIcon icon={icon} />
     </button>
   )
 }

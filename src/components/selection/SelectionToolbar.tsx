@@ -1,3 +1,4 @@
+import { faArrowDown, faRotateRight, faTrash } from '@fortawesome/free-solid-svg-icons'
 import { useEffect, useState } from 'react'
 import type { CanvasObjectType } from '../../types'
 import { SelectionToolbarButton } from './SelectionToolbarButton'
@@ -8,9 +9,9 @@ const TOOLBAR_GAP = 8
 const TOOLBAR_HEIGHT = 36
 
 const ICONS = {
-  rotate: '↻',
-  sendToBack: '⬇',
-  delete: '✕',
+  rotate: faRotateRight,
+  sendToBack: faArrowDown,
+  delete: faTrash,
 } as const
 
 interface SelectionToolbarProps {

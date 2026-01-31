@@ -1,7 +1,9 @@
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import './SelectionToolbarButton.css'
 
 interface SelectionToolbarButtonProps {
-  icon: string
+  icon: IconDefinition
   title: string
   ariaLabel: string
   onClick: (e: React.MouseEvent) => void
@@ -24,7 +26,7 @@ export function SelectionToolbarButton({
       aria-label={ariaLabel}
     >
       <span className="selection-toolbar-btn-icon" aria-hidden>
-        {icon}
+        <FontAwesomeIcon icon={icon} />
       </span>
     </button>
   )

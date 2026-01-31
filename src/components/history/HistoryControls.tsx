@@ -1,3 +1,4 @@
+import { faRedo, faUndo } from '@fortawesome/free-solid-svg-icons'
 import { useApp } from '../../context/AppContext'
 import { HistoryButton } from './HistoryButton'
 import './HistoryControls.css'
@@ -8,14 +9,14 @@ export function HistoryControls() {
   return (
     <div className="floating-controls history-controls">
       <HistoryButton
-        icon="↶"
+        icon={faUndo}
         title="Undo (Ctrl+Z)"
         ariaLabel="Undo"
         onClick={undo}
         disabled={!canUndo}
       />
       <HistoryButton
-        icon="↷"
+        icon={faRedo}
         title="Redo (Ctrl+Y or Ctrl+Shift+Z)"
         ariaLabel="Redo"
         onClick={redo}

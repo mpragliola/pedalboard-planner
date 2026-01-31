@@ -1,3 +1,5 @@
+import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Canvas } from './components/Canvas'
 import { BoardMenu } from './components/boardmenu/BoardMenu'
 import { DropdownsPanel } from './components/catalog/DropdownsPanel'
@@ -27,7 +29,8 @@ function AppContent() {
             title={floatingUiVisible ? 'Minimize catalog' : 'Expand catalog'}
             aria-label={floatingUiVisible ? 'Minimize catalog' : 'Expand catalog'}
           >
-            {floatingUiVisible ? '▲' : '▼'} Catalog
+            <FontAwesomeIcon icon={floatingUiVisible ? faChevronUp : faChevronDown} className="catalog-panel-toggle-icon" />
+            {' '}Catalog
           </button>
           <GptButton />
           <InfoButton />

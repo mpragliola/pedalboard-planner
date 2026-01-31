@@ -1,3 +1,5 @@
+import { faCircleInfo } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useState } from 'react'
 import { InfoModal } from './InfoModal'
 import './InfoButton.css'
@@ -14,7 +16,7 @@ export function InfoButton() {
         title="About Pedalboard Planner"
         aria-label="About Pedalboard Planner"
       >
-        ℹ
+        <FontAwesomeIcon icon={faCircleInfo} />
       </button>
       <InfoModal open={open} onClose={() => setOpen(false)} />
     </>

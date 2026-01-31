@@ -1,3 +1,13 @@
+import {
+  faCircleHalfStroke,
+  faCrosshairs,
+  faList,
+  faMinus,
+  faPlus,
+  faRuler,
+  faRulerCombined,
+  faTh,
+} from '@fortawesome/free-solid-svg-icons'
 import { useState } from 'react'
 import { useApp } from '../../context/AppContext'
 import { ZoomButton } from './ZoomButton'
@@ -12,28 +22,28 @@ export function ZoomControls() {
       <ZoomButton
         label="Zoom in"
         title="Zoom in"
-        icon="+"
+        icon={faPlus}
         onClick={zoomIn}
         className="zoom-in"
       />
       <ZoomButton
         label="Zoom out"
         title="Zoom out"
-        icon="−"
+        icon={faMinus}
         onClick={zoomOut}
         className="zoom-out"
       />
       <ZoomButton
         label="Center view"
         title="Center view on all objects"
-        icon="⊕"
+        icon={faCrosshairs}
         onClick={centerView}
         className="center-view"
       />
       <ZoomButton
         label="Toggle grid"
         title="Toggle grid"
-        icon="⊞"
+        icon={faTh}
         onClick={() => setShowGrid((v) => !v)}
         active={showGrid}
         className="grid-toggle"
@@ -41,7 +51,7 @@ export function ZoomControls() {
       <ZoomButton
         label="X-ray"
         title="Make all objects 50% transparent"
-        icon="◎"
+        icon={faCircleHalfStroke}
         onClick={() => setXray((v) => !v)}
         active={xray}
         className="xray-toggle"
@@ -49,7 +59,7 @@ export function ZoomControls() {
       <ZoomButton
         label="Ruler"
         title="Measure distances (drag rectangle, then click to fix, click again to exit)"
-        icon="▭"
+        icon={faRuler}
         onClick={() => {
           setLineRuler(() => false)
           setRuler((v) => !v)
@@ -60,7 +70,7 @@ export function ZoomControls() {
       <ZoomButton
         label="Line ruler"
         title="Measure polyline length (click to add points, double-click or ESC to exit)"
-        icon="∿"
+        icon={faRulerCombined}
         onClick={() => {
           setRuler(() => false)
           setLineRuler((v) => !v)
@@ -71,7 +81,7 @@ export function ZoomControls() {
       <ZoomButton
         label="Component list"
         title="Components and connectors (materials)"
-        icon="≡"
+        icon={faList}
         onClick={() => setComponentListOpen(true)}
         className="component-list-toggle"
       />
