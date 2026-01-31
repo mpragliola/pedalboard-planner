@@ -48,7 +48,7 @@ export function ZoomControls() {
       />
       <ZoomButton
         label="Ruler"
-        title="Measure distances (drag to create rectangle)"
+        title="Measure distances (drag rectangle, then click to fix, click again to exit)"
         icon="▭"
         onClick={() => {
           setLineRuler(() => false)

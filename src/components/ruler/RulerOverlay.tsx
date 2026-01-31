@@ -37,13 +37,18 @@ export function RulerOverlay() {
       if (e.button !== 0) return
       e.preventDefault()
       e.stopPropagation()
+      // If we already have a committed rectangle (not drawing), next click exits ruler mode
+      if (rect && !isDragging) {
+        setRuler(() => false)
+        return
+      }
       const { x, y } = clientToCanvas(e.clientX, e.clientY)
       dragStartRef.current = { x, y }
       setIsDragging(true)
       setRect({ x1: x, y1: y, x2: x, y2: y })
       overlayRef.current?.setPointerCapture(e.pointerId)
     },
-    [clientToCanvas]
+    [clientToCanvas, rect, isDragging, setRuler]
   )
 
   const handlePointerMove = useCallback(
