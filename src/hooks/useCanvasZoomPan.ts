@@ -66,8 +66,8 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
   useEffect(() => {
     const el = canvasRef.current
     if (!el) return
-    el.addEventListener('wheel', handleWheelZoom, { passive: false })
-    return () => el.removeEventListener('wheel', handleWheelZoom)
+    el.addEventListener('wheel', handleWheelZoom, { passive: false, capture: true })
+    return () => el.removeEventListener('wheel', handleWheelZoom, { capture: true })
   }, [handleWheelZoom])
 
   /* Pinch-to-zoom (touch) */
