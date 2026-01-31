@@ -1,5 +1,4 @@
-import type { CanvasObjectType, Connector } from '../types'
-import { CONNECTOR_KIND_OPTIONS, CONNECTOR_TYPE_OPTIONS } from '../constants'
+import type { CanvasObjectType } from '../types'
 
 /** Shape of state persisted to storage (e.g. localStorage). */
 export interface SavedState {
@@ -10,7 +9,6 @@ export interface SavedState {
   pan?: { x: number; y: number }
   showGrid?: boolean
   unit?: 'mm' | 'in'
-  connectors?: Connector[]
 }
 
 /**
@@ -18,7 +16,7 @@ export interface SavedState {
  * Validates loaded data and returns null on invalid or missing data.
  */
 export class StateManager {
-  constructor(private readonly storageKey: string = 'pedal/state') {}
+  constructor(private readonly storageKey: string = 'pedal/state') { }
 
   load(): SavedState | null {
     try {
@@ -38,18 +36,15 @@ export class StateManager {
         zoom: typeof (data as SavedState).zoom === 'number' ? (data as SavedState).zoom : undefined,
         pan:
           typeof pan === 'object' &&
-          pan !== null &&
-          'x' in pan &&
-          'y' in pan &&
-          typeof (pan as { x: unknown; y: unknown }).x === 'number' &&
-          typeof (pan as { x: unknown; y: unknown }).y === 'number'
+            pan !== null &&
+            'x' in pan &&
+            'y' in pan &&
+            typeof (pan as { x: unknown; y: unknown }).x === 'number' &&
+            typeof (pan as { x: unknown; y: unknown }).y === 'number'
             ? (pan as { x: number; y: number })
             : undefined,
         showGrid: typeof (data as SavedState).showGrid === 'boolean' ? (data as SavedState).showGrid : undefined,
         unit: (data as SavedState).unit === 'mm' || (data as SavedState).unit === 'in' ? (data as SavedState).unit : undefined,
-        connectors: StateManager.isValidConnectorArray((data as SavedState).connectors)
-          ? (data as SavedState).connectors
-          : undefined,
       }
     } catch {
       return null
@@ -83,24 +78,5 @@ export class StateManager {
 
   private static isValidObjectArray(arr: unknown): arr is CanvasObjectType[] {
     return Array.isArray(arr) && arr.every(StateManager.isValidObject)
-  }
-
-  private static isValidConnector(o: unknown): o is Connector {
-    if (typeof o !== 'object' || o === null) return false
-    const t = o as Record<string, unknown>
-    const typeValues = CONNECTOR_TYPE_OPTIONS.map((opt) => opt.value)
-    const kindValues = CONNECTOR_KIND_OPTIONS.map((opt) => opt.value)
-    return (
-      typeof t.id === 'string' &&
-      typeof t.deviceA === 'string' &&
-      typeof t.deviceB === 'string' &&
-      typeValues.includes(t.type as Connector['type']) &&
-      kindValues.includes(t.connectorA as Connector['connectorA']) &&
-      kindValues.includes(t.connectorB as Connector['connectorB'])
-    )
-  }
-
-  private static isValidConnectorArray(arr: unknown): arr is Connector[] {
-    return Array.isArray(arr) && arr.every(StateManager.isValidConnector)
   }
 }

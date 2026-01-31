@@ -1,10 +1,8 @@
-import type { CanvasObjectType, Connector } from '../types'
+import type { CanvasObjectType } from '../types'
 
 export interface PricePromptOptions {
   includeMaterials: boolean
   location: string
-  connectors: Connector[]
-  getObjectName: (id: string) => string
 }
 
 /**
@@ -27,18 +25,6 @@ export class PromptBuilder {
       .join('\n')
   }
 
-  /** Connector cables list when includeMaterials is true. */
-  getConnectorCablesList(): string {
-    const { connectors, getObjectName } = this.options
-    if (connectors.length === 0) return ''
-    return connectors
-      .map(
-        (c) =>
-          `- from ${getObjectName(c.deviceA)} to ${getObjectName(c.deviceB)}, cable of type ${c.type} with ${c.connectorA} and ${c.connectorB}`
-      )
-      .join('\n')
-  }
-
   /** Full prompt string for copy/paste into an LLM. */
   build(): string {
     const componentsList = this.getComponentsList()
@@ -51,10 +37,6 @@ export class PromptBuilder {
     ]
     if (this.options.includeMaterials) {
       parts.push('Include cables, velcro and similar materials in the estimate.')
-      const connectorCables = this.getConnectorCablesList()
-      if (connectorCables) {
-        parts.push('', 'Connector cables:', connectorCables)
-      }
     } else {
       parts.push('Exclude from the estimate: cables, velcro, and similar materials.')
     }

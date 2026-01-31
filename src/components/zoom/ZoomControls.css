@@ -1,6 +1,6 @@
 .zoom-controls.floating-controls {
   position: fixed;
-  z-index: 100;
+  z-index: 10100;
 }
 
 .zoom-controls {

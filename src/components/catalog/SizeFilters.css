@@ -17,7 +17,7 @@
 }
 
 .size-bounds {
-  font-size: 0.56rem; /* 20% smaller than 0.7rem */
+  font-size: 0.7rem;
   color: #555;
   font-variant-numeric: tabular-nums;
 }
@@ -42,32 +42,8 @@
   accent-color: #6478c8;
 }
 
-.size-filter-block {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
 @media (max-width: 768px) {
   .size-bounds {
-    font-size: 0.728rem; /* 20% smaller than 0.91rem */
-  }
-}
-
-/* Mobile portrait: width and depth slider blocks on one row */
-@media (max-width: 767px) and (orientation: portrait) {
-  .size-filters {
-    flex-direction: row;
-    gap: 12px;
-    max-width: none;
-  }
-
-  .size-filter-block {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .size-filter-block .size-slider-row .size-slider {
-    max-width: none;
+    font-size: 0.91rem;
   }
 }

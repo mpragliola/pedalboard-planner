@@ -1,5 +1,7 @@
 import { CanvasObject } from './CanvasObject'
 import { Grid } from './zoom/Grid'
+import { RulerOverlay } from './ruler/RulerOverlay'
+import { LineRulerOverlay } from './ruler/LineRulerOverlay'
 import { SelectionToolbar } from './selection/SelectionToolbar'
 import { useApp } from '../context/AppContext'
 import './Canvas.css'
@@ -12,6 +14,8 @@ export function Canvas() {
     tileSize,
     showGrid,
     xray,
+    ruler,
+    lineRuler,
     unit,
     isPanning,
     spaceDown,
@@ -83,6 +87,8 @@ export function Canvas() {
           />
         ))}
       </div>
+      {ruler && <RulerOverlay />}
+      {lineRuler && <LineRulerOverlay />}
     </div>
   )
 }

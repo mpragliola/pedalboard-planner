@@ -73,6 +73,18 @@
   }
 }
 
+/* Small mobile landscape: keep catalog from covering whole screen so filters + canvas visible */
+@media (max-width: 767px) and (orientation: landscape) {
+  .catalog-panel {
+    max-height: 85vh;
+  }
+
+  .catalog-panel-body {
+    max-height: 50vh;
+    overflow-y: auto;
+  }
+}
+
 /* Footer */
 .copyright {
   position: fixed;
