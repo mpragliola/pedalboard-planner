@@ -19,6 +19,7 @@ export function GptModal({ open, onClose }: GptModalProps) {
     [objects]
   )
   const [includeMaterials, setIncludeMaterials] = useState(false)
+  const [includeCommentsAndTips, setIncludeCommentsAndTips] = useState(false)
   const [includeLocation, setIncludeLocation] = useState(false)
   const [location, setLocation] = useState('')
   const [locationLoading, setLocationLoading] = useState(false)
@@ -30,6 +31,7 @@ export function GptModal({ open, onClose }: GptModalProps) {
 
   const promptBuilder = new PromptBuilder(objects, {
     includeMaterials,
+    includeCommentsAndTips,
     location: includeLocation ? location : '',
     connectors,
     getObjectName,
@@ -150,6 +152,15 @@ export function GptModal({ open, onClose }: GptModalProps) {
                 onChange={(e) => setIncludeMaterials(e.target.checked)}
               />
               <span>Include materials (cables, velcro, etc.) in the estimate</span>
+            </label>
+
+            <label className="gpt-modal-check">
+              <input
+                type="checkbox"
+                checked={includeCommentsAndTips}
+                onChange={(e) => setIncludeCommentsAndTips(e.target.checked)}
+              />
+              <span>Include comments and tips</span>
             </label>
           </div>
 

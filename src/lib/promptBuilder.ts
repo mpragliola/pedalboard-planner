@@ -2,6 +2,7 @@ import type { CanvasObjectType, Connector } from '../types'
 
 export interface PricePromptOptions {
   includeMaterials: boolean
+  includeCommentsAndTips: boolean
   location: string
   connectors: Connector[]
   getObjectName: (id: string) => string
@@ -62,6 +63,17 @@ export class PromptBuilder {
     const location = this.options.location.trim()
     if (location) {
       parts.push('', `Look up prices and stores considering I live in ${location}.`)
+    }
+    if (this.options.includeCommentsAndTips) {
+      parts.push(
+        '',
+        'Comment on the configuration and provide comments, suggestions, gotchas (e.g. obsolete or hard-to-find machines), and similar.'
+      )
+    } else {
+      parts.push(
+        '',
+        'Do not add further details, comments, or suggestions—only provide the price estimate.'
+      )
     }
     return parts.join('\n')
   }
