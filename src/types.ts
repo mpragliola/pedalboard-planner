@@ -22,3 +22,23 @@ export interface CanvasObjectType {
   image: string | null
   name: string
 }
+
+export type ConnectorLinkType = 'audio' | 'midi' | 'expression'
+
+export type ConnectorKind =
+  | 'mono jack (TS)'
+  | 'stereo jack (TRS)'
+  | 'MIDI (DIN)'
+  | 'MIDI (TRS)'
+  | 'two mono jacks (TSx2)'
+  | 'XLR male'
+  | 'XLR female'
+
+export interface Connector {
+  id: string
+  deviceA: string
+  deviceB: string
+  type: ConnectorLinkType
+  connectorA: ConnectorKind
+  connectorB: ConnectorKind
+}

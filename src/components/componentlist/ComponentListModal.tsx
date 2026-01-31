@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useApp } from '../../context/AppContext'
-import { CONNECTOR_TYPE_OPTIONS, CONNECTOR_KIND_OPTIONS } from '../../constants'
+import { CONNECTOR_TYPE_OPTIONS, CONNECTOR_KIND_OPTIONS, CONNECTOR_ICON_MAP } from '../../constants'
 import type { Connector, ConnectorKind, ConnectorLinkType } from '../../types'
 import './ComponentListModal.css'
 
@@ -176,58 +176,47 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
                   </tr>
                 </thead>
                 <tbody>
-                  {connectors.map((c) => {
-                    const iconMap: Record<string, string> = {
-                      'mono jack (TS)': 'images/connectors/mono-jack-ts.svg',
-                      'stereo jack (TRS)': 'images/connectors/stereo-jack-trs.svg',
-                      'MIDI (DIN)': 'images/connectors/midi-din.svg',
-                      'MIDI (TRS)': 'images/connectors/midi-trs.svg',
-                      'two mono jacks (TSx2)': 'images/connectors/two-mono-jacks.svg',
-                      'XLR male': 'images/connectors/xlr-male.svg',
-                      'XLR female': 'images/connectors/xlr-female.svg',
-                    }
-                    return (
-                      <tr key={c.id}>
-                        <td>{getObjectName(c.deviceA)}</td>
-                        <td>{getObjectName(c.deviceB)}</td>
-                        <td>{c.type}</td>
-                        <td className="connectors-icons-cell">
-                          <div className="connectors-icons">
-                            <img
-                              src={iconMap[c.connectorA]}
-                              alt={c.connectorA}
-                              title={c.connectorA}
-                              className="connector-icon"
-                            />
-                            <img
-                              src={iconMap[c.connectorB]}
-                              alt={c.connectorB}
-                              title={c.connectorB}
-                              className="connector-icon"
-                            />
-                          </div>
-                        </td>
-                        <td className="connectors-actions">
-                          <button
-                            type="button"
-                            className="connectors-btn connectors-btn-edit"
-                            onClick={() => startEdit(c)}
-                            aria-label="Edit connector"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            className="connectors-btn connectors-btn-remove"
-                            onClick={() => removeConnector(c.id)}
-                            aria-label="Remove connector"
-                          >
-                            Remove
-                          </button>
-                        </td>
-                      </tr>
-                    )
-                  })}
+                  {connectors.map((c) => (
+                    <tr key={c.id}>
+                      <td>{getObjectName(c.deviceA)}</td>
+                      <td>{getObjectName(c.deviceB)}</td>
+                      <td>{c.type}</td>
+                      <td className="connectors-icons-cell">
+                        <div className="connectors-icons">
+                          <img
+                            src={CONNECTOR_ICON_MAP[c.connectorA]}
+                            alt={c.connectorA}
+                            title={c.connectorA}
+                            className="connector-icon"
+                          />
+                          <img
+                            src={CONNECTOR_ICON_MAP[c.connectorB]}
+                            alt={c.connectorB}
+                            title={c.connectorB}
+                            className="connector-icon"
+                          />
+                        </div>
+                      </td>
+                      <td className="connectors-actions">
+                        <button
+                          type="button"
+                          className="connectors-btn connectors-btn-edit"
+                          onClick={() => startEdit(c)}
+                          aria-label="Edit connector"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          className="connectors-btn connectors-btn-remove"
+                          onClick={() => removeConnector(c.id)}
+                          aria-label="Remove connector"
+                        >
+                          Remove
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             )}
@@ -288,62 +277,38 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
 
                 <div className="connectors-form-section-title">Connector A</div>
                 <div className="connector-visual-picker">
-                  {CONNECTOR_KIND_OPTIONS.map((opt) => {
-                    const iconMap: Record<string, string> = {
-                      'mono jack (TS)': 'images/connectors/mono-jack-ts.svg',
-                      'stereo jack (TRS)': 'images/connectors/stereo-jack-trs.svg',
-                      'MIDI (DIN)': 'images/connectors/midi-din.svg',
-                      'MIDI (TRS)': 'images/connectors/midi-trs.svg',
-                      'two mono jacks (TSx2)': 'images/connectors/two-mono-jacks.svg',
-                      'XLR male': 'images/connectors/xlr-male.svg',
-                      'XLR female': 'images/connectors/xlr-female.svg',
-                    }
-                    return (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        className={`connector-visual-option ${form.connectorA === opt.value ? 'selected' : ''
-                          }`}
-                        onClick={() => setForm((f) => ({ ...f, connectorA: opt.value }))}
-                        title={opt.label}
-                      >
-                        <div className="connector-visual-icon">
-                          <img src={iconMap[opt.value]} alt="" />
-                        </div>
-                        <div className="connector-visual-label">{opt.label}</div>
-                      </button>
-                    )
-                  })}
+                  {CONNECTOR_KIND_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      className={`connector-visual-option ${form.connectorA === opt.value ? 'selected' : ''}`}
+                      onClick={() => setForm((f) => ({ ...f, connectorA: opt.value }))}
+                      title={opt.label}
+                    >
+                      <div className="connector-visual-icon">
+                        <img src={CONNECTOR_ICON_MAP[opt.value]} alt="" />
+                      </div>
+                      <div className="connector-visual-label">{opt.label}</div>
+                    </button>
+                  ))}
                 </div>
 
                 <div className="connectors-form-section-title">Connector B</div>
                 <div className="connector-visual-picker">
-                  {CONNECTOR_KIND_OPTIONS.map((opt) => {
-                    const iconMap: Record<string, string> = {
-                      'mono jack (TS)': 'images/connectors/mono-jack-ts.svg',
-                      'stereo jack (TRS)': 'images/connectors/stereo-jack-trs.svg',
-                      'MIDI (DIN)': 'images/connectors/midi-din.svg',
-                      'MIDI (TRS)': 'images/connectors/midi-trs.svg',
-                      'two mono jacks (TSx2)': 'images/connectors/two-mono-jacks.svg',
-                      'XLR male': 'images/connectors/xlr-male.svg',
-                      'XLR female': 'images/connectors/xlr-female.svg',
-                    }
-                    return (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        className={`connector-visual-option ${form.connectorB === opt.value ? 'selected' : ''
-                          }`}
-                        onClick={() => setForm((f) => ({ ...f, connectorB: opt.value }))}
-                        title={opt.label}
-                      >
-                        <div className="connector-visual-icon">
-                          <img src={iconMap[opt.value]} alt="" />
-                        </div>
-                        <div className="connector-visual-label">{opt.label}</div>
-                      </button>
-                    )
-                  })}
+                  {CONNECTOR_KIND_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      className={`connector-visual-option ${form.connectorB === opt.value ? 'selected' : ''}`}
+                      onClick={() => setForm((f) => ({ ...f, connectorB: opt.value }))}
+                      title={opt.label}
+                    >
+                      <div className="connector-visual-icon">
+                        <img src={CONNECTOR_ICON_MAP[opt.value]} alt="" />
+                      </div>
+                      <div className="connector-visual-label">{opt.label}</div>
+                    </button>
+                  ))}
                 </div>
 
                 <div className="connectors-form-actions">

@@ -21,7 +21,7 @@ import { useCanvasZoomPan } from '../hooks/useCanvasZoomPan'
 import { useObjectDrag } from '../hooks/useObjectDrag'
 import { useBoardDeviceFilters } from '../hooks/useBoardDeviceFilters'
 import { useHistory } from '../hooks/useHistory'
-import type { CanvasObjectType } from '../types'
+import type { CanvasObjectType, Connector } from '../types'
 
 const stateManager = new StateManager('pedal/state')
 
@@ -78,6 +78,8 @@ interface AppContextValue {
   // Floating UI visibility
   floatingUiVisible: boolean
   setFloatingUiVisible: React.Dispatch<React.SetStateAction<boolean>>
+  connectors: Connector[]
+  setConnectors: React.Dispatch<React.SetStateAction<Connector[]>>
 }
 
 const AppContext = createContext<AppContextValue | null>(null)
@@ -121,6 +123,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [catalogMode, setCatalogMode] = useState<CatalogMode>('boards')
   const [selectedObjectIds, setSelectedObjectIds] = useState<string[]>([])
   const [floatingUiVisible, setFloatingUiVisible] = useState(true)
+  const [connectors, setConnectors] = useState<Connector[]>(savedState?.connectors ?? [])
   const dropdownPanelRef = useRef<HTMLDivElement>(null)
 
   const {
@@ -246,7 +249,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const handleDeleteObject = useCallback((id: string) => {
     setObjects((prev) => prev.filter((o) => o.id !== id))
     setSelectedObjectIds((prev) => prev.filter((sid) => sid !== id))
-  }, [setObjects])
+    setConnectors((prev) => prev.filter((c) => c.deviceA !== id && c.deviceB !== id))
+  }, [setObjects, setConnectors])
 
   const handleRotateObject = useCallback((id: string) => {
     setObjects((prev) =>
@@ -296,12 +300,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
         pan,
         showGrid,
         unit,
+        connectors,
       })
     }, 400)
     return () => {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
     }
-  }, [objects, past, future, zoom, pan, showGrid, unit])
+  }, [objects, past, future, zoom, pan, showGrid, unit, connectors])
 
   const value: AppContextValue = {
     canvasRef,
@@ -348,6 +353,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     onDeviceSelect: handleDeviceSelect,
     floatingUiVisible,
     setFloatingUiVisible,
+    connectors,
+    setConnectors,
   }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

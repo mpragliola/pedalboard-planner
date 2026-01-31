@@ -1,4 +1,4 @@
-import type { CanvasObjectType } from '../types'
+import type { CanvasObjectType, Connector } from '../types'
 
 /** Shape of state persisted to storage (e.g. localStorage). */
 export interface SavedState {
@@ -9,6 +9,7 @@ export interface SavedState {
   pan?: { x: number; y: number }
   showGrid?: boolean
   unit?: 'mm' | 'in'
+  connectors?: Connector[]
 }
 
 /**
@@ -45,6 +46,7 @@ export class StateManager {
             : undefined,
         showGrid: typeof (data as SavedState).showGrid === 'boolean' ? (data as SavedState).showGrid : undefined,
         unit: (data as SavedState).unit === 'mm' || (data as SavedState).unit === 'in' ? (data as SavedState).unit : undefined,
+        connectors: StateManager.isValidConnectorArray((data as SavedState).connectors) ? (data as SavedState).connectors : undefined,
       }
     } catch {
       return null
@@ -78,5 +80,22 @@ export class StateManager {
 
   private static isValidObjectArray(arr: unknown): arr is CanvasObjectType[] {
     return Array.isArray(arr) && arr.every(StateManager.isValidObject)
+  }
+
+  private static isValidConnector(o: unknown): o is Connector {
+    if (typeof o !== 'object' || o === null) return false
+    const c = o as Record<string, unknown>
+    return (
+      typeof c.id === 'string' &&
+      typeof c.deviceA === 'string' &&
+      typeof c.deviceB === 'string' &&
+      typeof c.type === 'string' &&
+      typeof c.connectorA === 'string' &&
+      typeof c.connectorB === 'string'
+    )
+  }
+
+  private static isValidConnectorArray(arr: unknown): arr is Connector[] {
+    return Array.isArray(arr) && arr.every(StateManager.isValidConnector)
   }
 }

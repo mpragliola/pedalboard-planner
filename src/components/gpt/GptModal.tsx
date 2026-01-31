@@ -13,7 +13,11 @@ interface GptModalProps {
 const locationLoader = new LocationLoader()
 
 export function GptModal({ open, onClose }: GptModalProps) {
-  const { objects } = useApp()
+  const { objects, connectors } = useApp()
+  const getObjectName = useCallback(
+    (id: string) => objects.find((o) => o.id === id)?.name ?? id,
+    [objects]
+  )
   const [includeMaterials, setIncludeMaterials] = useState(false)
   const [includeLocation, setIncludeLocation] = useState(false)
   const [location, setLocation] = useState('')
@@ -27,6 +31,8 @@ export function GptModal({ open, onClose }: GptModalProps) {
   const promptBuilder = new PromptBuilder(objects, {
     includeMaterials,
     location: includeLocation ? location : '',
+    connectors,
+    getObjectName,
   })
   const builtPrompt = promptBuilder.build()
   const [promptText, setPromptText] = useState(builtPrompt)

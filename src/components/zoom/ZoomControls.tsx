@@ -1,9 +1,12 @@
+import { useState } from 'react'
 import { useApp } from '../../context/AppContext'
 import { ZoomButton } from './ZoomButton'
+import { ComponentListModal } from '../componentlist/ComponentListModal'
 import './ZoomControls.css'
 
 export function ZoomControls() {
   const { zoomIn, zoomOut, showGrid, setShowGrid, xray, setXray, ruler, setRuler, lineRuler, setLineRuler, centerView } = useApp()
+  const [componentListOpen, setComponentListOpen] = useState(false)
   return (
     <div className="floating-controls zoom-controls">
       <ZoomButton
@@ -64,6 +67,17 @@ export function ZoomControls() {
         }}
         active={lineRuler}
         className="line-ruler-toggle"
+      />
+      <ZoomButton
+        label="Component list"
+        title="Components and connectors (materials)"
+        icon="≡"
+        onClick={() => setComponentListOpen(true)}
+        className="component-list-toggle"
+      />
+      <ComponentListModal
+        open={componentListOpen}
+        onClose={() => setComponentListOpen(false)}
       />
     </div>
   )

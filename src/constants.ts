@@ -1,5 +1,16 @@
 import type { CanvasObjectType } from './types'
 import type { ConnectorKind, ConnectorLinkType } from './types'
+
+/** Connector kind to SVG image path. */
+export const CONNECTOR_ICON_MAP: Record<ConnectorKind, string> = {
+  'mono jack (TS)': '/images/connectors/mono-jack-ts.svg',
+  'stereo jack (TRS)': '/images/connectors/stereo-jack-trs.svg',
+  'MIDI (DIN)': '/images/connectors/midi-din.svg',
+  'MIDI (TRS)': '/images/connectors/midi-trs.svg',
+  'two mono jacks (TSx2)': '/images/connectors/two-mono-jacks.svg',
+  'XLR male': '/images/connectors/xlr-male.svg',
+  'XLR female': '/images/connectors/xlr-female.svg',
+}
 import type { DeviceType } from './data/devices'
 
 export const ZOOM_MIN = 0.5
