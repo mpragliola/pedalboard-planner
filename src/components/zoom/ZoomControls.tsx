@@ -1,12 +1,14 @@
 import {
-  faCircleHalfStroke,
   faCrosshairs,
+  faEye,
   faList,
   faMinus,
   faPlus,
   faRuler,
-  faRulerCombined,
+  faSlash,
+  faSquare,
   faTh,
+  faXRay,
 } from '@fortawesome/free-solid-svg-icons'
 import { useState } from 'react'
 import { useApp } from '../../context/AppContext'
@@ -17,6 +19,8 @@ import './ZoomControls.css'
 export function ZoomControls() {
   const { zoomIn, zoomOut, showGrid, setShowGrid, xray, setXray, ruler, setRuler, lineRuler, setLineRuler, centerView } = useApp()
   const [componentListOpen, setComponentListOpen] = useState(false)
+  const [measurementExpanded, setMeasurementExpanded] = useState(false)
+  const [viewExpanded, setViewExpanded] = useState(false)
   return (
     <div className="floating-controls zoom-controls">
       <ZoomButton
@@ -33,51 +37,75 @@ export function ZoomControls() {
         onClick={zoomOut}
         className="zoom-out"
       />
-      <ZoomButton
-        label="Center view"
-        title="Center view on all objects"
-        icon={faCrosshairs}
-        onClick={centerView}
-        className="center-view"
-      />
-      <ZoomButton
-        label="Toggle grid"
-        title="Toggle grid"
-        icon={faTh}
-        onClick={() => setShowGrid((v) => !v)}
-        active={showGrid}
-        className="grid-toggle"
-      />
-      <ZoomButton
-        label="X-ray"
-        title="Make all objects 50% transparent"
-        icon={faCircleHalfStroke}
-        onClick={() => setXray((v) => !v)}
-        active={xray}
-        className="xray-toggle"
-      />
-      <ZoomButton
-        label="Ruler"
-        title="Measure distances (drag rectangle, then click to fix, click again to exit)"
-        icon={faRuler}
-        onClick={() => {
-          setLineRuler(() => false)
-          setRuler((v) => !v)
-        }}
-        active={ruler}
-        className="ruler-toggle"
-      />
-      <ZoomButton
-        label="Line ruler"
-        title="Measure polyline length (click to add points, double-click or ESC to exit)"
-        icon={faRulerCombined}
-        onClick={() => {
-          setRuler(() => false)
-          setLineRuler((v) => !v)
-        }}
-        active={lineRuler}
-        className="line-ruler-toggle"
-      />
+      <div className={`view-tools-group ${viewExpanded ? 'expanded' : ''}`}>
+        <div className="view-tools-secondary">
+          <ZoomButton
+            label="Center view"
+            title="Center view on all objects"
+            icon={faCrosshairs}
+            onClick={centerView}
+            className="center-view"
+          />
+          <ZoomButton
+            label="Toggle grid"
+            title="Toggle grid"
+            icon={faTh}
+            onClick={() => setShowGrid((v) => !v)}
+            active={showGrid}
+            className="grid-toggle"
+          />
+          <ZoomButton
+            label="X-ray"
+            title="Make all objects 50% transparent"
+            icon={faXRay}
+            onClick={() => setXray((v) => !v)}
+            active={xray}
+            className="xray-toggle"
+          />
+        </div>
+        <ZoomButton
+          label="View options"
+          title={viewExpanded ? 'Hide view options' : 'View options'}
+          icon={faEye}
+          onClick={() => setViewExpanded((v) => !v)}
+          active={showGrid || xray}
+          className={`view-group-toggle ${viewExpanded ? 'open' : ''}`}
+        />
+      </div>
+      <div className={`measurement-tools-group ${measurementExpanded ? 'expanded' : ''}`}>
+        <div className="measurement-tools-secondary">
+          <ZoomButton
+            label="Ruler"
+            title="Measure distances (drag rectangle, then click to fix, click again to exit)"
+            icon={faSquare}
+            onClick={() => {
+              setLineRuler(() => false)
+              setRuler((v) => !v)
+            }}
+            active={ruler}
+            className="ruler-toggle"
+          />
+          <ZoomButton
+            label="Line ruler"
+            title="Measure polyline length (click to add points, double-click or ESC to exit)"
+            icon={faSlash}
+            onClick={() => {
+              setRuler(() => false)
+              setLineRuler((v) => !v)
+            }}
+            active={lineRuler}
+            className="line-ruler-toggle"
+          />
+        </div>
+        <ZoomButton
+          label="Measurement tools"
+          title={measurementExpanded ? 'Hide measurement tools' : 'Measurement tools'}
+          icon={faRuler}
+          onClick={() => setMeasurementExpanded((v) => !v)}
+          active={ruler || lineRuler}
+          className={`measurement-group-toggle ${measurementExpanded ? 'open' : ''}`}
+        />
+      </div>
       <ZoomButton
         label="Component list"
         title="Components and connectors (materials)"

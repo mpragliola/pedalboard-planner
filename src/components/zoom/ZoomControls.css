@@ -8,6 +8,58 @@
   right: 24px;
   display: flex;
   flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.view-tools-group,
+.measurement-tools-group {
+  display: flex;
+  flex-direction: row;
   align-items: center;
   gap: 8px;
+}
+
+.view-tools-secondary,
+.measurement-tools-secondary {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-width 0.25s ease-out, opacity 0.2s ease-out;
+}
+
+.view-tools-group.expanded .view-tools-secondary {
+  max-width: 156px; /* 44*3 + 8*2 for 3 buttons */
+  opacity: 1;
+  transition: max-width 0.3s ease-out, opacity 0.2s ease-in;
+}
+
+.measurement-tools-group.expanded .measurement-tools-secondary {
+  max-width: 104px; /* 44px + 8px + 44px for 2 buttons */
+  opacity: 1;
+  transition: max-width 0.3s ease-out, opacity 0.2s ease-in;
+}
+
+.zoom-btn.view-group-toggle,
+.zoom-btn.measurement-group-toggle {
+  transition: color 0.2s ease;
+}
+
+.zoom-btn.view-group-toggle.open,
+.zoom-btn.measurement-group-toggle.open {
+  color: #999;
+}
+
+.zoom-btn.view-group-toggle.open:hover,
+.zoom-btn.measurement-group-toggle.open:hover {
+  color: #777;
+}
+
+.zoom-btn.view-group-toggle.open.active,
+.zoom-btn.measurement-group-toggle.open.active {
+  color: #668;
 }
