@@ -1,8 +1,12 @@
+/** Turn angle (rad) below which we use sharp corner to avoid huge radius and numeric issues. */
+const MIN_TURN_RAD = 0.01
+
 /**
  * Builds an SVG path d string for a polyline with rounded joins at vertices.
- * Falls back to sharp corners when segment length < radius.
+ * Arc radius is chosen so the arc spans exactly the turn angle: more collinear → smaller arc (no arc at 180°).
+ * Falls back to sharp when segment length < radius or turn is effectively 0.
  * @param points - Screen-space points (e.g. from canvas coords * zoom + pan)
- * @param radius - Join radius in the same units as points (screen px)
+ * @param radius - Distance from vertex to arc endpoints along each segment (screen px)
  */
 export function buildRoundedPathD(
   points: { x: number; y: number }[],
@@ -37,24 +41,32 @@ export function buildRoundedPathD(
     const pInY = curr.y - dirInY * radius
     const pOutX = curr.x + dirOutX * radius
     const pOutY = curr.y + dirOutY * radius
-    d += ` L ${pInX} ${pInY}`
     const chordLen = Math.hypot(pOutX - pInX, pOutY - pInY)
-    const halfChord = chordLen / 2
-    if (radius * radius >= halfChord * halfChord) {
-      const dFromMid = Math.sqrt(radius * radius - halfChord * halfChord)
-      const midX = (pInX + pOutX) / 2
-      const midY = (pInY + pOutY) / 2
-      const perpX = -(pOutY - pInY) / chordLen
-      const perpY = (pOutX - pInX) / chordLen
-      const toCurr = (curr.x - midX) * perpX + (curr.y - midY) * perpY
-      const sign = toCurr > 0 ? 1 : -1
-      const cx = midX + perpX * sign * dFromMid
-      const cy = midY + perpY * sign * dFromMid
-      const sweep = (pInX - cx) * (pOutY - cy) - (pInY - cy) * (pOutX - cx) > 0 ? 0 : 1
-      d += ` A ${radius} ${radius} 0 0 ${sweep} ${pOutX} ${pOutY}`
-    } else {
+    const dot = Math.max(-1, Math.min(1, dirInX * dirOutX + dirInY * dirOutY))
+    const turnAngleRad = Math.acos(dot)
+    if (turnAngleRad < MIN_TURN_RAD) {
       d += ` L ${curr.x} ${curr.y}`
+      continue
     }
+    const halfTurn = turnAngleRad / 2
+    const sinHalf = Math.sin(halfTurn)
+    if (sinHalf < 1e-6) {
+      d += ` L ${curr.x} ${curr.y}`
+      continue
+    }
+    const arcRadius = chordLen / (2 * sinHalf)
+    const dFromMid = arcRadius * Math.cos(halfTurn)
+    const midX = (pInX + pOutX) / 2
+    const midY = (pInY + pOutY) / 2
+    const perpX = -(pOutY - pInY) / chordLen
+    const perpY = (pOutX - pInX) / chordLen
+    const toCurr = (curr.x - midX) * perpX + (curr.y - midY) * perpY
+    const sign = toCurr > 0 ? 1 : -1
+    const cx = midX + perpX * sign * dFromMid
+    const cy = midY + perpY * sign * dFromMid
+    const sweep = (pInX - cx) * (pOutY - cy) - (pInY - cy) * (pOutX - cx) > 0 ? 0 : 1
+    d += ` L ${pInX} ${pInY}`
+    d += ` A ${arcRadius} ${arcRadius} 0 0 ${sweep} ${pOutX} ${pOutY}`
   }
   return d
 }
