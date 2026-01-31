@@ -105,7 +105,11 @@ export function GptModal({ open, onClose }: GptModalProps) {
         </header>
         <div className="gpt-modal-body">
           <p className="gpt-modal-intro">
-            Build a prompt for an LLM to estimate the total price of your pedalboard. Copy it and paste into ChatGPT or another assistant.
+            Build a prompt for an LLM (ChatGPT, Claude, Gemini, etc.) to estimate the
+            total price of your pedalboard and have tips and suggestions.
+            Copy it and paste into your favourite LLM. <br />
+            <small>Disclaimer: the prices will be estimated and there is no guarantee of accuracy.
+              Always check the results and use your best judgement.</small>
           </p>
 
           <div className="gpt-modal-options">
