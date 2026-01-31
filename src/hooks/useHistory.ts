@@ -57,9 +57,17 @@ export function useHistory<T>(initialState: T, depth = 200, options?: UseHistory
     })
   }, [])
 
+  /** Replace state, past, and future in one go (e.g. for New/Load). */
+  const replace = useCallback((newState: T, newPast: T[] = [], newFuture: T[] = []) => {
+    _setState(newState)
+    setPast(newPast)
+    setFuture(newFuture)
+  }, [])
+
   return {
     state,
     setState,
+    replace,
     undo,
     redo,
     canUndo: past.length > 0,

@@ -86,6 +86,10 @@ interface AppContextValue {
   setFloatingUiVisible: React.Dispatch<React.SetStateAction<boolean>>
   connectors: Connector[]
   setConnectors: React.Dispatch<React.SetStateAction<Connector[]>>
+  // Pedalboard file: new / load / save
+  newBoard: () => void
+  loadBoardFromFile: (file: File) => void
+  saveBoardToFile: () => void
 }
 
 const AppContext = createContext<AppContextValue | null>(null)
@@ -109,6 +113,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const {
     state: objects,
     setState: setObjects,
+    replace: replaceHistory,
     undo,
     redo,
     canUndo,
@@ -135,6 +140,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const {
     zoom,
     pan,
+    setZoom,
+    setPan,
     animating: canvasAnimating,
     setAnimating: setCanvasAnimating,
     canvasRef,
@@ -142,7 +149,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     spaceDown,
     zoomIn,
     zoomOut,
-    setPan,
     handleCanvasPointerDown: canvasPanPointerDown,
     tileSize,
   } = useCanvasZoomPan({
@@ -305,6 +311,70 @@ export function AppProvider({ children }: { children: ReactNode }) {
     })
   }, [setObjects])
 
+  const loadBoardState = useCallback(
+    (state: SavedState) => {
+      if (state.objects?.length) initNextObjectIdFromObjects(state.objects)
+      replaceHistory(
+        state.objects ?? initialObjects,
+        state.past ?? [],
+        state.future ?? []
+      )
+      setSelectedObjectIds([])
+      setConnectors(state.connectors ?? [])
+      setUnit(state.unit ?? 'mm')
+      setShowGrid(state.showGrid ?? false)
+      if (typeof state.zoom === 'number') setZoom(state.zoom)
+      if (state.pan && typeof state.pan.x === 'number' && typeof state.pan.y === 'number') {
+        setPan(state.pan)
+      }
+    },
+    [replaceHistory, setZoom, setPan, setConnectors]
+  )
+
+  const newBoard = useCallback(() => {
+    replaceHistory(initialObjects, [], [])
+    setSelectedObjectIds([])
+    setConnectors([])
+    setUnit('mm')
+    setShowGrid(false)
+    setZoom(1)
+    setPan({ x: 0, y: 0 })
+  }, [replaceHistory, setZoom, setPan])
+
+  const loadBoardFromFile = useCallback(
+    (file: File) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const text = typeof reader.result === 'string' ? reader.result : ''
+        const state = StateManager.parseState(text)
+        if (state) loadBoardState(state)
+      }
+      reader.readAsText(file, 'utf-8')
+    },
+    [loadBoardState]
+  )
+
+  const saveBoardToFile = useCallback(() => {
+    const state: SavedState = {
+      objects,
+      past,
+      future,
+      zoom,
+      pan,
+      showGrid,
+      unit,
+      connectors,
+    }
+    const payload = StateManager.serializeState(state)
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `pedalboard-${new Date().toISOString().slice(0, 10)}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }, [objects, past, future, zoom, pan, showGrid, unit, connectors])
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
@@ -394,6 +464,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setFloatingUiVisible,
     connectors,
     setConnectors,
+    newBoard,
+    loadBoardFromFile,
+    saveBoardToFile,
   }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

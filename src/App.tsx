@@ -1,4 +1,5 @@
 import { Canvas } from './components/Canvas'
+import { BoardMenu } from './components/boardmenu/BoardMenu'
 import { DropdownsPanel } from './components/catalog/DropdownsPanel'
 import { GptButton } from './components/gpt/GptButton'
 import { InfoButton } from './components/info/InfoButton'
@@ -34,6 +35,9 @@ function AppContent() {
         <div className={`catalog-panel-body ${floatingUiVisible ? '' : 'minimized'}`}>
           <DropdownsPanel ref={dropdownPanelRef} />
         </div>
+      </div>
+      <div className="board-menu-wrap">
+        <BoardMenu />
       </div>
       <ZoomControls />
       <HistoryControls />

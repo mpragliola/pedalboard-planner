@@ -1,0 +1,61 @@
+import { useRef } from 'react'
+import { useApp } from '../../context/AppContext'
+import './BoardMenu.css'
+
+export function BoardMenu() {
+  const { newBoard, loadBoardFromFile, saveBoardToFile } = useApp()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleLoadClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      loadBoardFromFile(file)
+      e.target.value = ''
+    }
+  }
+
+  return (
+    <div className="board-menu">
+      <button
+        type="button"
+        className="board-menu-btn"
+        onClick={newBoard}
+        title="New pedalboard (clear current)"
+        aria-label="New pedalboard"
+      >
+        ＋
+      </button>
+      <button
+        type="button"
+        className="board-menu-btn"
+        onClick={handleLoadClick}
+        title="Load pedalboard from JSON file"
+        aria-label="Load pedalboard"
+      >
+        ↗
+      </button>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json,application/json"
+        className="board-menu-file-input"
+        aria-hidden="true"
+        tabIndex={-1}
+        onChange={handleFileChange}
+      />
+      <button
+        type="button"
+        className="board-menu-btn"
+        onClick={saveBoardToFile}
+        title="Save pedalboard to JSON file"
+        aria-label="Save pedalboard"
+      >
+        ↓
+      </button>
+    </div>
+  )
+}

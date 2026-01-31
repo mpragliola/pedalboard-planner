@@ -12,6 +12,40 @@ export interface SavedState {
   connectors?: Connector[]
 }
 
+/** Custom elements have id starting with board-custom- or device-custom-. */
+function isCustomObject(o: CanvasObjectType): boolean {
+  return o.id.startsWith('board-custom-') || o.id.startsWith('device-custom-')
+}
+
+/** Strip image from all objects; keep name only for custom elements. */
+function serializeObjects(objects: CanvasObjectType[]): Record<string, unknown>[] {
+  return objects.map((o) => {
+    const { image, name, ...rest } = o as CanvasObjectType & { image?: string | null; name?: string }
+    const out: Record<string, unknown> = { ...rest, name: o.name }
+    if (!isCustomObject(o)) delete out.name
+    return out
+  })
+}
+
+/** Restore image (null) and name (derive from brand+model if missing) when loading. */
+function normalizeLoadedObjects(objects: Record<string, unknown>[]): CanvasObjectType[] {
+  return objects.map((o) => {
+    const name =
+      typeof (o as { name?: unknown }).name === 'string'
+        ? (o as { name: string }).name
+        : `${(o as { brand?: string }).brand ?? ''} ${(o as { model?: string }).model ?? ''}`.trim() ||
+          (typeof (o as { type?: string }).type === 'string' ? (o as { type: string }).type : 'Object')
+    return {
+      ...o,
+      type: typeof (o as { type?: string }).type === 'string' ? (o as { type: string }).type : '',
+      brand: typeof (o as { brand?: string }).brand === 'string' ? (o as { brand: string }).brand : '',
+      model: typeof (o as { model?: string }).model === 'string' ? (o as { model: string }).model : '',
+      image: null,
+      name,
+    } as CanvasObjectType
+  })
+}
+
 /**
  * Loads and saves app state to a storage backend (e.g. localStorage).
  * Validates loaded data and returns null on invalid or missing data.
@@ -23,17 +57,31 @@ export class StateManager {
     try {
       const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(this.storageKey) : null
       if (!raw) return null
-      const data = JSON.parse(raw) as unknown
+      return StateManager.parseState(raw)
+    } catch {
+      return null
+    }
+  }
+
+  /** Parse and validate JSON string into SavedState. Returns null on invalid or missing data. */
+  static parseState(json: string): SavedState | null {
+    try {
+      const data = JSON.parse(json) as unknown
       if (typeof data !== 'object' || data === null || !('objects' in data)) return null
-      const objects = (data as SavedState).objects
-      if (!StateManager.isValidObjectArray(objects)) return null
-      const past = (data as SavedState).past
-      const future = (data as SavedState).future
+      const rawObjects = (data as SavedState).objects as unknown[]
+      if (!Array.isArray(rawObjects) || rawObjects.some((o) => typeof o !== 'object' || o === null)) return null
+      const rawObjRecords = rawObjects as Record<string, unknown>[]
+      if (!rawObjRecords.every(StateManager.isValidObjectRecord)) return null
+      const objects = normalizeLoadedObjects(rawObjRecords)
+      const past = (data as SavedState).past as unknown[] | undefined
+      const future = (data as SavedState).future as unknown[] | undefined
+      const pastValid = Array.isArray(past) && past.every((arr: unknown) => Array.isArray(arr) && (arr as Record<string, unknown>[]).every(StateManager.isValidObjectRecord))
+      const futureValid = Array.isArray(future) && future.every((arr: unknown) => Array.isArray(arr) && (arr as Record<string, unknown>[]).every(StateManager.isValidObjectRecord))
       const pan = (data as SavedState).pan
       return {
         objects,
-        past: Array.isArray(past) && past.every(StateManager.isValidObjectArray) ? past : undefined,
-        future: Array.isArray(future) && future.every(StateManager.isValidObjectArray) ? future : undefined,
+        past: pastValid && Array.isArray(past) ? past.map((arr: unknown) => normalizeLoadedObjects(arr as Record<string, unknown>[])) : undefined,
+        future: futureValid && Array.isArray(future) ? future.map((arr: unknown) => normalizeLoadedObjects(arr as Record<string, unknown>[])) : undefined,
         zoom: typeof (data as SavedState).zoom === 'number' ? (data as SavedState).zoom : undefined,
         pan:
           typeof pan === 'object' &&
@@ -56,14 +104,25 @@ export class StateManager {
   save(state: SavedState): void {
     try {
       if (typeof localStorage !== 'undefined') {
-        localStorage.setItem(this.storageKey, JSON.stringify(state))
+        localStorage.setItem(this.storageKey, JSON.stringify(StateManager.serializeState(state)))
       }
     } catch {
       // quota or disabled
     }
   }
 
-  private static isValidObject(o: unknown): o is CanvasObjectType {
+  /** Serialize state for storage/file: no image, name only for custom elements. */
+  static serializeState(state: SavedState): Record<string, unknown> {
+    return {
+      ...state,
+      objects: serializeObjects(state.objects),
+      past: state.past?.map(serializeObjects),
+      future: state.future?.map(serializeObjects),
+    }
+  }
+
+  /** Validate minimal record (no image/name required for load). */
+  private static isValidObjectRecord(o: unknown): o is Record<string, unknown> {
     if (typeof o !== 'object' || o === null) return false
     const t = o as Record<string, unknown>
     return (
@@ -73,13 +132,8 @@ export class StateManager {
       typeof t.y === 'number' &&
       typeof t.width === 'number' &&
       typeof t.depth === 'number' &&
-      typeof t.height === 'number' &&
-      typeof t.name === 'string'
+      typeof t.height === 'number'
     )
-  }
-
-  private static isValidObjectArray(arr: unknown): arr is CanvasObjectType[] {
-    return Array.isArray(arr) && arr.every(StateManager.isValidObject)
   }
 
   private static isValidConnector(o: unknown): o is Connector {

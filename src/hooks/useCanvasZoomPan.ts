@@ -258,6 +258,8 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
   return {
     zoom,
     pan,
+    setZoom,
+    setPan,
     animating,
     setAnimating,
     zoomRef,
@@ -268,7 +270,6 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
     zoomIn,
     zoomOut,
     zoomToward,
-    setPan,
     handleCanvasPointerDown,
     tileSize,
   }
