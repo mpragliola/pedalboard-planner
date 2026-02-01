@@ -137,32 +137,30 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
-  padding: 0;
+  padding: 6px;
   border: none;
-  border-radius: 4px;
-  background: transparent;
-  color: #666;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #f8f8f8 0%, #e8e8e8 100%);
+  color: #333;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s, box-shadow 0.15s;
 }
 
 .catalog-browse-btn:hover {
-  background: rgba(0, 0, 0, 0.06);
-  color: #333;
+  background: linear-gradient(180deg, #fff 0%, #f0f0f0 100%);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.catalog-browse-btn:active {
+  background: #e5e5e5;
 }
 
 .catalog-browse-btn.open {
-  color: #999;
-}
-
-.catalog-browse-btn.open:hover {
-  color: #888;
+  color: #666;
 }
 
 .catalog-browse-icon {
-  font-size: 0.9rem;
+  font-size: 1.2rem;
   line-height: 1;
 }
 
