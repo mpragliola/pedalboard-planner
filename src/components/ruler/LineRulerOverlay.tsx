@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useApp } from '../../context/AppContext'
 import { buildRoundedPathD, DEFAULT_JOIN_RADIUS } from '../../lib/polylinePath'
 import { formatLength } from '../../lib/rulerFormat'
@@ -20,11 +20,51 @@ export function LineRulerOverlay() {
     currentEnd,
     onPointerDown,
     onPointerMove,
+    onPointerUp,
     onDoubleClick,
+    committedLength,
     totalLength,
     hasSegments,
     hasPreview,
   } = usePolylineDraw(clientToCanvas, exitMode)
+
+  const lastTapRef = useRef<{ time: number; clientX: number; clientY: number } | null>(null)
+  const DOUBLE_TAP_MS = 350
+  const DOUBLE_TAP_PX = 50
+
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      if (e.button !== 0 && e.pointerType !== 'touch') return
+      const now = Date.now()
+      const last = lastTapRef.current
+      if (
+        last &&
+        now - last.time < DOUBLE_TAP_MS &&
+        Math.hypot(e.clientX - last.clientX, e.clientY - last.clientY) < DOUBLE_TAP_PX
+      ) {
+        lastTapRef.current = null
+        e.preventDefault()
+        e.stopPropagation()
+        exitMode()
+        return
+      }
+      onPointerDown(e)
+      if (e.button === 0 || e.pointerType === 'touch') {
+        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+      }
+    },
+    [onPointerDown, exitMode]
+  )
+
+  const handlePointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      onPointerUp(e)
+      if (e.button === 0 || e.pointerType === 'touch') {
+        lastTapRef.current = { time: Date.now(), clientX: e.clientX, clientY: e.clientY }
+      }
+    },
+    [onPointerUp]
+  )
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -51,19 +91,23 @@ export function LineRulerOverlay() {
     return null
   })()
 
+  const joinRadiusPx = DEFAULT_JOIN_RADIUS * zoom
   const committedPathD =
     segments.length > 0
       ? buildRoundedPathD(
           [toScreen(segments[0].x1, segments[0].y1), ...segments.map((s) => toScreen(s.x2, s.y2))],
-          DEFAULT_JOIN_RADIUS
+          joinRadiusPx
         )
       : ''
+
+  const showBothLengths = hasPreview && totalLength > committedLength + 0.01
 
   return (
     <div
       className="ruler-overlay line-ruler-overlay"
-      onPointerDown={onPointerDown}
+      onPointerDown={handlePointerDown}
       onPointerMove={onPointerMove}
+      onPointerUp={handlePointerUp}
       onDoubleClick={onDoubleClick}
     >
       <svg className="ruler-diagonal" style={{ left: 0, top: 0 }}>
@@ -103,7 +147,11 @@ export function LineRulerOverlay() {
         >
           <div className="ruler-popup-row">
             <span>Length</span>
-            <span>{formatLength(totalLength, unit)}</span>
+            <span>
+              {showBothLengths
+                ? `${formatLength(committedLength, unit)} (${formatLength(totalLength, unit)})`
+                : formatLength(totalLength, unit)}
+            </span>
           </div>
         </div>
       )}
