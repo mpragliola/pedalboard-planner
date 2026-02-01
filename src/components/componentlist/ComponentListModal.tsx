@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useApp } from '../../context/AppContext'
+import { useConfirmation } from '../../context/ConfirmationContext'
 import { CONNECTOR_TYPE_OPTIONS, CONNECTOR_KIND_OPTIONS, CONNECTOR_ICON_MAP } from '../../constants'
 import type { Connector, ConnectorKind, ConnectorLinkType } from '../../types'
 import './ComponentListModal.css'
@@ -24,6 +25,7 @@ const emptyForm = {
 
 export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
   const { objects, connectors, setConnectors, onDeleteObject } = useApp()
+  const { requestConfirmation } = useConfirmation()
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState(emptyForm)
 
@@ -94,6 +96,20 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
     [setConnectors, editingId, cancelEdit]
   )
 
+  const handleRemoveComponent = useCallback(
+    async (obj: { id: string; name: string }) => {
+      const confirmed = await requestConfirmation({
+        title: 'Remove from canvas',
+        message: `Remove "${obj.name}"? This cannot be undone.`,
+        confirmLabel: 'Remove',
+        cancelLabel: 'Cancel',
+        danger: true,
+      })
+      if (confirmed) onDeleteObject(obj.id)
+    },
+    [requestConfirmation, onDeleteObject]
+  )
+
   const isFormOpen = editingId !== null
   const canSave = form.deviceA && form.deviceB
 
@@ -140,22 +156,22 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
                 {objects.map((obj) => {
                   const isCustom = obj.id.startsWith('board-custom-') || obj.id.startsWith('device-custom-')
                   return (
-                  <tr key={obj.id}>
-                    <td>{obj.brand || '—'}</td>
-                    <td>{isCustom ? (obj.name || '—') : (obj.model || '—')}</td>
-                    <td>{obj.type || '—'}</td>
-                    <td className="component-list-actions">
-                      <button
-                        type="button"
-                        className="component-list-remove-btn component-list-remove-btn-icon"
-                        onClick={() => onDeleteObject(obj.id)}
-                        aria-label={`Remove ${obj.name}`}
-                        title="Remove from canvas"
-                      >
-                        <span aria-hidden>×</span>
-                      </button>
-                    </td>
-                  </tr>
+                    <tr key={obj.id}>
+                      <td>{obj.brand || '—'}</td>
+                      <td>{isCustom ? (obj.name || '—') : (obj.model || '—')}</td>
+                      <td>{obj.type || '—'}</td>
+                      <td className="component-list-actions">
+                        <button
+                          type="button"
+                          className="component-list-remove-btn component-list-remove-btn-icon"
+                          onClick={() => handleRemoveComponent(obj)}
+                          aria-label={`Remove ${obj.name}`}
+                          title="Remove from canvas"
+                        >
+                          <span aria-hidden>×</span>
+                        </button>
+                      </td>
+                    </tr>
                   )
                 })}
               </tbody>
