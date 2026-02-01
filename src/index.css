@@ -14,6 +14,13 @@
   box-sizing: border-box;
 }
 
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
 body {
   min-height: 100vh;
   overflow: hidden;
