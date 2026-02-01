@@ -14,14 +14,15 @@
 
 .unit-btn {
   flex: 0 0 auto;
-  padding: 4px 10px;
+  padding: 4px 8px;
   border: none;
   background: transparent;
-  font-size: 0.7rem;
+  font-size: 0.6rem;
   font-weight: 600;
   color: #666;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
+  text-transform: uppercase;
 }
 
 .unit-btn:hover {

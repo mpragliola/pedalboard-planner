@@ -18,6 +18,21 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
+.catalog-switches-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.catalog-switches-row .catalog-mode-switch {
+  margin-bottom: 0;
+}
+
+.catalog-switches-row .unit-switch {
+  margin-bottom: 0;
+}
+
 .floating-dropdowns .catalog-content {
   display: flex;
   flex-direction: column;
