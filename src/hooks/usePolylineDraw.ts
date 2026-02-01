@@ -117,6 +117,7 @@ export function usePolylineDraw(
     segmentStart,
     currentEnd,
     onPointerDown,
+    onPointerUp,
     onPointerMove,
     onDoubleClick,
     committedLength,
