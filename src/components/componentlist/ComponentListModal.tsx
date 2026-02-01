@@ -83,8 +83,8 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
         )
       )
     }
-    cancelEdit()
-  }, [editingId, form, setConnectors, cancelEdit])
+    startAdd()
+  }, [editingId, form, setConnectors, startAdd])
 
   const removeConnector = useCallback(
     (id: string) => {
