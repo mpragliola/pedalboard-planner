@@ -4,7 +4,6 @@
 }
 
 .floating-dropdowns {
-  font-family: 'Open Sans', sans-serif;
   top: 24px;
   left: 24px;
   max-height: calc(100vh - 48px);
@@ -45,11 +44,9 @@
   color: #555;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  font-family: 'Open Sans', sans-serif;
 }
 
 .dropdown-group .dropdown {
-  font-family: 'Open Sans', sans-serif;
   width: 145px;
   max-width: 145px;
   padding: 4px 20px 4px 6px;
@@ -186,7 +183,6 @@
   color: #555;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  font-family: 'Open Sans', sans-serif;
 }
 
 .custom-form-row {
@@ -202,7 +198,6 @@
 }
 
 .custom-input {
-  font-family: 'Open Sans', sans-serif;
   font-size: 0.65rem;
   padding: 4px 6px;
   border: 1px solid #ccc;
@@ -230,7 +225,6 @@
 .custom-create-btn {
   margin-top: 4px;
   padding: 6px 12px;
-  font-family: 'Open Sans', sans-serif;
   font-size: 0.7rem;
   font-weight: 600;
   color: #fff;

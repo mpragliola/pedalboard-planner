@@ -27,7 +27,6 @@
 }
 
 .catalog-modal {
-  font-family: 'Open Sans', sans-serif;
   font-size: 0.8rem;
   background: #fff;
   border-radius: 12px;
@@ -155,7 +154,6 @@
 }
 
 .catalog-modal-card-name {
-  font-family: 'Open Sans', sans-serif;
   font-size: 0.65rem;
   font-weight: 500;
   color: #333;

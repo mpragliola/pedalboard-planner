@@ -10,7 +10,6 @@
 }
 
 .component-list-modal {
-  font-family: 'Open Sans', sans-serif;
   font-size: 0.75rem;
   background: #fff;
   border-radius: 12px;
@@ -90,7 +89,6 @@
 }
 
 .component-list-table th {
-  font-family: 'Open Sans', sans-serif;
   font-weight: 600;
   color: #444;
   background: #e8e8e8;
@@ -178,7 +176,6 @@
 }
 
 .connectors-table th {
-  font-family: 'Open Sans', sans-serif;
   font-weight: 600;
   color: #444;
   background: #e8e8e8;
