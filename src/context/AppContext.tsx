@@ -137,7 +137,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [connectors, setConnectors] = useState<Connector[]>(savedState?.connectors ?? [])
   const dropdownPanelRef = useRef<HTMLDivElement>(null)
 
-  const clearDragStateRef = useRef<() => void>(() => {})
+  const clearDragStateRef = useRef<() => void>(() => { })
 
   const {
     zoom,
@@ -169,7 +169,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     clearDragStateRef.current = clearDragState
     return () => {
-      clearDragStateRef.current = () => {}
+      clearDragStateRef.current = () => { }
     }
   }, [clearDragState])
 
@@ -367,8 +367,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const saveBoardToFile = useCallback(() => {
     const state: SavedState = {
       objects,
-      past,
-      future,
       zoom,
       pan,
       showGrid,
@@ -383,7 +381,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     a.download = `pedalboard-${new Date().toISOString().slice(0, 10)}.json`
     a.click()
     URL.revokeObjectURL(url)
-  }, [objects, past, future, zoom, pan, showGrid, unit, connectors])
+  }, [objects, zoom, pan, showGrid, unit, connectors])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
