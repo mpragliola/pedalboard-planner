@@ -2,6 +2,30 @@
 
 All notable changes to this project are documented in this file. Entries are grouped by date (newest first).
 
+## 2026-02-01
+
+- Update project branding from "Pedalboard Planner" to "PedalboardFactory"
+- Refactor device templates to modularize brand-specific data (devices-brands/)
+- Add brand-specific board templates for improved modularity (boards-brands/)
+- Add confirmation dialogs for critical actions (new pedalboard, delete device)
+- Make pinch zoom and selection/drag mutually exclusive on touch devices
+- Enhance catalog layout: 20% wider on large screens, full-width internal elements, larger device list font
+- Style browse catalog button like GPT button (borderless)
+- Fix zoom toolbar drop shadows cropped on secondary elements
+- Update catalog z-index so it appears above app title/footer
+- Save pedalboard to file: exclude undo/redo history, round coordinates to 2 decimals
+- Refactor AppContext for improved state management and cleanup
+- Enhance ZoomControls with expandable view and measurement tool groups
+- Fix zoom toolbar overflow for drop shadows when expanded
+- Enhance DropdownsPanel and catalog component styles for responsiveness
+- Update App.css layout handling and fix double scrollbar
+- Refactor ComponentListModal: replace cancelEdit with startAdd for consecutive edits
+- Enhance LineRulerOverlay and usePolylineDraw interaction (onPointerUp, segment commitment)
+- Update font-family across components and add inheritance for form elements
+- Use FontAwesome for icons throughout the app
+- Add BoardMenu component for new/load/save pedalboard
+- Implement smooth zoom and pan transitions in Canvas
+
 ## 2026-01-31
 
 - Enhance polyline path generation with improved corner handling (variable arc radius so arc spans turn angle; no semicircle at 180°)
