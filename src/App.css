@@ -79,13 +79,17 @@
   }
 }
 
-/* Mobile portrait: wider catalog panel */
-@media (max-width: 767px) and (orientation: portrait) {
+/* Mobile and tablet portrait: wider catalog panel, leave room for board menu */
+@media (max-width: 768px) and (orientation: portrait) {
   .catalog-panel {
     left: 12px;
-    right: 12px;
+    right: 130px;
     width: auto;
     max-width: none;
+  }
+
+  .board-menu-wrap {
+    z-index: 250;
   }
 }
 

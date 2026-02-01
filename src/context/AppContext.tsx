@@ -198,15 +198,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setImageFailedIds((prev) => new Set(prev).add(id))
   }, [])
 
-  const getPlacementBesideDropdown = useCallback((): { x: number; y: number } => {
-    const dropdownEl = dropdownPanelRef.current
+  const getPlacementInVisibleViewport = useCallback((): { x: number; y: number } => {
     const canvasEl = canvasRef.current
-    if (!dropdownEl || !canvasEl) return { x: 120, y: 120 }
-    const dropdownRect = dropdownEl.getBoundingClientRect()
+    if (!canvasEl) return { x: 120, y: 120 }
     const canvasRect = canvasEl.getBoundingClientRect()
+    const catalogEl = document.querySelector('.catalog-panel')
+    const boardMenuEl = document.querySelector('.board-menu-wrap')
+    const catalogRect = catalogEl?.getBoundingClientRect()
+    const boardMenuRect = boardMenuEl?.getBoundingClientRect()
     const gap = 16
-    const canvasX = (dropdownRect.right + gap - canvasRect.left - pan.x) / zoom
-    const canvasY = (dropdownRect.top + dropdownRect.height / 2 - canvasRect.top - pan.y) / zoom
+    const margin = 24
+    let visibleLeft = canvasRect.left + margin
+    let visibleRight = canvasRect.right - margin
+    let visibleTop = canvasRect.top + margin
+    let visibleBottom = canvasRect.bottom - 40
+    if (catalogRect) {
+      visibleLeft = Math.max(visibleLeft, catalogRect.right + gap)
+    }
+    if (boardMenuRect) {
+      visibleRight = Math.min(visibleRight, boardMenuRect.left - gap)
+    }
+    if (visibleLeft >= visibleRight) visibleRight = visibleLeft + 200
+    if (visibleTop >= visibleBottom) visibleBottom = visibleTop + 200
+    const centerScreenX = (visibleLeft + visibleRight) / 2
+    const centerScreenY = (visibleTop + visibleBottom) / 2
+    const canvasX = (centerScreenX - canvasRect.left - pan.x) / zoom
+    const canvasY = (centerScreenY - canvasRect.top - pan.y) / zoom
     return { x: Math.round(canvasX), y: Math.round(canvasY) }
   }, [pan.x, pan.y, zoom, canvasRef])
 
@@ -251,13 +268,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (!id) return
       const template = BOARD_TEMPLATES.find((t) => t.id === id)
       if (!template) return
-      const { x, y } = getPlacementBesideDropdown()
+      const { x, y } = getPlacementInVisibleViewport()
       const newObj = createObjectFromBoardTemplate(template, x, y)
       setObjects((prev) => [...prev, newObj])
       setSelectedBoard('')
       setSelectedObjectIds([])
     },
-    [setSelectedBoard, setSelectedObjectIds, getPlacementBesideDropdown, setObjects]
+    [setSelectedBoard, setSelectedObjectIds, getPlacementInVisibleViewport, setObjects]
   )
 
   const handleDeviceSelect = useCallback(
@@ -266,35 +283,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (!id) return
       const template = DEVICE_TEMPLATES.find((t) => t.id === id)
       if (!template) return
-      const { x, y } = getPlacementBesideDropdown()
+      const { x, y } = getPlacementInVisibleViewport()
       const newObj = createObjectFromDeviceTemplate(template, x, y)
       setObjects((prev) => [...prev, newObj])
       setSelectedDevice('')
       setSelectedObjectIds([])
     },
-    [setSelectedDevice, setSelectedObjectIds, getPlacementBesideDropdown, setObjects]
+    [setSelectedDevice, setSelectedObjectIds, getPlacementInVisibleViewport, setObjects]
   )
 
   const handleCustomBoardCreate = useCallback(
     (params: { widthMm: number; depthMm: number; color: string; name: string }) => {
-      const { x, y } = getPlacementBesideDropdown()
+      const { x, y } = getPlacementInVisibleViewport()
       const newObj = createObjectFromCustomBoard(params, x, y)
       setObjects((prev) => [...prev, newObj])
       setSelectedBoard('')
       setSelectedObjectIds([])
     },
-    [setSelectedBoard, setSelectedObjectIds, getPlacementBesideDropdown, setObjects]
+    [setSelectedBoard, setSelectedObjectIds, getPlacementInVisibleViewport, setObjects]
   )
 
   const handleCustomDeviceCreate = useCallback(
     (params: { widthMm: number; depthMm: number; color: string; name: string }) => {
-      const { x, y } = getPlacementBesideDropdown()
+      const { x, y } = getPlacementInVisibleViewport()
       const newObj = createObjectFromCustomDevice(params, x, y)
       setObjects((prev) => [...prev, newObj])
       setSelectedDevice('')
       setSelectedObjectIds([])
     },
-    [setSelectedDevice, setSelectedObjectIds, getPlacementBesideDropdown, setObjects]
+    [setSelectedDevice, setSelectedObjectIds, getPlacementInVisibleViewport, setObjects]
   )
 
   const handleDeleteObject = useCallback((id: string) => {
