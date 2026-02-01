@@ -22,18 +22,18 @@ export function InfoModal({ open, onClose }: InfoModalProps) {
         className="info-modal"
         role="dialog"
         aria-modal="true"
-        aria-label="About Pedalboard Planner"
+        aria-label="About PedalboardFactory"
         onClick={(e) => e.stopPropagation()}
       >
         <header className="info-modal-header">
-          <h2 className="info-modal-title">About Pedalboard Planner</h2>
+          <h2 className="info-modal-title">About PedalboardFactory</h2>
           <button type="button" className="info-modal-close" onClick={onClose} aria-label="Close">
             ×
           </button>
         </header>
         <div className="info-modal-body">
           <p className="info-modal-intro">
-            Pedalboard Planner helps you plan pedalboard layouts by placing boards and pedals on a canvas.
+            PedalboardFactory helps you plan pedalboard layouts by placing boards and pedals on a canvas.
             You can arrange gear, compare sizes, and export a price-estimate prompt for an LLM.
           </p>
 

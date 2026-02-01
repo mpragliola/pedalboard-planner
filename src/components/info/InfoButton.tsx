@@ -13,8 +13,8 @@ export function InfoButton() {
         type="button"
         className="info-btn"
         onClick={() => setOpen(true)}
-        title="About Pedalboard Planner"
-        aria-label="About Pedalboard Planner"
+        title="About PedalboardFactory"
+        aria-label="About PedalboardFactory"
       >
         <FontAwesomeIcon icon={faCircleInfo} />
       </button>

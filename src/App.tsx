@@ -46,7 +46,7 @@ function AppContent() {
       <HistoryControls />
       <SelectionInfoPopup />
       <footer className="copyright">
-        Pedalboard Planner — by{' '}
+        PedalboardFactory — by{' '}
         <a href="mailto:marcopragliola@gmail.com">Marco Pragliola</a>
       </footer>
     </>
