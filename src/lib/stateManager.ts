@@ -12,16 +12,25 @@ export interface SavedState {
   connectors?: Connector[]
 }
 
+function round2(n: number): number {
+  return Math.round(n * 100) / 100
+}
+
 /** Custom elements have id starting with board-custom- or device-custom-. */
 function isCustomObject(o: CanvasObjectType): boolean {
   return o.id.startsWith('board-custom-') || o.id.startsWith('device-custom-')
 }
 
-/** Strip image from all objects; keep name only for custom elements. */
+/** Strip image from all objects; keep name only for custom elements. Round coordinates to 2 decimals. */
 function serializeObjects(objects: CanvasObjectType[]): Record<string, unknown>[] {
   return objects.map((o) => {
     const { image, name, ...rest } = o as CanvasObjectType & { image?: string | null; name?: string }
-    const out: Record<string, unknown> = { ...rest, name: o.name }
+    const out: Record<string, unknown> = {
+      ...rest,
+      x: round2(o.x),
+      y: round2(o.y),
+      name: o.name,
+    }
     if (!isCustomObject(o)) delete out.name
     return out
   })
@@ -34,7 +43,7 @@ function normalizeLoadedObjects(objects: Record<string, unknown>[]): CanvasObjec
       typeof (o as { name?: unknown }).name === 'string'
         ? (o as { name: string }).name
         : `${(o as { brand?: string }).brand ?? ''} ${(o as { model?: string }).model ?? ''}`.trim() ||
-          (typeof (o as { type?: string }).type === 'string' ? (o as { type: string }).type : 'Object')
+        (typeof (o as { type?: string }).type === 'string' ? (o as { type: string }).type : 'Object')
     return {
       ...o,
       type: typeof (o as { type?: string }).type === 'string' ? (o as { type: string }).type : '',
@@ -111,13 +120,18 @@ export class StateManager {
     }
   }
 
-  /** Serialize state for storage/file: no image, name only for custom elements. */
+  /** Serialize state for storage/file: no image, name only for custom elements. Coordinates rounded to 2 decimals. */
   static serializeState(state: SavedState): Record<string, unknown> {
+    const pan =
+      state.pan && typeof state.pan.x === 'number' && typeof state.pan.y === 'number'
+        ? { x: round2(state.pan.x), y: round2(state.pan.y) }
+        : state.pan
     return {
       ...state,
       objects: serializeObjects(state.objects),
       past: state.past?.map(serializeObjects),
       future: state.future?.map(serializeObjects),
+      pan,
     }
   }
 
