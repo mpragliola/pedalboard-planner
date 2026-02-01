@@ -12,9 +12,12 @@ function center(a: { clientX: number; clientY: number }, b: { clientX: number; c
 export interface UseCanvasZoomPanOptions {
   initialZoom?: number
   initialPan?: { x: number; y: number }
+  /** Called when pinch starts (2 fingers); use to cancel object drag so pinch and drag are mutually exclusive. */
+  onPinchStart?: () => void
 }
 
 export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
+  const onPinchStart = options?.onPinchStart
   const [zoom, setZoom] = useState<number>(options?.initialZoom ?? 1)
   const [pan, setPan] = useState<{ x: number; y: number }>(options?.initialPan ?? { x: 0, y: 0 })
   const [isPanning, setIsPanning] = useState(false)
@@ -138,6 +141,7 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
     const handleTouchStart = (e: TouchEvent) => {
       if (e.touches.length === 2) {
         e.preventDefault()
+        onPinchStart?.()
         setIsPanning(false)
         panStartRef.current = null
         const c = center(e.touches[0], e.touches[1])
@@ -172,7 +176,7 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
       el.removeEventListener('touchend', handleTouchEnd)
       el.removeEventListener('touchcancel', handleTouchEnd)
     }
-  }, [zoomToward])
+  }, [zoomToward, onPinchStart])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

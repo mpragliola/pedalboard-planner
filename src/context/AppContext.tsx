@@ -137,6 +137,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [connectors, setConnectors] = useState<Connector[]>(savedState?.connectors ?? [])
   const dropdownPanelRef = useRef<HTMLDivElement>(null)
 
+  const clearDragStateRef = useRef<() => void>(() => {})
+
   const {
     zoom,
     pan,
@@ -154,6 +156,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   } = useCanvasZoomPan({
     initialZoom: savedState?.zoom,
     initialPan: savedState?.pan,
+    onPinchStart: () => clearDragStateRef.current(),
   })
 
   const { draggingObjectId, handleObjectDragStart, clearDragState } = useObjectDrag(
@@ -162,6 +165,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     zoom,
     spaceDown
   )
+
+  useEffect(() => {
+    clearDragStateRef.current = clearDragState
+    return () => {
+      clearDragStateRef.current = () => {}
+    }
+  }, [clearDragState])
 
   const filters = useBoardDeviceFilters()
   const { setSelectedBoard, setSelectedDevice } = filters
