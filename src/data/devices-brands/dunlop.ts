@@ -1,0 +1,17 @@
+import { WDH_CRYBABY_STANDARD, WDH_MXR_STANDARD } from '../../wdh'
+import type { DeviceTemplate } from '../devices'
+
+export const DUNLOP_DEVICE_TEMPLATES: DeviceTemplate[] = [
+  { id: 'device-dunlop-crybaby-standard', type: 'pedal', brand: 'Dunlop', model: 'GCB95 Cry Baby Standard', name: 'Dunlop GCB95 Cry Baby Standard', wdh: WDH_CRYBABY_STANDARD, image: 'dunlop/cry-baby-standard.png' },
+  { id: 'device-dunlop-crybaby-mini', type: 'pedal', brand: 'Dunlop', model: 'CBM95 Cry Baby Mini Wah', name: 'Dunlop CBM95 Cry Baby Mini Wah', wdh: [80, 133, 75], image: 'dunlop/cry-baby-mini.png' },
+  { id: 'device-dunlop-crybaby-junior-white', type: 'pedal', brand: 'Dunlop', model: 'CBJ95 Cry Baby Junior Wah White', name: 'Dunlop CBJ95 Cry Baby Junior Wah White', wdh: [101, 203, 76], image: 'dunlop/cry-baby-junior-wah-special-edition-white.png' },
+  { id: 'device-dunlop-crybaby-535q-chrome', type: 'pedal', brand: 'Dunlop', model: '535Q-C Cry Baby 535Q Multi-Wah Chrome', name: 'Dunlop 535Q-C Cry Baby 535Q Multi-Wah Chrome', wdh: WDH_CRYBABY_STANDARD, image: 'dunlop/cry-baby-535q-multi-wah-chrome.png' },
+  { id: 'device-dunlop-qzone', type: 'pedal', brand: 'Dunlop', model: 'M250 Q Zone Fixed Wah', name: 'Dunlop M250 Q Zone Fixed Wah', wdh: WDH_MXR_STANDARD, image: 'dunlop/cry-baby-q-zone-fixed-wah.png' },
+  { id: 'device-dunlop-dimebag-wah', type: 'pedal', brand: 'Dunlop', model: 'DB01 Dimebag Cry Baby From Hell Wah', name: 'Dunlop DB01 Dimebag Cry Baby From Hell Wah', wdh: WDH_CRYBABY_STANDARD, image: 'dunlop/dimebag-cry-baby-wah.png' },
+  { id: 'device-dunlop-gary-clark-jr-wah', type: 'pedal', brand: 'Dunlop', model: 'GCJ95 Gary Clark Jr. Cry Baby Wah', name: 'Dunlop GCJ95 Gary Clark Jr. Cry Baby Wah', wdh: WDH_CRYBABY_STANDARD, image: 'dunlop/gary-clark-jr.-cry-baby-wah.png' },
+  { id: 'device-dunlop-geezer-butler-wah', type: 'pedal', brand: 'Dunlop', model: 'GZ95 Geezer Butler Cry Baby Wah', name: 'Dunlop GZ95 Geezer Butler Cry Baby Wah', wdh: WDH_CRYBABY_STANDARD, image: 'dunlop/geezer-butler-cry-baby-wah.png' },
+  { id: 'device-dunlop-jerry-cantrell-firefly', type: 'pedal', brand: 'Dunlop', model: 'JC95B Jerry Cantrell Firefly Cry Baby Wah', name: 'Dunlop JC95B Jerry Cantrell Firefly Cry Baby Wah', wdh: WDH_CRYBABY_STANDARD, image: 'dunlop/jerry-cantrell-firefly-cry-baby-wah-cream.png' },
+  { id: 'device-dunlop-sepultura-wah', type: 'pedal', brand: 'Dunlop', model: 'SEP95 Sepultura 40th Anniv Cry Baby Wah', name: 'Dunlop SEP95 Sepultura 40th Anniversary Cry Baby Wah', wdh: WDH_CRYBABY_STANDARD, image: 'dunlop/sepultura-40th-anniversary-cry-baby-wah.png' },
+  { id: 'device-dunlop-tom-morello-wah', type: 'pedal', brand: 'Dunlop', model: 'TBM95 Tom Morello Cry Baby Wah', name: 'Dunlop TBM95 Tom Morello Cry Baby Wah', wdh: WDH_CRYBABY_STANDARD, image: 'dunlop/tom-morello-cry-baby-wah.png' },
+  { id: 'device-dunlop-kirk-hammett-wah', type: 'pedal', brand: 'Dunlop', model: 'KH95 Kirk Hammett Collection Cry Baby Wah', name: 'Dunlop KH95 Kirk Hammett Collection Cry Baby Wah', wdh: WDH_CRYBABY_STANDARD, image: 'dunlop/kirk-hammett-collection-cry-baby-wah.png' },
+]

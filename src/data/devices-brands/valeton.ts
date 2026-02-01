@@ -1,0 +1,28 @@
+import type { DeviceTemplate } from '../devices'
+
+export const VALETON_DEVICE_TEMPLATES: DeviceTemplate[] = [
+  { id: 'device-valeton-gp100', type: 'multifx', brand: 'Valeton', model: 'GP-100', name: 'Valeton GP-100', wdh: [290, 190, 60], image: 'valeton/valeton-gp100.png' },
+  { id: 'device-valeton-gp200', type: 'multifx', brand: 'Valeton', model: 'GP-200', name: 'Valeton GP-200', wdh: [345, 220, 65], image: null },
+  { id: 'device-valeton-gp200lt', type: 'multifx', brand: 'Valeton', model: 'GP-200LT', name: 'Valeton GP-200LT', wdh: [270, 180, 60], image: null },
+  { id: 'device-valeton-gp5', type: 'multifx', brand: 'Valeton', model: 'GP-5', name: 'Valeton GP-5', wdh: [93.5, 42, 52], image: 'valeton/valeton-gp5.png' },
+  { id: 'device-valeton-dapper-acoustic-mini', type: 'multifx', brand: 'Valeton', model: 'Dapper Acoustic Mini', name: 'Valeton Dapper Acoustic Mini', wdh: [320, 65, 42], image: 'valeton/valeton dapper acoustic mini.png' },
+  { id: 'device-valeton-dapper-amp-mini', type: 'multifx', brand: 'Valeton', model: 'Dapper Amp Mini', name: 'Valeton Dapper Amp Mini', wdh: [320, 65, 42], image: 'valeton/valeton dapper amp mini.png' },
+  { id: 'device-valeton-dapper-bass-mini', type: 'multifx', brand: 'Valeton', model: 'Dapper Bass Mini', name: 'Valeton Dapper Bass Mini', wdh: [320, 65, 42], image: 'valeton/valeton dapper bass miin.png' },
+  { id: 'device-valeton-dapper-bass', type: 'multifx', brand: 'Valeton', model: 'Dapper Bass', name: 'Valeton Dapper Bass', wdh: [320, 65, 42], image: 'valeton/valeton dapper bass.png' },
+  { id: 'device-valeton-dapper-dark-mini', type: 'multifx', brand: 'Valeton', model: 'Dapper Dark Mini', name: 'Valeton Dapper Dark Mini', wdh: [320, 65, 42], image: 'valeton/valeton dapper dark mini.png' },
+  { id: 'device-valeton-dapper-dark', type: 'multifx', brand: 'Valeton', model: 'Dapper Dark', name: 'Valeton Dapper Dark', wdh: [320, 65, 42], image: 'valeton/valeton dapper dark.png' },
+  { id: 'device-valeton-dapper-indie', type: 'multifx', brand: 'Valeton', model: 'Dapper Indie', name: 'Valeton Dapper Indie', wdh: [320, 65, 42], image: 'valeton/valeton dapper indie.png' },
+  { id: 'device-valeton-dapper-looper-mini', type: 'multifx', brand: 'Valeton', model: 'Dapper Looper Mini', name: 'Valeton Dapper Looper Mini', wdh: [320, 65, 42], image: 'valeton/valeton dapper looper mini.png' },
+  { id: 'device-valeton-dapper-mdr', type: 'multifx', brand: 'Valeton', model: 'Dapper MDR', name: 'Valeton Dapper MDR', wdh: [320, 65, 42], image: 'valeton/valeton dapper mdr.png' },
+  { id: 'device-valeton-dapper-mini', type: 'multifx', brand: 'Valeton', model: 'Dapper Mini', name: 'Valeton Dapper Mini', wdh: [320, 65, 42], image: 'valeton/valeton dapper mini.png' },
+  { id: 'device-valeton-dapper', type: 'multifx', brand: 'Valeton', model: 'Dapper', name: 'Valeton Dapper', wdh: [320, 65, 42], image: 'valeton/valeton dapper.png' },
+  { id: 'device-valeton-vlp200', type: 'multifx', brand: 'Valeton', model: 'VLP-200', name: 'Valeton VLP-200', wdh: [290, 190, 60], image: 'valeton/valeton vlp 200.png' },
+  { id: 'device-valeton-vlp400', type: 'multifx', brand: 'Valeton', model: 'VLP-400', name: 'Valeton VLP-400', wdh: [345, 220, 65], image: 'valeton/valeton vlp 400.png' },
+  { id: 'device-valeton-gp100vt', type: 'multifx', brand: 'Valeton', model: 'GP-100VT', name: 'Valeton GP-100VT', wdh: [290, 190, 60], image: 'valeton/valeton-gp100vt.png' },
+  { id: 'device-valeton-gp200jr', type: 'multifx', brand: 'Valeton', model: 'GP-200JR', name: 'Valeton GP-200JR', wdh: [270, 180, 60], image: 'valeton/valeton-gp200jr.png' },
+  { id: 'device-valeton-gp200r', type: 'multifx', brand: 'Valeton', model: 'GP-200R', name: 'Valeton GP-200R', wdh: [345, 220, 62.5], image: 'valeton/valeton-gp200r.png' },
+  { id: 'device-valeton-gp200rt', type: 'multifx', brand: 'Valeton', model: 'GP-200RT', name: 'Valeton GP-200RT', wdh: [345, 220, 62.5], image: 'valeton/valeton-gp200rt.png' },
+  { id: 'device-valeton-gp200vt', type: 'multifx', brand: 'Valeton', model: 'GP-200VT', name: 'Valeton GP-200VT', wdh: [345, 220, 62.5], image: 'valeton/valeton-gp200vt.png' },
+  { id: 'device-valeton-gp200x', type: 'multifx', brand: 'Valeton', model: 'GP-200X', name: 'Valeton GP-200X', wdh: [345, 220, 62.5], image: 'valeton/valeton-gp200x.png' },
+  { id: 'device-valeton-gp50', type: 'multifx', brand: 'Valeton', model: 'GP-50', name: 'Valeton GP-50', wdh: [150, 100, 55], image: 'valeton/valeton-gp50.png' },
+]
