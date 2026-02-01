@@ -9,6 +9,7 @@ import { ZoomControls } from './components/zoom/ZoomControls'
 import { SelectionInfoPopup } from './components/selection/SelectionInfoPopup'
 import { HistoryControls } from './components/history/HistoryControls'
 import { AppProvider, useApp } from './context/AppContext'
+import { ConfirmationProvider } from './context/ConfirmationContext'
 import './App.css'
 
 export type { BoardType } from './data/boards'
@@ -56,9 +57,11 @@ function AppContent() {
 
 function App() {
   return (
-    <AppProvider>
-      <AppContent />
-    </AppProvider>
+    <ConfirmationProvider>
+      <AppProvider>
+        <AppContent />
+      </AppProvider>
+    </ConfirmationProvider>
   )
 }
 

@@ -1,6 +1,7 @@
 import { faArrowDown, faRotateRight, faTrash } from '@fortawesome/free-solid-svg-icons'
 import { useEffect, useState } from 'react'
 import type { CanvasObjectType } from '../../types'
+import { useConfirmation } from '../../context/ConfirmationContext'
 import { SelectionToolbarButton } from './SelectionToolbarButton'
 import './SelectionToolbar.css'
 
@@ -22,6 +23,7 @@ interface SelectionToolbarProps {
 }
 
 export function SelectionToolbar({ obj, onDelete, onRotate, onSendToBack }: SelectionToolbarProps) {
+  const { requestConfirmation } = useConfirmation()
   const [scaleUp, setScaleUp] = useState(
     () => typeof window !== 'undefined' && window.matchMedia(TABLET_MEDIA).matches
   )
@@ -37,10 +39,17 @@ export function SelectionToolbar({ obj, onDelete, onRotate, onSendToBack }: Sele
   const left = centerX
   const top = centerY - TOOLBAR_GAP - TOOLBAR_HEIGHT
 
-  const handleDelete = (e: React.MouseEvent) => {
+  const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation()
     e.preventDefault()
-    onDelete(obj.id)
+    const confirmed = await requestConfirmation({
+      title: 'Delete item',
+      message: `Delete "${obj.name}"? This cannot be undone.`,
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      danger: true,
+    })
+    if (confirmed) onDelete(obj.id)
   }
   const handleRotate = (e: React.MouseEvent) => {
     e.stopPropagation()

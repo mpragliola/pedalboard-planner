@@ -2,11 +2,24 @@ import { faFloppyDisk, faFolderOpen, faPlus } from '@fortawesome/free-solid-svg-
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useRef } from 'react'
 import { useApp } from '../../context/AppContext'
+import { useConfirmation } from '../../context/ConfirmationContext'
 import './BoardMenu.css'
 
 export function BoardMenu() {
   const { newBoard, loadBoardFromFile, saveBoardToFile } = useApp()
+  const { requestConfirmation } = useConfirmation()
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleNewBoard = async () => {
+    const confirmed = await requestConfirmation({
+      title: 'New pedalboard',
+      message: 'Clear the current pedalboard and start fresh? Unsaved changes will be lost.',
+      confirmLabel: 'New',
+      cancelLabel: 'Cancel',
+      danger: true,
+    })
+    if (confirmed) newBoard()
+  }
 
   const handleLoadClick = () => {
     fileInputRef.current?.click()
@@ -25,7 +38,7 @@ export function BoardMenu() {
       <button
         type="button"
         className="board-menu-btn"
-        onClick={newBoard}
+        onClick={handleNewBoard}
         title="New pedalboard (clear current)"
         aria-label="New pedalboard"
       >

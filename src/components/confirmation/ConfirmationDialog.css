@@ -1,0 +1,100 @@
+.confirmation-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60000;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: confirmation-fade-in 0.15s ease-out;
+}
+
+@keyframes confirmation-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.confirmation-dialog {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  padding: 20px 24px;
+  min-width: 320px;
+  max-width: min(400px, calc(100vw - 48px));
+  animation: confirmation-scale-in 0.2s ease-out;
+}
+
+@keyframes confirmation-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.confirmation-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #222;
+  margin: 0 0 10px;
+}
+
+.confirmation-message {
+  font-size: 0.85rem;
+  color: #444;
+  line-height: 1.45;
+  margin: 0 0 20px;
+}
+
+.confirmation-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.confirmation-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  border: none;
+}
+
+.confirmation-cancel {
+  background: rgba(0, 0, 0, 0.06);
+  color: #444;
+}
+
+.confirmation-cancel:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: #222;
+}
+
+.confirmation-confirm {
+  background: #0a84ff;
+  color: #fff;
+}
+
+.confirmation-confirm:hover {
+  background: #0070e0;
+}
+
+.confirmation-confirm.confirmation-danger {
+  background: #d32f2f;
+}
+
+.confirmation-confirm.confirmation-danger:hover {
+  background: #b71c1c;
+}
