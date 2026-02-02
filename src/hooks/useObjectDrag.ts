@@ -1,6 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import type { CanvasObjectType } from '../types'
 
+const DRAG_THRESHOLD_PX = 6
+
 export function useObjectDrag(
   objects: CanvasObjectType[],
   setObjects: (action: CanvasObjectType[] | ((prev: CanvasObjectType[]) => CanvasObjectType[]), saveToHistory?: boolean) => void,
@@ -8,6 +10,13 @@ export function useObjectDrag(
   spaceDown: boolean
 ) {
   const [draggingObjectId, setDraggingObjectId] = useState<string | null>(null)
+  const [pendingDrag, setPendingDrag] = useState<{
+    id: string
+    mouseX: number
+    mouseY: number
+    objX: number
+    objY: number
+  } | null>(null)
   const dragStartRef = useRef<{ mouseX: number; mouseY: number; objX: number; objY: number } | null>(null)
   const dragTargetIdsRef = useRef<Set<string>>(new Set())
   const hasPushedHistoryRef = useRef(false)
@@ -24,13 +33,11 @@ export function useObjectDrag(
     e.stopPropagation()
     const obj = objects.find((o) => o.id === id)
     if (!obj) return
-    dragTargetIdsRef.current = new Set([id])
-    setDraggingObjectId(id)
-    dragStartRef.current = { mouseX: e.clientX, mouseY: e.clientY, objX: obj.x, objY: obj.y }
-    hasPushedHistoryRef.current = false
+    setPendingDrag({ id, mouseX: e.clientX, mouseY: e.clientY, objX: obj.x, objY: obj.y })
   }, [objects, spaceDown])
 
   const clearDragState = useCallback(() => {
+    setPendingDrag(null)
     if (dragTargetIdsRef.current.size === 0) return
     dragTargetIdsRef.current = new Set()
     dragStartRef.current = null
@@ -57,6 +64,39 @@ export function useObjectDrag(
   )
 
   useEffect(() => {
+    if (!pendingDrag) return
+    const handlePointerMove = (e: PointerEvent) => {
+      if (!pendingDrag) return
+      const dx = e.clientX - pendingDrag.mouseX
+      const dy = e.clientY - pendingDrag.mouseY
+      const dist = Math.hypot(dx, dy)
+      if (dist < DRAG_THRESHOLD_PX) return
+      const newX = pendingDrag.objX + dx / zoom
+      const newY = pendingDrag.objY + dy / zoom
+      dragTargetIdsRef.current = new Set([pendingDrag.id])
+      dragStartRef.current = {
+        mouseX: e.clientX,
+        mouseY: e.clientY,
+        objX: newX,
+        objY: newY,
+      }
+      hasPushedHistoryRef.current = true
+      setDraggingObjectId(pendingDrag.id)
+      setPendingDrag(null)
+      handleObjectPositionUpdate(pendingDrag.id, newX, newY, true)
+    }
+    const handlePointerUp = () => setPendingDrag(null)
+    window.addEventListener('pointermove', handlePointerMove, { capture: true })
+    window.addEventListener('pointerup', handlePointerUp, { capture: true })
+    window.addEventListener('pointercancel', handlePointerUp, { capture: true })
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove, { capture: true })
+      window.removeEventListener('pointerup', handlePointerUp, { capture: true })
+      window.removeEventListener('pointercancel', handlePointerUp, { capture: true })
+    }
+  }, [pendingDrag, zoom, handleObjectPositionUpdate])
+
+  useEffect(() => {
     if (!draggingObjectId) return
     const handlePointerMove = (e: PointerEvent) => {
       const ids = getObjectsToDrag()
@@ -67,7 +107,6 @@ export function useObjectDrag(
       const newX = dragStartRef.current.objX + dx
       const newY = dragStartRef.current.objY + dy
 
-      // Push history once when movement actually starts
       const saveToHistory = !hasPushedHistoryRef.current
       if (saveToHistory) {
         hasPushedHistoryRef.current = true
