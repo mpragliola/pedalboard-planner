@@ -91,13 +91,13 @@
   }
 }
 
-/* Mobile and tablet portrait: wider catalog panel, leave room for board menu */
+/* Mobile and tablet portrait: leave room for board menu, cap width so panel isn't too wide */
 @media (max-width: 768px) and (orientation: portrait) {
   .catalog-panel {
     left: 12px;
     right: 130px;
     width: auto;
-    max-width: none;
+    max-width: min(300px, calc(100vw - 160px));
   }
 
   .board-menu-wrap {
