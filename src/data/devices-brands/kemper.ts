@@ -1,5 +1,8 @@
 import type { DeviceTemplate } from "../devices";
 
+const WDH_KEMPER_PROFILER_STAGE: [number, number, number] = [470, 260, 85]; // verified
+const WDH_KEMPER_PROFILER_PLAYER: [number, number, number] = [145, 166, 68]; // verified
+
 export const KEMPER_DEVICE_TEMPLATES: DeviceTemplate[] = [
   {
     id: "device-kemper-profiler-stage",
@@ -7,7 +10,7 @@ export const KEMPER_DEVICE_TEMPLATES: DeviceTemplate[] = [
     brand: "Kemper",
     model: "Profiler Stage",
     name: "Kemper Profiler Stage",
-    wdh: [470, 260, 85],
+    wdh: WDH_KEMPER_PROFILER_STAGE,
     image: null,
   },
   {
@@ -16,7 +19,7 @@ export const KEMPER_DEVICE_TEMPLATES: DeviceTemplate[] = [
     brand: "Kemper",
     model: "Profiler Player",
     name: "Kemper Profiler Player",
-    wdh: [311, 198, 68],
+    wdh: WDH_KEMPER_PROFILER_PLAYER,
     image: null,
   },
 ];
