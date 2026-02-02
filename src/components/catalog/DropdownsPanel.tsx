@@ -82,6 +82,8 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
   const listSize = isPhone ? 1 : 5
 
   const [catalogModalOpen, setCatalogModalOpen] = useState(false)
+  const [filtersExpanded, setFiltersExpanded] = useState(false)
+  const [customExpanded, setCustomExpanded] = useState(false)
 
   const [customBoardForm, setCustomBoardForm] = useState({
     widthMm: 400,
@@ -215,27 +217,56 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
                 </option>
               ))}
             </select>
-            <TextFilter
-              id="board-text-filter"
-              label="Search"
-              placeholder="Name, brand, model…"
-              value={boardTextFilter}
-              onChange={setBoardTextFilter}
-            />
-            <SizeFilters
-              unitLabel={unitLabel}
-              widthRange={boardWidthRange}
-              widthMin={boardWidthMin ?? ''}
-              widthMax={boardWidthMax ?? ''}
-              onWidthMinChange={handleBoardWidthMin}
-              onWidthMaxChange={handleBoardWidthMax}
-              depthRange={boardDepthRange}
-              depthMin={boardDepthMin ?? ''}
-              depthMax={boardDepthMax ?? ''}
-              onDepthMinChange={handleBoardDepthMin}
-              onDepthMaxChange={handleBoardDepthMax}
-              formatSliderValue={formatSliderValue}
-            />
+            <button
+              type="button"
+              className="collapsible-toggle"
+              onClick={() => setFiltersExpanded((e) => !e)}
+              aria-expanded={filtersExpanded}
+              aria-controls="board-filters-content"
+            >
+              <span className={`collapsible-chevron${filtersExpanded ? ' expanded' : ''}`} aria-hidden>
+                ▼
+              </span>
+              Filters
+            </button>
+            <div
+              id="board-filters-content"
+              className={`collapsible-content${filtersExpanded ? ' expanded' : ''}`}
+              aria-hidden={!filtersExpanded}
+            >
+              <div className="collapsible-inner">
+              <TextFilter
+                id="board-text-filter"
+                label="Search"
+                placeholder="Name, brand, model…"
+                value={boardTextFilter}
+                onChange={setBoardTextFilter}
+              />
+              <SizeFilters
+                unitLabel={unitLabel}
+                widthRange={boardWidthRange}
+                widthMin={boardWidthMin ?? ''}
+                widthMax={boardWidthMax ?? ''}
+                onWidthMinChange={handleBoardWidthMin}
+                onWidthMaxChange={handleBoardWidthMax}
+                depthRange={boardDepthRange}
+                depthMin={boardDepthMin ?? ''}
+                depthMax={boardDepthMax ?? ''}
+                onDepthMinChange={handleBoardDepthMin}
+                onDepthMaxChange={handleBoardDepthMax}
+                formatSliderValue={formatSliderValue}
+              />
+              <button
+                type="button"
+                className="filter-reset"
+                onClick={resetBoardFilters}
+                disabled={!hasBoardFilters}
+                title={hasBoardFilters ? 'Clear board filters' : 'No filters active'}
+              >
+                Reset filters
+              </button>
+              </div>
+            </div>
             <div className="catalog-add-row">
               <label className="dropdown-label">Add board</label>
               <button
@@ -255,17 +286,25 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
               options={filteredBoards.map((t) => ({ id: t.id, name: t.name }))}
               onAdd={onBoardSelect}
             />
-            <button
-              type="button"
-              className="filter-reset"
-              onClick={resetBoardFilters}
-              disabled={!hasBoardFilters}
-              title={hasBoardFilters ? 'Clear board filters' : 'No filters active'}
-            >
-              Reset filters
-            </button>
             <div className="custom-section">
-              <h3 className="custom-section-title">Custom board</h3>
+              <button
+                type="button"
+                className="collapsible-toggle custom-section-toggle"
+                onClick={() => setCustomExpanded((e) => !e)}
+                aria-expanded={customExpanded}
+                aria-controls="custom-board-content"
+              >
+                <span className={`collapsible-chevron${customExpanded ? ' expanded' : ''}`} aria-hidden>
+                  ▼
+                </span>
+                Custom board
+              </button>
+              <div
+                id="custom-board-content"
+                className={`collapsible-content${customExpanded ? ' expanded' : ''}`}
+                aria-hidden={!customExpanded}
+              >
+              <div className="collapsible-inner">
               <div className="custom-form-row">
                 <label htmlFor="custom-board-width" className="dropdown-label">
                   Width ({unitLabel})
@@ -341,6 +380,8 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
               >
                 Create
               </button>
+              </div>
+              </div>
             </div>
           </>
         )}
@@ -385,27 +426,56 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
                 </select>
               </div>
             </div>
-            <TextFilter
-              id="device-text-filter"
-              label="Search"
-              placeholder="Name, brand, model…"
-              value={deviceTextFilter}
-              onChange={setDeviceTextFilter}
-            />
-            <SizeFilters
-              unitLabel={unitLabel}
-              widthRange={deviceWidthRange}
-              widthMin={deviceWidthMin ?? ''}
-              widthMax={deviceWidthMax ?? ''}
-              onWidthMinChange={handleDeviceWidthMin}
-              onWidthMaxChange={handleDeviceWidthMax}
-              depthRange={deviceDepthRange}
-              depthMin={deviceDepthMin ?? ''}
-              depthMax={deviceDepthMax ?? ''}
-              onDepthMinChange={handleDeviceDepthMin}
-              onDepthMaxChange={handleDeviceDepthMax}
-              formatSliderValue={formatSliderValue}
-            />
+            <button
+              type="button"
+              className="collapsible-toggle"
+              onClick={() => setFiltersExpanded((e) => !e)}
+              aria-expanded={filtersExpanded}
+              aria-controls="device-filters-content"
+            >
+              <span className={`collapsible-chevron${filtersExpanded ? ' expanded' : ''}`} aria-hidden>
+                ▼
+              </span>
+              Filters
+            </button>
+            <div
+              id="device-filters-content"
+              className={`collapsible-content${filtersExpanded ? ' expanded' : ''}`}
+              aria-hidden={!filtersExpanded}
+            >
+              <div className="collapsible-inner">
+              <TextFilter
+                id="device-text-filter"
+                label="Search"
+                placeholder="Name, brand, model…"
+                value={deviceTextFilter}
+                onChange={setDeviceTextFilter}
+              />
+              <SizeFilters
+                unitLabel={unitLabel}
+                widthRange={deviceWidthRange}
+                widthMin={deviceWidthMin ?? ''}
+                widthMax={deviceWidthMax ?? ''}
+                onWidthMinChange={handleDeviceWidthMin}
+                onWidthMaxChange={handleDeviceWidthMax}
+                depthRange={deviceDepthRange}
+                depthMin={deviceDepthMin ?? ''}
+                depthMax={deviceDepthMax ?? ''}
+                onDepthMinChange={handleDeviceDepthMin}
+                onDepthMaxChange={handleDeviceDepthMax}
+                formatSliderValue={formatSliderValue}
+              />
+              <button
+                type="button"
+                className="filter-reset"
+                onClick={resetDeviceFilters}
+                disabled={!hasDeviceFilters}
+                title={hasDeviceFilters ? 'Clear device filters' : 'No filters active'}
+              >
+                Reset filters
+              </button>
+              </div>
+            </div>
             <div className="catalog-add-row">
               <label className="dropdown-label">Add device</label>
               <button
@@ -425,17 +495,25 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
               groups={deviceGroups}
               onAdd={onDeviceSelect}
             />
-            <button
-              type="button"
-              className="filter-reset"
-              onClick={resetDeviceFilters}
-              disabled={!hasDeviceFilters}
-              title={hasDeviceFilters ? 'Clear device filters' : 'No filters active'}
-            >
-              Reset filters
-            </button>
             <div className="custom-section">
-              <h3 className="custom-section-title">Custom device</h3>
+              <button
+                type="button"
+                className="collapsible-toggle custom-section-toggle"
+                onClick={() => setCustomExpanded((e) => !e)}
+                aria-expanded={customExpanded}
+                aria-controls="custom-device-content"
+              >
+                <span className={`collapsible-chevron${customExpanded ? ' expanded' : ''}`} aria-hidden>
+                  ▼
+                </span>
+                Custom device
+              </button>
+              <div
+                id="custom-device-content"
+                className={`collapsible-content${customExpanded ? ' expanded' : ''}`}
+                aria-hidden={!customExpanded}
+              >
+              <div className="collapsible-inner">
               <div className="custom-form-row">
                 <label htmlFor="custom-device-width" className="dropdown-label">
                   Width ({unitLabel})
@@ -511,6 +589,7 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
               >
                 Create
               </button>
+              </div>
             </div>
           </>
         )}
