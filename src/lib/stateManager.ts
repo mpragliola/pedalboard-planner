@@ -1,6 +1,7 @@
 import type { CanvasObjectType, Connector } from "../types";
 import { DEVICE_TEMPLATES } from "../data/devices";
 import { BOARD_TEMPLATES } from "../data/boards";
+import { MM_TO_PX } from "../constants";
 
 /** Shape of state persisted to storage (e.g. localStorage). */
 export interface SavedState {
@@ -16,8 +17,20 @@ export interface SavedState {
 
 /** Build a lookup map from template id to image path. */
 const templateImageMap: Map<string, string | null> = new Map();
-for (const t of DEVICE_TEMPLATES) templateImageMap.set(t.id, t.image ? `images/devices/${t.image}` : null);
-for (const t of BOARD_TEMPLATES) templateImageMap.set(t.id, t.image ? `images/boards/${t.image}` : null);
+/** Build a lookup map from template id to [width, depth, height] in px. */
+const templateWdhMap: Map<string, [number, number, number]> = new Map();
+for (const t of DEVICE_TEMPLATES) {
+  templateImageMap.set(t.id, t.image ? `images/devices/${t.image}` : null);
+  if (t.wdh && t.wdh.length === 3) {
+    templateWdhMap.set(t.id, [t.wdh[0] * MM_TO_PX, t.wdh[1] * MM_TO_PX, t.wdh[2] * MM_TO_PX]);
+  }
+}
+for (const t of BOARD_TEMPLATES) {
+  templateImageMap.set(t.id, t.image ? `images/boards/${t.image}` : null);
+  if (t.wdh && t.wdh.length === 3) {
+    templateWdhMap.set(t.id, [t.wdh[0] * MM_TO_PX, t.wdh[1] * MM_TO_PX, t.wdh[2] * MM_TO_PX]);
+  }
+}
 
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
@@ -28,22 +41,40 @@ function isCustomObject(o: CanvasObjectType): boolean {
   return o.templateId === "board-custom" || o.templateId === "device-custom";
 }
 
-/** Strip image from all objects; keep name only for custom elements. Round coordinates to 2 decimals. */
+/** Strip image from all objects; keep name only for custom elements. Omit width/depth/height when template has known dimensions (restored from template on load). Round coordinates to 2 decimals. */
 function serializeObjects(objects: CanvasObjectType[]): Record<string, unknown>[] {
   return objects.map((o) => {
-    const { image, name, ...rest } = o as CanvasObjectType & { image?: string | null; name?: string };
+    const { image, name, width, depth, height, ...rest } = o as CanvasObjectType & {
+      image?: string | null;
+      name?: string;
+      width?: number;
+      depth?: number;
+      height?: number;
+    };
     const out: Record<string, unknown> = {
       ...rest,
       x: round2(o.x),
       y: round2(o.y),
       name: o.name,
     };
-    if (!isCustomObject(o)) delete out.name;
+    const hasKnownTemplateDims = o.templateId ? templateWdhMap.has(o.templateId) : false;
+    if (isCustomObject(o)) {
+      out.width = o.width;
+      out.depth = o.depth;
+      out.height = o.height;
+    } else {
+      delete out.name;
+      if (!hasKnownTemplateDims) {
+        out.width = o.width;
+        out.depth = o.depth;
+        out.height = o.height;
+      }
+    }
     return out;
   });
 }
 
-/** Restore image from template and name (derive from brand+model if missing) when loading. */
+/** Restore image and dimensions from template when loading. Name derived from brand+model if missing. */
 function normalizeLoadedObjects(objects: Record<string, unknown>[]): CanvasObjectType[] {
   return objects.map((o) => {
     const templateId =
@@ -55,8 +86,14 @@ function normalizeLoadedObjects(objects: Record<string, unknown>[]): CanvasObjec
         ? (o as { name: string }).name
         : `${(o as { brand?: string }).brand ?? ""} ${(o as { model?: string }).model ?? ""}`.trim() ||
           (typeof (o as { type?: string }).type === "string" ? (o as { type: string }).type : "Object");
-    // Look up image from template; fall back to null for custom objects or unknown templates
     const image = templateId ? templateImageMap.get(templateId) ?? null : null;
+    const wdh = templateId ? templateWdhMap.get(templateId) : undefined;
+    const width =
+      typeof (o as { width?: number }).width === "number" ? (o as { width: number }).width : wdh ? wdh[0] : 0;
+    const depth =
+      typeof (o as { depth?: number }).depth === "number" ? (o as { depth: number }).depth : wdh ? wdh[1] : 0;
+    const height =
+      typeof (o as { height?: number }).height === "number" ? (o as { height: number }).height : wdh ? wdh[2] : 0;
     return {
       ...o,
       templateId,
@@ -65,6 +102,9 @@ function normalizeLoadedObjects(objects: Record<string, unknown>[]): CanvasObjec
       model: typeof (o as { model?: string }).model === "string" ? (o as { model: string }).model : "",
       image,
       name,
+      width,
+      depth,
+      height,
     } as CanvasObjectType;
   });
 }
@@ -155,33 +195,36 @@ export class StateManager {
     }
   }
 
-  /** Serialize state for storage/file: no image, name only for custom elements. Coordinates rounded to 2 decimals. */
+  /** Serialize state for storage/file: no image, name only for custom elements. Coordinates, pan, zoom rounded to 2 decimals. */
   static serializeState(state: SavedState): Record<string, unknown> {
     const pan =
       state.pan && typeof state.pan.x === "number" && typeof state.pan.y === "number"
         ? { x: round2(state.pan.x), y: round2(state.pan.y) }
         : state.pan;
+    const zoom = typeof state.zoom === "number" ? round2(state.zoom) : state.zoom;
     return {
       ...state,
       objects: serializeObjects(state.objects),
       past: state.past?.map(serializeObjects),
       future: state.future?.map(serializeObjects),
       pan,
+      zoom,
     };
   }
 
-  /** Validate minimal record (no image/name required for load). */
+  /** Validate minimal record. Width/depth/height optional when templateId matches a known template. */
   private static isValidObjectRecord(o: unknown): o is Record<string, unknown> {
     if (typeof o !== "object" || o === null) return false;
     const t = o as Record<string, unknown>;
+    const templateId = typeof t.templateId === "string" ? t.templateId : undefined;
+    const hasKnownTemplate = templateId ? templateWdhMap.has(templateId) : false;
+    const dimsRequired = !hasKnownTemplate;
     return (
       typeof t.id === "string" &&
       typeof t.subtype === "string" &&
       typeof t.x === "number" &&
       typeof t.y === "number" &&
-      typeof t.width === "number" &&
-      typeof t.depth === "number" &&
-      typeof t.height === "number"
+      (!dimsRequired || (typeof t.width === "number" && typeof t.depth === "number" && typeof t.height === "number"))
     );
   }
 

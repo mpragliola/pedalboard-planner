@@ -443,6 +443,30 @@ describe("StateManager.serializeState", () => {
     });
   });
 
+  describe("dimension stripping for non-custom objects", () => {
+    it("omits width, depth, height for template-based objects", () => {
+      const state: SavedState = {
+        objects: [{ ...bossDeviceObject } as SavedState["objects"][0]],
+      };
+      const ser = StateManager.serializeState(state);
+      const obj = (ser.objects as Record<string, unknown>[])[0];
+      expect(obj.width).toBeUndefined();
+      expect(obj.depth).toBeUndefined();
+      expect(obj.height).toBeUndefined();
+    });
+
+    it("preserves width, depth, height for custom objects", () => {
+      const state: SavedState = {
+        objects: [customBoardObject as SavedState["objects"][0]],
+      };
+      const ser = StateManager.serializeState(state);
+      const obj = (ser.objects as Record<string, unknown>[])[0];
+      expect(obj.width).toBe(500);
+      expect(obj.depth).toBe(300);
+      expect(obj.height).toBe(30);
+    });
+  });
+
   describe("name handling for custom vs non-custom objects", () => {
     it("preserves name for custom board objects", () => {
       const state: SavedState = {
@@ -595,5 +619,41 @@ describe("round-trip serialization", () => {
 
     // Name was stripped during serialization, then derived from brand+model
     expect(parsed.objects[0].name).toBe("Boss DS-1");
+  });
+
+  it("restores width, depth, height from template for non-custom objects on round-trip", () => {
+    const original: SavedState = {
+      objects: [{ ...bossDeviceObject, x: 0, y: 0 } as SavedState["objects"][0]],
+    };
+
+    const serialized = StateManager.serializeState(original);
+    const parsed = StateManager.parseState(JSON.stringify(serialized)) as SavedState;
+
+    // Dimensions stripped on serialize, restored from device-boss-ds-1 template (WDH_BOSS_COMPACT: 75×132×59 mm)
+    expect(parsed.objects[0].width).toBe(75);
+    expect(parsed.objects[0].depth).toBe(132);
+    expect(parsed.objects[0].height).toBe(59);
+  });
+
+  it("parses non-custom objects without width/depth/height when templateId is known", () => {
+    const raw = JSON.stringify({
+      objects: [
+        {
+          id: "1",
+          templateId: "device-boss-ds-1",
+          subtype: "device",
+          type: "pedal",
+          brand: "Boss",
+          model: "DS-1",
+          x: 10,
+          y: 20,
+        },
+      ],
+    });
+    const parsed = StateManager.parseState(raw) as SavedState;
+    expect(parsed).not.toBeNull();
+    expect(parsed!.objects[0].width).toBe(75);
+    expect(parsed!.objects[0].depth).toBe(132);
+    expect(parsed!.objects[0].height).toBe(59);
   });
 });
