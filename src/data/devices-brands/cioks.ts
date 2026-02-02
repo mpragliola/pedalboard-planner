@@ -1,76 +1,24 @@
 import type { DeviceTemplate } from "../devices";
+import { deviceId } from "../../lib/slug";
 
-export const CIOKS_DEVICE_TEMPLATES: DeviceTemplate[] = [
-  {
-    id: "device-cioks-dc7",
-    type: "power unit",
-    brand: "Cioks",
-    model: "DC7",
-    name: "Cioks DC7",
-    wdh: [160, 87, 26],
-    image: "cioks/cioks-dc7.png",
-  },
-  {
-    id: "device-cioks-dc10",
-    type: "power unit",
-    brand: "Cioks",
-    model: "DC10",
-    name: "Cioks DC10",
-    wdh: [160, 87, 26],
-    image: "cioks/cioks-dc10.png",
-  },
-  {
-    id: "device-cioks-4",
-    type: "power unit",
-    brand: "Cioks",
-    model: "4",
-    name: "Cioks 4",
-    wdh: [120, 70, 26],
-    image: "cioks/cioks-4.png",
-  },
-  {
-    id: "device-cioks-8",
-    type: "power unit",
-    brand: "Cioks",
-    model: "8",
-    name: "Cioks 8",
-    wdh: [160, 87, 26],
-    image: "cioks/cioks-8.png",
-  },
-  {
-    id: "device-cioks-sol",
-    type: "power unit",
-    brand: "Cioks",
-    model: "Sol",
-    name: "Cioks Sol",
-    wdh: [103, 89, 38],
-    image: "cioks/cioks-sol.png",
-  },
-  {
-    id: "device-cioks-ac10",
-    type: "power unit",
-    brand: "Cioks",
-    model: "AC10",
-    name: "Cioks AC10",
-    wdh: [160, 87, 26],
-    image: "cioks/cioks-ac10.png",
-  },
-  {
-    id: "device-cioks-ciokolate",
-    type: "power unit",
-    brand: "Cioks",
-    model: "Ciokolate",
-    name: "Cioks Ciokolate",
-    wdh: [160, 87, 26],
-    image: "cioks/cioks-ciokolate.png",
-  },
-  {
-    id: "device-cioks-crux",
-    type: "power unit",
-    brand: "Cioks",
-    model: "Crux",
-    name: "Cioks Crux",
-    wdh: [103, 89, 38],
-    image: "cioks/cioks-crux.png",
-  },
+const cioksDevices: Omit<DeviceTemplate, "type" | "brand" | "id" | "name">[] = [
+  { model: "DC7", wdh: [160, 87, 26], image: "cioks-dc7.png" },
+  { model: "DC10", wdh: [160, 87, 26], image: "cioks-dc10.png" },
+  { model: "4", wdh: [120, 70, 26], image: "cioks-4.png" },
+  { model: "8", wdh: [160, 87, 26], image: "cioks-8.png" },
+  { model: "Sol", wdh: [103, 89, 38], image: "cioks-sol.png" },
+  { model: "AC10", wdh: [160, 87, 26], image: "cioks-ac10.png" },
+  { model: "Ciokolate", wdh: [160, 87, 26], image: "cioks-ciokolate.png" },
+  { model: "Crux", wdh: [103, 89, 38], image: "cioks-crux.png" },
 ];
+
+export const CIOKS_DEVICE_TEMPLATES: DeviceTemplate[] = cioksDevices.map(
+  (d) => ({
+    ...d,
+    name: `Cioks ${d.model}`,
+    id: deviceId("cioks", d.model),
+    type: "power unit",
+    brand: "Cioks",
+    image: "cioks/" + d.image,
+  })
+);
