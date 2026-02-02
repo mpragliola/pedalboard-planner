@@ -5,6 +5,7 @@ import { useApp } from "../../context/AppContext";
 import { useConfirmation } from "../../context/ConfirmationContext";
 import { GptButton } from "../gpt/GptButton";
 import { InfoButton } from "../info/InfoButton";
+import { SettingsButton } from "../settings/SettingsButton";
 import "./BoardMenu.css";
 
 export function BoardMenu() {
@@ -75,6 +76,7 @@ export function BoardMenu() {
       </button>
       <GptButton />
       <InfoButton />
+      <SettingsButton />
     </div>
   );
 }

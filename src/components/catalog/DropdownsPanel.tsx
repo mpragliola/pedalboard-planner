@@ -1,7 +1,6 @@
 import { forwardRef, useState, useEffect } from "react";
 import { DEVICE_TYPE_ORDER, DEVICE_TYPE_LABEL } from "../../constants";
 import { useApp } from "../../context/AppContext";
-import { UnitSwitch } from "./UnitSwitch";
 import { CatalogModeSwitch } from "./CatalogModeSwitch";
 import { TextFilter } from "./TextFilter";
 import { CatalogList, CatalogListGrouped } from "./CatalogList";
@@ -29,7 +28,6 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
     catalogMode,
     setCatalogMode,
     unit,
-    setUnit,
     filters,
     onBoardSelect,
     onDeviceSelect,
@@ -191,7 +189,6 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
   return (
     <div ref={ref} className="floating-controls floating-dropdowns">
       <div className="catalog-switches-row">
-        <UnitSwitch value={unit} onChange={setUnit} />
         <CatalogModeSwitch value={catalogMode} onChange={setCatalogMode} />
       </div>
 
