@@ -36,6 +36,7 @@ export function CatalogList({
         value={value}
         onChange={(e) => onChange(e.currentTarget.value)}
       >
+        <option value="">—</option>
         {options.map((opt) => (
           <option key={opt.id} value={opt.id}>
             {opt.name}
@@ -83,6 +84,7 @@ export function CatalogListGrouped({
         value={value}
         onChange={(e) => onChange(e.currentTarget.value)}
       >
+        <option value="">—</option>
         {groups.map(({ label: groupLabel, options: groupOptions }) => (
           <optgroup key={groupLabel} label={groupLabel}>
             {groupOptions.map((opt) => (
