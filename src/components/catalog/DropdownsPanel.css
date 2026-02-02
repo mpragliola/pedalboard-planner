@@ -144,6 +144,62 @@
   cursor: default;
 }
 
+.collapsible-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 4px 0;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #555;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition: opacity 0.15s ease;
+}
+
+.collapsible-toggle:hover {
+  color: #333;
+}
+
+.collapsible-toggle:active {
+  opacity: 0.7;
+}
+
+.collapsible-chevron {
+  font-size: 0.6rem;
+  line-height: 1;
+  display: inline-block;
+  transition: transform 0.3s ease-in-out;
+}
+
+.collapsible-chevron.expanded {
+  transform: rotate(180deg);
+}
+
+.collapsible-content {
+  display: grid;
+  grid-template-rows: 0fr;
+  margin-top: 4px;
+  overflow: hidden;
+  transition: grid-template-rows 0.3s ease-in-out;
+}
+
+.collapsible-content.expanded {
+  grid-template-rows: 1fr;
+}
+
+.collapsible-content .collapsible-inner {
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .catalog-add-row {
   display: flex;
   align-items: center;
@@ -196,13 +252,8 @@
   gap: 6px;
 }
 
-.custom-section-title {
-  margin: 0 0 4px 0;
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: #555;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+.custom-section .collapsible-toggle {
+  margin-top: 0;
 }
 
 .custom-form-row {
@@ -226,7 +277,7 @@
   box-sizing: border-box;
 }
 
-.custom-input[type='text'] {
+.custom-input[type="text"] {
   width: 120px;
   flex: 1;
   min-width: 80px;

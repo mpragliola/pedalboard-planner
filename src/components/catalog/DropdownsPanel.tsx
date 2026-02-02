@@ -1,29 +1,27 @@
-import { forwardRef, useState, useEffect } from 'react'
-import { DEVICE_TYPE_ORDER, DEVICE_TYPE_LABEL } from '../../constants'
-import { useApp } from '../../context/AppContext'
-import { UnitSwitch } from './UnitSwitch'
-import { CatalogModeSwitch } from './CatalogModeSwitch'
-import { TextFilter } from './TextFilter'
-import { CatalogList, CatalogListGrouped } from './CatalogList'
-import { CatalogModal, type CatalogModalMode } from './CatalogModal'
-import { SizeFilters } from './SizeFilters'
-import './DropdownsPanel.css'
+import { forwardRef, useState, useEffect } from "react";
+import { DEVICE_TYPE_ORDER, DEVICE_TYPE_LABEL } from "../../constants";
+import { useApp } from "../../context/AppContext";
+import { UnitSwitch } from "./UnitSwitch";
+import { CatalogModeSwitch } from "./CatalogModeSwitch";
+import { TextFilter } from "./TextFilter";
+import { CatalogList, CatalogListGrouped } from "./CatalogList";
+import { CatalogModal, type CatalogModalMode } from "./CatalogModal";
+import { SizeFilters } from "./SizeFilters";
+import "./DropdownsPanel.css";
 
-export type { CatalogMode } from './CatalogModeSwitch'
+export type { CatalogMode } from "./CatalogModeSwitch";
 
-const PHONE_MEDIA = '(max-width: 767px)'
+const PHONE_MEDIA = "(max-width: 767px)";
 
 function useIsPhone() {
-  const [isPhone, setIsPhone] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia(PHONE_MEDIA).matches
-  )
+  const [isPhone, setIsPhone] = useState(() => typeof window !== "undefined" && window.matchMedia(PHONE_MEDIA).matches);
   useEffect(() => {
-    const m = window.matchMedia(PHONE_MEDIA)
-    const fn = () => setIsPhone(m.matches)
-    m.addEventListener('change', fn)
-    return () => m.removeEventListener('change', fn)
-  }, [])
-  return isPhone
+    const m = window.matchMedia(PHONE_MEDIA);
+    const fn = () => setIsPhone(m.matches);
+    m.addEventListener("change", fn);
+    return () => m.removeEventListener("change", fn);
+  }, []);
+  return isPhone;
 }
 
 export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel(_props, ref) {
@@ -37,7 +35,7 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
     onDeviceSelect,
     onCustomBoardCreate,
     onCustomDeviceCreate,
-  } = useApp()
+  } = useApp();
 
   const {
     boardBrandFilter,
@@ -76,30 +74,32 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
     deviceDepthRange,
     filteredDevices,
     resetDeviceFilters,
-  } = filters
+  } = filters;
 
-  const isPhone = useIsPhone()
-  const listSize = isPhone ? 1 : 5
+  const isPhone = useIsPhone();
+  const listSize = isPhone ? 1 : 5;
 
-  const [catalogModalOpen, setCatalogModalOpen] = useState(false)
+  const [catalogModalOpen, setCatalogModalOpen] = useState(false);
+  const [filtersExpanded, setFiltersExpanded] = useState(false);
+  const [customExpanded, setCustomExpanded] = useState(false);
 
   const [customBoardForm, setCustomBoardForm] = useState({
     widthMm: 400,
     depthMm: 200,
-    color: '#484852',
-    name: '',
-  })
+    color: "#484852",
+    name: "",
+  });
   const [customDeviceForm, setCustomDeviceForm] = useState({
     widthMm: 75,
     depthMm: 120,
-    color: '#484852',
-    name: '',
-  })
+    color: "#484852",
+    name: "",
+  });
 
   const openCatalogModal = (mode: CatalogModalMode) => {
-    setCatalogMode(mode)
-    setCatalogModalOpen(true)
-  }
+    setCatalogMode(mode);
+    setCatalogModalOpen(true);
+  };
 
   const hasBoardFilters = !!(
     boardBrandFilter ||
@@ -108,7 +108,7 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
     boardWidthMax ||
     boardDepthMin ||
     boardDepthMax
-  )
+  );
   const hasDeviceFilters = !!(
     deviceBrandFilter ||
     deviceTypeFilter ||
@@ -117,77 +117,76 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
     deviceWidthMax ||
     deviceDepthMin ||
     deviceDepthMax
-  )
+  );
 
-  const formatSliderValue = (mm: number) =>
-    unit === 'in' ? (mm / 25.4).toFixed(2) : String(Math.round(mm))
-  const unitLabel = unit === 'in' ? 'in' : 'mm'
+  const formatSliderValue = (mm: number) => (unit === "in" ? (mm / 25.4).toFixed(2) : String(Math.round(mm)));
+  const unitLabel = unit === "in" ? "in" : "mm";
 
   const handleBoardWidthMin = (v: string) => {
-    const isLow = v === String(boardWidthRange[0])
-    setBoardWidthMin(isLow ? '' : v)
-    const num = Number(v)
-    const maxVal = boardWidthMax ? Number(boardWidthMax) : boardWidthRange[1]
-    if (!isLow && num > maxVal) setBoardWidthMax(v)
-  }
+    const isLow = v === String(boardWidthRange[0]);
+    setBoardWidthMin(isLow ? "" : v);
+    const num = Number(v);
+    const maxVal = boardWidthMax ? Number(boardWidthMax) : boardWidthRange[1];
+    if (!isLow && num > maxVal) setBoardWidthMax(v);
+  };
   const handleBoardWidthMax = (v: string) => {
-    const isHigh = v === String(boardWidthRange[1])
-    setBoardWidthMax(isHigh ? '' : v)
-    const num = Number(v)
-    const minVal = boardWidthMin ? Number(boardWidthMin) : boardWidthRange[0]
-    if (!isHigh && num < minVal) setBoardWidthMin(v)
-  }
+    const isHigh = v === String(boardWidthRange[1]);
+    setBoardWidthMax(isHigh ? "" : v);
+    const num = Number(v);
+    const minVal = boardWidthMin ? Number(boardWidthMin) : boardWidthRange[0];
+    if (!isHigh && num < minVal) setBoardWidthMin(v);
+  };
   const handleBoardDepthMin = (v: string) => {
-    const isLow = v === String(boardDepthRange[0])
-    setBoardDepthMin(isLow ? '' : v)
-    const num = Number(v)
-    const maxVal = boardDepthMax ? Number(boardDepthMax) : boardDepthRange[1]
-    if (!isLow && num > maxVal) setBoardDepthMax(v)
-  }
+    const isLow = v === String(boardDepthRange[0]);
+    setBoardDepthMin(isLow ? "" : v);
+    const num = Number(v);
+    const maxVal = boardDepthMax ? Number(boardDepthMax) : boardDepthRange[1];
+    if (!isLow && num > maxVal) setBoardDepthMax(v);
+  };
   const handleBoardDepthMax = (v: string) => {
-    const isHigh = v === String(boardDepthRange[1])
-    setBoardDepthMax(isHigh ? '' : v)
-    const num = Number(v)
-    const minVal = boardDepthMin ? Number(boardDepthMin) : boardDepthRange[0]
-    if (!isHigh && num < minVal) setBoardDepthMin(v)
-  }
+    const isHigh = v === String(boardDepthRange[1]);
+    setBoardDepthMax(isHigh ? "" : v);
+    const num = Number(v);
+    const minVal = boardDepthMin ? Number(boardDepthMin) : boardDepthRange[0];
+    if (!isHigh && num < minVal) setBoardDepthMin(v);
+  };
   const handleDeviceWidthMin = (v: string) => {
-    const isLow = v === String(deviceWidthRange[0])
-    setDeviceWidthMin(isLow ? '' : v)
-    const num = Number(v)
-    const maxVal = deviceWidthMax ? Number(deviceWidthMax) : deviceWidthRange[1]
-    if (!isLow && num > maxVal) setDeviceWidthMax(v)
-  }
+    const isLow = v === String(deviceWidthRange[0]);
+    setDeviceWidthMin(isLow ? "" : v);
+    const num = Number(v);
+    const maxVal = deviceWidthMax ? Number(deviceWidthMax) : deviceWidthRange[1];
+    if (!isLow && num > maxVal) setDeviceWidthMax(v);
+  };
   const handleDeviceWidthMax = (v: string) => {
-    const isHigh = v === String(deviceWidthRange[1])
-    setDeviceWidthMax(isHigh ? '' : v)
-    const num = Number(v)
-    const minVal = deviceWidthMin ? Number(deviceWidthMin) : deviceWidthRange[0]
-    if (!isHigh && num < minVal) setDeviceWidthMin(v)
-  }
+    const isHigh = v === String(deviceWidthRange[1]);
+    setDeviceWidthMax(isHigh ? "" : v);
+    const num = Number(v);
+    const minVal = deviceWidthMin ? Number(deviceWidthMin) : deviceWidthRange[0];
+    if (!isHigh && num < minVal) setDeviceWidthMin(v);
+  };
   const handleDeviceDepthMin = (v: string) => {
-    const isLow = v === String(deviceDepthRange[0])
-    setDeviceDepthMin(isLow ? '' : v)
-    const num = Number(v)
-    const maxVal = deviceDepthMax ? Number(deviceDepthMax) : deviceDepthRange[1]
-    if (!isLow && num > maxVal) setDeviceDepthMax(v)
-  }
+    const isLow = v === String(deviceDepthRange[0]);
+    setDeviceDepthMin(isLow ? "" : v);
+    const num = Number(v);
+    const maxVal = deviceDepthMax ? Number(deviceDepthMax) : deviceDepthRange[1];
+    if (!isLow && num > maxVal) setDeviceDepthMax(v);
+  };
   const handleDeviceDepthMax = (v: string) => {
-    const isHigh = v === String(deviceDepthRange[1])
-    setDeviceDepthMax(isHigh ? '' : v)
-    const num = Number(v)
-    const minVal = deviceDepthMin ? Number(deviceDepthMin) : deviceDepthRange[0]
-    if (!isHigh && num < minVal) setDeviceDepthMin(v)
-  }
+    const isHigh = v === String(deviceDepthRange[1]);
+    setDeviceDepthMax(isHigh ? "" : v);
+    const num = Number(v);
+    const minVal = deviceDepthMin ? Number(deviceDepthMin) : deviceDepthRange[0];
+    if (!isHigh && num < minVal) setDeviceDepthMin(v);
+  };
 
   const deviceGroups = DEVICE_TYPE_ORDER.map((deviceType) => {
-    const templates = filteredDevices.filter((t) => t.type === deviceType)
-    if (templates.length === 0) return null
+    const templates = filteredDevices.filter((t) => t.type === deviceType);
+    if (templates.length === 0) return null;
     return {
       label: DEVICE_TYPE_LABEL[deviceType],
       options: templates.map((t) => ({ id: t.id, name: t.name, type: t.type })),
-    }
-  }).filter(Boolean) as { label: string; options: { id: string; name: string; type: string }[] }[]
+    };
+  }).filter(Boolean) as { label: string; options: { id: string; name: string; type: string }[] }[];
 
   return (
     <div ref={ref} className="floating-controls floating-dropdowns">
@@ -197,7 +196,7 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
       </div>
 
       <div className="dropdown-group catalog-content">
-        {catalogMode === 'boards' && (
+        {catalogMode === "boards" && (
           <>
             <label htmlFor="board-brand-filter" className="dropdown-label">
               Brand
@@ -215,37 +214,68 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
                 </option>
               ))}
             </select>
-            <TextFilter
-              id="board-text-filter"
-              label="Search"
-              placeholder="Name, brand, model…"
-              value={boardTextFilter}
-              onChange={setBoardTextFilter}
-            />
-            <SizeFilters
-              unitLabel={unitLabel}
-              widthRange={boardWidthRange}
-              widthMin={boardWidthMin ?? ''}
-              widthMax={boardWidthMax ?? ''}
-              onWidthMinChange={handleBoardWidthMin}
-              onWidthMaxChange={handleBoardWidthMax}
-              depthRange={boardDepthRange}
-              depthMin={boardDepthMin ?? ''}
-              depthMax={boardDepthMax ?? ''}
-              onDepthMinChange={handleBoardDepthMin}
-              onDepthMaxChange={handleBoardDepthMax}
-              formatSliderValue={formatSliderValue}
-            />
+            <button
+              type="button"
+              className="collapsible-toggle"
+              onClick={() => setFiltersExpanded((e) => !e)}
+              aria-expanded={filtersExpanded}
+              aria-controls="board-filters-content"
+            >
+              <span className={`collapsible-chevron${filtersExpanded ? " expanded" : ""}`} aria-hidden>
+                ▼
+              </span>
+              Filters
+            </button>
+            <div
+              id="board-filters-content"
+              className={`collapsible-content${filtersExpanded ? " expanded" : ""}`}
+              aria-hidden={!filtersExpanded}
+            >
+              <div className="collapsible-inner">
+                <TextFilter
+                  id="board-text-filter"
+                  label="Search"
+                  placeholder="Name, brand, model…"
+                  value={boardTextFilter}
+                  onChange={setBoardTextFilter}
+                />
+                <SizeFilters
+                  unitLabel={unitLabel}
+                  widthRange={boardWidthRange}
+                  widthMin={boardWidthMin ?? ""}
+                  widthMax={boardWidthMax ?? ""}
+                  onWidthMinChange={handleBoardWidthMin}
+                  onWidthMaxChange={handleBoardWidthMax}
+                  depthRange={boardDepthRange}
+                  depthMin={boardDepthMin ?? ""}
+                  depthMax={boardDepthMax ?? ""}
+                  onDepthMinChange={handleBoardDepthMin}
+                  onDepthMaxChange={handleBoardDepthMax}
+                  formatSliderValue={formatSliderValue}
+                />
+                <button
+                  type="button"
+                  className="filter-reset"
+                  onClick={resetBoardFilters}
+                  disabled={!hasBoardFilters}
+                  title={hasBoardFilters ? "Clear board filters" : "No filters active"}
+                >
+                  Reset filters
+                </button>
+              </div>
+            </div>
             <div className="catalog-add-row">
               <label className="dropdown-label">Add board</label>
               <button
                 type="button"
-                className={`catalog-browse-btn${catalogModalOpen && catalogMode === 'boards' ? ' open' : ''}`}
-                onClick={() => openCatalogModal('boards')}
+                className={`catalog-browse-btn${catalogModalOpen && catalogMode === "boards" ? " open" : ""}`}
+                onClick={() => openCatalogModal("boards")}
                 title="Browse boards with images"
                 aria-label="Browse boards with images"
               >
-                <span className="catalog-browse-icon" aria-hidden>▦</span>
+                <span className="catalog-browse-icon" aria-hidden>
+                  ▦
+                </span>
               </button>
             </div>
             <CatalogList
@@ -255,97 +285,111 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
               options={filteredBoards.map((t) => ({ id: t.id, name: t.name }))}
               onAdd={onBoardSelect}
             />
-            <button
-              type="button"
-              className="filter-reset"
-              onClick={resetBoardFilters}
-              disabled={!hasBoardFilters}
-              title={hasBoardFilters ? 'Clear board filters' : 'No filters active'}
-            >
-              Reset filters
-            </button>
             <div className="custom-section">
-              <h3 className="custom-section-title">Custom board</h3>
-              <div className="custom-form-row">
-                <label htmlFor="custom-board-width" className="dropdown-label">
-                  Width ({unitLabel})
-                </label>
-                <input
-                  id="custom-board-width"
-                  type="number"
-                  min={1}
-                  max={2000}
-                  className="custom-input"
-                  value={unit === 'in' ? (customBoardForm.widthMm / 25.4).toFixed(2) : String(customBoardForm.widthMm)}
-                  onChange={(e) => {
-                    const v = e.target.value
-                    const num = unit === 'in' ? Math.round(parseFloat(v || '0') * 25.4) : parseInt(v || '0', 10)
-                    if (!Number.isNaN(num)) setCustomBoardForm((f) => ({ ...f, widthMm: Math.max(1, num) }))
-                  }}
-                />
-              </div>
-              <div className="custom-form-row">
-                <label htmlFor="custom-board-depth" className="dropdown-label">
-                  Depth ({unitLabel})
-                </label>
-                <input
-                  id="custom-board-depth"
-                  type="number"
-                  min={1}
-                  max={2000}
-                  className="custom-input"
-                  value={unit === 'in' ? (customBoardForm.depthMm / 25.4).toFixed(2) : String(customBoardForm.depthMm)}
-                  onChange={(e) => {
-                    const v = e.target.value
-                    const num = unit === 'in' ? Math.round(parseFloat(v || '0') * 25.4) : parseInt(v || '0', 10)
-                    if (!Number.isNaN(num)) setCustomBoardForm((f) => ({ ...f, depthMm: Math.max(1, num) }))
-                  }}
-                />
-              </div>
-              <div className="custom-form-row">
-                <label htmlFor="custom-board-color" className="dropdown-label">
-                  Color
-                </label>
-                <input
-                  id="custom-board-color"
-                  type="color"
-                  className="custom-color-input"
-                  value={customBoardForm.color}
-                  onChange={(e) => setCustomBoardForm((f) => ({ ...f, color: e.target.value }))}
-                />
-              </div>
-              <div className="custom-form-row">
-                <label htmlFor="custom-board-name" className="dropdown-label">
-                  Name
-                </label>
-                <input
-                  id="custom-board-name"
-                  type="text"
-                  className="custom-input"
-                  placeholder="Custom board"
-                  value={customBoardForm.name}
-                  onChange={(e) => setCustomBoardForm((f) => ({ ...f, name: e.target.value }))}
-                />
-              </div>
               <button
                 type="button"
-                className="custom-create-btn"
-                onClick={() => {
-                  onCustomBoardCreate({
-                    widthMm: customBoardForm.widthMm,
-                    depthMm: customBoardForm.depthMm,
-                    color: customBoardForm.color,
-                    name: customBoardForm.name,
-                  })
-                }}
+                className="collapsible-toggle custom-section-toggle"
+                onClick={() => setCustomExpanded((e) => !e)}
+                aria-expanded={customExpanded}
+                aria-controls="custom-board-content"
               >
-                Create
+                <span className={`collapsible-chevron${customExpanded ? " expanded" : ""}`} aria-hidden>
+                  ▼
+                </span>
+                Custom board
               </button>
+              <div
+                id="custom-board-content"
+                className={`collapsible-content${customExpanded ? " expanded" : ""}`}
+                aria-hidden={!customExpanded}
+              >
+                <div className="collapsible-inner">
+                  <div className="custom-form-row">
+                    <label htmlFor="custom-board-width" className="dropdown-label">
+                      Width ({unitLabel})
+                    </label>
+                    <input
+                      id="custom-board-width"
+                      type="number"
+                      min={1}
+                      max={2000}
+                      className="custom-input"
+                      value={
+                        unit === "in" ? (customBoardForm.widthMm / 25.4).toFixed(2) : String(customBoardForm.widthMm)
+                      }
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        const num = unit === "in" ? Math.round(parseFloat(v || "0") * 25.4) : parseInt(v || "0", 10);
+                        if (!Number.isNaN(num)) setCustomBoardForm((f) => ({ ...f, widthMm: Math.max(1, num) }));
+                      }}
+                    />
+                  </div>
+                  <div className="custom-form-row">
+                    <label htmlFor="custom-board-depth" className="dropdown-label">
+                      Depth ({unitLabel})
+                    </label>
+                    <input
+                      id="custom-board-depth"
+                      type="number"
+                      min={1}
+                      max={2000}
+                      className="custom-input"
+                      value={
+                        unit === "in" ? (customBoardForm.depthMm / 25.4).toFixed(2) : String(customBoardForm.depthMm)
+                      }
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        const num = unit === "in" ? Math.round(parseFloat(v || "0") * 25.4) : parseInt(v || "0", 10);
+                        if (!Number.isNaN(num)) setCustomBoardForm((f) => ({ ...f, depthMm: Math.max(1, num) }));
+                      }}
+                    />
+                  </div>
+                  <div className="custom-form-row">
+                    <label htmlFor="custom-board-color" className="dropdown-label">
+                      Color
+                    </label>
+                    <input
+                      id="custom-board-color"
+                      type="color"
+                      className="custom-color-input"
+                      value={customBoardForm.color}
+                      onChange={(e) => setCustomBoardForm((f) => ({ ...f, color: e.target.value }))}
+                    />
+                  </div>
+                  <div className="custom-form-row">
+                    <label htmlFor="custom-board-name" className="dropdown-label">
+                      Name
+                    </label>
+                    <input
+                      id="custom-board-name"
+                      type="text"
+                      className="custom-input"
+                      placeholder="Custom board"
+                      value={customBoardForm.name}
+                      onChange={(e) => setCustomBoardForm((f) => ({ ...f, name: e.target.value }))}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className="custom-create-btn"
+                    onClick={() => {
+                      onCustomBoardCreate({
+                        widthMm: customBoardForm.widthMm,
+                        depthMm: customBoardForm.depthMm,
+                        color: customBoardForm.color,
+                        name: customBoardForm.name,
+                      });
+                    }}
+                  >
+                    Create
+                  </button>
+                </div>
+              </div>
             </div>
           </>
         )}
 
-        {catalogMode === 'devices' && (
+        {catalogMode === "devices" && (
           <>
             <div className="device-type-brand-row">
               <div className="device-filter-field">
@@ -385,37 +429,68 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
                 </select>
               </div>
             </div>
-            <TextFilter
-              id="device-text-filter"
-              label="Search"
-              placeholder="Name, brand, model…"
-              value={deviceTextFilter}
-              onChange={setDeviceTextFilter}
-            />
-            <SizeFilters
-              unitLabel={unitLabel}
-              widthRange={deviceWidthRange}
-              widthMin={deviceWidthMin ?? ''}
-              widthMax={deviceWidthMax ?? ''}
-              onWidthMinChange={handleDeviceWidthMin}
-              onWidthMaxChange={handleDeviceWidthMax}
-              depthRange={deviceDepthRange}
-              depthMin={deviceDepthMin ?? ''}
-              depthMax={deviceDepthMax ?? ''}
-              onDepthMinChange={handleDeviceDepthMin}
-              onDepthMaxChange={handleDeviceDepthMax}
-              formatSliderValue={formatSliderValue}
-            />
+            <button
+              type="button"
+              className="collapsible-toggle"
+              onClick={() => setFiltersExpanded((e) => !e)}
+              aria-expanded={filtersExpanded}
+              aria-controls="device-filters-content"
+            >
+              <span className={`collapsible-chevron${filtersExpanded ? " expanded" : ""}`} aria-hidden>
+                ▼
+              </span>
+              Filters
+            </button>
+            <div
+              id="device-filters-content"
+              className={`collapsible-content${filtersExpanded ? " expanded" : ""}`}
+              aria-hidden={!filtersExpanded}
+            >
+              <div className="collapsible-inner">
+                <TextFilter
+                  id="device-text-filter"
+                  label="Search"
+                  placeholder="Name, brand, model…"
+                  value={deviceTextFilter}
+                  onChange={setDeviceTextFilter}
+                />
+                <SizeFilters
+                  unitLabel={unitLabel}
+                  widthRange={deviceWidthRange}
+                  widthMin={deviceWidthMin ?? ""}
+                  widthMax={deviceWidthMax ?? ""}
+                  onWidthMinChange={handleDeviceWidthMin}
+                  onWidthMaxChange={handleDeviceWidthMax}
+                  depthRange={deviceDepthRange}
+                  depthMin={deviceDepthMin ?? ""}
+                  depthMax={deviceDepthMax ?? ""}
+                  onDepthMinChange={handleDeviceDepthMin}
+                  onDepthMaxChange={handleDeviceDepthMax}
+                  formatSliderValue={formatSliderValue}
+                />
+                <button
+                  type="button"
+                  className="filter-reset"
+                  onClick={resetDeviceFilters}
+                  disabled={!hasDeviceFilters}
+                  title={hasDeviceFilters ? "Clear device filters" : "No filters active"}
+                >
+                  Reset filters
+                </button>
+              </div>
+            </div>
             <div className="catalog-add-row">
               <label className="dropdown-label">Add device</label>
               <button
                 type="button"
-                className={`catalog-browse-btn${catalogModalOpen && catalogMode === 'devices' ? ' open' : ''}`}
-                onClick={() => openCatalogModal('devices')}
+                className={`catalog-browse-btn${catalogModalOpen && catalogMode === "devices" ? " open" : ""}`}
+                onClick={() => openCatalogModal("devices")}
                 title="Browse devices with images"
                 aria-label="Browse devices with images"
               >
-                <span className="catalog-browse-icon" aria-hidden>▦</span>
+                <span className="catalog-browse-icon" aria-hidden>
+                  ▦
+                </span>
               </button>
             </div>
             <CatalogListGrouped
@@ -425,100 +500,111 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
               groups={deviceGroups}
               onAdd={onDeviceSelect}
             />
-            <button
-              type="button"
-              className="filter-reset"
-              onClick={resetDeviceFilters}
-              disabled={!hasDeviceFilters}
-              title={hasDeviceFilters ? 'Clear device filters' : 'No filters active'}
-            >
-              Reset filters
-            </button>
             <div className="custom-section">
-              <h3 className="custom-section-title">Custom device</h3>
-              <div className="custom-form-row">
-                <label htmlFor="custom-device-width" className="dropdown-label">
-                  Width ({unitLabel})
-                </label>
-                <input
-                  id="custom-device-width"
-                  type="number"
-                  min={1}
-                  max={2000}
-                  className="custom-input"
-                  value={unit === 'in' ? (customDeviceForm.widthMm / 25.4).toFixed(2) : String(customDeviceForm.widthMm)}
-                  onChange={(e) => {
-                    const v = e.target.value
-                    const num = unit === 'in' ? Math.round(parseFloat(v || '0') * 25.4) : parseInt(v || '0', 10)
-                    if (!Number.isNaN(num)) setCustomDeviceForm((f) => ({ ...f, widthMm: Math.max(1, num) }))
-                  }}
-                />
-              </div>
-              <div className="custom-form-row">
-                <label htmlFor="custom-device-depth" className="dropdown-label">
-                  Depth ({unitLabel})
-                </label>
-                <input
-                  id="custom-device-depth"
-                  type="number"
-                  min={1}
-                  max={2000}
-                  className="custom-input"
-                  value={unit === 'in' ? (customDeviceForm.depthMm / 25.4).toFixed(2) : String(customDeviceForm.depthMm)}
-                  onChange={(e) => {
-                    const v = e.target.value
-                    const num = unit === 'in' ? Math.round(parseFloat(v || '0') * 25.4) : parseInt(v || '0', 10)
-                    if (!Number.isNaN(num)) setCustomDeviceForm((f) => ({ ...f, depthMm: Math.max(1, num) }))
-                  }}
-                />
-              </div>
-              <div className="custom-form-row">
-                <label htmlFor="custom-device-color" className="dropdown-label">
-                  Color
-                </label>
-                <input
-                  id="custom-device-color"
-                  type="color"
-                  className="custom-color-input"
-                  value={customDeviceForm.color}
-                  onChange={(e) => setCustomDeviceForm((f) => ({ ...f, color: e.target.value }))}
-                />
-              </div>
-              <div className="custom-form-row">
-                <label htmlFor="custom-device-name" className="dropdown-label">
-                  Name
-                </label>
-                <input
-                  id="custom-device-name"
-                  type="text"
-                  className="custom-input"
-                  placeholder="Custom device"
-                  value={customDeviceForm.name}
-                  onChange={(e) => setCustomDeviceForm((f) => ({ ...f, name: e.target.value }))}
-                />
-              </div>
               <button
                 type="button"
-                className="custom-create-btn"
-                onClick={() => {
-                  onCustomDeviceCreate({
-                    widthMm: customDeviceForm.widthMm,
-                    depthMm: customDeviceForm.depthMm,
-                    color: customDeviceForm.color,
-                    name: customDeviceForm.name,
-                  })
-                }}
+                className="collapsible-toggle custom-section-toggle"
+                onClick={() => setCustomExpanded((e) => !e)}
+                aria-expanded={customExpanded}
+                aria-controls="custom-device-content"
               >
-                Create
+                <span className={`collapsible-chevron${customExpanded ? " expanded" : ""}`} aria-hidden>
+                  ▼
+                </span>
+                Custom device
               </button>
+              <div
+                id="custom-device-content"
+                className={`collapsible-content${customExpanded ? " expanded" : ""}`}
+                aria-hidden={!customExpanded}
+              >
+                <div className="collapsible-inner">
+                  <div className="custom-form-row">
+                    <label htmlFor="custom-device-width" className="dropdown-label">
+                      Width ({unitLabel})
+                    </label>
+                    <input
+                      id="custom-device-width"
+                      type="number"
+                      min={1}
+                      max={2000}
+                      className="custom-input"
+                      value={
+                        unit === "in" ? (customDeviceForm.widthMm / 25.4).toFixed(2) : String(customDeviceForm.widthMm)
+                      }
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        const num = unit === "in" ? Math.round(parseFloat(v || "0") * 25.4) : parseInt(v || "0", 10);
+                        if (!Number.isNaN(num)) setCustomDeviceForm((f) => ({ ...f, widthMm: Math.max(1, num) }));
+                      }}
+                    />
+                  </div>
+                  <div className="custom-form-row">
+                    <label htmlFor="custom-device-depth" className="dropdown-label">
+                      Depth ({unitLabel})
+                    </label>
+                    <input
+                      id="custom-device-depth"
+                      type="number"
+                      min={1}
+                      max={2000}
+                      className="custom-input"
+                      value={
+                        unit === "in" ? (customDeviceForm.depthMm / 25.4).toFixed(2) : String(customDeviceForm.depthMm)
+                      }
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        const num = unit === "in" ? Math.round(parseFloat(v || "0") * 25.4) : parseInt(v || "0", 10);
+                        if (!Number.isNaN(num)) setCustomDeviceForm((f) => ({ ...f, depthMm: Math.max(1, num) }));
+                      }}
+                    />
+                  </div>
+                  <div className="custom-form-row">
+                    <label htmlFor="custom-device-color" className="dropdown-label">
+                      Color
+                    </label>
+                    <input
+                      id="custom-device-color"
+                      type="color"
+                      className="custom-color-input"
+                      value={customDeviceForm.color}
+                      onChange={(e) => setCustomDeviceForm((f) => ({ ...f, color: e.target.value }))}
+                    />
+                  </div>
+                  <div className="custom-form-row">
+                    <label htmlFor="custom-device-name" className="dropdown-label">
+                      Name
+                    </label>
+                    <input
+                      id="custom-device-name"
+                      type="text"
+                      className="custom-input"
+                      placeholder="Custom device"
+                      value={customDeviceForm.name}
+                      onChange={(e) => setCustomDeviceForm((f) => ({ ...f, name: e.target.value }))}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className="custom-create-btn"
+                    onClick={() => {
+                      onCustomDeviceCreate({
+                        widthMm: customDeviceForm.widthMm,
+                        depthMm: customDeviceForm.depthMm,
+                        color: customDeviceForm.color,
+                        name: customDeviceForm.name,
+                      });
+                    }}
+                  >
+                    Create
+                  </button>
+                </div>
+              </div>
             </div>
           </>
         )}
       </div>
-      <CatalogModal
-        open={catalogModalOpen}
-        onClose={() => setCatalogModalOpen(false)}
-      />
+      <CatalogModal open={catalogModalOpen} onClose={() => setCatalogModalOpen(false)} />
     </div>
-  )
-})
+  );
+});
