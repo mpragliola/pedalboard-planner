@@ -3,26 +3,17 @@ import type { CanvasObjectType } from '../types'
 import type { BoardTemplate } from '../data/boards'
 import type { DeviceTemplate } from '../data/devices'
 
-/** Next counter per template id so IDs are templateId-1, templateId-2, … */
-const nextCounterByTemplate = new Map<string, number>()
-
-function getNextCounter(templateId: string): number {
-  const n = (nextCounterByTemplate.get(templateId) ?? 1)
-  nextCounterByTemplate.set(templateId, n + 1)
-  return n
-}
+/** Global counter for unique object IDs. */
+let nextObjectId = 1
 
 /** Call when restoring state so new objects never get IDs that collide with existing ones. */
 export function initNextObjectIdFromObjects(objects: CanvasObjectType[]): void {
+  let maxId = 0
   for (const o of objects) {
-    const m = o.id.match(/-(\d+)$/)
-    if (m) {
-      const base = o.id.slice(0, -m[0].length)
-      const n = parseInt(m[1], 10) + 1
-      const prev = nextCounterByTemplate.get(base) ?? 1
-      nextCounterByTemplate.set(base, Math.max(prev, n))
-    }
+    const n = parseInt(o.id, 10)
+    if (!isNaN(n) && n > maxId) maxId = n
   }
+  nextObjectId = maxId + 1
 }
 
 export function createObjectFromBoardTemplate(
@@ -31,7 +22,8 @@ export function createObjectFromBoardTemplate(
   y: number
 ): CanvasObjectType {
   return {
-    id: `${template.id}-${getNextCounter(template.id)}`,
+    id: String(nextObjectId++),
+    templateId: template.id,
     subtype: 'board',
     type: template.type,
     brand: template.brand,
@@ -54,7 +46,8 @@ export function createObjectFromDeviceTemplate(
   y: number
 ): CanvasObjectType {
   return {
-    id: `${template.id}-${getNextCounter(template.id)}`,
+    id: String(nextObjectId++),
+    templateId: template.id,
     subtype: 'device',
     type: template.type,
     brand: template.brand,
@@ -67,7 +60,7 @@ export function createObjectFromDeviceTemplate(
     height: template.wdh[2] * MM_TO_PX,
     rotation: 0,
     ...(template.image ? {} : { color: template.color ?? DEFAULT_OBJECT_COLOR }),
-    image: template.image ? `${BASE_URL}images/devices/${template.image}` : null,
+    image: template.image ? `images/devices/${template.image}` : null,
   }
 }
 

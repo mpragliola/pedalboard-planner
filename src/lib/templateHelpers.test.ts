@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import {
   createObjectFromBoardTemplate,
   createObjectFromDeviceTemplate,
@@ -40,14 +40,17 @@ describe("createObjectFromBoardTemplate", () => {
     expect(obj.width).toBe(590);
     expect(obj.depth).toBe(150);
     expect(obj.height).toBe(25);
-    expect(obj.id).toMatch(/^board-aclam-s1-\d+$/);
+    // ID is now numeric
+    expect(obj.id).toMatch(/^\d+$/);
+    // templateId holds the template reference
+    expect(obj.templateId).toBe("board-aclam-s1");
   });
 
-  it("increments id for same template", () => {
+  it("increments id for each object", () => {
     const a = createObjectFromBoardTemplate(boardTemplate, 0, 0);
     const b = createObjectFromBoardTemplate(boardTemplate, 0, 0);
-    const numA = parseInt(a.id.split("-").pop()!, 10);
-    const numB = parseInt(b.id.split("-").pop()!, 10);
+    const numA = parseInt(a.id, 10);
+    const numB = parseInt(b.id, 10);
     expect(numB).toBe(numA + 1);
   });
 });
@@ -58,15 +61,20 @@ describe("createObjectFromDeviceTemplate", () => {
     expect(obj.subtype).toBe("device");
     expect(obj.x).toBe(200);
     expect(obj.y).toBe(300);
-    expect(obj.id).toMatch(/^device-boss-dc2w-\d+$/);
+    // ID is now numeric
+    expect(obj.id).toMatch(/^\d+$/);
+    // templateId holds the template reference
+    expect(obj.templateId).toBe("device-boss-dc2w");
   });
 });
 
 describe("initNextObjectIdFromObjects", () => {
   it("sets counter so next id does not collide", () => {
+    // Simulate loaded objects with numeric IDs
     initNextObjectIdFromObjects([
       {
-        id: "board-aclam-s1-3",
+        id: "10",
+        templateId: "board-aclam-s1",
         subtype: "board",
         type: "",
         brand: "",
@@ -81,7 +89,8 @@ describe("initNextObjectIdFromObjects", () => {
       },
     ] as never);
     const obj = createObjectFromBoardTemplate(boardTemplate, 0, 0);
-    expect(obj.id).toBe("board-aclam-s1-4");
+    // Next ID should be 11
+    expect(parseInt(obj.id, 10)).toBe(11);
   });
 });
 
@@ -95,7 +104,10 @@ describe("createObjectFromCustomBoard", () => {
     expect(obj.width).toBe(400);
     expect(obj.depth).toBe(200);
     expect(obj.name).toBe("My board");
-    expect(obj.id).toMatch(/^board-custom-\d+$/);
+    // ID is numeric
+    expect(obj.id).toMatch(/^\d+$/);
+    // Custom boards have templateId "board-custom"
+    expect(obj.templateId).toBe("board-custom");
   });
 
   it("uses default name when empty", () => {
@@ -119,7 +131,10 @@ describe("createObjectFromCustomDevice", () => {
     expect(obj.width).toBe(70);
     expect(obj.depth).toBe(120);
     expect(obj.name).toBe("My pedal");
-    expect(obj.id).toMatch(/^device-custom-\d+$/);
+    // ID is numeric
+    expect(obj.id).toMatch(/^\d+$/);
+    // Custom devices have templateId "device-custom"
+    expect(obj.templateId).toBe("device-custom");
   });
 
   it("uses default name when empty", () => {

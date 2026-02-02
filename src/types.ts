@@ -5,7 +5,10 @@ export type ObjectSubtype = 'board' | 'device'
 
 /** Rotation in degrees: 0, 90, 180, 270. Affects footprint (90/270 swap width/depth). */
 export interface CanvasObjectType {
+  /** Unique numeric instance ID (e.g. "1", "2", "3"). */
   id: string
+  /** Template ID for looking up image (e.g. "device-boss-ds-1", "board-aclam-xs1"). */
+  templateId?: string
   subtype: ObjectSubtype
   type: string
   brand: string
