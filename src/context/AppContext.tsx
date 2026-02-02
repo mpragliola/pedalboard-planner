@@ -74,6 +74,28 @@ interface AppContextValue {
   filters: ReturnType<typeof useBoardDeviceFilters>;
   onBoardSelect: (templateId: string) => void;
   onDeviceSelect: (templateId: string) => void;
+  onBoardSelectAt: (templateId: string, canvasX: number, canvasY: number) => void;
+  onDeviceSelectAt: (templateId: string, canvasX: number, canvasY: number) => void;
+  /** Long-press drag from catalog: state and position for ghost; startCatalogDrag starts it, pointerup ends it. */
+  catalogDrag: {
+    templateId: string;
+    mode: "boards" | "devices";
+    imageUrl: string | null;
+    widthMm: number;
+    depthMm: number;
+  } | null;
+  catalogDragPosition: { x: number; y: number };
+  startCatalogDrag: (
+    templateId: string,
+    mode: "boards" | "devices",
+    imageUrl: string | null,
+    clientX: number,
+    clientY: number,
+    widthMm: number,
+    depthMm: number
+  ) => void;
+  /** Returns true if the last interaction was a catalog drag end (so click handlers should not add). */
+  shouldIgnoreCatalogClick: () => boolean;
   onCustomBoardCreate: (params: { widthMm: number; depthMm: number; color: string; name: string }) => void;
   onCustomDeviceCreate: (params: { widthMm: number; depthMm: number; color: string; name: string }) => void;
   // Floating UI visibility
@@ -275,6 +297,95 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [setSelectedDevice, setSelectedObjectIds, getPlacementInVisibleViewport, setObjects]
   );
 
+  const handleBoardSelectAt = useCallback(
+    (templateId: string, canvasX: number, canvasY: number) => {
+      const id = templateId?.trim();
+      if (!id) return;
+      const template = BOARD_TEMPLATES.find((t) => t.id === id);
+      if (!template) return;
+      const w = template.wdh[0] * MM_TO_PX;
+      const d = template.wdh[1] * MM_TO_PX;
+      const newObj = createObjectFromBoardTemplate(template, canvasX - w / 2, canvasY - d / 2);
+      setObjects((prev) => [...prev, newObj]);
+      setSelectedBoard("");
+      setSelectedObjectIds([]);
+    },
+    [setSelectedBoard, setSelectedObjectIds, setObjects]
+  );
+
+  const handleDeviceSelectAt = useCallback(
+    (templateId: string, canvasX: number, canvasY: number) => {
+      const id = templateId?.trim();
+      if (!id) return;
+      const template = DEVICE_TEMPLATES.find((t) => t.id === id);
+      if (!template) return;
+      const w = template.wdh[0] * MM_TO_PX;
+      const d = template.wdh[1] * MM_TO_PX;
+      const newObj = createObjectFromDeviceTemplate(template, canvasX - w / 2, canvasY - d / 2);
+      setObjects((prev) => [...prev, newObj]);
+      setSelectedDevice("");
+      setSelectedObjectIds([]);
+    },
+    [setSelectedDevice, setSelectedObjectIds, setObjects]
+  );
+
+  const [catalogDrag, setCatalogDrag] = useState<{
+    templateId: string;
+    mode: "boards" | "devices";
+    imageUrl: string | null;
+    widthMm: number;
+    depthMm: number;
+  } | null>(null);
+  const [catalogDragPosition, setCatalogDragPosition] = useState({ x: 0, y: 0 });
+  const ignoreNextCatalogClickRef = useRef(false);
+
+  const startCatalogDrag = useCallback(
+    (
+      templateId: string,
+      mode: "boards" | "devices",
+      imageUrl: string | null,
+      clientX: number,
+      clientY: number,
+      widthMm: number,
+      depthMm: number
+    ) => {
+      setCatalogDrag({ templateId, mode, imageUrl, widthMm, depthMm });
+      setCatalogDragPosition({ x: clientX, y: clientY });
+    },
+    []
+  );
+
+  const shouldIgnoreCatalogClick = useCallback(() => {
+    const v = ignoreNextCatalogClickRef.current;
+    ignoreNextCatalogClickRef.current = false;
+    return v;
+  }, []);
+
+  useEffect(() => {
+    if (!catalogDrag) return;
+    const onMove = (e: PointerEvent) => setCatalogDragPosition({ x: e.clientX, y: e.clientY });
+    const onUp = (e: PointerEvent) => {
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      if (canvasRef.current && el && canvasRef.current.contains(el)) {
+        const r = canvasRef.current.getBoundingClientRect();
+        const x = (e.clientX - r.left - pan.x) / zoom;
+        const y = (e.clientY - r.top - pan.y) / zoom;
+        if (catalogDrag.mode === "boards") handleBoardSelectAt(catalogDrag.templateId, x, y);
+        else handleDeviceSelectAt(catalogDrag.templateId, x, y);
+      }
+      ignoreNextCatalogClickRef.current = true;
+      setCatalogDrag(null);
+    };
+    window.addEventListener("pointermove", onMove, { capture: true });
+    window.addEventListener("pointerup", onUp, { capture: true });
+    window.addEventListener("pointercancel", onUp, { capture: true });
+    return () => {
+      window.removeEventListener("pointermove", onMove, { capture: true });
+      window.removeEventListener("pointerup", onUp, { capture: true });
+      window.removeEventListener("pointercancel", onUp, { capture: true });
+    };
+  }, [catalogDrag, zoom, pan.x, pan.y, handleBoardSelectAt, handleDeviceSelectAt]);
+
   const handleCustomBoardCreate = useCallback(
     (params: { widthMm: number; depthMm: number; color: string; name: string }) => {
       const { x: cx, y: cy } = getPlacementInVisibleViewport();
@@ -471,6 +582,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     filters,
     onBoardSelect: handleBoardSelect,
     onDeviceSelect: handleDeviceSelect,
+    onBoardSelectAt: handleBoardSelectAt,
+    onDeviceSelectAt: handleDeviceSelectAt,
+    catalogDrag,
+    catalogDragPosition,
+    startCatalogDrag,
+    shouldIgnoreCatalogClick,
     onCustomBoardCreate: handleCustomBoardCreate,
     onCustomDeviceCreate: handleCustomDeviceCreate,
     floatingUiVisible,

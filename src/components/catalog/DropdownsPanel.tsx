@@ -182,9 +182,19 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
     if (templates.length === 0) return null;
     return {
       label: DEVICE_TYPE_LABEL[deviceType],
-      options: templates.map((t) => ({ id: t.id, name: t.name, type: t.type })),
+      options: templates.map((t) => ({
+        id: t.id,
+        name: t.name,
+        type: t.type,
+        image: t.image,
+        widthMm: t.wdh[0],
+        depthMm: t.wdh[1],
+      })),
     };
-  }).filter(Boolean) as { label: string; options: { id: string; name: string; type: string }[] }[];
+  }).filter(Boolean) as {
+    label: string;
+    options: { id: string; name: string; type: string; image?: string | null; widthMm?: number; depthMm?: number }[];
+  }[];
 
   return (
     <div ref={ref} className="floating-controls floating-dropdowns">
@@ -279,8 +289,15 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
               id="boards-select"
               label=""
               size={listSize}
-              options={filteredBoards.map((t) => ({ id: t.id, name: t.name }))}
+              options={filteredBoards.map((t) => ({
+                id: t.id,
+                name: t.name,
+                image: t.image,
+                widthMm: t.wdh[0],
+                depthMm: t.wdh[1],
+              }))}
               onAdd={onBoardSelect}
+              catalogMode="boards"
             />
             <div className="custom-section">
               <button
@@ -496,6 +513,7 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
               size={listSize}
               groups={deviceGroups}
               onAdd={onDeviceSelect}
+              catalogMode="devices"
             />
             <div className="custom-section">
               <button

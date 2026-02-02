@@ -17,6 +17,7 @@
 
 .catalog-list-item {
   display: block;
+  position: relative;
   width: 100%;
   padding: 4px 8px;
   text-align: left;
@@ -26,9 +27,30 @@
   font: inherit;
   color: #333;
   cursor: pointer;
+  overflow: visible; /* allow drag-image (opacity 0) to be captured; text ellipsis in .catalog-list-item-text */
+  touch-action: pan-y; /* allow vertical scroll; long-press is cancelled if user moves (see JS) */
+  user-select: none;
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
+.catalog-list-item-text {
+  display: block;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Invisible img used only as drag ghost (setDragImage). In-view so browser captures it; opacity 0 so user doesn't see it. */
+.catalog-list-item-drag-image {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  pointer-events: none;
+  opacity: 0;
 }
 
 .catalog-list-item:hover {

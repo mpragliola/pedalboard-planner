@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Canvas } from "./components/Canvas";
 import { BoardMenu } from "./components/boardmenu/BoardMenu";
 import { DropdownsPanel } from "./components/catalog/DropdownsPanel";
+import { CatalogDragGhost } from "./components/catalog/CatalogDragGhost";
 import { ZoomControls } from "./components/zoom/ZoomControls";
 import { SelectionInfoPopup } from "./components/selection/SelectionInfoPopup";
 import { HistoryControls } from "./components/history/HistoryControls";
@@ -17,7 +18,13 @@ export type { CanvasObjectType, ObjectSubtype } from "./types";
 function AppContent() {
   const { dropdownPanelRef, floatingUiVisible, setFloatingUiVisible } = useApp();
   return (
-    <>
+    <div
+      className="app-content"
+      onContextMenu={(e) => e.preventDefault()}
+      role="application"
+      aria-label="Pedalboard editor"
+    >
+      <CatalogDragGhost />
       <Canvas />
       <div className="catalog-panel">
         <div className="catalog-panel-head">
@@ -51,7 +58,7 @@ function AppContent() {
       <footer className="copyright">
         PedalboardFactory — by <a href="mailto:marcopragliola@gmail.com">Marco Pragliola</a>
       </footer>
-    </>
+    </div>
   );
 }
 

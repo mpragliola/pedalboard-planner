@@ -1,0 +1,37 @@
+/* During catalog drag: avoid browser "forbidden" cursor and text selection */
+body.catalog-dragging {
+  cursor: grabbing !important;
+  user-select: none;
+}
+
+body.catalog-dragging * {
+  cursor: grabbing !important;
+}
+
+.catalog-drag-ghost {
+  position: fixed;
+  z-index: 70000;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.catalog-drag-ghost-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  -webkit-user-drag: none;
+  user-drag: none;
+  pointer-events: none;
+}
+
+.catalog-drag-ghost-placeholder {
+  width: 100%;
+  height: 100%;
+  display: block;
+}

@@ -1,14 +1,14 @@
-import { useRef, useEffect } from 'react'
-import { CanvasObject } from './CanvasObject'
-import { Grid } from './zoom/Grid'
-import { RulerOverlay } from './ruler/RulerOverlay'
-import { LineRulerOverlay } from './ruler/LineRulerOverlay'
-import { SelectionToolbar } from './selection/SelectionToolbar'
-import { useApp } from '../context/AppContext'
-import './Canvas.css'
+import { useRef, useEffect } from "react";
+import { CanvasObject } from "./CanvasObject";
+import { Grid } from "./zoom/Grid";
+import { RulerOverlay } from "./ruler/RulerOverlay";
+import { LineRulerOverlay } from "./ruler/LineRulerOverlay";
+import { SelectionToolbar } from "./selection/SelectionToolbar";
+import { useApp } from "../context/AppContext";
+import "./Canvas.css";
 
 export function Canvas() {
-  const viewportRef = useRef<HTMLDivElement>(null)
+  const viewportRef = useRef<HTMLDivElement>(null);
   const {
     canvasRef,
     zoom,
@@ -24,6 +24,7 @@ export function Canvas() {
     canvasAnimating,
     setCanvasAnimating,
     handleCanvasPointerDown,
+    setFloatingUiVisible,
     objects,
     selectedObjectIds,
     imageFailedIds,
@@ -34,28 +35,30 @@ export function Canvas() {
     onDeleteObject,
     onRotateObject,
     onSendToBack,
-  } = useApp()
+  } = useApp();
 
   useEffect(() => {
-    if (!canvasAnimating || !viewportRef.current) return
-    const el = viewportRef.current
-    const onEnd = () => setCanvasAnimating(false)
-    el.addEventListener('transitionend', onEnd)
-    return () => el.removeEventListener('transitionend', onEnd)
-  }, [canvasAnimating, setCanvasAnimating])
+    if (!canvasAnimating || !viewportRef.current) return;
+    const el = viewportRef.current;
+    const onEnd = () => setCanvasAnimating(false);
+    el.addEventListener("transitionend", onEnd);
+    return () => el.removeEventListener("transitionend", onEnd);
+  }, [canvasAnimating, setCanvasAnimating]);
 
-  const selectedObject =
-    selectedObjectIds.length === 1 ? objects.find((o) => o.id === selectedObjectIds[0]) : null
+  const selectedObject = selectedObjectIds.length === 1 ? objects.find((o) => o.id === selectedObjectIds[0]) : null;
 
   // Application units: 1 mm = 1 px; 1 cm = 10 px, 1 in = 25.4 px (match board dimensions)
-  const gridSizePx = unit === 'mm' ? 10 : 25.4
-  const gridSizeCss = `${gridSizePx}px`
+  const gridSizePx = unit === "mm" ? 10 : 25.4;
+  const gridSizeCss = `${gridSizePx}px`;
 
   return (
     <div
-      className={`canvas ${isPanning ? 'canvas-grabbing' : spaceDown ? 'canvas-grab' : ''} ${canvasAnimating ? 'canvas-animating' : ''}`}
+      className={`canvas ${isPanning ? "canvas-grabbing" : spaceDown ? "canvas-grab" : ""} ${
+        canvasAnimating ? "canvas-animating" : ""
+      }`}
       ref={canvasRef}
       onPointerDown={handleCanvasPointerDown}
+      onClick={() => setFloatingUiVisible(false)}
       onContextMenu={(e) => e.preventDefault()}
     >
       <div
@@ -71,37 +74,34 @@ export function Canvas() {
         style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }}
       >
         <div className="canvas-viewport-zoom">
-        <Grid
-          visible={showGrid}
-          gridSizeCss={gridSizeCss}
-        />
-        {selectedObject && (
-          <SelectionToolbar
-            obj={selectedObject}
-            onDelete={onDeleteObject}
-            onRotate={onRotateObject}
-            onSendToBack={onSendToBack}
-          />
-        )}
-        {objects.map((obj, index) => (
-          <CanvasObject
-            key={obj.id}
-            obj={obj}
-            stackIndex={index}
-            useImage={obj.image !== null && !imageFailedIds.has(obj.id)}
-            isDragging={draggingObjectId === obj.id}
-            isSelected={selectedObjectIds.includes(obj.id)}
-            opacity={xray ? 0.5 : 1}
-            canvasRef={canvasRef}
-            onImageError={() => onImageError(obj.id)}
-            onPointerDown={(e) => onObjectPointerDown(obj.id, e)}
-            onDragEnd={onDragEnd}
-          />
-        ))}
+          <Grid visible={showGrid} gridSizeCss={gridSizeCss} />
+          {selectedObject && (
+            <SelectionToolbar
+              obj={selectedObject}
+              onDelete={onDeleteObject}
+              onRotate={onRotateObject}
+              onSendToBack={onSendToBack}
+            />
+          )}
+          {objects.map((obj, index) => (
+            <CanvasObject
+              key={obj.id}
+              obj={obj}
+              stackIndex={index}
+              useImage={obj.image !== null && !imageFailedIds.has(obj.id)}
+              isDragging={draggingObjectId === obj.id}
+              isSelected={selectedObjectIds.includes(obj.id)}
+              opacity={xray ? 0.5 : 1}
+              canvasRef={canvasRef}
+              onImageError={() => onImageError(obj.id)}
+              onPointerDown={(e) => onObjectPointerDown(obj.id, e)}
+              onDragEnd={onDragEnd}
+            />
+          ))}
         </div>
       </div>
       {ruler && <RulerOverlay />}
       {lineRuler && <LineRulerOverlay />}
     </div>
-  )
+  );
 }
