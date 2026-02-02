@@ -22,7 +22,7 @@ const mooerDevices: Omit<DeviceTemplate, "id" | "name" | "brand">[] = [
   { type: "multifx", model: "GE200 Plus", wdh: WDH_MOOER_GE200_PLUS, image: "ge200plus.png" },
   { type: "multifx", model: "GE250", wdh: WDH_MOOER_GE250, image: "ge-250.png" },
   { type: "multifx", model: "GE1000", wdh: WDH_MOOER_GE1000, image: "ge1000.png" },
-  { type: "pedal", model: "Expline", wdh: WDH_MOOER_EXPLINE, image: "expline.png" },
+  { type: "pedal", model: "Expline", wdh: WDH_MOOER_EXPLINE, image: "mooer-expline.png" },
   { type: "pedal", model: "GL100", wdh: WDH_MICRO_MINI, image: "gl100.png" },
   { type: "pedal", model: "GL200", wdh: WDH_MICRO_MINI, image: "gl200.png" },
   { type: "pedal", model: "Mini Pedal", wdh: WDH_MICRO_MINI, image: null },
