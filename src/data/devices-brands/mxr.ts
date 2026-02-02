@@ -22,7 +22,7 @@ export const MXR_DEVICE_TEMPLATES: DeviceTemplate[] = [
   { id: 'device-mxr-raijin-drive', type: 'pedal', brand: 'MXR', model: 'CSP037 Raijin Drive', name: 'MXR CSP037 Raijin Drive', wdh: WDH_MXR_STANDARD, image: 'mxr/mxr-raijin-drive.png' },
   { id: 'device-mxr-thump-bass-preamp', type: 'pedal', brand: 'MXR', model: 'M281 Thump Bass Preamp', name: 'MXR M281 Thump Bass Preamp', wdh: WDH_MXR_STANDARD, image: 'mxr/mxr-thump-bass-preamp.png' },
   { id: 'device-mxr75-phase-vintage-45', type: 'pedal', brand: 'MXR', model: 'CSP105 \'75 Vintage Phase 45', name: 'MXR CSP105 \'75 Vintage Phase 45', wdh: WDH_MXR_STANDARD, image: 'mxr/mxr75-phase-vintage-45.png' },
-  { id: 'device-mxr-dd30', type: 'pedal', brand: 'MXR', model: 'DD30 Dookie Drive', name: 'MXR DD30 Dookie Drive', wdh: WDH_MXR_STANDARD, image: 'mxr/mxrDD30.MAIN__92700.png' },
-  { id: 'device-mxr-m309', type: 'pedal', brand: 'MXR', model: 'M309 Joshua Ambient Echo', name: 'MXR M309 Joshua Ambient Echo', wdh: WDH_MXR_STANDARD, image: 'mxr/mxrM309.MAIN__43410.png' },
+  { id: 'device-mxr-dd30', type: 'pedal', brand: 'MXR', model: 'DD30 Dookie Drive', name: 'MXR DD30 Dookie Drive', wdh: WDH_MXR_STANDARD, image: 'mxr/mxrdd30.main__92700.png' },
+  { id: 'device-mxr-m309', type: 'pedal', brand: 'MXR', model: 'M309 Joshua Ambient Echo', name: 'MXR M309 Joshua Ambient Echo', wdh: WDH_MXR_STANDARD, image: 'mxr/mxrm309.main__43410.png' },
   { id: 'device-mxr-suboctave-fuzz', type: 'pedal', brand: 'MXR', model: 'M287 Sub Octave Bass Fuzz', name: 'MXR M287 Sub Octave Bass Fuzz', wdh: WDH_MXR_BASS, image: 'mxr/mxt-suboctave-fuzz.png' },
 ]

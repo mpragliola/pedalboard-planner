@@ -4,6 +4,7 @@ export const STRYMON_DEVICE_TEMPLATES: DeviceTemplate[] = [
   { id: 'device-strymon-small', type: 'pedal', brand: 'Strymon', model: 'Small Format (Timeline / BigSky)', name: 'Strymon Small Format (Timeline / BigSky)', wdh: [170, 127, 44], image: null },
   { id: 'device-strymon-compact', type: 'pedal', brand: 'Strymon', model: 'Compact (El Capistan v2 size)', name: 'Strymon Compact (El Capistan v2 size)', wdh: [114, 103, 44], image: null },
   { id: 'device-strymon-ojai', type: 'power unit', brand: 'Strymon', model: 'Ojai Multi Power Supply', name: 'Strymon Ojai Multi Power Supply', wdh: [103, 89, 38], image: null },
+  { id: 'device-strymon-zuma', type: 'power unit', brand: 'Strymon', model: 'Zuma', name: 'Strymon Zuma', wdh: [103, 89, 38], image: 'strymon/strymon-zuma.png' },
   { id: 'device-strymon-bigsky-mx', type: 'pedal', brand: 'Strymon', model: 'BigSky MX', name: 'Strymon BigSky MX', wdh: [170, 127, 44], image: 'strymon/strymon-BigSkyMX_Site_StoreImage-768x768.png' },
   { id: 'device-strymon-bigsky', type: 'pedal', brand: 'Strymon', model: 'BigSky', name: 'Strymon BigSky', wdh: [170, 127, 44], image: 'strymon/strymon-bigsky_topdown_grad2_1600-1024x1024-1-768x768.png' },
   { id: 'device-strymon-bluesky-v2', type: 'pedal', brand: 'Strymon', model: 'BlueSky v2', name: 'Strymon BlueSky v2', wdh: [114, 103, 44], image: 'strymon/strymon-blueSkyv2_StoreImage_NoBorder-768x768.png' },

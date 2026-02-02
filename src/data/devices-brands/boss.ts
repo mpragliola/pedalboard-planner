@@ -16,7 +16,7 @@ export const BOSS_DEVICE_TEMPLATES: DeviceTemplate[] = [
   { id: 'device-boss-ds1x', type: 'pedal', brand: 'Boss', model: 'DS-1X', name: 'Boss DS-1X', wdh: WDH_BOSS_COMPACT, image: 'boss/boss-ds-1x_top_vtn.png' },
   { id: 'device-boss-mt2', type: 'pedal', brand: 'Boss', model: 'MT-2', name: 'Boss MT-2', wdh: WDH_BOSS_COMPACT, image: 'boss/boss-mt-2_top_tn.png' },
   { id: 'device-boss-mt2w', type: 'pedal', brand: 'Boss', model: 'MT-2W', name: 'Boss MT-2W', wdh: WDH_BOSS_COMPACT, image: 'boss/boss-mt-2w_tn.png' },
-  { id: 'device-boss-sd1', type: 'pedal', brand: 'Boss', model: 'SD-1', name: 'Boss SD-1', wdh: WDH_BOSS_COMPACT, image: null },
+  { id: 'device-boss-sd1', type: 'pedal', brand: 'Boss', model: 'SD-1', name: 'Boss SD-1', wdh: WDH_BOSS_COMPACT, image: 'boss/boss-sd1.png' },
   { id: 'device-boss-twin', type: 'pedal', brand: 'Boss', model: 'Twin Pedal (FS-6 size)', name: 'Boss Twin Pedal (FS-6 size)', wdh: [188, 91, 60], image: null },
   { id: 'device-boss-mini', type: 'pedal', brand: 'Boss', model: 'Mini Pedal', name: 'Boss Mini Pedal', wdh: [43, 93, 50], image: null },
 
@@ -49,7 +49,7 @@ export const BOSS_DEVICE_TEMPLATES: DeviceTemplate[] = [
   { id: 'device-boss-me50', type: 'multifx', brand: 'Boss', model: 'ME-50', name: 'Boss ME-50', wdh: [384, 225, 78], image: 'boss/boss-me-50.png' },
   { id: 'device-boss-me50b', type: 'multifx', brand: 'Boss', model: 'ME-50B', name: 'Boss ME-50B', wdh: [384, 225, 78], image: 'boss/boss-me-50b.png' },
   { id: 'device-boss-me70', type: 'multifx', brand: 'Boss', model: 'ME-70', name: 'Boss ME-70', wdh: [384, 229, 74], image: 'boss/boss-me-70.png' },
-  { id: 'device-boss-pocketgt', type: 'multifx', brand: 'Boss', model: 'Pocket GT', name: 'Boss Pocket GT', wdh: [105, 65, 25], image: null },
+  { id: 'device-boss-pocketgt', type: 'multifx', brand: 'Boss', model: 'Pocket GT', name: 'Boss Pocket GT', wdh: [105, 65, 25], image: 'boss/pocket_gt.png' },
 
   // Boss RC series (loopers)
   { id: 'device-boss-rc10r', type: 'multifx', brand: 'Boss', model: 'RC-10R', name: 'Boss RC-10R', wdh: WDH_BOSS_200, image: 'boss/boss-rc-10r.png' },
