@@ -3,11 +3,8 @@ import { PromptBuilder } from "./promptBuilder";
 import type { CanvasObjectType } from "../types";
 import type { Connector } from "../types";
 
-const baseObject = (
-  overrides: Partial<CanvasObjectType> & { id: string; name: string }
-): CanvasObjectType =>
+const baseObject = (overrides: Partial<CanvasObjectType> & { id: string; name: string }): CanvasObjectType =>
   ({
-    id: overrides.id,
     subtype: "device",
     type: "pedal",
     brand: "",
@@ -18,7 +15,6 @@ const baseObject = (
     depth: 120,
     height: 50,
     image: null,
-    name: overrides.name,
     ...overrides,
   } as CanvasObjectType);
 
@@ -38,10 +34,7 @@ describe("PromptBuilder", () => {
     });
 
     it("returns bullet list with name only when no brand/model", () => {
-      const pb = new PromptBuilder(
-        [baseObject({ id: "d1", name: "My Pedal" })],
-        defaultOptions
-      );
+      const pb = new PromptBuilder([baseObject({ id: "d1", name: "My Pedal" })], defaultOptions);
       expect(pb.getComponentsList()).toBe("- My Pedal");
     });
 
@@ -69,8 +62,7 @@ describe("PromptBuilder", () => {
     });
 
     it("formats connector line with type and device names", () => {
-      const getObjectName = (id: string) =>
-        id === "d1" ? "Pedal A" : "Pedal B";
+      const getObjectName = (id: string) => (id === "d1" ? "Pedal A" : "Pedal B");
       const pb = new PromptBuilder([], {
         ...defaultOptions,
         connectors: [
@@ -96,10 +88,7 @@ describe("PromptBuilder", () => {
 
   describe("build", () => {
     it("includes components and price estimate intro", () => {
-      const pb = new PromptBuilder(
-        [baseObject({ id: "d1", name: "Test" })],
-        defaultOptions
-      );
+      const pb = new PromptBuilder([baseObject({ id: "d1", name: "Test" })], defaultOptions);
       const out = pb.build();
       expect(out).toContain("Components:");
       expect(out).toContain("- Test");
