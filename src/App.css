@@ -20,6 +20,18 @@
   }
 }
 
+@media (min-width: 1440px) {
+  .catalog-panel {
+    width: 320px;
+  }
+}
+
+@media (min-width: 1920px) {
+  .catalog-panel {
+    width: 400px;
+  }
+}
+
 .catalog-panel-head {
   flex: 0 0 auto;
   padding: 6px 10px;

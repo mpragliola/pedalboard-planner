@@ -8,8 +8,30 @@
   align-items: stretch;
   justify-content: flex-start;
   padding: 24px;
+  /* 24 (left) + 180 (panel) + 16 gap */
   padding-left: 220px;
   animation: catalog-modal-fade-in 0.15s ease-out;
+}
+
+@media (min-width: 1024px) {
+  .catalog-modal-backdrop {
+    /* 24 + 216 + 16 */
+    padding-left: 256px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .catalog-modal-backdrop {
+    /* 24 + 320 + 16 */
+    padding-left: 360px;
+  }
+}
+
+@media (min-width: 1920px) {
+  .catalog-modal-backdrop {
+    /* 24 + 400 + 16 */
+    padding-left: 440px;
+  }
 }
 
 .catalog-modal-backdrop .catalog-modal {
