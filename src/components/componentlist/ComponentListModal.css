@@ -39,6 +39,29 @@
   margin: 0;
 }
 
+.component-list-modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.component-list-modal-export-btn {
+  padding: 6px 10px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  background: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.component-list-modal-export-btn:hover {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.3);
+}
+
 .component-list-modal-close {
   width: 26px;
   height: 26px;
@@ -96,12 +119,12 @@
 
 .component-list-table tbody tr:nth-child(odd) td {
   background: #fff;
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
 }
 
 .component-list-table tbody tr:nth-child(even) td {
   background: #f5f5f5;
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
 }
 
 .component-list-table tbody tr:hover td {
@@ -183,12 +206,12 @@
 
 .connectors-table tbody tr:nth-child(odd) td {
   background: #fff;
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
 }
 
 .connectors-table tbody tr:nth-child(even) td {
   background: #f5f5f5;
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
 }
 
 .connectors-table tbody tr:hover td {

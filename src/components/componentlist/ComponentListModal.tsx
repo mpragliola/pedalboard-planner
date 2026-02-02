@@ -1,43 +1,82 @@
-import { useState, useCallback } from 'react'
-import { createPortal } from 'react-dom'
-import { useApp } from '../../context/AppContext'
-import { useConfirmation } from '../../context/ConfirmationContext'
-import { CONNECTOR_TYPE_OPTIONS, CONNECTOR_KIND_OPTIONS, CONNECTOR_ICON_MAP } from '../../constants'
-import type { Connector, ConnectorKind, ConnectorLinkType } from '../../types'
-import './ComponentListModal.css'
+import { useState, useCallback } from "react";
+import { createPortal } from "react-dom";
+import { useApp } from "../../context/AppContext";
+import { useConfirmation } from "../../context/ConfirmationContext";
+import { CONNECTOR_TYPE_OPTIONS, CONNECTOR_KIND_OPTIONS, CONNECTOR_ICON_MAP } from "../../constants";
+import type { Connector, ConnectorKind, ConnectorLinkType } from "../../types";
+import "./ComponentListModal.css";
 
 function nextConnectorId(): string {
-  return `connector-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+  return `connector-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
 interface ComponentListModalProps {
-  open: boolean
-  onClose: () => void
+  open: boolean;
+  onClose: () => void;
 }
 
 const emptyForm = {
-  deviceA: '',
-  deviceB: '',
-  type: 'audio' as ConnectorLinkType,
-  connectorA: 'mono jack (TS)' as ConnectorKind,
-  connectorB: 'mono jack (TS)' as ConnectorKind,
+  deviceA: "",
+  deviceB: "",
+  type: "audio" as ConnectorLinkType,
+  connectorA: "mono jack (TS)" as ConnectorKind,
+  connectorB: "mono jack (TS)" as ConnectorKind,
+};
+
+function escapeCsvField(value: string): string {
+  const s = String(value ?? "");
+  if (/[",\r\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+
+function buildComponentListCsv(
+  objects: { brand?: string; model?: string; type?: string; name?: string; id: string }[],
+  connectors: Connector[],
+  getObjectName: (id: string) => string
+): string {
+  const rows: string[] = [];
+  rows.push("Components");
+  rows.push(["Brand", "Model", "Type"].map(escapeCsvField).join(","));
+  for (const obj of objects) {
+    const isCustom = obj.id.startsWith("board-custom-") || obj.id.startsWith("device-custom-");
+    const model = isCustom ? obj.name ?? "" : obj.model ?? "";
+    rows.push([obj.brand ?? "", model, obj.type ?? ""].map(escapeCsvField).join(","));
+  }
+  rows.push("");
+  rows.push("Connectors");
+  rows.push(["Device A", "Device B", "Type", "Connector A", "Connector B"].map(escapeCsvField).join(","));
+  for (const c of connectors) {
+    rows.push(
+      [getObjectName(c.deviceA), getObjectName(c.deviceB), c.type, c.connectorA, c.connectorB]
+        .map(escapeCsvField)
+        .join(",")
+    );
+  }
+  return rows.join("\r\n");
+}
+
+function downloadCsv(content: string, filename: string) {
+  const blob = new Blob([content], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
-  const { objects, connectors, setConnectors, onDeleteObject } = useApp()
-  const { requestConfirmation } = useConfirmation()
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [form, setForm] = useState(emptyForm)
+  const { objects, connectors, setConnectors, onDeleteObject } = useApp();
+  const { requestConfirmation } = useConfirmation();
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState(emptyForm);
 
-  const getObjectName = useCallback(
-    (id: string) => objects.find((o) => o.id === id)?.name ?? id,
-    [objects]
-  )
+  const getObjectName = useCallback((id: string) => objects.find((o) => o.id === id)?.name ?? id, [objects]);
 
   const startAdd = useCallback(() => {
-    setForm(emptyForm)
-    setEditingId('')
-  }, [])
+    setForm(emptyForm);
+    setEditingId("");
+  }, []);
 
   const startEdit = useCallback((c: Connector) => {
     setForm({
@@ -46,18 +85,18 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
       type: c.type,
       connectorA: c.connectorA,
       connectorB: c.connectorB,
-    })
-    setEditingId(c.id)
-  }, [])
+    });
+    setEditingId(c.id);
+  }, []);
 
   const cancelEdit = useCallback(() => {
-    setEditingId(null)
-    setForm(emptyForm)
-  }, [])
+    setEditingId(null);
+    setForm(emptyForm);
+  }, []);
 
   const saveConnector = useCallback(() => {
-    if (!form.deviceA || !form.deviceB) return
-    if (editingId === '') {
+    if (!form.deviceA || !form.deviceB) return;
+    if (editingId === "") {
       setConnectors((prev) => [
         ...prev,
         {
@@ -68,52 +107,58 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
           connectorA: form.connectorA,
           connectorB: form.connectorB,
         },
-      ])
+      ]);
     } else {
       setConnectors((prev) =>
         prev.map((c) =>
           c.id === editingId
             ? {
-              ...c,
-              deviceA: form.deviceA,
-              deviceB: form.deviceB,
-              type: form.type,
-              connectorA: form.connectorA,
-              connectorB: form.connectorB,
-            }
+                ...c,
+                deviceA: form.deviceA,
+                deviceB: form.deviceB,
+                type: form.type,
+                connectorA: form.connectorA,
+                connectorB: form.connectorB,
+              }
             : c
         )
-      )
+      );
     }
-    startAdd()
-  }, [editingId, form, setConnectors, startAdd])
+    startAdd();
+  }, [editingId, form, setConnectors, startAdd]);
 
   const removeConnector = useCallback(
     (id: string) => {
-      setConnectors((prev) => prev.filter((c) => c.id !== id))
-      if (editingId === id) cancelEdit()
+      setConnectors((prev) => prev.filter((c) => c.id !== id));
+      if (editingId === id) cancelEdit();
     },
     [setConnectors, editingId, cancelEdit]
-  )
+  );
 
   const handleRemoveComponent = useCallback(
     async (obj: { id: string; name: string }) => {
       const confirmed = await requestConfirmation({
-        title: 'Remove from canvas',
+        title: "Remove from canvas",
         message: `Remove "${obj.name}"? This cannot be undone.`,
-        confirmLabel: 'Remove',
-        cancelLabel: 'Cancel',
+        confirmLabel: "Remove",
+        cancelLabel: "Cancel",
         danger: true,
-      })
-      if (confirmed) onDeleteObject(obj.id)
+      });
+      if (confirmed) onDeleteObject(obj.id);
     },
     [requestConfirmation, onDeleteObject]
-  )
+  );
 
-  const isFormOpen = editingId !== null
-  const canSave = form.deviceA && form.deviceB
+  const isFormOpen = editingId !== null;
+  const canSave = form.deviceA && form.deviceB;
 
-  if (!open) return null
+  const handleExportCsv = useCallback(() => {
+    const csv = buildComponentListCsv(objects, connectors, getObjectName);
+    const filename = `pedalboard-components-${new Date().toISOString().slice(0, 10)}.csv`;
+    downloadCsv(csv, filename);
+  }, [objects, connectors, getObjectName]);
+
+  if (!open) return null;
 
   const modal = (
     <div
@@ -130,14 +175,20 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
       >
         <header className="component-list-modal-header">
           <h2 className="component-list-modal-title">Component list</h2>
-          <button
-            type="button"
-            className="component-list-modal-close"
-            onClick={onClose}
-            aria-label="Close"
-          >
-            ×
-          </button>
+          <div className="component-list-modal-header-actions">
+            <button
+              type="button"
+              className="component-list-modal-export-btn"
+              onClick={handleExportCsv}
+              aria-label="Export to CSV"
+              title="Export components and connectors to CSV"
+            >
+              Export to CSV
+            </button>
+            <button type="button" className="component-list-modal-close" onClick={onClose} aria-label="Close">
+              ×
+            </button>
+          </div>
         </header>
         <div className="component-list-modal-body">
           {objects.length === 0 ? (
@@ -154,12 +205,12 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
               </thead>
               <tbody>
                 {objects.map((obj) => {
-                  const isCustom = obj.id.startsWith('board-custom-') || obj.id.startsWith('device-custom-')
+                  const isCustom = obj.id.startsWith("board-custom-") || obj.id.startsWith("device-custom-");
                   return (
                     <tr key={obj.id}>
-                      <td>{obj.brand || '—'}</td>
-                      <td>{isCustom ? (obj.name || '—') : (obj.model || '—')}</td>
-                      <td>{obj.type || '—'}</td>
+                      <td>{obj.brand || "—"}</td>
+                      <td>{isCustom ? obj.name || "—" : obj.model || "—"}</td>
+                      <td>{obj.type || "—"}</td>
                       <td className="component-list-actions">
                         <button
                           type="button"
@@ -172,7 +223,7 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
                         </button>
                       </td>
                     </tr>
-                  )
+                  );
                 })}
               </tbody>
             </table>
@@ -244,9 +295,7 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
 
             {isFormOpen ? (
               <div className="connectors-form">
-                <h4 className="connectors-form-title">
-                  {editingId === '' ? 'Add connector' : 'Edit connector'}
-                </h4>
+                <h4 className="connectors-form-title">{editingId === "" ? "Add connector" : "Edit connector"}</h4>
                 <div className="connectors-form-grid">
                   <div className="connectors-form-row">
                     <label htmlFor="connector-device-a">Device A</label>
@@ -283,9 +332,7 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
                     <select
                       id="connector-type"
                       value={form.type}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, type: e.target.value as ConnectorLinkType }))
-                      }
+                      onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as ConnectorLinkType }))}
                     >
                       {CONNECTOR_TYPE_OPTIONS.map((opt) => (
                         <option key={opt.value} value={opt.value}>
@@ -302,7 +349,7 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
                     <button
                       key={opt.value}
                       type="button"
-                      className={`connector-visual-option ${form.connectorA === opt.value ? 'selected' : ''}`}
+                      className={`connector-visual-option ${form.connectorA === opt.value ? "selected" : ""}`}
                       onClick={() => setForm((f) => ({ ...f, connectorA: opt.value }))}
                       title={opt.label}
                     >
@@ -320,7 +367,7 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
                     <button
                       key={opt.value}
                       type="button"
-                      className={`connector-visual-option ${form.connectorB === opt.value ? 'selected' : ''}`}
+                      className={`connector-visual-option ${form.connectorB === opt.value ? "selected" : ""}`}
                       onClick={() => setForm((f) => ({ ...f, connectorB: opt.value }))}
                       title={opt.label}
                     >
@@ -339,13 +386,9 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
                     onClick={saveConnector}
                     disabled={!canSave}
                   >
-                    {editingId === '' ? 'Add' : 'Save'}
+                    {editingId === "" ? "Add" : "Save"}
                   </button>
-                  <button
-                    type="button"
-                    className="connectors-btn connectors-btn-secondary"
-                    onClick={cancelEdit}
-                  >
+                  <button type="button" className="connectors-btn connectors-btn-secondary" onClick={cancelEdit}>
                     Cancel
                   </button>
                 </div>
@@ -356,7 +399,7 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
                 className="connectors-add-btn"
                 onClick={startAdd}
                 disabled={objects.length < 2}
-                title={objects.length < 2 ? 'Add at least 2 components to create connectors' : ''}
+                title={objects.length < 2 ? "Add at least 2 components to create connectors" : ""}
               >
                 + Add connector
               </button>
@@ -365,6 +408,6 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
         </div>
       </div>
     </div>
-  )
-  return createPortal(modal, document.body)
+  );
+  return createPortal(modal, document.body);
 }
