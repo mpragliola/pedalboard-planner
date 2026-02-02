@@ -14,7 +14,7 @@
   position: absolute;
   border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.14);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.39);
   overflow: hidden;
   transition: transform 0.35s ease-in-out;
   transform-origin: 50% 50%;
@@ -37,6 +37,7 @@
   background: none;
   box-shadow: none;
   border: none;
+  overflow: visible;
 }
 
 .canvas-object.has-image .canvas-object-image {
@@ -44,5 +45,5 @@
   height: 100%;
   object-fit: cover;
   display: block;
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.2)) drop-shadow(0 1px 3px rgba(0, 0, 0, 0.14));
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.7));
 }
