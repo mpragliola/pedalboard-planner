@@ -1,37 +1,39 @@
-import { faFloppyDisk, faFolderOpen, faPlus } from '@fortawesome/free-solid-svg-icons'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { useRef } from 'react'
-import { useApp } from '../../context/AppContext'
-import { useConfirmation } from '../../context/ConfirmationContext'
-import './BoardMenu.css'
+import { faFloppyDisk, faFolderOpen, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useRef } from "react";
+import { useApp } from "../../context/AppContext";
+import { useConfirmation } from "../../context/ConfirmationContext";
+import { GptButton } from "../gpt/GptButton";
+import { InfoButton } from "../info/InfoButton";
+import "./BoardMenu.css";
 
 export function BoardMenu() {
-  const { newBoard, loadBoardFromFile, saveBoardToFile } = useApp()
-  const { requestConfirmation } = useConfirmation()
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const { newBoard, loadBoardFromFile, saveBoardToFile } = useApp();
+  const { requestConfirmation } = useConfirmation();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleNewBoard = async () => {
     const confirmed = await requestConfirmation({
-      title: 'New pedalboard',
-      message: 'Clear the current pedalboard and start fresh? Unsaved changes will be lost.',
-      confirmLabel: 'New',
-      cancelLabel: 'Cancel',
+      title: "New pedalboard",
+      message: "Clear the current pedalboard and start fresh? Unsaved changes will be lost.",
+      confirmLabel: "New",
+      cancelLabel: "Cancel",
       danger: true,
-    })
-    if (confirmed) newBoard()
-  }
+    });
+    if (confirmed) newBoard();
+  };
 
   const handleLoadClick = () => {
-    fileInputRef.current?.click()
-  }
+    fileInputRef.current?.click();
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+    const file = e.target.files?.[0];
     if (file) {
-      loadBoardFromFile(file)
-      e.target.value = ''
+      loadBoardFromFile(file);
+      e.target.value = "";
     }
-  }
+  };
 
   return (
     <div className="board-menu">
@@ -71,6 +73,8 @@ export function BoardMenu() {
       >
         <FontAwesomeIcon icon={faFloppyDisk} />
       </button>
+      <GptButton />
+      <InfoButton />
     </div>
-  )
+  );
 }
