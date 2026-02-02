@@ -1,149 +1,43 @@
+import type { Wdh } from "../../wdh";
 import { WDH_ZOOM_AC, WDH_ZOOM_MS } from "../../wdh";
 import type { DeviceTemplate } from "../devices";
+import { deviceId } from "../../lib/slug";
 
-export const ZOOM_DEVICE_TEMPLATES: DeviceTemplate[] = [
-  {
-    id: "device-zoom-g3xn",
-    type: "multifx",
-    brand: "Zoom",
-    model: "G3Xn",
-    name: "Zoom G3Xn",
-    wdh: [318, 181, 57],
-    image: null,
-  },
-  {
-    id: "device-zoom-g5n",
-    type: "multifx",
-    brand: "Zoom",
-    model: "G5n",
-    name: "Zoom G5n",
-    wdh: [423, 196, 73],
-    image: null,
-  },
-  {
-    id: "device-zoom-g11",
-    type: "multifx",
-    brand: "Zoom",
-    model: "G11",
-    name: "Zoom G11",
-    wdh: [338, 180, 77],
-    image: "zoom/g11.png",
-  },
-  {
-    id: "device-zoom-a1xfour",
-    type: "multifx",
-    brand: "Zoom",
-    model: "A1X Four",
-    name: "Zoom A1X Four",
-    wdh: [10, 10, 10],
-    image: "zoom/a1xfour.png",
-  },
-  {
-    id: "device-zoom-ac2",
-    type: "multifx",
-    brand: "Zoom",
-    model: "AC-2",
-    name: "Zoom AC-2",
-    wdh: WDH_ZOOM_AC,
-    image: "zoom/ac2.png",
-  },
-  {
-    id: "device-zoom-ac3",
-    type: "multifx",
-    brand: "Zoom",
-    model: "AC-3",
-    name: "Zoom AC-3",
-    wdh: WDH_ZOOM_AC,
-    image: "zoom/ac3.png",
-  },
-  {
-    id: "device-zoom-b2four",
-    type: "multifx",
-    brand: "Zoom",
-    model: "B2 Four",
-    name: "Zoom B2 Four",
-    wdh: [10, 10, 10],
-    image: "zoom/b2four.png",
-  },
-  {
-    id: "device-zoom-b6",
-    type: "multifx",
-    brand: "Zoom",
-    model: "B6",
-    name: "Zoom B6",
-    wdh: [338, 180, 77],
-    image: "zoom/b6.png",
-  },
-  {
-    id: "device-zoom-g1four",
-    type: "multifx",
-    brand: "Zoom",
-    model: "G1 Four",
-    name: "Zoom G1 Four",
-    wdh: [10, 10, 10],
-    image: "zoom/g1four.png",
-  },
-  {
-    id: "device-zoom-g6",
-    type: "multifx",
-    brand: "Zoom",
-    model: "G6",
-    name: "Zoom G6",
-    wdh: [338, 180, 77],
-    image: "zoom/g6.png",
-  },
-  {
-    id: "device-zoom-m50gplus",
-    type: "pedal",
-    brand: "Zoom",
-    model: "MS-50G+",
-    name: "Zoom MS-50G+",
-    wdh: WDH_ZOOM_MS,
-    image: "zoom/m50gplus.png",
-  },
-  {
-    id: "device-zoom-ms200dplus",
-    type: "pedal",
-    brand: "Zoom",
-    model: "MS-200D+",
-    name: "Zoom MS-200D+",
-    wdh: WDH_ZOOM_MS,
-    image: "zoom/ms-200dplus.png",
-  },
-  {
-    id: "device-zoom-ms60bplus",
-    type: "pedal",
-    brand: "Zoom",
-    model: "MS-60B+",
-    name: "Zoom MS-60B+",
-    wdh: WDH_ZOOM_MS,
-    image: "zoom/ms-60bplus.png",
-  },
-  {
-    id: "device-zoom-ms70cdrplus",
-    type: "pedal",
-    brand: "Zoom",
-    model: "MS-70CDR+",
-    name: "Zoom MS-70CDR+",
-    wdh: WDH_ZOOM_MS,
-    image: "zoom/ms-70cdrplus.png",
-  },
-  {
-    id: "device-zoom-ms80irplus",
-    type: "pedal",
-    brand: "Zoom",
-    model: "MS-80IR+",
-    name: "Zoom MS-80IR+",
-    wdh: WDH_ZOOM_MS,
-    image: "zoom/ms-80irplus.png",
-  },
-  {
-    id: "device-zoom-ms90lpplus",
-    type: "pedal",
-    brand: "Zoom",
-    model: "MS-90LP+",
-    name: "Zoom MS-90LP+",
-    wdh: WDH_ZOOM_MS,
-    image: "zoom/ms-90lpplus.png",
-  },
+type ZoomRowBase = Omit<DeviceTemplate, "id" | "brand" | "type"> & {
+  type: DeviceTemplate["type"];
+  image: string | null;
+};
+
+const WDH_ZOOM_338: Wdh = [338, 180, 77];
+const WDH_ZOOM_SMALL: Wdh = [10, 10, 10];
+
+const zoomMultifx: ZoomRowBase[] = [
+  { model: "G3Xn", name: "Zoom G3Xn", wdh: [318, 181, 57], type: "multifx", image: null },
+  { model: "G5n", name: "Zoom G5n", wdh: [423, 196, 73], type: "multifx", image: null },
+  { model: "G11", name: "Zoom G11", wdh: WDH_ZOOM_338, type: "multifx", image: "g11.png" },
+  { model: "A1X Four", name: "Zoom A1X Four", wdh: WDH_ZOOM_SMALL, type: "multifx", image: "a1xfour.png" },
+  { model: "AC-2", name: "Zoom AC-2", wdh: WDH_ZOOM_AC, type: "multifx", image: "ac2.png" },
+  { model: "AC-3", name: "Zoom AC-3", wdh: WDH_ZOOM_AC, type: "multifx", image: "ac3.png" },
+  { model: "B2 Four", name: "Zoom B2 Four", wdh: WDH_ZOOM_SMALL, type: "multifx", image: "b2four.png" },
+  { model: "B6", name: "Zoom B6", wdh: WDH_ZOOM_338, type: "multifx", image: "b6.png" },
+  { model: "G1 Four", name: "Zoom G1 Four", wdh: WDH_ZOOM_SMALL, type: "multifx", image: "g1four.png" },
+  { model: "G6", name: "Zoom G6", wdh: WDH_ZOOM_338, type: "multifx", image: "g6.png" },
 ];
+
+const zoomPedals: ZoomRowBase[] = [
+  { model: "MS-50G+", name: "Zoom MS-50G+", wdh: WDH_ZOOM_MS, type: "pedal", image: "m50gplus.png" },
+  { model: "MS-200D+", name: "Zoom MS-200D+", wdh: WDH_ZOOM_MS, type: "pedal", image: "ms-200dplus.png" },
+  { model: "MS-60B+", name: "Zoom MS-60B+", wdh: WDH_ZOOM_MS, type: "pedal", image: "ms-60bplus.png" },
+  { model: "MS-70CDR+", name: "Zoom MS-70CDR+", wdh: WDH_ZOOM_MS, type: "pedal", image: "ms-70cdrplus.png" },
+  { model: "MS-80IR+", name: "Zoom MS-80IR+", wdh: WDH_ZOOM_MS, type: "pedal", image: "ms-80irplus.png" },
+  { model: "MS-90LP+", name: "Zoom MS-90LP+", wdh: WDH_ZOOM_MS, type: "pedal", image: "ms-90lpplus.png" },
+];
+
+const zoomRows: ZoomRowBase[] = [...zoomMultifx, ...zoomPedals];
+
+export const ZOOM_DEVICE_TEMPLATES: DeviceTemplate[] = zoomRows.map((d) => ({
+  ...d,
+  id: deviceId("zoom", d.model),
+  brand: "Zoom",
+  image: d.image ? "zoom/" + d.image : null,
+}));
