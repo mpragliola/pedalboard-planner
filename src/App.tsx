@@ -46,6 +46,9 @@ function AppContent() {
       <ZoomControls />
       <HistoryControls />
       <SelectionInfoPopup />
+      <p className="disclaimer" aria-live="polite">
+        Prototype — may contain bugs; catalog is incomplete and may have errors.
+      </p>
       <footer className="copyright">
         PedalboardFactory — by{' '}
         <a href="mailto:marcopragliola@gmail.com">Marco Pragliola</a>
