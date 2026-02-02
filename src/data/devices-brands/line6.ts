@@ -1,0 +1,58 @@
+import type { DeviceTemplate } from "../devices";
+
+export const LINE6_DEVICE_TEMPLATES: DeviceTemplate[] = [
+  {
+    id: "device-line6-dl4-mkii",
+    type: "pedal",
+    brand: "Line 6",
+    model: "DL4 MkII",
+    name: "Line 6 DL4 MkII",
+    wdh: [300, 190, 64],
+    image: null,
+  },
+  {
+    id: "device-line6-helix-floor",
+    type: "multifx",
+    brand: "Line 6",
+    model: "Helix Floor",
+    name: "Line 6 Helix Floor",
+    wdh: [560, 350, 87],
+    image: "line6/line6-helix-floor.png",
+  },
+  {
+    id: "device-line6-helix-lt",
+    type: "multifx",
+    brand: "Line 6",
+    model: "Helix LT",
+    name: "Line 6 Helix LT",
+    wdh: [527, 301, 87],
+    image: null,
+  },
+  {
+    id: "device-line6-hx-stomp",
+    type: "multifx",
+    brand: "Line 6",
+    model: "HX Stomp",
+    name: "Line 6 HX Stomp",
+    wdh: [178, 126, 66],
+    image: "line6/line6-hxstomp.png",
+  },
+  {
+    id: "device-line6-hx-stomp-xl",
+    type: "multifx",
+    brand: "Line 6",
+    model: "HX Stomp XL",
+    name: "Line 6 HX Stomp XL",
+    wdh: [316, 126, 66],
+    image: null,
+  },
+  {
+    id: "device-line6-pod-go",
+    type: "multifx",
+    brand: "Line 6",
+    model: "POD Go",
+    name: "Line 6 POD Go",
+    wdh: [359, 227, 79],
+    image: "line6/line6-podgo.png",
+  },
+];
