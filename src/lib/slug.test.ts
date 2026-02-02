@@ -14,6 +14,14 @@ describe("modelToSlug", () => {
     expect(modelToSlug("44 Magnum")).toBe("44-magnum");
     expect(modelToSlug("PitchFactor")).toBe("pitchfactor");
   });
+
+  it("trims leading and trailing hyphens", () => {
+    expect(modelToSlug("  DC-2w  ")).toBe("dc-2w");
+  });
+
+  it("handles empty string", () => {
+    expect(modelToSlug("")).toBe("");
+  });
 });
 
 describe("deviceId", () => {

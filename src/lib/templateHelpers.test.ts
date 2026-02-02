@@ -4,6 +4,7 @@ import {
   createObjectFromDeviceTemplate,
   initNextObjectIdFromObjects,
   createObjectFromCustomBoard,
+  createObjectFromCustomDevice,
 } from "./templateHelpers";
 import type { BoardTemplate } from "../data/boards";
 import type { DeviceTemplate } from "../data/devices";
@@ -95,5 +96,38 @@ describe("createObjectFromCustomBoard", () => {
     expect(obj.depth).toBe(200);
     expect(obj.name).toBe("My board");
     expect(obj.id).toMatch(/^board-custom-\d+$/);
+  });
+
+  it("uses default name when empty", () => {
+    const obj = createObjectFromCustomBoard(
+      { widthMm: 100, depthMm: 100, color: "#000", name: "   " },
+      0,
+      0
+    );
+    expect(obj.name).toBe("Custom board");
+  });
+});
+
+describe("createObjectFromCustomDevice", () => {
+  it("creates device with custom dimensions and name", () => {
+    const obj = createObjectFromCustomDevice(
+      { widthMm: 70, depthMm: 120, color: "#f00", name: "My pedal" },
+      50,
+      50
+    );
+    expect(obj.subtype).toBe("device");
+    expect(obj.width).toBe(70);
+    expect(obj.depth).toBe(120);
+    expect(obj.name).toBe("My pedal");
+    expect(obj.id).toMatch(/^device-custom-\d+$/);
+  });
+
+  it("uses default name when empty", () => {
+    const obj = createObjectFromCustomDevice(
+      { widthMm: 50, depthMm: 50, color: "#fff", name: "" },
+      0,
+      0
+    );
+    expect(obj.name).toBe("Custom device");
   });
 });

@@ -31,4 +31,32 @@ describe("buildRoundedPathD", () => {
     expect(d).toMatch(/^M 0 0/);
     expect(d).toMatch(/ A /);
   });
+
+  it("uses straight line for collinear points (no arc)", () => {
+    const d = buildRoundedPathD(
+      [
+        { x: 0, y: 0 },
+        { x: 50, y: 0 },
+        { x: 100, y: 0 },
+      ],
+      5
+    );
+    expect(d).toMatch(/^M 0 0/);
+    expect(d).not.toMatch(/ A /);
+    expect(d).toContain("L 100 0");
+  });
+
+  it("returns path for four points", () => {
+    const d = buildRoundedPathD(
+      [
+        { x: 0, y: 0 },
+        { x: 50, y: 0 },
+        { x: 50, y: 50 },
+        { x: 0, y: 50 },
+      ],
+      5
+    );
+    expect(d).toMatch(/^M 0 0/);
+    expect(d).toContain("L 0 50");
+  });
 });

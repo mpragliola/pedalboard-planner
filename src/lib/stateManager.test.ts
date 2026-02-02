@@ -60,6 +60,43 @@ describe("StateManager.parseState", () => {
     expect(out.pan).toEqual({ x: 10, y: 20 });
     expect(out.unit).toBe("in");
   });
+
+  it("parses past, future, showGrid, connectors when valid", () => {
+    const raw = JSON.stringify({
+      objects: [validObject],
+      past: [[validObject]],
+      future: [],
+      showGrid: true,
+      connectors: [
+        {
+          id: "c1",
+          deviceA: "d1",
+          deviceB: "d2",
+          type: "audio",
+          connectorA: "mono jack (TS)",
+          connectorB: "mono jack (TS)",
+        },
+      ],
+    });
+    const out = StateManager.parseState(raw) as SavedState;
+    expect(out.past).toHaveLength(1);
+    expect(out.past![0]).toHaveLength(1);
+    expect(out.future).toEqual([]);
+    expect(out.showGrid).toBe(true);
+    expect(out.connectors).toHaveLength(1);
+    expect(out.connectors![0].type).toBe("audio");
+  });
+
+  it("drops invalid pan and unit", () => {
+    const raw = JSON.stringify({
+      objects: [validObject],
+      pan: { x: "not a number", y: 0 },
+      unit: "cm",
+    });
+    const out = StateManager.parseState(raw) as SavedState;
+    expect(out.pan).toBeUndefined();
+    expect(out.unit).toBeUndefined();
+  });
 });
 
 describe("StateManager.serializeState", () => {
@@ -80,5 +117,16 @@ describe("StateManager.serializeState", () => {
     expect(obj.x).toBe(1.23);
     expect(obj.y).toBe(5.68);
     expect(obj.image).toBeUndefined();
+  });
+
+  it("serializes past and future when present", () => {
+    const state: SavedState = {
+      objects: [validObject as SavedState["objects"][0]],
+      past: [[validObject as SavedState["objects"][0]]],
+      future: [],
+    };
+    const ser = StateManager.serializeState(state);
+    expect(ser.past).toHaveLength(1);
+    expect(ser.future).toEqual([]);
   });
 });

@@ -20,4 +20,9 @@ describe("formatLength", () => {
     const s = formatLength(0.1, "in");
     expect(s).toMatch(/mil$/);
   });
+
+  it("formats zero", () => {
+    expect(formatLength(0, "mm")).toBe("0.00 mm");
+    expect(formatLength(0, "in")).toMatch(/in|mil/);
+  });
 });
