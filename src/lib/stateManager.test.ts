@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { StateManager } from "./stateManager";
 import type { SavedState } from "./stateManager";
+import type { Connector } from "../types";
 
 // A valid object record with all required fields for validation
 const validObject = {
@@ -527,13 +528,13 @@ describe("StateManager.serializeState", () => {
     });
 
     it("preserves connectors", () => {
-      const connector = {
+      const connector: Connector = {
         id: "c1",
         deviceA: "d1",
         deviceB: "d2",
         type: "audio",
-        connectorA: "TS",
-        connectorB: "TS",
+        connectorA: "mono jack (TS)",
+        connectorB: "mono jack (TS)",
       };
       const state: SavedState = { objects: [], connectors: [connector] };
       const ser = StateManager.serializeState(state);

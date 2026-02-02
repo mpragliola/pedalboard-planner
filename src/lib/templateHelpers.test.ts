@@ -96,11 +96,7 @@ describe("initNextObjectIdFromObjects", () => {
 
 describe("createObjectFromCustomBoard", () => {
   it("creates board with custom dimensions and name", () => {
-    const obj = createObjectFromCustomBoard(
-      { widthMm: 400, depthMm: 200, color: "#abc", name: "My board" },
-      10,
-      20
-    );
+    const obj = createObjectFromCustomBoard({ widthMm: 400, depthMm: 200, color: "#abc", name: "My board" }, 10, 20);
     expect(obj.width).toBe(400);
     expect(obj.depth).toBe(200);
     expect(obj.name).toBe("My board");
@@ -111,22 +107,14 @@ describe("createObjectFromCustomBoard", () => {
   });
 
   it("uses default name when empty", () => {
-    const obj = createObjectFromCustomBoard(
-      { widthMm: 100, depthMm: 100, color: "#000", name: "   " },
-      0,
-      0
-    );
+    const obj = createObjectFromCustomBoard({ widthMm: 100, depthMm: 100, color: "#000", name: "   " }, 0, 0);
     expect(obj.name).toBe("Custom board");
   });
 });
 
 describe("createObjectFromCustomDevice", () => {
   it("creates device with custom dimensions and name", () => {
-    const obj = createObjectFromCustomDevice(
-      { widthMm: 70, depthMm: 120, color: "#f00", name: "My pedal" },
-      50,
-      50
-    );
+    const obj = createObjectFromCustomDevice({ widthMm: 70, depthMm: 120, color: "#f00", name: "My pedal" }, 50, 50);
     expect(obj.subtype).toBe("device");
     expect(obj.width).toBe(70);
     expect(obj.depth).toBe(120);
@@ -138,11 +126,7 @@ describe("createObjectFromCustomDevice", () => {
   });
 
   it("uses default name when empty", () => {
-    const obj = createObjectFromCustomDevice(
-      { widthMm: 50, depthMm: 50, color: "#fff", name: "" },
-      0,
-      0
-    );
+    const obj = createObjectFromCustomDevice({ widthMm: 50, depthMm: 50, color: "#fff", name: "" }, 0, 0);
     expect(obj.name).toBe("Custom device");
   });
 });
