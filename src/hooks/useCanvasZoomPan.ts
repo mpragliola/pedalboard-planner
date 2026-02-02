@@ -1,263 +1,264 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
-import { ZOOM_MIN, ZOOM_MAX, ZOOM_STEP } from '../constants'
+import { useState, useCallback, useEffect, useRef } from "react";
+import { ZOOM_MIN, ZOOM_MAX, ZOOM_STEP } from "../constants";
 
 function dist(a: { clientX: number; clientY: number }, b: { clientX: number; clientY: number }) {
-  return Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY)
+  return Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
 }
 
 function center(a: { clientX: number; clientY: number }, b: { clientX: number; clientY: number }) {
-  return { x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 }
+  return { x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 };
 }
 
 export interface UseCanvasZoomPanOptions {
-  initialZoom?: number
-  initialPan?: { x: number; y: number }
+  initialZoom?: number;
+  initialPan?: { x: number; y: number };
   /** Called when pinch starts (2 fingers); use to cancel object drag so pinch and drag are mutually exclusive. */
-  onPinchStart?: () => void
+  onPinchStart?: () => void;
 }
 
 export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
-  const onPinchStart = options?.onPinchStart
-  const [zoom, setZoom] = useState<number>(options?.initialZoom ?? 1)
-  const [pan, setPan] = useState<{ x: number; y: number }>(options?.initialPan ?? { x: 0, y: 0 })
-  const [isPanning, setIsPanning] = useState(false)
-  const [spaceDown, setSpaceDown] = useState(false)
-  const panStartRef = useRef<{ mouseX: number; mouseY: number; panX: number; panY: number; pointerId: number } | null>(null)
-  const pinchRef = useRef<{ initialDistance: number; initialZoom: number; initialPan: { x: number; y: number }; centerX: number; centerY: number } | null>(null)
-  const canvasRef = useRef<HTMLDivElement>(null)
-  const zoomRef = useRef(zoom)
-  const panRef = useRef(pan)
-  const [animating, setAnimating] = useState(false)
-  const wheelPivotRef = useRef<{ x: number; y: number; at: number } | null>(null)
-  const WHEEL_PIVOT_MS = 120
-  const lastWheelApplyRef = useRef(0)
-  const wheelApplyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const wheelEndTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const pendingZoomRef = useRef(zoomRef.current)
-  const pendingPivotRef = useRef({ x: 0, y: 0 })
-  const WHEEL_THROTTLE_MS = 50
-  const WHEEL_TRANSITION_MS = 250
+  const onPinchStart = options?.onPinchStart;
+  const [zoom, setZoom] = useState<number>(options?.initialZoom ?? 1);
+  const [pan, setPan] = useState<{ x: number; y: number }>(options?.initialPan ?? { x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [spaceDown, setSpaceDown] = useState(false);
+  const panStartRef = useRef<{ mouseX: number; mouseY: number; panX: number; panY: number; pointerId: number } | null>(
+    null
+  );
+  const pinchRef = useRef<{
+    initialDistance: number;
+    initialZoom: number;
+    initialPan: { x: number; y: number };
+    centerX: number;
+    centerY: number;
+  } | null>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const zoomRef = useRef(zoom);
+  const panRef = useRef(pan);
+  const [animating, setAnimating] = useState(false);
+  const wheelPivotRef = useRef<{ x: number; y: number; at: number } | null>(null);
+  const WHEEL_PIVOT_MS = 120;
+  const lastWheelApplyRef = useRef(0);
+  const wheelApplyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wheelEndTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingZoomRef = useRef(zoomRef.current);
+  const pendingPivotRef = useRef({ x: 0, y: 0 });
+  const WHEEL_THROTTLE_MS = 50;
+  const WHEEL_TRANSITION_MS = 250;
   /* Keep pending in sync when we apply from buttons/center so wheel uses correct base */
   useEffect(() => {
     if (!animating) {
-      pendingZoomRef.current = zoomRef.current
+      pendingZoomRef.current = zoomRef.current;
     }
-  }, [zoom, animating])
+  }, [zoom, animating]);
 
   useEffect(() => {
-    zoomRef.current = zoom
-  }, [zoom])
+    zoomRef.current = zoom;
+  }, [zoom]);
   useEffect(() => {
-    panRef.current = pan
-  }, [pan])
+    panRef.current = pan;
+  }, [pan]);
 
   const zoomToward = useCallback((newZoom: number, pivotX: number, pivotY: number) => {
-    const z = zoomRef.current
-    const p = panRef.current
-    const clampedZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, newZoom))
-    const newPanX = pivotX - ((pivotX - p.x) * clampedZoom) / z
-    const newPanY = pivotY - ((pivotY - p.y) * clampedZoom) / z
-    zoomRef.current = clampedZoom
-    panRef.current = { x: newPanX, y: newPanY }
-    setZoom(clampedZoom)
-    setPan({ x: newPanX, y: newPanY })
-  }, [])
+    const z = zoomRef.current;
+    const p = panRef.current;
+    const clampedZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, newZoom));
+    const newPanX = pivotX - ((pivotX - p.x) * clampedZoom) / z;
+    const newPanY = pivotY - ((pivotY - p.y) * clampedZoom) / z;
+    zoomRef.current = clampedZoom;
+    panRef.current = { x: newPanX, y: newPanY };
+    setZoom(clampedZoom);
+    setPan({ x: newPanX, y: newPanY });
+  }, []);
 
   const zoomIn = useCallback(() => {
-    setAnimating(true)
-    const el = canvasRef.current
-    const centerX = el ? el.getBoundingClientRect().left + el.offsetWidth / 2 : window.innerWidth / 2
-    const centerY = el ? el.getBoundingClientRect().top + el.offsetHeight / 2 : window.innerHeight / 2
+    setAnimating(true);
+    const el = canvasRef.current;
+    const centerX = el ? el.getBoundingClientRect().left + el.offsetWidth / 2 : window.innerWidth / 2;
+    const centerY = el ? el.getBoundingClientRect().top + el.offsetHeight / 2 : window.innerHeight / 2;
     /* Defer so CSS sees old transform first, then new → transition runs */
     requestAnimationFrame(() => {
-      requestAnimationFrame(() => zoomToward(zoomRef.current + ZOOM_STEP, centerX, centerY))
-    })
-  }, [zoomToward])
+      requestAnimationFrame(() => zoomToward(zoomRef.current + ZOOM_STEP, centerX, centerY));
+    });
+  }, [zoomToward]);
 
   const zoomOut = useCallback(() => {
-    setAnimating(true)
-    const el = canvasRef.current
-    const centerX = el ? el.getBoundingClientRect().left + el.offsetWidth / 2 : window.innerWidth / 2
-    const centerY = el ? el.getBoundingClientRect().top + el.offsetHeight / 2 : window.innerHeight / 2
+    setAnimating(true);
+    const el = canvasRef.current;
+    const centerX = el ? el.getBoundingClientRect().left + el.offsetWidth / 2 : window.innerWidth / 2;
+    const centerY = el ? el.getBoundingClientRect().top + el.offsetHeight / 2 : window.innerHeight / 2;
     requestAnimationFrame(() => {
-      requestAnimationFrame(() => zoomToward(zoomRef.current - ZOOM_STEP, centerX, centerY))
-    })
-  }, [zoomToward])
+      requestAnimationFrame(() => zoomToward(zoomRef.current - ZOOM_STEP, centerX, centerY));
+    });
+  }, [zoomToward]);
 
   const handleWheelZoom = useCallback(
     (e: WheelEvent) => {
-      e.preventDefault()
-      setAnimating(true) /* CSS transition for smooth wheel zoom */
-      const now = performance.now()
-      let pivot = wheelPivotRef.current
+      e.preventDefault();
+      setAnimating(true); /* CSS transition for smooth wheel zoom */
+      const now = performance.now();
+      let pivot = wheelPivotRef.current;
       if (!pivot || now - pivot.at > WHEEL_PIVOT_MS) {
-        pivot = { x: e.clientX, y: e.clientY, at: now }
-        wheelPivotRef.current = pivot
+        pivot = { x: e.clientX, y: e.clientY, at: now };
+        wheelPivotRef.current = pivot;
       }
-      const normalizedDelta = e.deltaMode === 1 ? -e.deltaY * 32 : -e.deltaY
-      const factor = 1 + normalizedDelta * 0.002
+      const normalizedDelta = e.deltaMode === 1 ? -e.deltaY * 32 : -e.deltaY;
+      const factor = 1 + normalizedDelta * 0.002;
       /* Accumulate so multiple wheel events before apply compound */
-      pendingZoomRef.current = Math.max(
-        ZOOM_MIN,
-        Math.min(ZOOM_MAX, pendingZoomRef.current * factor)
-      )
-      pendingPivotRef.current = { x: pivot.x, y: pivot.y }
-      const lastApply = lastWheelApplyRef.current
-      const elapsed = lastApply === 0 ? WHEEL_THROTTLE_MS : now - lastApply
+      pendingZoomRef.current = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, pendingZoomRef.current * factor));
+      pendingPivotRef.current = { x: pivot.x, y: pivot.y };
+      const lastApply = lastWheelApplyRef.current;
+      const elapsed = lastApply === 0 ? WHEEL_THROTTLE_MS : now - lastApply;
       const applyPending = () => {
-        zoomToward(pendingZoomRef.current, pendingPivotRef.current.x, pendingPivotRef.current.y)
-        lastWheelApplyRef.current = performance.now()
-        wheelApplyTimeoutRef.current = null
-        if (wheelEndTimeoutRef.current !== null) clearTimeout(wheelEndTimeoutRef.current)
+        zoomToward(pendingZoomRef.current, pendingPivotRef.current.x, pendingPivotRef.current.y);
+        lastWheelApplyRef.current = performance.now();
+        wheelApplyTimeoutRef.current = null;
+        if (wheelEndTimeoutRef.current !== null) clearTimeout(wheelEndTimeoutRef.current);
         wheelEndTimeoutRef.current = setTimeout(() => {
-          setAnimating(false)
-          lastWheelApplyRef.current = 0
-        }, WHEEL_TRANSITION_MS)
-      }
+          setAnimating(false);
+          lastWheelApplyRef.current = 0;
+        }, WHEEL_TRANSITION_MS);
+      };
       if (lastApply === 0 || elapsed >= WHEEL_THROTTLE_MS) {
         if (wheelApplyTimeoutRef.current !== null) {
-          clearTimeout(wheelApplyTimeoutRef.current)
-          wheelApplyTimeoutRef.current = null
+          clearTimeout(wheelApplyTimeoutRef.current);
+          wheelApplyTimeoutRef.current = null;
         }
-        applyPending()
+        applyPending();
       } else if (wheelApplyTimeoutRef.current === null) {
-        wheelApplyTimeoutRef.current = setTimeout(applyPending, WHEEL_THROTTLE_MS - elapsed)
+        wheelApplyTimeoutRef.current = setTimeout(applyPending, WHEEL_THROTTLE_MS - elapsed);
       }
     },
     [zoomToward]
-  )
+  );
 
   useEffect(() => {
-    const el = canvasRef.current
-    if (!el) return
-    el.addEventListener('wheel', handleWheelZoom, { passive: false, capture: true })
-    return () => el.removeEventListener('wheel', handleWheelZoom, { capture: true })
-  }, [handleWheelZoom])
+    const el = canvasRef.current;
+    if (!el) return;
+    el.addEventListener("wheel", handleWheelZoom, { passive: false, capture: true });
+    return () => el.removeEventListener("wheel", handleWheelZoom, { capture: true });
+  }, [handleWheelZoom]);
 
   /* Pinch-to-zoom (touch) */
   useEffect(() => {
-    const el = canvasRef.current
-    if (!el) return
+    const el = canvasRef.current;
+    if (!el) return;
     const handleTouchStart = (e: TouchEvent) => {
       if (e.touches.length === 2) {
-        e.preventDefault()
-        onPinchStart?.()
-        setIsPanning(false)
-        panStartRef.current = null
-        const c = center(e.touches[0], e.touches[1])
+        e.preventDefault();
+        onPinchStart?.();
+        setIsPanning(false);
+        panStartRef.current = null;
+        const c = center(e.touches[0], e.touches[1]);
         pinchRef.current = {
           initialDistance: dist(e.touches[0], e.touches[1]),
           initialZoom: zoomRef.current,
           initialPan: { ...panRef.current },
           centerX: c.x,
           centerY: c.y,
-        }
+        };
       }
-    }
+    };
     const handleTouchMove = (e: TouchEvent) => {
       if (e.touches.length === 2 && pinchRef.current) {
-        e.preventDefault()
-        const d = dist(e.touches[0], e.touches[1])
-        const scale = d / pinchRef.current.initialDistance
-        const newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, pinchRef.current.initialZoom * scale))
-        zoomToward(newZoom, pinchRef.current.centerX, pinchRef.current.centerY)
+        e.preventDefault();
+        const d = dist(e.touches[0], e.touches[1]);
+        const scale = d / pinchRef.current.initialDistance;
+        const newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, pinchRef.current.initialZoom * scale));
+        zoomToward(newZoom, pinchRef.current.centerX, pinchRef.current.centerY);
       }
-    }
+    };
     const handleTouchEnd = (e: TouchEvent) => {
-      if (e.touches.length < 2) pinchRef.current = null
-    }
-    el.addEventListener('touchstart', handleTouchStart, { passive: false })
-    el.addEventListener('touchmove', handleTouchMove, { passive: false })
-    el.addEventListener('touchend', handleTouchEnd, { passive: true })
-    el.addEventListener('touchcancel', handleTouchEnd, { passive: true })
+      if (e.touches.length < 2) pinchRef.current = null;
+    };
+    el.addEventListener("touchstart", handleTouchStart, { passive: false });
+    el.addEventListener("touchmove", handleTouchMove, { passive: false });
+    el.addEventListener("touchend", handleTouchEnd, { passive: true });
+    el.addEventListener("touchcancel", handleTouchEnd, { passive: true });
     return () => {
-      el.removeEventListener('touchstart', handleTouchStart)
-      el.removeEventListener('touchmove', handleTouchMove)
-      el.removeEventListener('touchend', handleTouchEnd)
-      el.removeEventListener('touchcancel', handleTouchEnd)
-    }
-  }, [zoomToward, onPinchStart])
+      el.removeEventListener("touchstart", handleTouchStart);
+      el.removeEventListener("touchmove", handleTouchMove);
+      el.removeEventListener("touchend", handleTouchEnd);
+      el.removeEventListener("touchcancel", handleTouchEnd);
+    };
+  }, [zoomToward, onPinchStart]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Space') {
-        e.preventDefault()
-        setSpaceDown(true)
+      if (e.code === "Space") {
+        e.preventDefault();
+        setSpaceDown(true);
       }
-    }
+    };
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.code === 'Space') {
-        e.preventDefault()
-        setSpaceDown(false)
+      if (e.code === "Space") {
+        e.preventDefault();
+        setSpaceDown(false);
         if (isPanning) {
-          setIsPanning(false)
-          panStartRef.current = null
+          setIsPanning(false);
+          panStartRef.current = null;
         }
       }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    window.addEventListener('keyup', handleKeyUp)
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
     return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-      window.removeEventListener('keyup', handleKeyUp)
-    }
-  }, [isPanning])
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, [isPanning]);
 
   useEffect(() => {
-    if (!isPanning) return
+    if (!isPanning) return;
     const handlePointerMove = (e: PointerEvent) => {
       if (panStartRef.current && e.pointerId === panStartRef.current.pointerId) {
-        const dx = e.clientX - panStartRef.current.mouseX
-        const dy = e.clientY - panStartRef.current.mouseY
+        const dx = e.clientX - panStartRef.current.mouseX;
+        const dy = e.clientY - panStartRef.current.mouseY;
         setPan({
           x: panStartRef.current.panX + dx,
           y: panStartRef.current.panY + dy,
-        })
+        });
       }
-    }
+    };
     const handlePointerUp = (e: PointerEvent) => {
       if (panStartRef.current && e.pointerId === panStartRef.current.pointerId) {
-        setIsPanning(false)
-        panStartRef.current = null
+        setIsPanning(false);
+        panStartRef.current = null;
       }
-    }
-    window.addEventListener('pointermove', handlePointerMove, { capture: true })
-    window.addEventListener('pointerup', handlePointerUp, { capture: true })
-    window.addEventListener('pointercancel', handlePointerUp, { capture: true })
+    };
+    window.addEventListener("pointermove", handlePointerMove, { capture: true });
+    window.addEventListener("pointerup", handlePointerUp, { capture: true });
+    window.addEventListener("pointercancel", handlePointerUp, { capture: true });
     return () => {
-      window.removeEventListener('pointermove', handlePointerMove, { capture: true })
-      window.removeEventListener('pointerup', handlePointerUp, { capture: true })
-      window.removeEventListener('pointercancel', handlePointerUp, { capture: true })
-    }
-  }, [isPanning])
+      window.removeEventListener("pointermove", handlePointerMove, { capture: true });
+      window.removeEventListener("pointerup", handlePointerUp, { capture: true });
+      window.removeEventListener("pointercancel", handlePointerUp, { capture: true });
+    };
+  }, [isPanning]);
 
   const handleCanvasPointerDown = useCallback(
     (e: React.PointerEvent) => {
-      const onObject = (e.target as Element).closest('.canvas-object-wrapper')
-      const isTouch = e.pointerType === 'touch'
-      const coarsePointer = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
+      const onObject = (e.target as Element).closest(".canvas-object-wrapper");
       const startPan =
-        !onObject &&
-        (e.button === 1 ||
-          (e.button === 0 && spaceDown) ||
-          (e.button === 0 && (isTouch || coarsePointer)))
+        e.button === 1 || // middle button always pans (even over objects)
+        (!onObject && e.button === 0); // left button pans when dragging on empty canvas
       if (startPan) {
-        e.preventDefault()
-        setAnimating(false) /* no CSS transition during drag */
-        setIsPanning(true)
+        e.preventDefault();
+        setAnimating(false); /* no CSS transition during drag */
+        setIsPanning(true);
         panStartRef.current = {
           mouseX: e.clientX,
           mouseY: e.clientY,
           panX: pan.x,
           panY: pan.y,
           pointerId: e.pointerId,
-        }
+        };
       }
     },
-    [spaceDown, pan.x, pan.y]
-  )
+    [pan.x, pan.y]
+  );
 
-  const tileSize = 1200 * zoom
+  const tileSize = 1200 * zoom;
 
   return {
     zoom,
@@ -276,5 +277,5 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
     zoomToward,
     handleCanvasPointerDown,
     tileSize,
-  }
+  };
 }
