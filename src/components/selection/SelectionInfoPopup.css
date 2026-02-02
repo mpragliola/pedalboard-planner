@@ -1,6 +1,6 @@
 .selection-info-popup {
   position: fixed;
-  top: 24px;
+  top: 76px; /* below file menu (24px + ~44px menu height + 8px gap) */
   right: 24px;
   z-index: 1000;
   background: rgba(255, 255, 255, 0.9);
