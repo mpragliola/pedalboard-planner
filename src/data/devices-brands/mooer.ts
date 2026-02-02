@@ -7,10 +7,10 @@ const WDH_MOOER_GE200: [number, number, number] = [297, 174, 45.5];
 const WDH_MOOER_GE200_PLUS: [number, number, number] = [297, 174, 45.5];
 const WDH_MOOER_GE250: [number, number, number] = [324, 170, 60];
 const WDH_MOOER_GE1000: [number, number, number] = [337, 170, 53];
-const WDH_MOOER_EXPLINE: [number, number, number] = [128, 55, 58];
+const WDH_MOOER_EXPLINE: [number, number, number] = [55, 128, 58];
 const WDH_OCEAN_MACHINE_II: [number, number, number] = [215, 110, 45];
 const WDH_MACRO_POWER_S8: [number, number, number] = [165, 83, 52];
-const WDH_MVP: [number, number, number] = [125, 86.6, 60];
+const WDH_MVP: [number, number, number] = [86.6, 125, 60];
 const WDH_X2_V2: [number, number, number] = [75, 115, 60];
 const WDH_MICRO_MINI: [number, number, number] = [93.5, 42, 52];
 
