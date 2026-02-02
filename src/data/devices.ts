@@ -9,6 +9,7 @@ import { STRYMON_DEVICE_TEMPLATES } from './devices-brands/strymon'
 import { VALETON_DEVICE_TEMPLATES } from './devices-brands/valeton'
 import { NUX_DEVICE_TEMPLATES } from './devices-brands/nux'
 import { ZOOM_DEVICE_TEMPLATES } from './devices-brands/zoom'
+import { EVENTIDE_DEVICE_TEMPLATES } from './devices-brands/eventide'
 
 export type DeviceType = 'power unit' | 'controller' | 'pedal' | 'multifx'
 
@@ -37,11 +38,13 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
   ...ATOMIC_DEVICE_TEMPLATES,
   ...NUX_DEVICE_TEMPLATES,
   ...ZOOM_DEVICE_TEMPLATES,
+  ...EVENTIDE_DEVICE_TEMPLATES,
 
   // Single / standard pedals
   { id: 'device-ts808', type: 'pedal', brand: 'Ibanez', model: 'TS808', name: 'TS808', wdh: [70, 125, 52], image: 'ibanez/ts808.png' },
   { id: 'device-ehx-nano', type: 'pedal', brand: 'Electro-Harmonix', model: 'Nano Pedal', name: 'Electro-Harmonix Nano Pedal', wdh: [70, 114, 54], image: null },
   { id: 'device-ehx-xo', type: 'pedal', brand: 'Electro-Harmonix', model: 'XO Pedal', name: 'Electro-Harmonix XO Pedal', wdh: [91, 118, 57], image: null },
+  { id: 'device-ehx-magnum-44', type: 'power unit', brand: 'Electro-Harmonix', model: '44 Magnum', name: 'Electro-Harmonix 44 Magnum', wdh: [70, 114, 53], image: 'ehx/ehx-magnum-44.png' },
   // EVH
   { id: 'device-evh-mhg', type: 'pedal', brand: 'EVH', model: 'EVH 5150 Overdrive', name: 'EVH 5150 Overdrive', wdh: WDH_MXR_BASS, image: 'evh/EVHMHG.MAIN__65502.png' },
   // AMT
@@ -62,8 +65,6 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
   { id: 'device-wampler-standard', type: 'pedal', brand: 'Wampler', model: 'Standard', name: 'Wampler Standard', wdh: [64, 118, 57], image: null },
   { id: 'device-keeley-standard', type: 'pedal', brand: 'Keeley', model: 'Standard', name: 'Keeley Standard', wdh: [66, 121, 56], image: null },
   { id: 'device-darkglass-microtubes', type: 'pedal', brand: 'Darkglass', model: 'Microtubes Pedal', name: 'Darkglass Microtubes Pedal', wdh: [120, 95, 57], image: null },
-  { id: 'device-eventide-h9', type: 'pedal', brand: 'Eventide', model: 'H9 / H90', name: 'Eventide H9 / H90', wdh: [140, 114, 58], image: null },
-  { id: 'device-eventide-factor', type: 'pedal', brand: 'Eventide', model: 'Factor Series', name: 'Eventide Factor Series', wdh: [196, 122, 58], image: null },
   { id: 'device-line6-dl4-mkii', type: 'pedal', brand: 'Line 6', model: 'DL4 MkII', name: 'Line 6 DL4 MkII', wdh: [300, 190, 64], image: null },
   { id: 'device-digitech-whammy-dt', type: 'pedal', brand: 'DigiTech', model: 'Whammy DT', name: 'DigiTech Whammy DT', wdh: [170, 196, 61], image: null },
   { id: 'device-ehx-pico', type: 'pedal', brand: 'Electro-Harmonix', model: 'Pico Pedal', name: 'Electro-Harmonix Pico Pedal', wdh: [50, 90, 50], image: null },
