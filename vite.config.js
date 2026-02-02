@@ -6,4 +6,8 @@ export default defineConfig({
     include: /\.(jsx|tsx)$/,
   })],
   base: "/pedalboard-planner/",
+  test: {
+    environment: 'node',
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+  },
 })
