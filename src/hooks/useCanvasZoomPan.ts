@@ -241,6 +241,7 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
       const onObject = (e.target as Element).closest(".canvas-object-wrapper");
       const startPan =
         e.button === 1 || // middle button always pans (even over objects)
+        (e.button === 0 && spaceDown) || // space + left drag pans everywhere
         (!onObject && e.button === 0); // left button pans when dragging on empty canvas
       if (startPan) {
         e.preventDefault();
@@ -255,7 +256,7 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
         };
       }
     },
-    [pan.x, pan.y]
+    [spaceDown, pan.x, pan.y]
   );
 
   const tileSize = 1200 * zoom;
