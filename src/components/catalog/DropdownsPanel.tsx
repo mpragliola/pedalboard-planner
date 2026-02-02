@@ -56,7 +56,6 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
     boardWidthRange,
     boardDepthRange,
     filteredBoards,
-    selectedBoard,
     resetBoardFilters,
     deviceTypeFilter,
     setDeviceTypeFilter,
@@ -76,7 +75,6 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
     deviceWidthRange,
     deviceDepthRange,
     filteredDevices,
-    selectedDevice,
     resetDeviceFilters,
   } = filters
 
@@ -84,7 +82,6 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
   const listSize = isPhone ? 1 : 5
 
   const [catalogModalOpen, setCatalogModalOpen] = useState(false)
-  const { setSelectedBoard, setSelectedDevice } = filters
 
   const [customBoardForm, setCustomBoardForm] = useState({
     widthMm: 400,
@@ -98,11 +95,6 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
     color: '#484852',
     name: '',
   })
-
-  useEffect(() => {
-    setSelectedBoard('')
-    setSelectedDevice('')
-  }, [setSelectedBoard, setSelectedDevice])
 
   const openCatalogModal = (mode: CatalogModalMode) => {
     setCatalogMode(mode)
@@ -260,9 +252,8 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
               id="boards-select"
               label=""
               size={listSize}
-              value={selectedBoard}
               options={filteredBoards.map((t) => ({ id: t.id, name: t.name }))}
-              onChange={onBoardSelect}
+              onAdd={onBoardSelect}
             />
             <button
               type="button"
@@ -431,9 +422,8 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
               id="devices-select"
               label=""
               size={listSize}
-              value={selectedDevice}
               groups={deviceGroups}
-              onChange={onDeviceSelect}
+              onAdd={onDeviceSelect}
             />
             <button
               type="button"
