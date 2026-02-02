@@ -1,7 +1,8 @@
 import type { CanvasObjectType } from './types'
 import type { ConnectorKind, ConnectorLinkType } from './types'
 
-const BASE_URL = typeof import.meta !== 'undefined' && import.meta.env?.BASE_URL != null
+/** Base URL for static assets (e.g. '' or '/pedal/'). Use for image paths so they resolve from app root. */
+export const BASE_URL = typeof import.meta !== 'undefined' && import.meta.env?.BASE_URL != null
   ? import.meta.env.BASE_URL
   : '/'
 

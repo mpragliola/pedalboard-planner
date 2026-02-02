@@ -1,4 +1,4 @@
-import { MM_TO_PX, DEFAULT_OBJECT_COLOR } from '../constants'
+import { MM_TO_PX, DEFAULT_OBJECT_COLOR, BASE_URL } from '../constants'
 import type { CanvasObjectType } from '../types'
 import type { BoardTemplate } from '../data/boards'
 import type { DeviceTemplate } from '../data/devices'
@@ -67,7 +67,7 @@ export function createObjectFromDeviceTemplate(
     height: template.wdh[2] * MM_TO_PX,
     rotation: 0,
     ...(template.image ? {} : { color: template.color ?? DEFAULT_OBJECT_COLOR }),
-    image: template.image ? `images/devices/${template.image}` : null,
+    image: template.image ? `${BASE_URL}images/devices/${template.image}` : null,
   }
 }
 

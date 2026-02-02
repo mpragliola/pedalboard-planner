@@ -1,7 +1,15 @@
 import type { RefObject } from 'react'
-import { DEFAULT_OBJECT_COLOR } from '../constants'
+import { DEFAULT_OBJECT_COLOR, BASE_URL } from '../constants'
 import type { CanvasObjectType } from '../types'
 import './CanvasObject.css'
+
+/** Resolve image URL so relative paths work from app root (e.g. when BASE_URL is set). */
+function imageSrc(path: string | null | undefined): string {
+  if (!path) return ''
+  if (path.startsWith('/') || path.startsWith('http')) return path
+  const base = BASE_URL.endsWith('/') ? BASE_URL : `${BASE_URL}/`
+  return `${base}${path}`
+}
 
 interface CanvasObjectProps {
   obj: CanvasObjectType
@@ -84,7 +92,7 @@ export function CanvasObject({ obj, stackIndex, useImage, isDragging, isSelected
       >
         {useImage && obj.image ? (
           <img
-            src={obj.image}
+            src={imageSrc(obj.image)}
             alt=""
             className="canvas-object-image"
             draggable={false}
