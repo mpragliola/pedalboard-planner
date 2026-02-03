@@ -32,15 +32,15 @@ function AppContent() {
             type="button"
             className="catalog-panel-toggle"
             onClick={() => setFloatingUiVisible((v) => !v)}
-            title={floatingUiVisible ? "Minimize catalog" : "Expand catalog"}
-            aria-label={floatingUiVisible ? "Minimize catalog" : "Expand catalog"}
+            title={floatingUiVisible ? "Minimize panel" : "Expand panel"}
+            aria-label={floatingUiVisible ? "Minimize panel" : "Expand panel"}
           >
             <FontAwesomeIcon
               icon={floatingUiVisible ? faChevronUp : faChevronDown}
               className="catalog-panel-toggle-icon"
-            />{" "}
-            Catalog
+            />
           </button>
+          <BoardMenu />
           <button
             type="button"
             className="panel-expand-btn"
@@ -54,9 +54,6 @@ function AppContent() {
         <div className={`catalog-panel-body ${floatingUiVisible ? "" : "minimized"}`}>
           <DropdownsPanel ref={dropdownPanelRef} />
         </div>
-      </div>
-      <div className="board-menu-wrap">
-        <BoardMenu />
       </div>
       <ZoomControls />
       <HistoryControls />

@@ -57,7 +57,18 @@ body.catalog-dragging .catalog-panel {
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
+/* File menu (New, Load, Save, GPT, Info, Settings) embedded in catalog head */
+.catalog-panel-head .board-menu {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+
 .panel-expand-btn {
+  flex-shrink: 0;
   margin-left: auto;
   padding: 6px 10px;
   color: #444;
@@ -114,7 +125,7 @@ body.catalog-dragging .catalog-panel {
 }
 
 .catalog-panel-toggle-icon {
-  margin-right: 4px;
+  display: block;
 }
 
 .catalog-panel-body {
@@ -146,17 +157,13 @@ body.catalog-dragging .catalog-panel {
   }
 }
 
-/* Mobile and tablet portrait: leave room for board menu, cap width so panel isn't too wide */
+/* Mobile and tablet portrait: cap width so panel isn't too wide */
 @media (max-width: 768px) and (orientation: portrait) {
   .catalog-panel {
     left: 12px;
-    right: 130px;
+    right: 12px;
     width: auto;
-    max-width: min(300px, calc(100vw - 160px));
-  }
-
-  .board-menu-wrap {
-    z-index: 250;
+    max-width: min(300px, calc(100vw - 24px));
   }
 }
 
