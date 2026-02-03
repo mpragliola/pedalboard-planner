@@ -28,7 +28,7 @@ describe("LocationLoader", () => {
   });
 
   it("throws when getCurrentPosition fails (permission denied)", async () => {
-    const getCurrentPosition = vi.fn((success: () => void, error: () => void) => {
+    const getCurrentPosition = vi.fn((_success: () => void, error: () => void) => {
       error();
     });
     Object.defineProperty(globalThis, "navigator", {
