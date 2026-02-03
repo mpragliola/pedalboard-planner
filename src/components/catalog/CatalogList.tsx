@@ -1,8 +1,11 @@
 import { useRef, useLayoutEffect, useCallback } from "react";
 import { useApp } from "../../context/AppContext";
+import { DEFAULT_OBJECT_COLOR } from "../../constants";
 import "./CatalogList.css";
 
 const LONG_PRESS_MS = 400;
+
+export type CatalogViewMode = "text" | "list" | "grid" | "large";
 
 export interface CatalogListOption {
   id: string;
@@ -12,6 +15,8 @@ export interface CatalogListOption {
   /** Dimensions in mm for ghost aspect ratio */
   widthMm?: number;
   depthMm?: number;
+  /** Color for placeholder when no image */
+  color?: string;
 }
 
 interface CatalogListProps {
@@ -22,9 +27,65 @@ interface CatalogListProps {
   onAdd: (id: string) => void;
   /** 'boards' | 'devices' – used for drag-from-catalog drop on canvas */
   catalogMode: "boards" | "devices";
+  /** Controlled view mode */
+  viewMode: CatalogViewMode;
+  /** Callback when view mode changes */
+  onViewModeChange: (mode: CatalogViewMode) => void;
 }
 
-export function CatalogList({ id, label, size, options, onAdd, catalogMode }: CatalogListProps) {
+function ViewModeToggle({ mode, onChange }: { mode: CatalogViewMode; onChange: (m: CatalogViewMode) => void }) {
+  return (
+    <div className="catalog-view-toggle" role="group" aria-label="View mode">
+      <button
+        type="button"
+        className={`catalog-view-btn${mode === "text" ? " active" : ""}`}
+        onClick={() => onChange("text")}
+        title="Text list"
+        aria-pressed={mode === "text"}
+      >
+        ☰
+      </button>
+      <button
+        type="button"
+        className={`catalog-view-btn${mode === "list" ? " active" : ""}`}
+        onClick={() => onChange("list")}
+        title="Thumbnail list"
+        aria-pressed={mode === "list"}
+      >
+        ☷
+      </button>
+      <button
+        type="button"
+        className={`catalog-view-btn${mode === "grid" ? " active" : ""}`}
+        onClick={() => onChange("grid")}
+        title="Small grid"
+        aria-pressed={mode === "grid"}
+      >
+        ▦
+      </button>
+      <button
+        type="button"
+        className={`catalog-view-btn${mode === "large" ? " active" : ""}`}
+        onClick={() => onChange("large")}
+        title="Large grid"
+        aria-pressed={mode === "large"}
+      >
+        ⊞
+      </button>
+    </div>
+  );
+}
+
+export function CatalogList({
+  id,
+  label,
+  size,
+  options,
+  onAdd,
+  catalogMode,
+  viewMode,
+  onViewModeChange,
+}: CatalogListProps) {
   const listRef = useRef<HTMLDivElement>(null);
   const scrollRestoreRef = useRef<number | null>(null);
   const { startCatalogDrag } = useApp();
@@ -58,7 +119,9 @@ export function CatalogList({ id, label, size, options, onAdd, catalogMode }: Ca
       const start = { x: e.clientX, y: e.clientY };
       posRef.current = start;
       initialPosRef.current = start;
+      const pointerId = e.pointerId;
       const onMove = (ev: PointerEvent) => {
+        if (ev.pointerId !== pointerId) return;
         posRef.current = { x: ev.clientX, y: ev.clientY };
         if (
           Math.hypot(ev.clientX - initialPosRef.current.x, ev.clientY - initialPosRef.current.y) > MOVE_THRESHOLD_PX
@@ -66,7 +129,8 @@ export function CatalogList({ id, label, size, options, onAdd, catalogMode }: Ca
           cleanupRef.current();
         }
       };
-      const onUp = () => {
+      const onUp = (ev: PointerEvent) => {
+        if (ev.pointerId !== pointerId) return;
         cleanupRef.current();
         if (!timerFiredRef.current) handleAdd(opt.id);
       };
@@ -79,7 +143,16 @@ export function CatalogList({ id, label, size, options, onAdd, catalogMode }: Ca
         const imageUrl = opt.image ? `${imageBase}${opt.image}` : null;
         const widthMm = opt.widthMm ?? 100;
         const depthMm = opt.depthMm ?? 100;
-        startCatalogDrag(opt.id, catalogMode, imageUrl, posRef.current.x, posRef.current.y, widthMm, depthMm);
+        startCatalogDrag(
+          opt.id,
+          catalogMode,
+          imageUrl,
+          pointerId,
+          posRef.current.x,
+          posRef.current.y,
+          widthMm,
+          depthMm
+        );
       }, LONG_PRESS_MS);
       cleanupRef.current = () => {
         if (longPressTimerRef.current) {
@@ -94,20 +167,26 @@ export function CatalogList({ id, label, size, options, onAdd, catalogMode }: Ca
     [catalogMode, imageBase, startCatalogDrag]
   );
 
+  const listClassName = `catalog-list catalog-list--${viewMode}`;
+  const minHeight = viewMode === "grid" || viewMode === "large" ? 120 : size * 28;
+
   return (
     <>
-      {label ? (
-        <label id={`${id}-label`} className="dropdown-label">
-          {label}
-        </label>
-      ) : null}
+      <div className="catalog-list-header">
+        {label ? (
+          <label id={`${id}-label`} className="dropdown-label">
+            {label}
+          </label>
+        ) : null}
+        <ViewModeToggle mode={viewMode} onChange={onViewModeChange} />
+      </div>
       <div
         ref={listRef}
         id={id}
-        className="catalog-list"
+        className={listClassName}
         role="listbox"
         aria-label={label || "Add board"}
-        style={{ minHeight: size * 28 }}
+        style={{ minHeight }}
       >
         {options.length === 0 ? (
           <div className="catalog-list-empty">No matches</div>
@@ -122,16 +201,18 @@ export function CatalogList({ id, label, size, options, onAdd, catalogMode }: Ca
               onContextMenu={(e) => e.preventDefault()}
               title={`Add ${opt.name} (long-press to drag)`}
             >
-              {opt.image ? (
-                <img
-                  src={`${imageBase}${opt.image}`}
-                  alt=""
-                  aria-hidden
-                  className="catalog-list-item-drag-image"
-                  width={48}
-                  height={48}
-                />
-              ) : null}
+              {viewMode !== "text" && (
+                <span className="catalog-list-item-thumb">
+                  {opt.image ? (
+                    <img src={`${imageBase}${opt.image}`} alt="" aria-hidden loading="lazy" />
+                  ) : (
+                    <span
+                      className="catalog-list-item-placeholder"
+                      style={{ backgroundColor: opt.color ?? DEFAULT_OBJECT_COLOR }}
+                    />
+                  )}
+                </span>
+              )}
               <span className="catalog-list-item-text">{opt.name}</span>
             </button>
           ))
@@ -148,6 +229,7 @@ export interface CatalogListGroupOption {
   image?: string | null;
   widthMm?: number;
   depthMm?: number;
+  color?: string;
 }
 
 interface CatalogListGroupedProps {
@@ -157,9 +239,22 @@ interface CatalogListGroupedProps {
   groups: { label: string; options: CatalogListGroupOption[] }[];
   onAdd: (id: string) => void;
   catalogMode: "boards" | "devices";
+  /** Controlled view mode */
+  viewMode: CatalogViewMode;
+  /** Callback when view mode changes */
+  onViewModeChange: (mode: CatalogViewMode) => void;
 }
 
-export function CatalogListGrouped({ id, label, size, groups, onAdd, catalogMode }: CatalogListGroupedProps) {
+export function CatalogListGrouped({
+  id,
+  label,
+  size,
+  groups,
+  onAdd,
+  catalogMode,
+  viewMode,
+  onViewModeChange,
+}: CatalogListGroupedProps) {
   const listRef = useRef<HTMLDivElement>(null);
   const scrollRestoreRef = useRef<number | null>(null);
   const { startCatalogDrag } = useApp();
@@ -193,7 +288,9 @@ export function CatalogListGrouped({ id, label, size, groups, onAdd, catalogMode
       const start = { x: e.clientX, y: e.clientY };
       posRef.current = start;
       initialPosRef.current = start;
+      const pointerId = e.pointerId;
       const onMove = (ev: PointerEvent) => {
+        if (ev.pointerId !== pointerId) return;
         posRef.current = { x: ev.clientX, y: ev.clientY };
         if (
           Math.hypot(ev.clientX - initialPosRef.current.x, ev.clientY - initialPosRef.current.y) > MOVE_THRESHOLD_PX
@@ -201,7 +298,8 @@ export function CatalogListGrouped({ id, label, size, groups, onAdd, catalogMode
           cleanupRef.current();
         }
       };
-      const onUp = () => {
+      const onUp = (ev: PointerEvent) => {
+        if (ev.pointerId !== pointerId) return;
         cleanupRef.current();
         if (!timerFiredRef.current) handleAdd(opt.id);
       };
@@ -214,7 +312,16 @@ export function CatalogListGrouped({ id, label, size, groups, onAdd, catalogMode
         const imageUrl = opt.image ? `${imageBase}${opt.image}` : null;
         const widthMm = opt.widthMm ?? 75;
         const depthMm = opt.depthMm ?? 120;
-        startCatalogDrag(opt.id, catalogMode, imageUrl, posRef.current.x, posRef.current.y, widthMm, depthMm);
+        startCatalogDrag(
+          opt.id,
+          catalogMode,
+          imageUrl,
+          pointerId,
+          posRef.current.x,
+          posRef.current.y,
+          widthMm,
+          depthMm
+        );
       }, LONG_PRESS_MS);
       cleanupRef.current = () => {
         if (longPressTimerRef.current) {
@@ -229,20 +336,26 @@ export function CatalogListGrouped({ id, label, size, groups, onAdd, catalogMode
     [catalogMode, imageBase, startCatalogDrag]
   );
 
+  const listClassName = `catalog-list catalog-list--${viewMode}`;
+  const minHeight = viewMode === "grid" || viewMode === "large" ? 120 : size * 28;
+
   return (
     <>
-      {label ? (
-        <label id={`${id}-label`} className="dropdown-label">
-          {label}
-        </label>
-      ) : null}
+      <div className="catalog-list-header">
+        {label ? (
+          <label id={`${id}-label`} className="dropdown-label">
+            {label}
+          </label>
+        ) : null}
+        <ViewModeToggle mode={viewMode} onChange={onViewModeChange} />
+      </div>
       <div
         ref={listRef}
         id={id}
-        className="catalog-list"
+        className={listClassName}
         role="listbox"
         aria-label={label || "Add device"}
-        style={{ minHeight: size * 28 }}
+        style={{ minHeight }}
       >
         {groups.every((g) => g.options.length === 0) ? (
           <div className="catalog-list-empty">No matches</div>
@@ -250,30 +363,36 @@ export function CatalogListGrouped({ id, label, size, groups, onAdd, catalogMode
           groups.map(({ label: groupLabel, options: groupOptions }) =>
             groupOptions.length > 0 ? (
               <div key={groupLabel} className="catalog-list-group">
-                <div className="catalog-list-group-label">{groupLabel}</div>
-                {groupOptions.map((opt) => (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    role="option"
-                    className="catalog-list-item"
-                    onPointerDown={(e) => handlePointerDown(e, opt)}
-                    onContextMenu={(e) => e.preventDefault()}
-                    title={`Add ${opt.name} (long-press to drag)`}
-                  >
-                    {opt.image ? (
-                      <img
-                        src={`${imageBase}${opt.image}`}
-                        alt=""
-                        aria-hidden
-                        className="catalog-list-item-drag-image"
-                        width={48}
-                        height={48}
-                      />
-                    ) : null}
-                    <span className="catalog-list-item-text">{opt.name}</span>
-                  </button>
-                ))}
+                {viewMode !== "grid" && viewMode !== "large" && (
+                  <div className="catalog-list-group-label">{groupLabel}</div>
+                )}
+                <div className={viewMode === "grid" || viewMode === "large" ? "catalog-list-group-grid" : undefined}>
+                  {groupOptions.map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      role="option"
+                      className="catalog-list-item"
+                      onPointerDown={(e) => handlePointerDown(e, opt)}
+                      onContextMenu={(e) => e.preventDefault()}
+                      title={`Add ${opt.name} (long-press to drag)`}
+                    >
+                      {viewMode !== "text" && (
+                        <span className="catalog-list-item-thumb">
+                          {opt.image ? (
+                            <img src={`${imageBase}${opt.image}`} alt="" aria-hidden loading="lazy" />
+                          ) : (
+                            <span
+                              className="catalog-list-item-placeholder"
+                              style={{ backgroundColor: opt.color ?? DEFAULT_OBJECT_COLOR }}
+                            />
+                          )}
+                        </span>
+                      )}
+                      <span className="catalog-list-item-text">{opt.name}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             ) : null
           )

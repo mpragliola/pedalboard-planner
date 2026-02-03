@@ -1,11 +1,23 @@
-/* During catalog drag: avoid browser "forbidden" cursor and text selection */
+/* Catalog drag and canvas drag/selection are mutually exclusive */
+body.catalog-dragging .canvas {
+  pointer-events: none;
+}
+
 body.catalog-dragging {
   cursor: grabbing !important;
   user-select: none;
+  touch-action: none;
+  overscroll-behavior: none;
 }
 
 body.catalog-dragging * {
   cursor: grabbing !important;
+}
+
+body.catalog-dragging .catalog-modal,
+body.catalog-dragging .catalog-modal-scroll,
+body.catalog-dragging .catalog-modal-card {
+  touch-action: none;
 }
 
 .catalog-drag-ghost {

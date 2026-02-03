@@ -1,4 +1,4 @@
-import { MM_TO_PX, DEFAULT_OBJECT_COLOR } from "../constants";
+import { MM_TO_PX, DEFAULT_OBJECT_COLOR, BASE_URL } from "../constants";
 import type { CanvasObjectType } from "../types";
 import type { BoardTemplate } from "../data/boards";
 import type { DeviceTemplate } from "../data/devices";

@@ -85,15 +85,19 @@ interface AppContextValue {
     depthMm: number;
   } | null;
   catalogDragPosition: { x: number; y: number };
+  setCatalogDragPosition: React.Dispatch<React.SetStateAction<{ x: number; y: number }>>;
   startCatalogDrag: (
     templateId: string,
     mode: "boards" | "devices",
     imageUrl: string | null,
+    pointerId: number,
     clientX: number,
     clientY: number,
     widthMm: number,
     depthMm: number
   ) => void;
+  /** Called when catalog drag ends (pointer up/cancel); does placement and cleanup. */
+  endCatalogDrag: (clientX: number, clientY: number) => void;
   /** Returns true if the last interaction was a catalog drag end (so click handlers should not add). */
   shouldIgnoreCatalogClick: () => boolean;
   onCustomBoardCreate: (params: { widthMm: number; depthMm: number; color: string; name: string }) => void;
@@ -159,6 +163,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const {
     zoom,
     pan,
+    zoomRef,
+    panRef,
     setZoom,
     setPan,
     animating: canvasAnimating,
@@ -338,21 +344,75 @@ export function AppProvider({ children }: { children: ReactNode }) {
   } | null>(null);
   const [catalogDragPosition, setCatalogDragPosition] = useState({ x: 0, y: 0 });
   const ignoreNextCatalogClickRef = useRef(false);
+  const catalogDragRef = useRef(catalogDrag);
+  const catalogDragCleanupRef = useRef<() => void>(() => {});
+  const catalogPointerIdRef = useRef<number | null>(null);
+  catalogDragRef.current = catalogDrag;
+
+  const endCatalogDrag = useCallback(
+    (clientX: number, clientY: number) => {
+      catalogDragCleanupRef.current?.();
+      catalogDragCleanupRef.current = () => {};
+      catalogPointerIdRef.current = null;
+      document.body.classList.remove("catalog-dragging");
+      const data = catalogDragRef.current;
+      if (!data) {
+        setCatalogDrag(null);
+        return;
+      }
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const r = canvas.getBoundingClientRect();
+        if (clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom) {
+          const zoomNow = zoomRef.current;
+          const panNow = panRef.current;
+          const x = (clientX - r.left - panNow.x) / zoomNow;
+          const y = (clientY - r.top - panNow.y) / zoomNow;
+          if (data.mode === "boards") handleBoardSelectAt(data.templateId, x, y);
+          else handleDeviceSelectAt(data.templateId, x, y);
+        }
+      }
+      ignoreNextCatalogClickRef.current = true;
+      setCatalogDrag(null);
+    },
+    [handleBoardSelectAt, handleDeviceSelectAt]
+  );
 
   const startCatalogDrag = useCallback(
     (
       templateId: string,
       mode: "boards" | "devices",
       imageUrl: string | null,
+      pointerId: number,
       clientX: number,
       clientY: number,
       widthMm: number,
       depthMm: number
     ) => {
+      catalogDragCleanupRef.current?.();
+      catalogPointerIdRef.current = pointerId;
+      document.body.classList.add("catalog-dragging");
       setCatalogDrag({ templateId, mode, imageUrl, widthMm, depthMm });
       setCatalogDragPosition({ x: clientX, y: clientY });
+      const onMove = (e: PointerEvent) => {
+        if (catalogPointerIdRef.current !== e.pointerId) return;
+        e.preventDefault();
+        setCatalogDragPosition({ x: e.clientX, y: e.clientY });
+      };
+      const onUp = (e: PointerEvent) => {
+        if (catalogPointerIdRef.current !== e.pointerId) return;
+        endCatalogDrag(e.clientX, e.clientY);
+      };
+      window.addEventListener("pointermove", onMove, { capture: true, passive: false });
+      window.addEventListener("pointerup", onUp, { capture: true });
+      window.addEventListener("pointercancel", onUp, { capture: true });
+      catalogDragCleanupRef.current = () => {
+        window.removeEventListener("pointermove", onMove, { capture: true });
+        window.removeEventListener("pointerup", onUp, { capture: true });
+        window.removeEventListener("pointercancel", onUp, { capture: true });
+      };
     },
-    []
+    [endCatalogDrag]
   );
 
   const shouldIgnoreCatalogClick = useCallback(() => {
@@ -360,31 +420,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     ignoreNextCatalogClickRef.current = false;
     return v;
   }, []);
-
-  useEffect(() => {
-    if (!catalogDrag) return;
-    const onMove = (e: PointerEvent) => setCatalogDragPosition({ x: e.clientX, y: e.clientY });
-    const onUp = (e: PointerEvent) => {
-      const el = document.elementFromPoint(e.clientX, e.clientY);
-      if (canvasRef.current && el && canvasRef.current.contains(el)) {
-        const r = canvasRef.current.getBoundingClientRect();
-        const x = (e.clientX - r.left - pan.x) / zoom;
-        const y = (e.clientY - r.top - pan.y) / zoom;
-        if (catalogDrag.mode === "boards") handleBoardSelectAt(catalogDrag.templateId, x, y);
-        else handleDeviceSelectAt(catalogDrag.templateId, x, y);
-      }
-      ignoreNextCatalogClickRef.current = true;
-      setCatalogDrag(null);
-    };
-    window.addEventListener("pointermove", onMove, { capture: true });
-    window.addEventListener("pointerup", onUp, { capture: true });
-    window.addEventListener("pointercancel", onUp, { capture: true });
-    return () => {
-      window.removeEventListener("pointermove", onMove, { capture: true });
-      window.removeEventListener("pointerup", onUp, { capture: true });
-      window.removeEventListener("pointercancel", onUp, { capture: true });
-    };
-  }, [catalogDrag, zoom, pan.x, pan.y, handleBoardSelectAt, handleDeviceSelectAt]);
 
   const handleCustomBoardCreate = useCallback(
     (params: { widthMm: number; depthMm: number; color: string; name: string }) => {
@@ -586,7 +621,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     onDeviceSelectAt: handleDeviceSelectAt,
     catalogDrag,
     catalogDragPosition,
+    setCatalogDragPosition,
     startCatalogDrag,
+    endCatalogDrag,
     shouldIgnoreCatalogClick,
     onCustomBoardCreate: handleCustomBoardCreate,
     onCustomDeviceCreate: handleCustomDeviceCreate,

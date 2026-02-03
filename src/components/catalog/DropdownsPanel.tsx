@@ -3,8 +3,7 @@ import { DEVICE_TYPE_ORDER, DEVICE_TYPE_LABEL } from "../../constants";
 import { useApp } from "../../context/AppContext";
 import { CatalogModeSwitch } from "./CatalogModeSwitch";
 import { TextFilter } from "./TextFilter";
-import { CatalogList, CatalogListGrouped } from "./CatalogList";
-import { CatalogModal, type CatalogModalMode } from "./CatalogModal";
+import { CatalogList, CatalogListGrouped, type CatalogViewMode } from "./CatalogList";
 import { SizeFilters } from "./SizeFilters";
 import "./DropdownsPanel.css";
 
@@ -77,9 +76,9 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
   const isPhone = useIsPhone();
   const listSize = isPhone ? 1 : 5;
 
-  const [catalogModalOpen, setCatalogModalOpen] = useState(false);
   const [filtersExpanded, setFiltersExpanded] = useState(false);
   const [customExpanded, setCustomExpanded] = useState(false);
+  const [catalogViewMode, setCatalogViewMode] = useState<CatalogViewMode>("text");
 
   const [customBoardForm, setCustomBoardForm] = useState({
     widthMm: 400,
@@ -93,11 +92,6 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
     color: "#484852",
     name: "",
   });
-
-  const openCatalogModal = (mode: CatalogModalMode) => {
-    setCatalogMode(mode);
-    setCatalogModalOpen(true);
-  };
 
   const hasBoardFilters = !!(
     boardBrandFilter ||
@@ -271,23 +265,9 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
                 </button>
               </div>
             </div>
-            <div className="catalog-add-row">
-              <label className="dropdown-label">Add board</label>
-              <button
-                type="button"
-                className={`catalog-browse-btn${catalogModalOpen && catalogMode === "boards" ? " open" : ""}`}
-                onClick={() => openCatalogModal("boards")}
-                title="Browse boards with images"
-                aria-label="Browse boards with images"
-              >
-                <span className="catalog-browse-icon" aria-hidden>
-                  ▦
-                </span>
-              </button>
-            </div>
             <CatalogList
               id="boards-select"
-              label=""
+              label="Add board"
               size={listSize}
               options={filteredBoards.map((t) => ({
                 id: t.id,
@@ -295,9 +275,12 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
                 image: t.image,
                 widthMm: t.wdh[0],
                 depthMm: t.wdh[1],
+                color: t.color,
               }))}
               onAdd={onBoardSelect}
               catalogMode="boards"
+              viewMode={catalogViewMode}
+              onViewModeChange={setCatalogViewMode}
             />
             <div className="custom-section">
               <button
@@ -493,27 +476,15 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
                 </button>
               </div>
             </div>
-            <div className="catalog-add-row">
-              <label className="dropdown-label">Add device</label>
-              <button
-                type="button"
-                className={`catalog-browse-btn${catalogModalOpen && catalogMode === "devices" ? " open" : ""}`}
-                onClick={() => openCatalogModal("devices")}
-                title="Browse devices with images"
-                aria-label="Browse devices with images"
-              >
-                <span className="catalog-browse-icon" aria-hidden>
-                  ▦
-                </span>
-              </button>
-            </div>
             <CatalogListGrouped
               id="devices-select"
-              label=""
+              label="Add device"
               size={listSize}
               groups={deviceGroups}
               onAdd={onDeviceSelect}
               catalogMode="devices"
+              viewMode={catalogViewMode}
+              onViewModeChange={setCatalogViewMode}
             />
             <div className="custom-section">
               <button
@@ -619,7 +590,6 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
           </>
         )}
       </div>
-      <CatalogModal open={catalogModalOpen} onClose={() => setCatalogModalOpen(false)} />
     </div>
   );
 });

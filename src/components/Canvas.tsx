@@ -25,6 +25,7 @@ export function Canvas() {
     setCanvasAnimating,
     handleCanvasPointerDown,
     setFloatingUiVisible,
+    shouldIgnoreCatalogClick,
     objects,
     selectedObjectIds,
     imageFailedIds,
@@ -58,7 +59,10 @@ export function Canvas() {
       }`}
       ref={canvasRef}
       onPointerDown={handleCanvasPointerDown}
-      onClick={() => setFloatingUiVisible(false)}
+      onClick={() => {
+        if (shouldIgnoreCatalogClick()) return;
+        setFloatingUiVisible(false);
+      }}
       onContextMenu={(e) => e.preventDefault()}
     >
       <div
