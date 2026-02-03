@@ -156,6 +156,7 @@ export function CatalogList({
           ))
         )}
       </div>
+      <p className="catalog-list-hint">Click to add, long-press to drag</p>
     </>
   );
 }
@@ -278,6 +279,7 @@ export function CatalogListGrouped({
           )
         )}
       </div>
+      <p className="catalog-list-hint">Click to add, long-press to drag</p>
     </>
   );
 }
