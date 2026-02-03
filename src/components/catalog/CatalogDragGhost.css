@@ -14,12 +14,6 @@ body.catalog-dragging * {
   cursor: grabbing !important;
 }
 
-body.catalog-dragging .catalog-modal,
-body.catalog-dragging .catalog-modal-scroll,
-body.catalog-dragging .catalog-modal-card {
-  touch-action: none;
-}
-
 .catalog-drag-ghost {
   position: fixed;
   z-index: 70000;

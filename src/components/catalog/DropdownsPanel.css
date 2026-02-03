@@ -200,48 +200,6 @@
   gap: 4px;
 }
 
-.catalog-add-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.catalog-add-row .dropdown-label {
-  margin: 0;
-}
-
-.catalog-browse-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px;
-  border: none;
-  border-radius: 6px;
-  background: linear-gradient(180deg, #f8f8f8 0%, #e8e8e8 100%);
-  color: #333;
-  cursor: pointer;
-  transition: background 0.15s, box-shadow 0.15s;
-}
-
-.catalog-browse-btn:hover {
-  background: linear-gradient(180deg, #fff 0%, #f0f0f0 100%);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-}
-
-.catalog-browse-btn:active {
-  background: #e5e5e5;
-}
-
-.catalog-browse-btn.open {
-  color: #666;
-}
-
-.catalog-browse-icon {
-  font-size: 1.2rem;
-  line-height: 1;
-}
-
 /* Custom board / device section */
 .custom-section {
   margin-top: 12px;
