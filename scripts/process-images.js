@@ -28,7 +28,7 @@
  */
 
 import { execSync, spawnSync } from "child_process";
-import { existsSync, readdirSync, rmSync, mkdirSync } from "fs";
+import { existsSync, readdirSync, rmSync, mkdirSync, renameSync } from "fs";
 import { join, dirname, extname, basename, parse as pathParse } from "path";
 import { fileURLToPath } from "url";
 import { config } from "dotenv";
@@ -92,8 +92,14 @@ function run(cmd, args, options = {}) {
   return spawnSync(cmd, quoted, { stdio: "inherit", shell: true, ...options });
 }
 
+// Logging
+function log(msg) {
+  console.log(`[process-images] ${msg}`);
+}
+
 // Empty and recreate temporary folders
 if (!dryRun) {
+  log("Cleaning output and temp directories...");
   for (const d of [outputDir, tempBorderDir]) {
     if (existsSync(d)) rmSync(d, { recursive: true, force: true });
   }
@@ -108,9 +114,14 @@ const files = readdirSync(targetDir).filter((f) => {
   return imageExts.includes(ext);
 });
 
+log(`Found ${files.length} images in ${targetDir}`);
+
 // PHASE 1: Add borders
-if (!noBorders) {
-  for (const file of files) {
+if (!noBorders && files.length > 0) {
+  log("Phase 1: Adding borders...");
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    log(`  [${i + 1}/${files.length}] ${file}`);
     const inputPath = join(targetDir, file);
     const baseName = basename(file, extname(file));
     const borderedPath = join(tempBorderDir, `${baseName}.png`);
@@ -120,6 +131,7 @@ if (!noBorders) {
 
 // PHASE 2: Background removal
 const rembgInputDir = noBorders ? targetDir : tempBorderDir;
+log("Phase 2: Background removal (rembg)...");
 const rembgArgs = ["p"];
 if (process.env.REMBG_ALPHA_MATTING === "1" || process.env.REMBG_ALPHA_MATTING === "true") {
   rembgArgs.push("-a");
@@ -133,7 +145,10 @@ run(rembgPath, rembgArgs);
 // PHASE 3: Advanced Trimming with Mask
 if (!dryRun) {
   const processedFiles = readdirSync(outputDir).filter((f) => f.endsWith(".png"));
-  for (const file of processedFiles) {
+  log(`Phase 3: Trimming ${processedFiles.length} images...`);
+  for (let i = 0; i < processedFiles.length; i++) {
+    const file = processedFiles[i];
+    log(`  [${i + 1}/${processedFiles.length}] ${file}`);
     const filePath = join(outputDir, file);
     // Output is overwritten in place for simplicity (or can use out2 if needed)
     // Use a temp file then overwrite
@@ -164,13 +179,16 @@ if (!dryRun) {
       } catch {}
       // Rename the trimmed file to the original file name
       try {
-        require("fs").renameSync(tempTrimPath, filePath);
+        renameSync(tempTrimPath, filePath);
       } catch (e) {
         console.error(`Failed to overwrite ${filePath} with trimmed image:`, e);
       }
     }
   }
-  if (existsSync(tempBorderDir)) rmSync(tempBorderDir, { recursive: true, force: true });
+  if (existsSync(tempBorderDir)) {
+    log("Removing temp_borders...");
+    rmSync(tempBorderDir, { recursive: true, force: true });
+  }
 }
 
-console.log(`Processed ${files.length} files -> ${outputDir}`);
+log(`Done. Processed ${files.length} files -> ${outputDir}`);

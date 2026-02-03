@@ -30,14 +30,20 @@ function Get-TargetFolder($fileName) {
   if ($base.StartsWith("warwick-rockboard")) { return @("boards", "rockboard") }
   if ($base -eq "headrush-pedalboard") { return @("devices", "headrush") }  # device
 
+  # Multi-word / compound prefixes (check before single-word)
+  if ($base.StartsWith("hughesandketner")) { return @("devices", "hughes-kettner") }
+  if ($base.StartsWith("hughes and kettner") -or $base.StartsWith("hughes-and-kettner")) { return @("devices", "hughes-kettner") }
+  if ($base.StartsWith("harley benton") -or $base.StartsWith("harley-benton")) { return @("devices", "harley-benton") }
+
   # Devices by prefix
   $deviceBrands = @{
     "amt" = "amt"; "boss" = "boss"; "bass-dd" = "boss"; "bodd" = "boss"; "re-boss" = "boss"
     "cioks" = "cioks"; "dunlop" = "dunlop"; "cry-baby" = "dunlop"; "evhmhg" = "evh"
-    "fractal" = "fractal"; "headrush" = "headrush"; "line6" = "line6"; "mission" = "mission"
+    "fractal" = "fractal"; "headrush" = "headrush"; "harley" = "harley-benton"; "hughes" = "hughes-kettner"
+    "line6" = "line6"; "mission" = "mission"; "mipro" = "mipro"
     "mooer" = "mooer"; "mxr" = "mxr"; "mxr75" = "mxr"; "mxrdd30" = "mxr"; "mxrm309" = "mxr"; "mxt" = "mxr"
-    "nux" = "nux"; "strymon" = "strymon"; "valeton" = "valeton"; "walrus" = "walrus"; "walrusaudio" = "walrus"
-    "zoom" = "zoom"; "aclam" = "aclam"
+    "nux" = "nux"; "sennheiser" = "sennheiser"; "shure" = "shure"; "strymon" = "strymon"
+    "valeton" = "valeton"; "walrus" = "walrus"; "walrusaudio" = "walrus"; "zoom" = "zoom"; "aclam" = "aclam"
   }
   foreach ($key in $deviceBrands.Keys) {
     if ($base.StartsWith($key)) { return @("devices", $deviceBrands[$key]) }
