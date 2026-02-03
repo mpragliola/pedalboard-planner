@@ -1,13 +1,34 @@
 # Force CPU for ONNX Runtime to avoid GPU initialization hangs in sandbox
 $env:ONNXRUNTIME_PROVIDER = 'CPUExecutionProvider'
 
-$targetDir = "E:\dev\pedal\public\images\devices\_"
+# Load .env file if it exists
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$envFile = Join-Path $scriptDir ".env"
+if (Test-Path $envFile) {
+    Get-Content $envFile | ForEach-Object {
+        if ($_ -match '^\s*([^#][^=]+)=(.*)$') {
+            $name = $matches[1].Trim()
+            $value = $matches[2].Trim()
+            Set-Item -Path "env:$name" -Value $value
+        }
+    }
+}
+
+# Resolve target directory: env var > default relative path
+$defaultTargetDir = Join-Path (Split-Path -Parent $scriptDir) "public\images\devices\_"
+$targetDir = if ($env:IMAGE_PROCESS_DIR) { $env:IMAGE_PROCESS_DIR } else { $defaultTargetDir }
 $outputDir = Join-Path $targetDir "processed"
 $tempBorderDir = Join-Path $targetDir "temp_borders"
 $dryRun = $args -contains "--dry-run"
 $noBorders = $args -contains "--no-borders"
 
-$rembgPath = "C:\Users\panta\AppData\Local\Python\pythoncore-3.11-64\Scripts\rembg.exe"
+# Resolve rembg path: env var > PATH lookup > error
+$rembgPath = if ($env:REMBG_PATH) { $env:REMBG_PATH } else { (Get-Command rembg -ErrorAction SilentlyContinue).Source }
+
+if (-not $rembgPath -or -not (Test-Path $rembgPath)) {
+    Write-Error "rembg not found. Set REMBG_PATH in scripts/.env or add rembg to PATH."
+    exit 1
+}
 
 if (-not (Test-Path $targetDir)) {
     Write-Error "Directory not found: $targetDir"
