@@ -106,6 +106,8 @@ interface AppContextValue {
   // Floating UI visibility
   floatingUiVisible: boolean;
   setFloatingUiVisible: React.Dispatch<React.SetStateAction<boolean>>;
+  panelExpanded: boolean;
+  setPanelExpanded: React.Dispatch<React.SetStateAction<boolean>>;
   connectors: Connector[];
   setConnectors: React.Dispatch<React.SetStateAction<Connector[]>>;
   // Pedalboard file: new / load / save
@@ -156,6 +158,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [catalogMode, setCatalogMode] = useState<CatalogMode>("boards");
   const [selectedObjectIds, setSelectedObjectIds] = useState<string[]>([]);
   const [floatingUiVisible, setFloatingUiVisible] = useState(true);
+  const [panelExpanded, setPanelExpanded] = useState(false);
   const [connectors, setConnectors] = useState<Connector[]>(savedState?.connectors ?? []);
   const dropdownPanelRef = useRef<HTMLDivElement>(null);
 
@@ -551,6 +554,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     onCustomDeviceCreate: handleCustomDeviceCreate,
     floatingUiVisible,
     setFloatingUiVisible,
+    panelExpanded,
+    setPanelExpanded,
     connectors,
     setConnectors,
     newBoard,

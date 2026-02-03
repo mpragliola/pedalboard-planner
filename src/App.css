@@ -11,6 +11,21 @@
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   overflow: hidden;
+  transition: transform 0.25s ease-out, opacity 0.25s ease-out, width 0.2s ease-out, max-width 0.2s ease-out;
+}
+
+/* Slide entire panel out during catalog drag */
+body.catalog-dragging .catalog-panel {
+  transform: translateX(calc(-100% - 24px));
+  opacity: 0.3;
+  transition: transform 0.2s ease-in, opacity 0.2s ease-in;
+}
+
+/* On mobile: slide up instead of left */
+@media (max-width: 767px) {
+  body.catalog-dragging .catalog-panel {
+    transform: translateY(calc(-100% - 24px));
+  }
 }
 
 @media (min-width: 1024px) {
@@ -40,6 +55,35 @@
   justify-content: flex-start;
   gap: 8px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.panel-expand-btn {
+  margin-left: auto;
+  padding: 2px 6px;
+  font-size: 0.7rem;
+  color: #666;
+  background: transparent;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.panel-expand-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #333;
+}
+
+.catalog-panel.panel-expanded {
+  width: calc(100vw - 48px);
+  max-width: 800px;
+}
+
+/* Hide expand button on mobile where panel is already full width */
+@media (max-width: 767px) {
+  .panel-expand-btn {
+    display: none;
+  }
 }
 
 .catalog-panel-toggle {

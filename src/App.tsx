@@ -16,7 +16,7 @@ export type { DeviceType } from "./data/devices";
 export type { CanvasObjectType, ObjectSubtype } from "./types";
 
 function AppContent() {
-  const { dropdownPanelRef, floatingUiVisible, setFloatingUiVisible } = useApp();
+  const { dropdownPanelRef, floatingUiVisible, setFloatingUiVisible, panelExpanded, setPanelExpanded } = useApp();
   return (
     <div
       className="app-content"
@@ -26,7 +26,7 @@ function AppContent() {
     >
       <CatalogDragGhost />
       <Canvas />
-      <div className="catalog-panel">
+      <div className={`catalog-panel${panelExpanded ? " panel-expanded" : ""}`}>
         <div className="catalog-panel-head">
           <button
             type="button"
@@ -40,6 +40,15 @@ function AppContent() {
               className="catalog-panel-toggle-icon"
             />{" "}
             Catalog
+          </button>
+          <button
+            type="button"
+            className="panel-expand-btn"
+            onClick={() => setPanelExpanded((e) => !e)}
+            title={panelExpanded ? "Collapse panel" : "Expand panel"}
+            aria-pressed={panelExpanded}
+          >
+            {panelExpanded ? "◂" : "▸"}
           </button>
         </div>
         <div className={`catalog-panel-body ${floatingUiVisible ? "" : "minimized"}`}>
