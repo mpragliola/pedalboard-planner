@@ -59,18 +59,25 @@ body.catalog-dragging .catalog-panel {
 
 .panel-expand-btn {
   margin-left: auto;
-  padding: 4px 8px;
-  color: #666;
-  background: transparent;
-  border: 1px solid #ccc;
+  padding: 6px 10px;
+  color: #444;
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.15);
   border-radius: 4px;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
-  font-size: 0.85rem;
+  font-size: 1rem;
+  min-width: 36px;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .panel-expand-btn svg {
   display: block;
+  width: 0.9em;
+  height: 0.9em;
 }
 
 .panel-expand-btn:hover {
@@ -83,8 +90,8 @@ body.catalog-dragging .catalog-panel {
   max-width: 800px;
 }
 
-/* Hide expand button on mobile where panel is already full width */
-@media (max-width: 767px) {
+/* Hide expand button only on very small screens where layout is constrained */
+@media (max-width: 480px) {
   .panel-expand-btn {
     display: none;
   }
