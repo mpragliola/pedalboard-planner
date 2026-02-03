@@ -1,3 +1,11 @@
+#!/usr/bin/env node
+/**
+ * Remove backup files (names ending with ~) from public/images/ recursively.
+ * Used to clean up editor/OS backup files before committing.
+ *
+ * Run: node scripts/remove-backup-files.js
+ */
+
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -14,7 +22,6 @@ function removeBackupFiles(dir) {
       removed += removeBackupFiles(fullPath);
     } else if (entry.name.endsWith('~')) {
       fs.unlinkSync(fullPath);
-      console.log('Removed:', path.relative(imagesDir, fullPath));
       removed++;
     }
   }
@@ -27,4 +34,4 @@ if (!fs.existsSync(imagesDir)) {
 }
 
 const count = removeBackupFiles(imagesDir);
-console.log(`\nRemoved ${count} backup file(s).`);
+console.log(`Removed ${count} backup file(s)`);

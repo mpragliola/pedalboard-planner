@@ -1,3 +1,12 @@
+#!/usr/bin/env node
+/**
+ * Convert non-PNG images (JPG, JPEG, WEBP) in public/images/devices/_ to PNG format.
+ * Uses ImageMagick (magick). Replaces original files with converted PNGs.
+ *
+ * Run: node scripts/convert-to-png.js
+ * Requires: ImageMagick in PATH
+ */
+
 import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
@@ -16,23 +25,20 @@ const nonPngFiles = files.filter(f => {
 });
 
 if (nonPngFiles.length === 0) {
-    console.log('No non-PNG files found to convert.');
+    console.log('Converted 0 files');
     process.exit(0);
 }
 
-console.log(`Found ${nonPngFiles.length} files to convert in ${targetDir}...`);
-
-nonPngFiles.forEach(file => {
+let converted = 0;
+for (const file of nonPngFiles) {
     const inputPath = path.join(targetDir, file);
     const outputPath = path.join(targetDir, path.basename(file, path.extname(file)) + '.png');
-
     try {
-        console.log(`Converting: ${file} -> ${path.basename(outputPath)}`);
         execSync(`magick "${inputPath}" "${outputPath}"`);
         fs.unlinkSync(inputPath);
+        converted++;
     } catch (err) {
-        console.error(`Failed to convert ${file}:`, err.message);
+        // silent
     }
-});
-
-console.log('\nConversion complete!');
+}
+console.log(`Converted ${converted} files`);

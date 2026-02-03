@@ -1,5 +1,7 @@
 # Distribute images from public/images/devices/_/processed to correct device or board brand folders.
-# Normalize filenames: lowercase, spaces to hyphens, remove special chars.
+# Uses filename prefixes (zoom, boss, blackbird, etc.) to determine target folder.
+# Normalizes filenames: lowercase, spaces to hyphens, removes special characters.
+# Run: .\scripts\distribute-processed-images.ps1
 
 $ErrorActionPreference = "Stop"
 $processedDir = Join-Path $PSScriptRoot "..\public\images\devices\_\processed"
@@ -72,5 +74,4 @@ foreach ($f in $files) {
   $relPath = if ($type -eq "boards") { "boards/$brand/$normalized" } else { "devices/$brand/$normalized" }
   $copied += [PSCustomObject]@{ From = $f.Name; To = $relPath; Type = $type; Brand = $brand }
 }
-$copied | Format-Table -AutoSize
-Write-Host "Copied $($copied.Count) files."
+Write-Host "Copied $($copied.Count) files"
