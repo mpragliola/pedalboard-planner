@@ -319,3 +319,38 @@
   outline: 2px solid #0a84ff;
   outline-offset: -2px;
 }
+
+/* ========== LONG-PRESS FEEDBACK ========== */
+/* While pressing/holding - subtle scale and highlight */
+.catalog-list-item.catalog-item-pressing {
+  transform: scale(0.97);
+  background: rgba(10, 132, 255, 0.08);
+  transition: transform 0.15s ease-out, background 0.15s ease-out;
+}
+
+/* Grid/large mode: also add border highlight */
+.catalog-list--grid .catalog-list-item.catalog-item-pressing,
+.catalog-list--large .catalog-list-item.catalog-item-pressing {
+  border-color: rgba(10, 132, 255, 0.4);
+  box-shadow: 0 0 0 2px rgba(10, 132, 255, 0.15);
+}
+
+/* When long-press activates drag - brief pulse */
+.catalog-list-item.catalog-item-activated {
+  animation: catalog-item-pulse 0.2s ease-out;
+}
+
+@keyframes catalog-item-pulse {
+  0% {
+    transform: scale(0.97);
+    background: rgba(10, 132, 255, 0.15);
+  }
+  50% {
+    transform: scale(1.02);
+    background: rgba(10, 132, 255, 0.25);
+  }
+  100% {
+    transform: scale(1);
+    background: transparent;
+  }
+}

@@ -19,6 +19,11 @@ interface UseCatalogItemDragOptions {
   onTap: (id: string) => void;
 }
 
+/** CSS class added while pressing (visual feedback) */
+const PRESSING_CLASS = "catalog-item-pressing";
+/** CSS class added when long-press triggers drag */
+const ACTIVATED_CLASS = "catalog-item-activated";
+
 /**
  * Hook for catalog item long-press-to-drag behavior.
  * Handles pointer events, long-press timer, and initiates catalog drag.
@@ -35,17 +40,28 @@ export function useCatalogItemDrag({
   const posRef = useRef({ x: 0, y: 0 });
   const initialPosRef = useRef({ x: 0, y: 0 });
   const cleanupRef = useRef<() => void>(() => {});
+  const activePointerIdRef = useRef<number | null>(null);
+  const targetRef = useRef<HTMLButtonElement | null>(null);
 
   const imageBase = catalogMode === "boards" ? "images/boards/" : "images/devices/";
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLButtonElement>, opt: CatalogItemDragOption) => {
       if (e.button !== 0) return;
+      // Prevent default to avoid any browser-synthesized events (clicks, etc.)
+      e.preventDefault();
+      // Clean up any previous operation (defensive)
+      cleanupRef.current();
+      activePointerIdRef.current = e.pointerId;
       timerFiredRef.current = false;
+      targetRef.current = e.currentTarget;
       const start = { x: e.clientX, y: e.clientY };
       posRef.current = start;
       initialPosRef.current = start;
       const pointerId = e.pointerId;
+
+      // Add pressing class for visual feedback
+      e.currentTarget.classList.add(PRESSING_CLASS);
 
       const onMove = (ev: PointerEvent) => {
         if (ev.pointerId !== pointerId) return;
@@ -59,8 +75,10 @@ export function useCatalogItemDrag({
 
       const onUp = (ev: PointerEvent) => {
         if (ev.pointerId !== pointerId) return;
+        // Check flag BEFORE cleanup to handle any race conditions
+        const shouldTap = !timerFiredRef.current;
         cleanupRef.current();
-        if (!timerFiredRef.current) onTap(opt.id);
+        if (shouldTap) onTap(opt.id);
       };
 
       window.addEventListener("pointermove", onMove, { capture: true });
@@ -69,6 +87,10 @@ export function useCatalogItemDrag({
 
       longPressTimerRef.current = setTimeout(() => {
         timerFiredRef.current = true;
+        // Add activated class for pulse feedback
+        targetRef.current?.classList.add(ACTIVATED_CLASS);
+        // Remove after animation
+        setTimeout(() => targetRef.current?.classList.remove(ACTIVATED_CLASS), 200);
         cleanupRef.current();
         const imageUrl = opt.image ? `${imageBase}${opt.image}` : null;
         const widthMm = opt.widthMm ?? defaultWidthMm;
@@ -86,6 +108,8 @@ export function useCatalogItemDrag({
       }, LONG_PRESS_MS);
 
       cleanupRef.current = () => {
+        activePointerIdRef.current = null;
+        targetRef.current?.classList.remove(PRESSING_CLASS);
         if (longPressTimerRef.current) {
           clearTimeout(longPressTimerRef.current);
           longPressTimerRef.current = null;
