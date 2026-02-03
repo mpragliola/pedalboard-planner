@@ -12,8 +12,8 @@ const WDH_ZOOM_338: Wdh = [338, 180, 77];
 const WDH_ZOOM_SMALL: Wdh = [10, 10, 10];
 
 const zoomMultifx: ZoomRowBase[] = [
-  { model: "G3Xn", name: "Zoom G3Xn", wdh: [318, 181, 57], type: "multifx", image: null },
-  { model: "G5n", name: "Zoom G5n", wdh: [423, 196, 73], type: "multifx", image: null },
+  { model: "G3Xn", name: "Zoom G3Xn", wdh: [318, 181, 57], type: "multifx", image: "g3xn.png" },
+  { model: "G5n", name: "Zoom G5n", wdh: [423, 196, 73], type: "multifx", image: "g5n.png" },
   { model: "G11", name: "Zoom G11", wdh: WDH_ZOOM_338, type: "multifx", image: "g11.png" },
   { model: "A1X Four", name: "Zoom A1X Four", wdh: WDH_ZOOM_SMALL, type: "multifx", image: "a1xfour.png" },
   { model: "AC-2", name: "Zoom AC-2", wdh: WDH_ZOOM_AC, type: "multifx", image: "ac2.png" },
@@ -22,6 +22,13 @@ const zoomMultifx: ZoomRowBase[] = [
   { model: "B6", name: "Zoom B6", wdh: WDH_ZOOM_338, type: "multifx", image: "b6.png" },
   { model: "G1 Four", name: "Zoom G1 Four", wdh: WDH_ZOOM_SMALL, type: "multifx", image: "g1four.png" },
   { model: "G6", name: "Zoom G6", wdh: WDH_ZOOM_338, type: "multifx", image: "g6.png" },
+  { model: "G5", name: "Zoom G5", wdh: [423, 196, 73], type: "multifx", image: "g5.png" },
+  { model: "G3", name: "Zoom G3", wdh: [318, 181, 57], type: "multifx", image: "g3.png" },
+  { model: "G3X", name: "Zoom G3X", wdh: [318, 181, 57], type: "multifx", image: "g3x.png" },
+  { model: "G7.1ut", name: "Zoom G7.1ut", wdh: WDH_ZOOM_338, type: "multifx", image: "g7-1ut.png" },
+  { model: "G9.2tt", name: "Zoom G9.2tt", wdh: WDH_ZOOM_338, type: "multifx", image: "g9-2tt.png" },
+  { model: "FP1", name: "Zoom FP1", wdh: WDH_ZOOM_AC, type: "multifx", image: "fp1.png" },
+  { model: "FP-02M", name: "Zoom FP-02M", wdh: WDH_ZOOM_AC, type: "multifx", image: "fp-02m.png" },
 ];
 
 const zoomPedals: ZoomRowBase[] = [
