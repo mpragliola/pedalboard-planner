@@ -12,10 +12,10 @@ const WDH_LINE6_STADIUM_FLOOR: [number, number, number] = [408, 241, 82]; // est
 const WDH_LINE6_STADIUM_XL_FLOOR: [number, number, number] = [492, 262, 110]; // estimated
 const WDH_LINE6_HX_ONE: [number, number, number] = [96, 125, 62]; // ultra-compact; exact mm not in public spec
 // Relay receiver dimensions (Line 6 comparison chart)
-const WDH_LINE6_RELAY_G10: [number, number, number] = [99, 99, 32];
-const WDH_LINE6_RELAY_G30: [number, number, number] = [80, 50, 66];
-const WDH_LINE6_RELAY_G50: [number, number, number] = [89, 114, 87];
-const WDH_LINE6_RELAY_G70: [number, number, number] = [66, 50, 44]; // pilot's guide
+const WDH_LINE6_RELAY_G10: [number, number, number] = [99, 99, 60.3];
+const WDH_LINE6_RELAY_G30: [number, number, number] = [80, 114, 31];
+const WDH_LINE6_RELAY_G50: [number, number, number] = [80, 110, 33];
+const WDH_LINE6_RELAY_G70: [number, number, number] = [103, 140, 52]; // pilot's guide
 
 const line6Devices: Omit<DeviceTemplate, "id" | "name" | "brand">[] = [
   { type: "pedal", model: "DL4 MkII", wdh: WDH_LINE6_DL4_MKII, image: null },

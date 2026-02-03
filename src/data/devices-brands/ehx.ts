@@ -21,7 +21,7 @@ export const EHX_DEVICE_TEMPLATES: DeviceTemplate[] = [
   },
   {
     id: "device-ehx-magnum-44",
-    type: "power unit",
+    type: "power",
     brand: "Electro-Harmonix",
     model: "44 Magnum",
     name: "Electro-Harmonix 44 Magnum",

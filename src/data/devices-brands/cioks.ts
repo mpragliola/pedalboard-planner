@@ -16,7 +16,7 @@ export const CIOKS_DEVICE_TEMPLATES: DeviceTemplate[] = cioksDevices.map((d) => 
   ...d,
   name: `Cioks ${d.model}`,
   id: deviceId("cioks", d.model),
-  type: "power unit",
+  type: "power",
   brand: "Cioks",
   image: "cioks/" + d.image,
 }));

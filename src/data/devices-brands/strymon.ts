@@ -6,7 +6,7 @@ const WDH_COMPACT: [number, number, number] = [114, 102, 44];
 const WDH_POWER_UNIT: [number, number, number] = [81, 58, 33];
 
 const strymonDevices: Omit<DeviceTemplate, "id" | "name" | "brand">[] = [
-  { type: "power unit", model: "Zuma", wdh: WDH_POWER_UNIT, image: "zuma" },
+  { type: "power", model: "Zuma", wdh: WDH_POWER_UNIT, image: "zuma" },
   { type: "pedal", model: "BigSky MX", wdh: [178, 127, 48], image: "bigsky-mx" },
   { type: "pedal", model: "BigSky", wdh: WDH_SMALL, image: "bigsky" },
   { type: "pedal", model: "BlueSky v2", wdh: WDH_COMPACT, image: "bluesky-v2" },

@@ -24,7 +24,7 @@ import { MIPRO_DEVICE_TEMPLATES } from "./devices-brands/mipro";
 import { SENNHEISER_DEVICE_TEMPLATES } from "./devices-brands/sennheiser";
 import { SHURE_DEVICE_TEMPLATES } from "./devices-brands/shure";
 
-export type DeviceType = "power unit" | "controller" | "pedal" | "multifx" | "wireless";
+export type DeviceType = "power" | "controller" | "pedal" | "multifx" | "wireless";
 
 export interface DeviceTemplate {
   id: string;
@@ -218,7 +218,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
   // Power supply units
   {
     id: "device-voodoolab-pp2plus",
-    type: "power unit",
+    type: "power",
     brand: "Voodoo Lab",
     model: "Pedal Power 2 Plus",
     name: "Voodoo Lab Pedal Power 2 Plus",
@@ -227,7 +227,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
   },
   {
     id: "device-truetone-cs12",
-    type: "power unit",
+    type: "power",
     brand: "Truetone",
     model: "1 SPOT Pro CS12",
     name: "Truetone 1 SPOT Pro CS12 Power Supply",
@@ -236,7 +236,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
   },
   {
     id: "device-mono-powersupply-medium",
-    type: "power unit",
+    type: "power",
     brand: "Mono",
     model: "Power Supply Medium",
     name: "Mono Power Supply Medium",
@@ -245,7 +245,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
   },
   {
     id: "device-voodoolab-iso5",
-    type: "power unit",
+    type: "power",
     brand: "Voodoo Lab",
     model: "Pedal Power Iso 5",
     name: "Voodoo Lab Pedal Power Iso 5",
@@ -254,7 +254,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
   },
   {
     id: "device-palmer-pwt06",
-    type: "power unit",
+    type: "power",
     brand: "Palmer",
     model: "PWT 06 IEC",
     name: "Palmer PWT 06 IEC",
@@ -263,7 +263,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
   },
   {
     id: "device-palmer-pwt04",
-    type: "power unit",
+    type: "power",
     brand: "Palmer",
     model: "PWT 04 / Universal Pedalboard Power Supply",
     name: "Palmer PWT 04 Universal Pedalboard Power Supply",
@@ -272,7 +272,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
   },
   {
     id: "device-tonecity-tps06",
-    type: "power unit",
+    type: "power",
     brand: "Tone City",
     model: "TPS-06 Multi Power Supply",
     name: "Tone City TPS-06 Multi Power Supply",

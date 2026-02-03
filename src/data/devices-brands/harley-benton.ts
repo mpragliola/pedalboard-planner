@@ -3,7 +3,7 @@ import type { DeviceTemplate } from "../devices";
 export const HARLEY_BENTON_DEVICE_TEMPLATES: DeviceTemplate[] = [
   {
     id: "device-harleybenton-iso5pro",
-    type: "power unit",
+    type: "power",
     brand: "Harley Benton",
     model: "PowerPlant ISO-5 Pro",
     name: "Harley Benton PowerPlant ISO-5 Pro",

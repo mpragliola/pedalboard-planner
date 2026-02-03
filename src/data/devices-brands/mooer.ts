@@ -15,7 +15,7 @@ const WDH_X2_V2: [number, number, number] = [75, 115, 60];
 const WDH_MICRO_MINI: [number, number, number] = [93.5, 42, 52];
 
 const mooerDevices: Omit<DeviceTemplate, "id" | "name" | "brand">[] = [
-  { type: "power unit", model: "Macro Power S8", wdh: WDH_MACRO_POWER_S8, image: null },
+  { type: "power", model: "Macro Power S8", wdh: WDH_MACRO_POWER_S8, image: null },
   { type: "multifx", model: "GE100", wdh: WDH_MOOER_GE100, image: "mooer-ge-100.png" },
   { type: "multifx", model: "GE150 Plus Li", wdh: WDH_MOOER_GE150_PLUS_LI, image: "mooer-ge150plusli.png" },
   { type: "multifx", model: "GE200", wdh: WDH_MOOER_GE200, image: null },

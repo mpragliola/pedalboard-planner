@@ -21,7 +21,7 @@ export const JOYO_DEVICE_TEMPLATES: DeviceTemplate[] = [
   },
   {
     id: "device-joyo-jp05",
-    type: "power unit",
+    type: "power",
     brand: "Joyo",
     model: "JP-05 Power Bank Supply 5",
     name: "Joyo JP-05 Power Bank Supply 5",
