@@ -37,4 +37,12 @@ describe("boardId", () => {
       "board-aclam-smart-track-xs1"
     );
   });
+
+  it("handles RockBoard Duo 2.0 style model", () => {
+    expect(boardId("rockboard", "Duo 2.0")).toBe("board-rockboard-duo-20");
+  });
+
+  it("handles Cinque 5.3 MAX style model", () => {
+    expect(boardId("rockboard", "Cinque 5.3 MAX")).toBe("board-rockboard-cinque-53-max");
+  });
 });
