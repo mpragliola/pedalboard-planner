@@ -225,7 +225,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setImageFailedIds((prev) => new Set(prev).add(id));
   }, []);
 
-  /** Uses placement strategy to compute center of viewport not covered by catalog/board menu. */
+  /** Uses placement strategy so new device/board appears at center of browser viewport. */
   const getPlacementInVisibleViewport = useCallback((): { x: number; y: number } => {
     const canvasEl = canvasRef.current;
     if (!canvasEl) return DEFAULT_PLACEMENT_FALLBACK;
@@ -235,6 +235,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       zoom,
       catalogRect: document.querySelector(".catalog-panel")?.getBoundingClientRect(),
       boardMenuRect: document.querySelector(".board-menu-wrap")?.getBoundingClientRect(),
+      viewportCenter: { x: window.innerWidth / 2, y: window.innerHeight / 2 },
     });
   }, [pan, zoom, canvasRef]);
 
