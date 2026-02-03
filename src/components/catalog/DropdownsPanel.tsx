@@ -1,5 +1,6 @@
 import { forwardRef, useState, useEffect } from "react";
 import { DEVICE_TYPE_ORDER, DEVICE_TYPE_LABEL } from "../../constants";
+import type { DeviceType } from "../../data/devices";
 import { useApp } from "../../context/AppContext";
 import { CatalogModeSwitch } from "./CatalogModeSwitch";
 import { TextFilter } from "./TextFilter";
@@ -180,10 +181,15 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
     setDeviceDepthMin
   );
 
-  const deviceGroups = DEVICE_TYPE_ORDER.map((deviceType) => {
+  const deviceGroups: {
+    deviceType: DeviceType;
+    label: string;
+    options: { id: string; name: string; type: string; image?: string | null; widthMm?: number; depthMm?: number }[];
+  }[] = DEVICE_TYPE_ORDER.map((deviceType) => {
     const templates = filteredDevices.filter((t) => t.type === deviceType);
     if (templates.length === 0) return null;
     return {
+      deviceType,
       label: DEVICE_TYPE_LABEL[deviceType],
       options: templates.map((t) => ({
         id: t.id,
@@ -194,10 +200,7 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
         depthMm: t.wdh[1],
       })),
     };
-  }).filter(Boolean) as {
-    label: string;
-    options: { id: string; name: string; type: string; image?: string | null; widthMm?: number; depthMm?: number }[];
-  }[];
+  }).filter((g): g is NonNullable<typeof g> => g != null);
 
   return (
     <div ref={ref} className="floating-controls floating-dropdowns">

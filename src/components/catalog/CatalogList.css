@@ -325,6 +325,10 @@
 }
 
 .catalog-list-group-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
   padding: 4px 8px 2px;
   font-size: 0.7rem;
   font-weight: 600;
@@ -332,6 +336,12 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   background: rgba(0, 0, 0, 0.04);
+}
+
+.catalog-list-group-icon {
+  flex-shrink: 0;
+  font-size: 0.65rem;
+  color: #888;
 }
 
 /* Focus styles */

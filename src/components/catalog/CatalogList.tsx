@@ -1,7 +1,19 @@
 import { useRef, useLayoutEffect, useCallback } from "react";
+import { faGuitar, faLayerGroup, faPlug, faSliders, faWifi } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { DEFAULT_OBJECT_COLOR } from "../../constants";
+import type { DeviceType } from "../../data/devices";
 import { useCatalogItemDrag, type CatalogItemDragOption } from "../../hooks/useCatalogItemDrag";
 import "./CatalogList.css";
+
+const DEVICE_TYPE_ICON: Record<DeviceType, IconDefinition> = {
+  pedal: faGuitar,
+  multifx: faLayerGroup,
+  power: faPlug,
+  controller: faSliders,
+  wireless: faWifi,
+};
 
 export type CatalogViewMode = "text" | "list" | "grid" | "large";
 
@@ -181,7 +193,7 @@ interface CatalogListGroupedProps {
   id: string;
   label: string;
   size: number;
-  groups: { label: string; options: CatalogListGroupOption[] }[];
+  groups: { deviceType?: DeviceType; label: string; options: CatalogListGroupOption[] }[];
   onAdd: (id: string) => void;
   catalogMode: "boards" | "devices";
   /** Controlled view mode */
@@ -261,11 +273,20 @@ export function CatalogListGrouped({
         {groups.every((g) => g.options.length === 0) ? (
           <div className="catalog-list-empty">No matches</div>
         ) : (
-          groups.map(({ label: groupLabel, options: groupOptions }) =>
+          groups.map(({ deviceType, label: groupLabel, options: groupOptions }) =>
             groupOptions.length > 0 ? (
               <div key={groupLabel} className="catalog-list-group">
                 {viewMode !== "grid" && viewMode !== "large" && (
-                  <div className="catalog-list-group-label">{groupLabel}</div>
+                  <div className="catalog-list-group-label">
+                    {groupLabel}
+                    {deviceType && DEVICE_TYPE_ICON[deviceType] && (
+                      <FontAwesomeIcon
+                        icon={DEVICE_TYPE_ICON[deviceType]}
+                        className="catalog-list-group-icon"
+                        aria-hidden
+                      />
+                    )}
+                  </div>
                 )}
                 <div className={viewMode === "grid" || viewMode === "large" ? "catalog-list-group-grid" : undefined}>
                   {groupOptions.map((opt) => (
