@@ -93,17 +93,36 @@ export function CatalogList({
   label,
   size,
   options,
-  onAdd: _onAdd,
+  onAdd,
   catalogMode,
   viewMode,
   onViewModeChange,
 }: CatalogListProps) {
   const listRef = useRef<HTMLDivElement>(null);
+  const scrollRestoreRef = useRef<number | null>(null);
+
+  const handleAdd = useCallback(
+    (optId: string) => {
+      if (listRef.current) scrollRestoreRef.current = listRef.current.scrollTop;
+      onAdd(optId);
+    },
+    [onAdd]
+  );
 
   const { handlePointerDown, imageBase } = useCatalogItemDrag({
     catalogMode,
     defaultWidthMm: 100,
     defaultDepthMm: 100,
+    onTap: handleAdd,
+  });
+
+  useLayoutEffect(() => {
+    const el = listRef.current;
+    const saved = scrollRestoreRef.current;
+    if (el && saved !== null) {
+      el.scrollTop = saved;
+      scrollRestoreRef.current = null;
+    }
   });
 
   useLayoutEffect(() => {
@@ -148,7 +167,7 @@ export function CatalogList({
               className="catalog-list-item"
               onPointerDown={(e) => handlePointerDown(e, opt)}
               onContextMenu={(e) => e.preventDefault()}
-              title={`Drag ${opt.name} to place on board`}
+              title={`Add ${opt.name} at center, or long-press to drag`}
             >
               {viewMode !== "text" && (
                 <span className="catalog-list-item-thumb">
@@ -167,7 +186,7 @@ export function CatalogList({
           ))
         )}
       </div>
-      <p className="catalog-list-hint">Drag to place on board</p>
+      <p className="catalog-list-hint">Click to add, long-press to drag</p>
     </>
   );
 }
@@ -196,12 +215,13 @@ export function CatalogListGrouped({
   label,
   size,
   groups,
-  onAdd: _onAddGrouped,
+  onAdd,
   catalogMode,
   viewMode,
   onViewModeChange,
 }: CatalogListGroupedProps) {
   const listRef = useRef<HTMLDivElement>(null);
+  const scrollRestoreRef = useRef<number | null>(null);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
   const toggleGroup = useCallback((groupLabel: string) => {
@@ -213,10 +233,28 @@ export function CatalogListGrouped({
     });
   }, []);
 
+  const handleAdd = useCallback(
+    (optId: string) => {
+      if (listRef.current) scrollRestoreRef.current = listRef.current.scrollTop;
+      onAdd(optId);
+    },
+    [onAdd]
+  );
+
   const { handlePointerDown, imageBase } = useCatalogItemDrag({
     catalogMode,
     defaultWidthMm: 75,
     defaultDepthMm: 120,
+    onTap: handleAdd,
+  });
+
+  useLayoutEffect(() => {
+    const el = listRef.current;
+    const saved = scrollRestoreRef.current;
+    if (el && saved !== null) {
+      el.scrollTop = saved;
+      scrollRestoreRef.current = null;
+    }
   });
 
   useLayoutEffect(() => {
@@ -312,7 +350,7 @@ export function CatalogListGrouped({
                         className="catalog-list-item"
                         onPointerDown={(e) => handlePointerDown(e, opt)}
                         onContextMenu={(e) => e.preventDefault()}
-                        title={`Drag ${opt.name} to place on board`}
+                        title={`Add ${opt.name} at center, or long-press to drag`}
                       >
                         {viewMode !== "text" && (
                           <span className="catalog-list-item-thumb">
@@ -336,7 +374,7 @@ export function CatalogListGrouped({
           )
         )}
       </div>
-      <p className="catalog-list-hint">Drag to place on board</p>
+      <p className="catalog-list-hint">Click to add, long-press to drag</p>
     </>
   );
 }
