@@ -190,6 +190,12 @@ const bossControllers: BossRowBase[] = [
   { model: "ES-8", name: "ES-8", wdh: WDH_ES8, image: "boss-es-8_top_tn.png" },
 ];
 
+// ——— Wireless systems ———
+const bossWireless: BossRowBase[] = [
+  { model: "WL-50", name: "WL-50 Wireless", wdh: WDH_COMPACT, image: "boss-wl-50_wireless.png" },
+  { model: "WL-60", name: "WL-60 Wireless", wdh: WDH_COMPACT, image: "boss-wl-60-wireless.png" },
+];
+
 // ——— Pedals (delay, OD, etc.) ———
 const bossPedalsFinal: BossRowBase[] = [
   { model: "MS-3", name: "MS-3", wdh: WDH_200, image: "boss-ms-3_tn.png" },
@@ -212,6 +218,7 @@ const bossDevices: BossDeviceRow[] = [
   ...bossMultifxRcRest.map((d) => toBossRow(d, "multifx")),
   ...bossMultifxSyVe.map((d) => toBossRow(d, "multifx")),
   ...bossControllers.map((d) => toBossRow(d, "controller")),
+  ...bossWireless.map((d) => toBossRow(d, "wireless")),
 ];
 
 function addBossPrefix(name: string): string {

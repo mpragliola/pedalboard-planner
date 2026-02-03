@@ -28,4 +28,13 @@ export const HARLEY_BENTON_DEVICE_TEMPLATES: DeviceTemplate[] = [
     wdh: [560, 350, 90],
     image: null,
   },
+  {
+    id: "device-harleybenton-airborne-pro-5-8ghz-wireless",
+    type: "wireless",
+    brand: "Harley Benton",
+    model: "Airborne Pro 5.8GHz Wireless",
+    name: "Harley Benton Airborne Pro 5.8GHz Wireless",
+    wdh: [73, 129, 59],
+    image: "harley-benton/harley-benton-airborne-pro-5.8ghz-wireless.png",
+  },
 ];

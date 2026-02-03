@@ -19,8 +19,12 @@ import { KEMPER_DEVICE_TEMPLATES } from "./devices-brands/kemper";
 import { NEURAL_DEVICE_TEMPLATES } from "./devices-brands/neural";
 import { HEADRUSH_DEVICE_TEMPLATES } from "./devices-brands/headrush";
 import { HARLEY_BENTON_DEVICE_TEMPLATES } from "./devices-brands/harley-benton";
+import { HUGHES_KETTNER_DEVICE_TEMPLATES } from "./devices-brands/hughes-kettner";
+import { MIPRO_DEVICE_TEMPLATES } from "./devices-brands/mipro";
+import { SENNHEISER_DEVICE_TEMPLATES } from "./devices-brands/sennheiser";
+import { SHURE_DEVICE_TEMPLATES } from "./devices-brands/shure";
 
-export type DeviceType = "power unit" | "controller" | "pedal" | "multifx" | "wireless systems";
+export type DeviceType = "power unit" | "controller" | "pedal" | "multifx" | "wireless";
 
 export interface DeviceTemplate {
   id: string;
@@ -57,6 +61,10 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
   ...NEURAL_DEVICE_TEMPLATES,
   ...HEADRUSH_DEVICE_TEMPLATES,
   ...HARLEY_BENTON_DEVICE_TEMPLATES,
+  ...HUGHES_KETTNER_DEVICE_TEMPLATES,
+  ...MIPRO_DEVICE_TEMPLATES,
+  ...SENNHEISER_DEVICE_TEMPLATES,
+  ...SHURE_DEVICE_TEMPLATES,
 
   // Single / standard pedals
   {
