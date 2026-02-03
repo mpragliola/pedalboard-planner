@@ -1,5 +1,14 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { ZOOM_MIN, ZOOM_MAX, ZOOM_STEP } from "../constants";
+import {
+  ZOOM_MIN,
+  ZOOM_MAX,
+  ZOOM_STEP,
+  TILE_SIZE_BASE,
+  WHEEL_PIVOT_MS,
+  WHEEL_THROTTLE_MS,
+  WHEEL_TRANSITION_MS,
+  WHEEL_ZOOM_FACTOR,
+} from "../constants";
 
 function dist(a: { clientX: number; clientY: number }, b: { clientX: number; clientY: number }) {
   return Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
@@ -37,14 +46,11 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
   const panRef = useRef(pan);
   const [animating, setAnimating] = useState(false);
   const wheelPivotRef = useRef<{ x: number; y: number; at: number } | null>(null);
-  const WHEEL_PIVOT_MS = 120;
   const lastWheelApplyRef = useRef(0);
   const wheelApplyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const wheelEndTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingZoomRef = useRef(zoomRef.current);
   const pendingPivotRef = useRef({ x: 0, y: 0 });
-  const WHEEL_THROTTLE_MS = 50;
-  const WHEEL_TRANSITION_MS = 250;
   /* Keep pending in sync when we apply from buttons/center so wheel uses correct base */
   useEffect(() => {
     if (!animating) {
@@ -103,7 +109,7 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
         wheelPivotRef.current = pivot;
       }
       const normalizedDelta = e.deltaMode === 1 ? -e.deltaY * 32 : -e.deltaY;
-      const factor = 1 + normalizedDelta * 0.002;
+      const factor = 1 + normalizedDelta * WHEEL_ZOOM_FACTOR;
       /* Accumulate so multiple wheel events before apply compound */
       pendingZoomRef.current = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, pendingZoomRef.current * factor));
       pendingPivotRef.current = { x: pivot.x, y: pivot.y };
@@ -135,8 +141,9 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
   useEffect(() => {
     const el = canvasRef.current;
     if (!el) return;
-    el.addEventListener("wheel", handleWheelZoom, { passive: false, capture: true });
-    return () => el.removeEventListener("wheel", handleWheelZoom, { capture: true });
+    const wheelOptions = { passive: false, capture: true } as const;
+    el.addEventListener("wheel", handleWheelZoom, wheelOptions);
+    return () => el.removeEventListener("wheel", handleWheelZoom, wheelOptions);
   }, [handleWheelZoom]);
 
   /* Pinch-to-zoom (touch) */
@@ -171,15 +178,17 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
     const handleTouchEnd = (e: TouchEvent) => {
       if (e.touches.length < 2) pinchRef.current = null;
     };
-    el.addEventListener("touchstart", handleTouchStart, { passive: false });
-    el.addEventListener("touchmove", handleTouchMove, { passive: false });
-    el.addEventListener("touchend", handleTouchEnd, { passive: true });
-    el.addEventListener("touchcancel", handleTouchEnd, { passive: true });
+    const activeOptions = { passive: false } as const;
+    const passiveOptions = { passive: true } as const;
+    el.addEventListener("touchstart", handleTouchStart, activeOptions);
+    el.addEventListener("touchmove", handleTouchMove, activeOptions);
+    el.addEventListener("touchend", handleTouchEnd, passiveOptions);
+    el.addEventListener("touchcancel", handleTouchEnd, passiveOptions);
     return () => {
-      el.removeEventListener("touchstart", handleTouchStart);
-      el.removeEventListener("touchmove", handleTouchMove);
-      el.removeEventListener("touchend", handleTouchEnd);
-      el.removeEventListener("touchcancel", handleTouchEnd);
+      el.removeEventListener("touchstart", handleTouchStart, activeOptions);
+      el.removeEventListener("touchmove", handleTouchMove, activeOptions);
+      el.removeEventListener("touchend", handleTouchEnd, passiveOptions);
+      el.removeEventListener("touchcancel", handleTouchEnd, passiveOptions);
     };
   }, [zoomToward, onPinchStart]);
 
@@ -259,7 +268,7 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
     [spaceDown, pan.x, pan.y]
   );
 
-  const tileSize = 1200 * zoom;
+  const tileSize = TILE_SIZE_BASE * zoom;
 
   return {
     zoom,

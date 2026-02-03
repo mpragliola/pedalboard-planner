@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useCallback, useRef, useEffect, useMemo, type ReactNode } from "react";
 import { BOARD_TEMPLATES } from "../data/boards";
 import { DEVICE_TEMPLATES } from "../data/devices";
-import { initialObjects, MM_TO_PX } from "../constants";
+import { initialObjects, MM_TO_PX, HISTORY_DEPTH, DEBOUNCE_SAVE_MS, DEFAULT_PLACEMENT_FALLBACK } from "../constants";
 import {
   createObjectFromBoardTemplate,
   createObjectFromDeviceTemplate,
@@ -15,6 +15,7 @@ import { useCanvasZoomPan } from "../hooks/useCanvasZoomPan";
 import { useObjectDrag } from "../hooks/useObjectDrag";
 import { useBoardDeviceFilters } from "../hooks/useBoardDeviceFilters";
 import { useHistory } from "../hooks/useHistory";
+import { useCatalogDrag } from "../hooks/useCatalogDrag";
 import type { CanvasObjectType, Connector } from "../types";
 
 const stateManager = new StateManager("pedal/state");
@@ -141,7 +142,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     canRedo,
     past,
     future,
-  } = useHistory<CanvasObjectType[]>(historyInitial.objects, 200, {
+  } = useHistory<CanvasObjectType[]>(historyInitial.objects, HISTORY_DEPTH, {
     initialPast: historyInitial.past,
     initialFuture: historyInitial.future,
   });
@@ -224,7 +225,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   /** Uses placement strategy to compute center of viewport not covered by catalog/board menu. */
   const getPlacementInVisibleViewport = useCallback((): { x: number; y: number } => {
     const canvasEl = canvasRef.current;
-    if (!canvasEl) return { x: 120, y: 120 };
+    if (!canvasEl) return DEFAULT_PLACEMENT_FALLBACK;
     return visibleViewportPlacement({
       canvasRect: canvasEl.getBoundingClientRect(),
       pan,
@@ -269,157 +270,78 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   }, [objects, zoom, setPan, setCanvasAnimating, canvasRef]);
 
-  const handleBoardSelect = useCallback(
-    (templateId: string) => {
+  /** Core function to add an object from a template at a specific position */
+  const addObjectFromTemplate = useCallback(
+    (mode: "boards" | "devices", templateId: string, canvasX: number, canvasY: number) => {
       const id = templateId?.trim();
       if (!id) return;
-      const template = BOARD_TEMPLATES.find((t) => t.id === id);
+
+      const templates = mode === "boards" ? BOARD_TEMPLATES : DEVICE_TEMPLATES;
+      const template = templates.find((t) => t.id === id);
       if (!template) return;
-      const { x: cx, y: cy } = getPlacementInVisibleViewport();
+
       const w = template.wdh[0] * MM_TO_PX;
       const d = template.wdh[1] * MM_TO_PX;
-      const newObj = createObjectFromBoardTemplate(template, cx - w / 2, cy - d / 2);
+      const createFn = mode === "boards" ? createObjectFromBoardTemplate : createObjectFromDeviceTemplate;
+      const newObj = createFn(template as never, canvasX - w / 2, canvasY - d / 2);
+
       setObjects((prev) => [...prev, newObj]);
-      setSelectedBoard("");
+      (mode === "boards" ? setSelectedBoard : setSelectedDevice)("");
       setSelectedObjectIds([]);
     },
-    [setSelectedBoard, setSelectedObjectIds, getPlacementInVisibleViewport, setObjects]
+    [setSelectedBoard, setSelectedDevice, setSelectedObjectIds, setObjects]
+  );
+
+  const handleBoardSelect = useCallback(
+    (templateId: string) => {
+      const { x, y } = getPlacementInVisibleViewport();
+      addObjectFromTemplate("boards", templateId, x, y);
+    },
+    [getPlacementInVisibleViewport, addObjectFromTemplate]
   );
 
   const handleDeviceSelect = useCallback(
     (templateId: string) => {
-      const id = templateId?.trim();
-      if (!id) return;
-      const template = DEVICE_TEMPLATES.find((t) => t.id === id);
-      if (!template) return;
-      const { x: cx, y: cy } = getPlacementInVisibleViewport();
-      const w = template.wdh[0] * MM_TO_PX;
-      const d = template.wdh[1] * MM_TO_PX;
-      const newObj = createObjectFromDeviceTemplate(template, cx - w / 2, cy - d / 2);
-      setObjects((prev) => [...prev, newObj]);
-      setSelectedDevice("");
-      setSelectedObjectIds([]);
+      const { x, y } = getPlacementInVisibleViewport();
+      addObjectFromTemplate("devices", templateId, x, y);
     },
-    [setSelectedDevice, setSelectedObjectIds, getPlacementInVisibleViewport, setObjects]
+    [getPlacementInVisibleViewport, addObjectFromTemplate]
   );
 
   const handleBoardSelectAt = useCallback(
     (templateId: string, canvasX: number, canvasY: number) => {
-      const id = templateId?.trim();
-      if (!id) return;
-      const template = BOARD_TEMPLATES.find((t) => t.id === id);
-      if (!template) return;
-      const w = template.wdh[0] * MM_TO_PX;
-      const d = template.wdh[1] * MM_TO_PX;
-      const newObj = createObjectFromBoardTemplate(template, canvasX - w / 2, canvasY - d / 2);
-      setObjects((prev) => [...prev, newObj]);
-      setSelectedBoard("");
-      setSelectedObjectIds([]);
+      addObjectFromTemplate("boards", templateId, canvasX, canvasY);
     },
-    [setSelectedBoard, setSelectedObjectIds, setObjects]
+    [addObjectFromTemplate]
   );
 
   const handleDeviceSelectAt = useCallback(
     (templateId: string, canvasX: number, canvasY: number) => {
-      const id = templateId?.trim();
-      if (!id) return;
-      const template = DEVICE_TEMPLATES.find((t) => t.id === id);
-      if (!template) return;
-      const w = template.wdh[0] * MM_TO_PX;
-      const d = template.wdh[1] * MM_TO_PX;
-      const newObj = createObjectFromDeviceTemplate(template, canvasX - w / 2, canvasY - d / 2);
-      setObjects((prev) => [...prev, newObj]);
-      setSelectedDevice("");
-      setSelectedObjectIds([]);
+      addObjectFromTemplate("devices", templateId, canvasX, canvasY);
     },
-    [setSelectedDevice, setSelectedObjectIds, setObjects]
+    [addObjectFromTemplate]
   );
 
-  const [catalogDrag, setCatalogDrag] = useState<{
-    templateId: string;
-    mode: "boards" | "devices";
-    imageUrl: string | null;
-    widthMm: number;
-    depthMm: number;
-  } | null>(null);
-  const [catalogDragPosition, setCatalogDragPosition] = useState({ x: 0, y: 0 });
-  const ignoreNextCatalogClickRef = useRef(false);
-  const catalogDragRef = useRef(catalogDrag);
-  const catalogDragCleanupRef = useRef<() => void>(() => {});
-  const catalogPointerIdRef = useRef<number | null>(null);
-  catalogDragRef.current = catalogDrag;
-
-  const endCatalogDrag = useCallback(
-    (clientX: number, clientY: number) => {
-      catalogDragCleanupRef.current?.();
-      catalogDragCleanupRef.current = () => {};
-      catalogPointerIdRef.current = null;
-      document.body.classList.remove("catalog-dragging");
-      const data = catalogDragRef.current;
-      if (!data) {
-        setCatalogDrag(null);
-        return;
-      }
-      const canvas = canvasRef.current;
-      if (canvas) {
-        const r = canvas.getBoundingClientRect();
-        if (clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom) {
-          const zoomNow = zoomRef.current;
-          const panNow = panRef.current;
-          const x = (clientX - r.left - panNow.x) / zoomNow;
-          const y = (clientY - r.top - panNow.y) / zoomNow;
-          if (data.mode === "boards") handleBoardSelectAt(data.templateId, x, y);
-          else handleDeviceSelectAt(data.templateId, x, y);
-        }
-      }
-      ignoreNextCatalogClickRef.current = true;
-      setCatalogDrag(null);
+  const handleDropOnCanvas = useCallback(
+    (mode: "boards" | "devices", templateId: string, x: number, y: number) => {
+      addObjectFromTemplate(mode, templateId, x, y);
     },
-    [handleBoardSelectAt, handleDeviceSelectAt]
+    [addObjectFromTemplate]
   );
 
-  const startCatalogDrag = useCallback(
-    (
-      templateId: string,
-      mode: "boards" | "devices",
-      imageUrl: string | null,
-      pointerId: number,
-      clientX: number,
-      clientY: number,
-      widthMm: number,
-      depthMm: number
-    ) => {
-      catalogDragCleanupRef.current?.();
-      catalogPointerIdRef.current = pointerId;
-      document.body.classList.add("catalog-dragging");
-      setCatalogDrag({ templateId, mode, imageUrl, widthMm, depthMm });
-      setCatalogDragPosition({ x: clientX, y: clientY });
-      const onMove = (e: PointerEvent) => {
-        if (catalogPointerIdRef.current !== e.pointerId) return;
-        e.preventDefault();
-        setCatalogDragPosition({ x: e.clientX, y: e.clientY });
-      };
-      const onUp = (e: PointerEvent) => {
-        if (catalogPointerIdRef.current !== e.pointerId) return;
-        endCatalogDrag(e.clientX, e.clientY);
-      };
-      window.addEventListener("pointermove", onMove, { capture: true, passive: false });
-      window.addEventListener("pointerup", onUp, { capture: true });
-      window.addEventListener("pointercancel", onUp, { capture: true });
-      catalogDragCleanupRef.current = () => {
-        window.removeEventListener("pointermove", onMove, { capture: true });
-        window.removeEventListener("pointerup", onUp, { capture: true });
-        window.removeEventListener("pointercancel", onUp, { capture: true });
-      };
-    },
-    [endCatalogDrag]
-  );
-
-  const shouldIgnoreCatalogClick = useCallback(() => {
-    const v = ignoreNextCatalogClickRef.current;
-    ignoreNextCatalogClickRef.current = false;
-    return v;
-  }, []);
+  const {
+    catalogDrag,
+    catalogDragPosition,
+    setCatalogDragPosition,
+    startCatalogDrag,
+    endCatalogDrag,
+    shouldIgnoreCatalogClick,
+  } = useCatalogDrag({
+    canvasRef,
+    zoomRef,
+    panRef,
+    onDropOnCanvas: handleDropOnCanvas,
+  });
 
   const handleCustomBoardCreate = useCallback(
     (params: { widthMm: number; depthMm: number; color: string; name: string }) => {
@@ -566,7 +488,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         unit,
         connectors,
       });
-    }, 400);
+    }, DEBOUNCE_SAVE_MS);
     return () => {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     };

@@ -1,12 +1,16 @@
-.confirmation-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 60000;
+/* Native dialog styling */
+.confirmation-dialog {
+  border: none;
+  border-radius: 12px;
+  padding: 0;
+  background: #fff;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  min-width: 320px;
+  max-width: min(400px, calc(100vw - 48px));
+}
+
+.confirmation-dialog::backdrop {
   background: rgba(0, 0, 0, 0.35);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
   animation: confirmation-fade-in 0.15s ease-out;
 }
 
@@ -14,19 +18,12 @@
   from {
     opacity: 0;
   }
-
   to {
     opacity: 1;
   }
 }
 
-.confirmation-dialog {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
-  padding: 20px 24px;
-  min-width: 320px;
-  max-width: min(400px, calc(100vw - 48px));
+.confirmation-dialog[open] {
   animation: confirmation-scale-in 0.2s ease-out;
 }
 
@@ -35,11 +32,14 @@
     opacity: 0;
     transform: scale(0.98);
   }
-
   to {
     opacity: 1;
     transform: scale(1);
   }
+}
+
+.confirmation-content {
+  padding: 20px 24px;
 }
 
 .confirmation-title {
