@@ -49,12 +49,13 @@ export const HISTORY_DEPTH = 200;
 // Zoom multiplier for wheel events
 export const WHEEL_ZOOM_FACTOR = 0.002;
 
-export const DEVICE_TYPE_ORDER: DeviceType[] = ["pedal", "multifx", "power unit", "controller"];
+export const DEVICE_TYPE_ORDER: DeviceType[] = ["pedal", "multifx", "power unit", "controller", "wireless systems"];
 export const DEVICE_TYPE_LABEL: Record<DeviceType, string> = {
   pedal: "Pedals",
   multifx: "Multifx",
   "power unit": "Power units",
   controller: "Controllers",
+  "wireless systems": "Wireless systems",
 };
 
 export const initialObjects: CanvasObjectType[] = [];

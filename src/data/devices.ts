@@ -20,7 +20,7 @@ import { NEURAL_DEVICE_TEMPLATES } from "./devices-brands/neural";
 import { HEADRUSH_DEVICE_TEMPLATES } from "./devices-brands/headrush";
 import { HARLEY_BENTON_DEVICE_TEMPLATES } from "./devices-brands/harley-benton";
 
-export type DeviceType = "power unit" | "controller" | "pedal" | "multifx";
+export type DeviceType = "power unit" | "controller" | "pedal" | "multifx" | "wireless systems";
 
 export interface DeviceTemplate {
   id: string;
