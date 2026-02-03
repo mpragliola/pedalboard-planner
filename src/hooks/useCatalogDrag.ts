@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from "react";
+import { capturePointer } from "../lib/pointerCapture";
 
 export interface CatalogDragState {
   templateId: string;
@@ -25,16 +26,14 @@ export function useCatalogDrag({ canvasRef, zoomRef, panRef, onDropOnCanvas }: U
 
   const ignoreNextClickRef = useRef(false);
   const dragStateRef = useRef(dragState);
-  const cleanupRef = useRef<() => void>(() => {});
-  const pointerIdRef = useRef<number | null>(null);
+  const releaseRef = useRef<() => void>(() => {});
 
   dragStateRef.current = dragState;
 
   const endDrag = useCallback(
     (clientX: number, clientY: number) => {
-      cleanupRef.current();
-      cleanupRef.current = () => {};
-      pointerIdRef.current = null;
+      releaseRef.current();
+      releaseRef.current = () => {};
       document.body.classList.remove("catalog-dragging");
 
       const data = dragStateRef.current;
@@ -75,37 +74,22 @@ export function useCatalogDrag({ canvasRef, zoomRef, panRef, onDropOnCanvas }: U
       depthMm: number
     ) => {
       // Cleanup any existing drag
-      cleanupRef.current();
-      pointerIdRef.current = pointerId;
+      releaseRef.current();
       document.body.classList.add("catalog-dragging");
 
       setDragState({ templateId, mode, imageUrl, widthMm, depthMm });
       setPosition({ x: clientX, y: clientY });
 
-      const onMove = (e: PointerEvent) => {
-        if (pointerIdRef.current !== e.pointerId) return;
-        e.preventDefault();
-        setPosition({ x: e.clientX, y: e.clientY });
-      };
+      const { release } = capturePointer(pointerId, {
+        onMove: (e) => {
+          setPosition({ x: e.clientX, y: e.clientY });
+        },
+        onEnd: (e) => {
+          endDrag(e.clientX, e.clientY);
+        },
+      });
 
-      const onUp = (e: PointerEvent) => {
-        if (pointerIdRef.current !== e.pointerId) return;
-        endDrag(e.clientX, e.clientY);
-      };
-
-      // Use consistent options objects for add/remove to avoid any edge cases
-      const moveOptions = { capture: true, passive: false } as const;
-      const upOptions = { capture: true } as const;
-
-      window.addEventListener("pointermove", onMove, moveOptions);
-      window.addEventListener("pointerup", onUp, upOptions);
-      window.addEventListener("pointercancel", onUp, upOptions);
-
-      cleanupRef.current = () => {
-        window.removeEventListener("pointermove", onMove, moveOptions);
-        window.removeEventListener("pointerup", onUp, upOptions);
-        window.removeEventListener("pointercancel", onUp, upOptions);
-      };
+      releaseRef.current = release;
     },
     [endDrag]
   );
