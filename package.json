@@ -14,6 +14,7 @@
     "deploy": "gh-pages -d dist",
     "process": "node scripts/process-images.js",
     "check-devices": "npx tsx scripts/check-devices.ts",
+    "dump-templates": "npx tsx scripts/dump-templates.ts",
     "convert-to-png": "node scripts/convert-to-png.js",
     "remove-backup-files": "node scripts/remove-backup-files.js",
     "distribute-images": "pwsh -File scripts/distribute-processed-images.ps1"
