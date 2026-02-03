@@ -19,34 +19,28 @@
  * REQUIREMENTS:
  *   - ImageMagick (magick) in PATH
  *   - rembg (set REMBG_PATH in .env or add to PATH)
+ *
+ * OPTIONAL .env for cleaner silhouettes:
+ *   - REMBG_ALPHA_MATTING=1     Enable alpha matting (better edges, fewer dark halos)
+ *   - REMBG_ERODE_SIZE=12       Alpha matting erode size (default 10)
+ *   - REMBG_MODEL=isnet-general-use  Model: u2net|u2netp|isnet-general-use|birefnet-general|bria-rmbg
  * ============================================================================
  */
 
 import { execSync, spawnSync } from "child_process";
-import { existsSync, readdirSync, rmSync, mkdirSync, readFileSync } from "fs";
-import { join, dirname, extname, basename } from "path";
+import { existsSync, readdirSync, rmSync, mkdirSync } from "fs";
+import { join, dirname, extname, basename, parse as pathParse } from "path";
 import { fileURLToPath } from "url";
+import { config } from "dotenv";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+const projectRoot = dirname(__dirname);
+
+config({ path: join(projectRoot, ".env") });
 
 // Force CPU for ONNX Runtime
 process.env.ONNXRUNTIME_PROVIDER = "CPUExecutionProvider";
-
-// Load .env from project root
-const projectRoot = dirname(__dirname);
-const envFile = join(projectRoot, ".env");
-if (existsSync(envFile)) {
-  const envContent = readFileSync(envFile, "utf-8");
-  for (const line of envContent.split("\n")) {
-    const match = line.match(/^\s*([^#][^=]+)=(.*)$/);
-    if (match) {
-      const name = match[1].trim();
-      const value = match[2].trim();
-      process.env[name] = value;
-    }
-  }
-}
 
 // Parse args
 const args = process.argv.slice(2);
@@ -86,18 +80,25 @@ if (!existsSync(targetDir)) {
   process.exit(1);
 }
 
+/** Quote path for shell (spaces in filenames break magick/rembg on Windows). */
+function quotePath(p) {
+  return /\s/.test(p) ? `"${p.replace(/"/g, '\\"')}"` : p;
+}
+
 // Helper to run commands
 function run(cmd, args, options = {}) {
   if (dryRun) return { status: 0 };
-  return spawnSync(cmd, args, { stdio: "inherit", shell: true, ...options });
+  const quoted = args.map((a) => (typeof a === "string" && /\s/.test(a) ? quotePath(a) : a));
+  return spawnSync(cmd, quoted, { stdio: "inherit", shell: true, ...options });
 }
 
-// Cleanup and create folders
+// Empty and recreate temporary folders
 if (!dryRun) {
-  if (existsSync(outputDir)) rmSync(outputDir, { recursive: true, force: true });
-  if (!noBorders && existsSync(tempBorderDir)) rmSync(tempBorderDir, { recursive: true, force: true });
-  if (!noBorders) mkdirSync(tempBorderDir, { recursive: true });
+  for (const d of [outputDir, tempBorderDir]) {
+    if (existsSync(d)) rmSync(d, { recursive: true, force: true });
+  }
   mkdirSync(outputDir, { recursive: true });
+  if (!noBorders) mkdirSync(tempBorderDir, { recursive: true });
 }
 
 // Get source files
@@ -119,18 +120,57 @@ if (!noBorders) {
 
 // PHASE 2: Background removal
 const rembgInputDir = noBorders ? targetDir : tempBorderDir;
-run(rembgPath, ["p", rembgInputDir, outputDir]);
+const rembgArgs = ["p"];
+if (process.env.REMBG_ALPHA_MATTING === "1" || process.env.REMBG_ALPHA_MATTING === "true") {
+  rembgArgs.push("-a");
+  const erode = process.env.REMBG_ERODE_SIZE;
+  if (erode) rembgArgs.push("-ae", erode);
+}
+if (process.env.REMBG_MODEL) rembgArgs.push("-m", process.env.REMBG_MODEL);
+rembgArgs.push(rembgInputDir, outputDir);
+run(rembgPath, rembgArgs);
 
-// PHASE 3: Trimming
+// PHASE 3: Advanced Trimming with Mask
 if (!dryRun) {
   const processedFiles = readdirSync(outputDir).filter((f) => f.endsWith(".png"));
   for (const file of processedFiles) {
     const filePath = join(outputDir, file);
-    run("magick", [filePath, "-fuzz", "5%", "-trim", "+repage", filePath]);
+    // Output is overwritten in place for simplicity (or can use out2 if needed)
+    // Use a temp file then overwrite
+    const { name } = pathParse(filePath);
+    const tempTrimPath = join(outputDir, `${name}_trimmed.png`);
+    // magick out.png "(" +clone -alpha extract -threshold 60% ")" -compose CopyOpacity -composite -trim +repage out2.png
+    run("magick", [
+      filePath,
+      "(",
+      "+clone",
+      "-alpha",
+      "extract",
+      "-threshold",
+      "70%",
+      ")",
+      "-compose",
+      "CopyOpacity",
+      "-composite",
+      "-trim",
+      "+repage",
+      tempTrimPath,
+    ]);
+    // Overwrite input with trimmed image
+    if (existsSync(tempTrimPath)) {
+      try {
+        // Remove the original file
+        rmSync(filePath, { force: true });
+      } catch {}
+      // Rename the trimmed file to the original file name
+      try {
+        require("fs").renameSync(tempTrimPath, filePath);
+      } catch (e) {
+        console.error(`Failed to overwrite ${filePath} with trimmed image:`, e);
+      }
+    }
   }
-  if (!noBorders && existsSync(tempBorderDir)) {
-    rmSync(tempBorderDir, { recursive: true, force: true });
-  }
+  if (existsSync(tempBorderDir)) rmSync(tempBorderDir, { recursive: true, force: true });
 }
 
 console.log(`Processed ${files.length} files -> ${outputDir}`);
