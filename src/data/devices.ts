@@ -23,6 +23,9 @@ import { HUGHES_KETTNER_DEVICE_TEMPLATES } from "./devices-brands/hughes-kettner
 import { MIPRO_DEVICE_TEMPLATES } from "./devices-brands/mipro";
 import { SENNHEISER_DEVICE_TEMPLATES } from "./devices-brands/sennheiser";
 import { SHURE_DEVICE_TEMPLATES } from "./devices-brands/shure";
+import { MORNINGSTAR_DEVICE_TEMPLATES } from "./devices-brands/morningstar";
+import { MVAVE_DEVICE_TEMPLATES } from "./devices-brands/mvave";
+import { SONICAKE_DEVICE_TEMPLATES } from "./devices-brands/sonicake";
 
 export type DeviceType = "power" | "controller" | "pedal" | "multifx" | "wireless";
 
@@ -65,6 +68,9 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
   ...MIPRO_DEVICE_TEMPLATES,
   ...SENNHEISER_DEVICE_TEMPLATES,
   ...SHURE_DEVICE_TEMPLATES,
+  ...MORNINGSTAR_DEVICE_TEMPLATES,
+  ...MVAVE_DEVICE_TEMPLATES,
+  ...SONICAKE_DEVICE_TEMPLATES,
 
   // Single / standard pedals
   {
