@@ -1,5 +1,13 @@
-import { useRef, useLayoutEffect, useCallback } from "react";
-import { faGuitar, faLayerGroup, faPlug, faSliders, faWifi } from "@fortawesome/free-solid-svg-icons";
+import { useRef, useState, useLayoutEffect, useCallback } from "react";
+import {
+  faChevronDown,
+  faChevronRight,
+  faGuitar,
+  faLayerGroup,
+  faPlug,
+  faSliders,
+  faWifi,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { DEFAULT_OBJECT_COLOR } from "../../constants";
@@ -85,36 +93,17 @@ export function CatalogList({
   label,
   size,
   options,
-  onAdd,
+  onAdd: _onAdd,
   catalogMode,
   viewMode,
   onViewModeChange,
 }: CatalogListProps) {
   const listRef = useRef<HTMLDivElement>(null);
-  const scrollRestoreRef = useRef<number | null>(null);
-
-  const handleAdd = useCallback(
-    (optId: string) => {
-      if (listRef.current) scrollRestoreRef.current = listRef.current.scrollTop;
-      onAdd(optId);
-    },
-    [onAdd]
-  );
 
   const { handlePointerDown, imageBase } = useCatalogItemDrag({
     catalogMode,
     defaultWidthMm: 100,
     defaultDepthMm: 100,
-    onTap: handleAdd,
-  });
-
-  useLayoutEffect(() => {
-    const el = listRef.current;
-    const saved = scrollRestoreRef.current;
-    if (el && saved !== null) {
-      el.scrollTop = saved;
-      scrollRestoreRef.current = null;
-    }
   });
 
   useLayoutEffect(() => {
@@ -159,7 +148,7 @@ export function CatalogList({
               className="catalog-list-item"
               onPointerDown={(e) => handlePointerDown(e, opt)}
               onContextMenu={(e) => e.preventDefault()}
-              title={`Add ${opt.name} (long-press to drag)`}
+              title={`Drag ${opt.name} to place on board`}
             >
               {viewMode !== "text" && (
                 <span className="catalog-list-item-thumb">
@@ -178,7 +167,7 @@ export function CatalogList({
           ))
         )}
       </div>
-      <p className="catalog-list-hint">Click to add, long-press to drag</p>
+      <p className="catalog-list-hint">Drag to place on board</p>
     </>
   );
 }
@@ -207,36 +196,27 @@ export function CatalogListGrouped({
   label,
   size,
   groups,
-  onAdd,
+  onAdd: _onAddGrouped,
   catalogMode,
   viewMode,
   onViewModeChange,
 }: CatalogListGroupedProps) {
   const listRef = useRef<HTMLDivElement>(null);
-  const scrollRestoreRef = useRef<number | null>(null);
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
-  const handleAdd = useCallback(
-    (optId: string) => {
-      if (listRef.current) scrollRestoreRef.current = listRef.current.scrollTop;
-      onAdd(optId);
-    },
-    [onAdd]
-  );
+  const toggleGroup = useCallback((groupLabel: string) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(groupLabel)) next.delete(groupLabel);
+      else next.add(groupLabel);
+      return next;
+    });
+  }, []);
 
   const { handlePointerDown, imageBase } = useCatalogItemDrag({
     catalogMode,
     defaultWidthMm: 75,
     defaultDepthMm: 120,
-    onTap: handleAdd,
-  });
-
-  useLayoutEffect(() => {
-    const el = listRef.current;
-    const saved = scrollRestoreRef.current;
-    if (el && saved !== null) {
-      el.scrollTop = saved;
-      scrollRestoreRef.current = null;
-    }
   });
 
   useLayoutEffect(() => {
@@ -277,50 +257,86 @@ export function CatalogListGrouped({
             groupOptions.length > 0 ? (
               <div key={groupLabel} className="catalog-list-group">
                 {viewMode !== "grid" && viewMode !== "large" && (
-                  <div className="catalog-list-group-label">
-                    {groupLabel}
-                    {deviceType && DEVICE_TYPE_ICON[deviceType] && (
+                  <button
+                    type="button"
+                    className="catalog-list-group-label"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      toggleGroup(groupLabel);
+                    }}
+                    aria-expanded={!collapsedGroups.has(groupLabel)}
+                    aria-controls={`${id}-group-${groupLabel.replace(/\s+/g, "-")}`}
+                  >
+                    <span className="catalog-list-group-label-text">{groupLabel}</span>
+                    <span className="catalog-list-group-label-icons">
+                      {deviceType && DEVICE_TYPE_ICON[deviceType] && (
+                        <FontAwesomeIcon
+                          icon={DEVICE_TYPE_ICON[deviceType]}
+                          className="catalog-list-group-icon"
+                          aria-hidden
+                        />
+                      )}
                       <FontAwesomeIcon
-                        icon={DEVICE_TYPE_ICON[deviceType]}
-                        className="catalog-list-group-icon"
+                        icon={collapsedGroups.has(groupLabel) ? faChevronRight : faChevronDown}
+                        className="catalog-list-group-chevron"
                         aria-hidden
                       />
-                    )}
-                  </div>
+                    </span>
+                  </button>
                 )}
-                <div className={viewMode === "grid" || viewMode === "large" ? "catalog-list-group-grid" : undefined}>
-                  {groupOptions.map((opt) => (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      role="option"
-                      className="catalog-list-item"
-                      onPointerDown={(e) => handlePointerDown(e, opt)}
-                      onContextMenu={(e) => e.preventDefault()}
-                      title={`Add ${opt.name} (long-press to drag)`}
-                    >
-                      {viewMode !== "text" && (
-                        <span className="catalog-list-item-thumb">
-                          {opt.image ? (
-                            <img src={`${imageBase}${opt.image}`} alt="" aria-hidden loading="lazy" />
-                          ) : (
-                            <span
-                              className="catalog-list-item-placeholder"
-                              style={{ backgroundColor: opt.color ?? DEFAULT_OBJECT_COLOR }}
-                            />
-                          )}
-                        </span>
-                      )}
-                      <span className="catalog-list-item-text">{opt.name}</span>
-                    </button>
-                  ))}
+                <div
+                  id={
+                    viewMode !== "grid" && viewMode !== "large"
+                      ? `${id}-group-${groupLabel.replace(/\s+/g, "-")}`
+                      : undefined
+                  }
+                  className={`catalog-list-group-inner ${
+                    viewMode !== "grid" && viewMode !== "large" && collapsedGroups.has(groupLabel)
+                      ? "collapsed"
+                      : "expanded"
+                  }`}
+                  style={viewMode === "grid" || viewMode === "large" ? { display: "block" } : { display: "grid" }}
+                >
+                  <div
+                    className={
+                      viewMode === "grid" || viewMode === "large"
+                        ? "catalog-list-group-grid"
+                        : "catalog-list-group-content"
+                    }
+                  >
+                    {groupOptions.map((opt) => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        role="option"
+                        className="catalog-list-item"
+                        onPointerDown={(e) => handlePointerDown(e, opt)}
+                        onContextMenu={(e) => e.preventDefault()}
+                        title={`Drag ${opt.name} to place on board`}
+                      >
+                        {viewMode !== "text" && (
+                          <span className="catalog-list-item-thumb">
+                            {opt.image ? (
+                              <img src={`${imageBase}${opt.image}`} alt="" aria-hidden loading="lazy" />
+                            ) : (
+                              <span
+                                className="catalog-list-item-placeholder"
+                                style={{ backgroundColor: opt.color ?? DEFAULT_OBJECT_COLOR }}
+                              />
+                            )}
+                          </span>
+                        )}
+                        <span className="catalog-list-item-text">{opt.name}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             ) : null
           )
         )}
       </div>
-      <p className="catalog-list-hint">Click to add, long-press to drag</p>
+      <p className="catalog-list-hint">Drag to place on board</p>
     </>
   );
 }

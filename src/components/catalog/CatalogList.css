@@ -329,6 +329,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 6px;
+  width: 100%;
   padding: 4px 8px 2px;
   font-size: 0.7rem;
   font-weight: 600;
@@ -336,12 +337,60 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   background: rgba(0, 0, 0, 0.04);
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.catalog-list-group-label:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.catalog-list-group-label:active {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.catalog-list-group-label-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.catalog-list-group-label-icons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .catalog-list-group-icon {
   flex-shrink: 0;
   font-size: 0.65rem;
   color: #888;
+}
+
+.catalog-list-group-chevron {
+  flex-shrink: 0;
+  font-size: 0.55rem;
+  color: #999;
+  transition: transform 0.2s ease;
+}
+
+/* Collapsible content: smooth height animation */
+.catalog-list-group-inner {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 0.25s ease-out;
+  min-height: 0;
+}
+
+.catalog-list-group-inner.collapsed {
+  grid-template-rows: 0fr;
+}
+
+.catalog-list-group-content {
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* Focus styles */
