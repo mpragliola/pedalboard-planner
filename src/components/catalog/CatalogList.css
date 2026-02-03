@@ -99,6 +99,13 @@
   background: rgba(0, 0, 0, 0.06);
 }
 
+/* Two columns only when catalog panel is expanded */
+.catalog-panel.panel-expanded .catalog-list--text {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 8px;
+}
+
 /* ========== LIST MODE (thumbnail + text) ========== */
 .catalog-list--list .catalog-list-item {
   display: flex;
@@ -150,6 +157,13 @@
 
 .catalog-list--list .catalog-list-item:hover {
   background: rgba(0, 0, 0, 0.06);
+}
+
+/* Two columns only when catalog panel is expanded */
+.catalog-panel.panel-expanded .catalog-list--list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 8px;
 }
 
 /* ========== GRID MODE (thumbnails with name below) ========== */
