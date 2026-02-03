@@ -178,17 +178,15 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
     const handleTouchEnd = (e: TouchEvent) => {
       if (e.touches.length < 2) pinchRef.current = null;
     };
-    const activeOptions = { passive: false } as const;
-    const passiveOptions = { passive: true } as const;
-    el.addEventListener("touchstart", handleTouchStart, activeOptions);
-    el.addEventListener("touchmove", handleTouchMove, activeOptions);
-    el.addEventListener("touchend", handleTouchEnd, passiveOptions);
-    el.addEventListener("touchcancel", handleTouchEnd, passiveOptions);
+    el.addEventListener("touchstart", handleTouchStart, { passive: false });
+    el.addEventListener("touchmove", handleTouchMove, { passive: false });
+    el.addEventListener("touchend", handleTouchEnd, { passive: true });
+    el.addEventListener("touchcancel", handleTouchEnd, { passive: true });
     return () => {
-      el.removeEventListener("touchstart", handleTouchStart, activeOptions);
-      el.removeEventListener("touchmove", handleTouchMove, activeOptions);
-      el.removeEventListener("touchend", handleTouchEnd, passiveOptions);
-      el.removeEventListener("touchcancel", handleTouchEnd, passiveOptions);
+      el.removeEventListener("touchstart", handleTouchStart);
+      el.removeEventListener("touchmove", handleTouchMove);
+      el.removeEventListener("touchend", handleTouchEnd);
+      el.removeEventListener("touchcancel", handleTouchEnd);
     };
   }, [zoomToward, onPinchStart]);
 
