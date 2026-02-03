@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { useApp } from "../../context/AppContext";
 import { DEFAULT_OBJECT_COLOR } from "../../constants";
 import "./CatalogDragGhost.css";
@@ -18,11 +17,7 @@ function ghostDimensions(widthMm: number, depthMm: number): { w: number; h: numb
 export function CatalogDragGhost() {
   const { catalogDrag, catalogDragPosition } = useApp();
 
-  useEffect(() => {
-    if (!catalogDrag) return;
-    document.body.classList.add("catalog-dragging");
-    return () => document.body.classList.remove("catalog-dragging");
-  }, [catalogDrag]);
+  // Note: body.catalog-dragging class is managed by AppContext's startCatalogDrag/endCatalogDrag
 
   if (!catalogDrag) return null;
   const { w, h } = ghostDimensions(catalogDrag.widthMm, catalogDrag.depthMm);

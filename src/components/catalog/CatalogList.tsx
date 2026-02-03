@@ -1,20 +1,12 @@
 import { useRef, useLayoutEffect, useCallback } from "react";
-import { useApp } from "../../context/AppContext";
 import { DEFAULT_OBJECT_COLOR } from "../../constants";
+import { useCatalogItemDrag, type CatalogItemDragOption } from "../../hooks/useCatalogItemDrag";
 import "./CatalogList.css";
-
-const LONG_PRESS_MS = 400;
 
 export type CatalogViewMode = "text" | "list" | "grid" | "large";
 
-export interface CatalogListOption {
-  id: string;
+export interface CatalogListOption extends CatalogItemDragOption {
   name: string;
-  /** Optional image path (e.g. from template.image) for drag ghost */
-  image?: string | null;
-  /** Dimensions in mm for ghost aspect ratio */
-  widthMm?: number;
-  depthMm?: number;
   /** Color for placeholder when no image */
   color?: string;
 }
@@ -88,13 +80,21 @@ export function CatalogList({
 }: CatalogListProps) {
   const listRef = useRef<HTMLDivElement>(null);
   const scrollRestoreRef = useRef<number | null>(null);
-  const { startCatalogDrag } = useApp();
-  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const timerFiredRef = useRef(false);
-  const posRef = useRef({ x: 0, y: 0 });
-  const initialPosRef = useRef({ x: 0, y: 0 });
-  const cleanupRef = useRef<() => void>(() => {});
-  const MOVE_THRESHOLD_PX = 10;
+
+  const handleAdd = useCallback(
+    (optId: string) => {
+      if (listRef.current) scrollRestoreRef.current = listRef.current.scrollTop;
+      onAdd(optId);
+    },
+    [onAdd]
+  );
+
+  const { handlePointerDown, imageBase } = useCatalogItemDrag({
+    catalogMode,
+    defaultWidthMm: 100,
+    defaultDepthMm: 100,
+    onTap: handleAdd,
+  });
 
   useLayoutEffect(() => {
     const el = listRef.current;
@@ -104,68 +104,6 @@ export function CatalogList({
       scrollRestoreRef.current = null;
     }
   });
-
-  const handleAdd = (optId: string) => {
-    if (listRef.current) scrollRestoreRef.current = listRef.current.scrollTop;
-    onAdd(optId);
-  };
-
-  const imageBase = catalogMode === "boards" ? "images/boards/" : "images/devices/";
-
-  const handlePointerDown = useCallback(
-    (e: React.PointerEvent<HTMLButtonElement>, opt: CatalogListOption) => {
-      if (e.button !== 0) return;
-      timerFiredRef.current = false;
-      const start = { x: e.clientX, y: e.clientY };
-      posRef.current = start;
-      initialPosRef.current = start;
-      const pointerId = e.pointerId;
-      const onMove = (ev: PointerEvent) => {
-        if (ev.pointerId !== pointerId) return;
-        posRef.current = { x: ev.clientX, y: ev.clientY };
-        if (
-          Math.hypot(ev.clientX - initialPosRef.current.x, ev.clientY - initialPosRef.current.y) > MOVE_THRESHOLD_PX
-        ) {
-          cleanupRef.current();
-        }
-      };
-      const onUp = (ev: PointerEvent) => {
-        if (ev.pointerId !== pointerId) return;
-        cleanupRef.current();
-        if (!timerFiredRef.current) handleAdd(opt.id);
-      };
-      window.addEventListener("pointermove", onMove, { capture: true });
-      window.addEventListener("pointerup", onUp, { capture: true });
-      window.addEventListener("pointercancel", onUp, { capture: true });
-      longPressTimerRef.current = setTimeout(() => {
-        timerFiredRef.current = true;
-        cleanupRef.current();
-        const imageUrl = opt.image ? `${imageBase}${opt.image}` : null;
-        const widthMm = opt.widthMm ?? 100;
-        const depthMm = opt.depthMm ?? 100;
-        startCatalogDrag(
-          opt.id,
-          catalogMode,
-          imageUrl,
-          pointerId,
-          posRef.current.x,
-          posRef.current.y,
-          widthMm,
-          depthMm
-        );
-      }, LONG_PRESS_MS);
-      cleanupRef.current = () => {
-        if (longPressTimerRef.current) {
-          clearTimeout(longPressTimerRef.current);
-          longPressTimerRef.current = null;
-        }
-        window.removeEventListener("pointermove", onMove, { capture: true });
-        window.removeEventListener("pointerup", onUp, { capture: true });
-        window.removeEventListener("pointercancel", onUp, { capture: true });
-      };
-    },
-    [catalogMode, imageBase, startCatalogDrag]
-  );
 
   const listClassName = `catalog-list catalog-list--${viewMode}`;
   const minHeight = viewMode === "grid" || viewMode === "large" ? 120 : size * 28;
@@ -222,13 +160,9 @@ export function CatalogList({
   );
 }
 
-export interface CatalogListGroupOption {
-  id: string;
+export interface CatalogListGroupOption extends CatalogItemDragOption {
   name: string;
   type: string;
-  image?: string | null;
-  widthMm?: number;
-  depthMm?: number;
   color?: string;
 }
 
@@ -257,13 +191,21 @@ export function CatalogListGrouped({
 }: CatalogListGroupedProps) {
   const listRef = useRef<HTMLDivElement>(null);
   const scrollRestoreRef = useRef<number | null>(null);
-  const { startCatalogDrag } = useApp();
-  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const timerFiredRef = useRef(false);
-  const posRef = useRef({ x: 0, y: 0 });
-  const initialPosRef = useRef({ x: 0, y: 0 });
-  const cleanupRef = useRef<() => void>(() => {});
-  const MOVE_THRESHOLD_PX = 10;
+
+  const handleAdd = useCallback(
+    (optId: string) => {
+      if (listRef.current) scrollRestoreRef.current = listRef.current.scrollTop;
+      onAdd(optId);
+    },
+    [onAdd]
+  );
+
+  const { handlePointerDown, imageBase } = useCatalogItemDrag({
+    catalogMode,
+    defaultWidthMm: 75,
+    defaultDepthMm: 120,
+    onTap: handleAdd,
+  });
 
   useLayoutEffect(() => {
     const el = listRef.current;
@@ -273,68 +215,6 @@ export function CatalogListGrouped({
       scrollRestoreRef.current = null;
     }
   });
-
-  const handleAdd = (optId: string) => {
-    if (listRef.current) scrollRestoreRef.current = listRef.current.scrollTop;
-    onAdd(optId);
-  };
-
-  const imageBase = catalogMode === "devices" ? "images/devices/" : "images/boards/";
-
-  const handlePointerDown = useCallback(
-    (e: React.PointerEvent<HTMLButtonElement>, opt: CatalogListGroupOption) => {
-      if (e.button !== 0) return;
-      timerFiredRef.current = false;
-      const start = { x: e.clientX, y: e.clientY };
-      posRef.current = start;
-      initialPosRef.current = start;
-      const pointerId = e.pointerId;
-      const onMove = (ev: PointerEvent) => {
-        if (ev.pointerId !== pointerId) return;
-        posRef.current = { x: ev.clientX, y: ev.clientY };
-        if (
-          Math.hypot(ev.clientX - initialPosRef.current.x, ev.clientY - initialPosRef.current.y) > MOVE_THRESHOLD_PX
-        ) {
-          cleanupRef.current();
-        }
-      };
-      const onUp = (ev: PointerEvent) => {
-        if (ev.pointerId !== pointerId) return;
-        cleanupRef.current();
-        if (!timerFiredRef.current) handleAdd(opt.id);
-      };
-      window.addEventListener("pointermove", onMove, { capture: true });
-      window.addEventListener("pointerup", onUp, { capture: true });
-      window.addEventListener("pointercancel", onUp, { capture: true });
-      longPressTimerRef.current = setTimeout(() => {
-        timerFiredRef.current = true;
-        cleanupRef.current();
-        const imageUrl = opt.image ? `${imageBase}${opt.image}` : null;
-        const widthMm = opt.widthMm ?? 75;
-        const depthMm = opt.depthMm ?? 120;
-        startCatalogDrag(
-          opt.id,
-          catalogMode,
-          imageUrl,
-          pointerId,
-          posRef.current.x,
-          posRef.current.y,
-          widthMm,
-          depthMm
-        );
-      }, LONG_PRESS_MS);
-      cleanupRef.current = () => {
-        if (longPressTimerRef.current) {
-          clearTimeout(longPressTimerRef.current);
-          longPressTimerRef.current = null;
-        }
-        window.removeEventListener("pointermove", onMove, { capture: true });
-        window.removeEventListener("pointerup", onUp, { capture: true });
-        window.removeEventListener("pointercancel", onUp, { capture: true });
-      };
-    },
-    [catalogMode, imageBase, startCatalogDrag]
-  );
 
   const listClassName = `catalog-list catalog-list--${viewMode}`;
   const minHeight = viewMode === "grid" || viewMode === "large" ? 120 : size * 28;

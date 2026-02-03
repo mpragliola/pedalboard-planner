@@ -4,6 +4,7 @@ import { useApp } from "../../context/AppContext";
 import { CatalogModeSwitch } from "./CatalogModeSwitch";
 import { TextFilter } from "./TextFilter";
 import { CatalogList, CatalogListGrouped, type CatalogViewMode } from "./CatalogList";
+import { CustomItemForm } from "./CustomItemForm";
 import { SizeFilters } from "./SizeFilters";
 import "./DropdownsPanel.css";
 
@@ -80,19 +81,6 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
   const [customExpanded, setCustomExpanded] = useState(false);
   const [catalogViewMode, setCatalogViewMode] = useState<CatalogViewMode>("text");
 
-  const [customBoardForm, setCustomBoardForm] = useState({
-    widthMm: 400,
-    depthMm: 200,
-    color: "#484852",
-    name: "",
-  });
-  const [customDeviceForm, setCustomDeviceForm] = useState({
-    widthMm: 75,
-    depthMm: 120,
-    color: "#484852",
-    name: "",
-  });
-
   const hasBoardFilters = !!(
     boardBrandFilter ||
     boardTextFilter ||
@@ -114,62 +102,83 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
   const formatSliderValue = (mm: number) => (unit === "in" ? (mm / 25.4).toFixed(2) : String(Math.round(mm)));
   const unitLabel = unit === "in" ? "in" : "mm";
 
-  const handleBoardWidthMin = (v: string) => {
-    const isLow = v === String(boardWidthRange[0]);
-    setBoardWidthMin(isLow ? "" : v);
-    const num = Number(v);
-    const maxVal = boardWidthMax ? Number(boardWidthMax) : boardWidthRange[1];
-    if (!isLow && num > maxVal) setBoardWidthMax(v);
-  };
-  const handleBoardWidthMax = (v: string) => {
-    const isHigh = v === String(boardWidthRange[1]);
-    setBoardWidthMax(isHigh ? "" : v);
-    const num = Number(v);
-    const minVal = boardWidthMin ? Number(boardWidthMin) : boardWidthRange[0];
-    if (!isHigh && num < minVal) setBoardWidthMin(v);
-  };
-  const handleBoardDepthMin = (v: string) => {
-    const isLow = v === String(boardDepthRange[0]);
-    setBoardDepthMin(isLow ? "" : v);
-    const num = Number(v);
-    const maxVal = boardDepthMax ? Number(boardDepthMax) : boardDepthRange[1];
-    if (!isLow && num > maxVal) setBoardDepthMax(v);
-  };
-  const handleBoardDepthMax = (v: string) => {
-    const isHigh = v === String(boardDepthRange[1]);
-    setBoardDepthMax(isHigh ? "" : v);
-    const num = Number(v);
-    const minVal = boardDepthMin ? Number(boardDepthMin) : boardDepthRange[0];
-    if (!isHigh && num < minVal) setBoardDepthMin(v);
-  };
-  const handleDeviceWidthMin = (v: string) => {
-    const isLow = v === String(deviceWidthRange[0]);
-    setDeviceWidthMin(isLow ? "" : v);
-    const num = Number(v);
-    const maxVal = deviceWidthMax ? Number(deviceWidthMax) : deviceWidthRange[1];
-    if (!isLow && num > maxVal) setDeviceWidthMax(v);
-  };
-  const handleDeviceWidthMax = (v: string) => {
-    const isHigh = v === String(deviceWidthRange[1]);
-    setDeviceWidthMax(isHigh ? "" : v);
-    const num = Number(v);
-    const minVal = deviceWidthMin ? Number(deviceWidthMin) : deviceWidthRange[0];
-    if (!isHigh && num < minVal) setDeviceWidthMin(v);
-  };
-  const handleDeviceDepthMin = (v: string) => {
-    const isLow = v === String(deviceDepthRange[0]);
-    setDeviceDepthMin(isLow ? "" : v);
-    const num = Number(v);
-    const maxVal = deviceDepthMax ? Number(deviceDepthMax) : deviceDepthRange[1];
-    if (!isLow && num > maxVal) setDeviceDepthMax(v);
-  };
-  const handleDeviceDepthMax = (v: string) => {
-    const isHigh = v === String(deviceDepthRange[1]);
-    setDeviceDepthMax(isHigh ? "" : v);
-    const num = Number(v);
-    const minVal = deviceDepthMin ? Number(deviceDepthMin) : deviceDepthRange[0];
-    if (!isHigh && num < minVal) setDeviceDepthMin(v);
-  };
+  /** Factory for min/max range filter handlers that auto-clamp the opposite bound. */
+  const createRangeHandler =
+    (
+      type: "min" | "max",
+      range: readonly [number, number],
+      currentOpposite: string | undefined,
+      setSelf: (v: string) => void,
+      setOpposite: (v: string) => void
+    ) =>
+    (v: string) => {
+      const boundary = type === "min" ? range[0] : range[1];
+      const isAtBoundary = v === String(boundary);
+      setSelf(isAtBoundary ? "" : v);
+      const num = Number(v);
+      const oppositeVal = currentOpposite ? Number(currentOpposite) : type === "min" ? range[1] : range[0];
+      if (!isAtBoundary) {
+        if (type === "min" && num > oppositeVal) setOpposite(v);
+        if (type === "max" && num < oppositeVal) setOpposite(v);
+      }
+    };
+
+  const handleBoardWidthMin = createRangeHandler(
+    "min",
+    boardWidthRange,
+    boardWidthMax,
+    setBoardWidthMin,
+    setBoardWidthMax
+  );
+  const handleBoardWidthMax = createRangeHandler(
+    "max",
+    boardWidthRange,
+    boardWidthMin,
+    setBoardWidthMax,
+    setBoardWidthMin
+  );
+  const handleBoardDepthMin = createRangeHandler(
+    "min",
+    boardDepthRange,
+    boardDepthMax,
+    setBoardDepthMin,
+    setBoardDepthMax
+  );
+  const handleBoardDepthMax = createRangeHandler(
+    "max",
+    boardDepthRange,
+    boardDepthMin,
+    setBoardDepthMax,
+    setBoardDepthMin
+  );
+  const handleDeviceWidthMin = createRangeHandler(
+    "min",
+    deviceWidthRange,
+    deviceWidthMax,
+    setDeviceWidthMin,
+    setDeviceWidthMax
+  );
+  const handleDeviceWidthMax = createRangeHandler(
+    "max",
+    deviceWidthRange,
+    deviceWidthMin,
+    setDeviceWidthMax,
+    setDeviceWidthMin
+  );
+  const handleDeviceDepthMin = createRangeHandler(
+    "min",
+    deviceDepthRange,
+    deviceDepthMax,
+    setDeviceDepthMin,
+    setDeviceDepthMax
+  );
+  const handleDeviceDepthMax = createRangeHandler(
+    "max",
+    deviceDepthRange,
+    deviceDepthMin,
+    setDeviceDepthMax,
+    setDeviceDepthMin
+  );
 
   const deviceGroups = DEVICE_TYPE_ORDER.map((deviceType) => {
     const templates = filteredDevices.filter((t) => t.type === deviceType);
@@ -300,87 +309,15 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
                 className={`collapsible-content${customExpanded ? " expanded" : ""}`}
                 aria-hidden={!customExpanded}
               >
-                <div className="collapsible-inner">
-                  <div className="custom-form-row">
-                    <label htmlFor="custom-board-width" className="dropdown-label">
-                      Width ({unitLabel})
-                    </label>
-                    <input
-                      id="custom-board-width"
-                      type="number"
-                      min={1}
-                      max={2000}
-                      className="custom-input"
-                      value={
-                        unit === "in" ? (customBoardForm.widthMm / 25.4).toFixed(2) : String(customBoardForm.widthMm)
-                      }
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        const num = unit === "in" ? Math.round(parseFloat(v || "0") * 25.4) : parseInt(v || "0", 10);
-                        if (!Number.isNaN(num)) setCustomBoardForm((f) => ({ ...f, widthMm: Math.max(1, num) }));
-                      }}
-                    />
-                  </div>
-                  <div className="custom-form-row">
-                    <label htmlFor="custom-board-depth" className="dropdown-label">
-                      Depth ({unitLabel})
-                    </label>
-                    <input
-                      id="custom-board-depth"
-                      type="number"
-                      min={1}
-                      max={2000}
-                      className="custom-input"
-                      value={
-                        unit === "in" ? (customBoardForm.depthMm / 25.4).toFixed(2) : String(customBoardForm.depthMm)
-                      }
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        const num = unit === "in" ? Math.round(parseFloat(v || "0") * 25.4) : parseInt(v || "0", 10);
-                        if (!Number.isNaN(num)) setCustomBoardForm((f) => ({ ...f, depthMm: Math.max(1, num) }));
-                      }}
-                    />
-                  </div>
-                  <div className="custom-form-row">
-                    <label htmlFor="custom-board-color" className="dropdown-label">
-                      Color
-                    </label>
-                    <input
-                      id="custom-board-color"
-                      type="color"
-                      className="custom-color-input"
-                      value={customBoardForm.color}
-                      onChange={(e) => setCustomBoardForm((f) => ({ ...f, color: e.target.value }))}
-                    />
-                  </div>
-                  <div className="custom-form-row">
-                    <label htmlFor="custom-board-name" className="dropdown-label">
-                      Name
-                    </label>
-                    <input
-                      id="custom-board-name"
-                      type="text"
-                      className="custom-input"
-                      placeholder="Custom board"
-                      value={customBoardForm.name}
-                      onChange={(e) => setCustomBoardForm((f) => ({ ...f, name: e.target.value }))}
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    className="custom-create-btn"
-                    onClick={() => {
-                      onCustomBoardCreate({
-                        widthMm: customBoardForm.widthMm,
-                        depthMm: customBoardForm.depthMm,
-                        color: customBoardForm.color,
-                        name: customBoardForm.name,
-                      });
-                    }}
-                  >
-                    Create
-                  </button>
-                </div>
+                <CustomItemForm
+                  idPrefix="custom-board"
+                  itemType="board"
+                  unitLabel={unitLabel}
+                  unit={unit}
+                  defaultWidth={400}
+                  defaultDepth={200}
+                  onCreate={onCustomBoardCreate}
+                />
               </div>
             </div>
           </>
@@ -504,87 +441,15 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
                 className={`collapsible-content${customExpanded ? " expanded" : ""}`}
                 aria-hidden={!customExpanded}
               >
-                <div className="collapsible-inner">
-                  <div className="custom-form-row">
-                    <label htmlFor="custom-device-width" className="dropdown-label">
-                      Width ({unitLabel})
-                    </label>
-                    <input
-                      id="custom-device-width"
-                      type="number"
-                      min={1}
-                      max={2000}
-                      className="custom-input"
-                      value={
-                        unit === "in" ? (customDeviceForm.widthMm / 25.4).toFixed(2) : String(customDeviceForm.widthMm)
-                      }
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        const num = unit === "in" ? Math.round(parseFloat(v || "0") * 25.4) : parseInt(v || "0", 10);
-                        if (!Number.isNaN(num)) setCustomDeviceForm((f) => ({ ...f, widthMm: Math.max(1, num) }));
-                      }}
-                    />
-                  </div>
-                  <div className="custom-form-row">
-                    <label htmlFor="custom-device-depth" className="dropdown-label">
-                      Depth ({unitLabel})
-                    </label>
-                    <input
-                      id="custom-device-depth"
-                      type="number"
-                      min={1}
-                      max={2000}
-                      className="custom-input"
-                      value={
-                        unit === "in" ? (customDeviceForm.depthMm / 25.4).toFixed(2) : String(customDeviceForm.depthMm)
-                      }
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        const num = unit === "in" ? Math.round(parseFloat(v || "0") * 25.4) : parseInt(v || "0", 10);
-                        if (!Number.isNaN(num)) setCustomDeviceForm((f) => ({ ...f, depthMm: Math.max(1, num) }));
-                      }}
-                    />
-                  </div>
-                  <div className="custom-form-row">
-                    <label htmlFor="custom-device-color" className="dropdown-label">
-                      Color
-                    </label>
-                    <input
-                      id="custom-device-color"
-                      type="color"
-                      className="custom-color-input"
-                      value={customDeviceForm.color}
-                      onChange={(e) => setCustomDeviceForm((f) => ({ ...f, color: e.target.value }))}
-                    />
-                  </div>
-                  <div className="custom-form-row">
-                    <label htmlFor="custom-device-name" className="dropdown-label">
-                      Name
-                    </label>
-                    <input
-                      id="custom-device-name"
-                      type="text"
-                      className="custom-input"
-                      placeholder="Custom device"
-                      value={customDeviceForm.name}
-                      onChange={(e) => setCustomDeviceForm((f) => ({ ...f, name: e.target.value }))}
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    className="custom-create-btn"
-                    onClick={() => {
-                      onCustomDeviceCreate({
-                        widthMm: customDeviceForm.widthMm,
-                        depthMm: customDeviceForm.depthMm,
-                        color: customDeviceForm.color,
-                        name: customDeviceForm.name,
-                      });
-                    }}
-                  >
-                    Create
-                  </button>
-                </div>
+                <CustomItemForm
+                  idPrefix="custom-device"
+                  itemType="device"
+                  unitLabel={unitLabel}
+                  unit={unit}
+                  defaultWidth={75}
+                  defaultDepth={120}
+                  onCreate={onCustomDeviceCreate}
+                />
               </div>
             </div>
           </>
