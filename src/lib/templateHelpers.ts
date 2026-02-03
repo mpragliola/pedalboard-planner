@@ -3,22 +3,32 @@ import type { CanvasObjectType } from "../types";
 import type { BoardTemplate } from "../data/boards";
 import type { DeviceTemplate } from "../data/devices";
 
-/** Global counter for unique object IDs. */
+/** Global counter for unique object IDs. Uses timestamp prefix to survive HMR. */
 let nextObjectId = 1;
+let idPrefix = Date.now();
 
 /** Call when restoring state so new objects never get IDs that collide with existing ones. */
 export function initNextObjectIdFromObjects(objects: CanvasObjectType[]): void {
   let maxId = 0;
   for (const o of objects) {
-    const n = parseInt(o.id, 10);
+    // Handle both old numeric IDs and new prefixed IDs
+    const parts = o.id.split("-");
+    const n = parseInt(parts[parts.length - 1], 10);
     if (!isNaN(n) && n > maxId) maxId = n;
   }
   nextObjectId = maxId + 1;
+  // Reset prefix on load to ensure uniqueness even if IDs were corrupted
+  idPrefix = Date.now();
+}
+
+/** Generate a unique object ID */
+function generateId(): string {
+  return `${idPrefix}-${nextObjectId++}`;
 }
 
 export function createObjectFromBoardTemplate(template: BoardTemplate, x: number, y: number): CanvasObjectType {
   return {
-    id: String(nextObjectId++),
+    id: generateId(),
     templateId: template.id,
     subtype: "board",
     type: template.type,
@@ -38,7 +48,7 @@ export function createObjectFromBoardTemplate(template: BoardTemplate, x: number
 
 export function createObjectFromDeviceTemplate(template: DeviceTemplate, x: number, y: number): CanvasObjectType {
   return {
-    id: String(nextObjectId++),
+    id: generateId(),
     templateId: template.id,
     subtype: "device",
     type: template.type,
