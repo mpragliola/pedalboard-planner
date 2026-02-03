@@ -28,7 +28,7 @@ const full = args.includes("--full");
 if (args.includes("--help")) {
   console.log(`check-devices - Unified check of device and board templates and images
 
-Usage: npx tsx scripts/check-devices.ts [options]
+Usage: npm run check-devices -- [options]
 
 Options:
   --help          Show this help
