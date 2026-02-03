@@ -1,8 +1,6 @@
 import { useRef, useCallback } from "react";
 import { useApp } from "../context/AppContext";
-
-const LONG_PRESS_MS = 400;
-const MOVE_THRESHOLD_PX = 10;
+import { LONG_PRESS_MS, MOVE_THRESHOLD_PX } from "../constants";
 
 export interface CatalogItemDragOption {
   id: string;
