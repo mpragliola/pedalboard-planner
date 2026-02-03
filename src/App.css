@@ -59,14 +59,18 @@ body.catalog-dragging .catalog-panel {
 
 .panel-expand-btn {
   margin-left: auto;
-  padding: 2px 6px;
-  font-size: 0.7rem;
+  padding: 4px 8px;
   color: #666;
   background: transparent;
   border: 1px solid #ccc;
   border-radius: 4px;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
+  font-size: 0.85rem;
+}
+
+.panel-expand-btn svg {
+  display: block;
 }
 
 .panel-expand-btn:hover {

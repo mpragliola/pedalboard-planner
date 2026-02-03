@@ -1,4 +1,4 @@
-import { faChevronDown, faChevronUp } from "@fortawesome/free-solid-svg-icons";
+import { faChevronDown, faChevronUp, faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Canvas } from "./components/Canvas";
 import { BoardMenu } from "./components/boardmenu/BoardMenu";
@@ -48,7 +48,7 @@ function AppContent() {
             title={panelExpanded ? "Collapse panel" : "Expand panel"}
             aria-pressed={panelExpanded}
           >
-            {panelExpanded ? "◂" : "▸"}
+            <FontAwesomeIcon icon={panelExpanded ? faChevronLeft : faChevronRight} />
           </button>
         </div>
         <div className={`catalog-panel-body ${floatingUiVisible ? "" : "minimized"}`}>

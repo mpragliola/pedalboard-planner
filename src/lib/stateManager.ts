@@ -32,6 +32,15 @@ for (const t of BOARD_TEMPLATES) {
   }
 }
 
+/** Returns [width, depth, height] in px. For known templates, always from template (source of truth). */
+export function getObjectDimensions(obj: CanvasObjectType): [number, number, number] {
+  const tid = obj.templateId;
+  if (tid && templateWdhMap.has(tid)) {
+    return templateWdhMap.get(tid)!;
+  }
+  return [obj.width, obj.depth, obj.height];
+}
+
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
@@ -88,12 +97,22 @@ function normalizeLoadedObjects(objects: Record<string, unknown>[]): CanvasObjec
           (typeof (o as { type?: string }).type === "string" ? (o as { type: string }).type : "Object");
     const image = templateId ? templateImageMap.get(templateId) ?? null : null;
     const wdh = templateId ? templateWdhMap.get(templateId) : undefined;
-    const width =
-      typeof (o as { width?: number }).width === "number" ? (o as { width: number }).width : wdh ? wdh[0] : 0;
-    const depth =
-      typeof (o as { depth?: number }).depth === "number" ? (o as { depth: number }).depth : wdh ? wdh[1] : 0;
-    const height =
-      typeof (o as { height?: number }).height === "number" ? (o as { height: number }).height : wdh ? wdh[2] : 0;
+    /* For known templates, always use template as source of truth. Only use saved dims for custom objects. */
+    const width = wdh
+      ? wdh[0]
+      : typeof (o as { width?: number }).width === "number"
+      ? (o as { width: number }).width
+      : 0;
+    const depth = wdh
+      ? wdh[1]
+      : typeof (o as { depth?: number }).depth === "number"
+      ? (o as { depth: number }).depth
+      : 0;
+    const height = wdh
+      ? wdh[2]
+      : typeof (o as { height?: number }).height === "number"
+      ? (o as { height: number }).height
+      : 0;
     return {
       ...o,
       templateId,

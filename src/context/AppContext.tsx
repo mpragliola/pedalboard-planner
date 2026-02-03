@@ -9,7 +9,7 @@ import {
   createObjectFromCustomDevice,
   initNextObjectIdFromObjects,
 } from "../lib/templateHelpers";
-import { StateManager, type SavedState } from "../lib/stateManager";
+import { StateManager, getObjectDimensions, type SavedState } from "../lib/stateManager";
 import { visibleViewportPlacement } from "../lib/placementStrategy";
 import { useCanvasZoomPan } from "../hooks/useCanvasZoomPan";
 import { useObjectDrag } from "../hooks/useObjectDrag";
@@ -248,12 +248,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     let maxX = -Infinity;
     let maxY = -Infinity;
     for (const obj of objects) {
+      const [width, depth] = getObjectDimensions(obj);
       const rotation = normalizeRotation(obj.rotation ?? 0);
       const is90or270 = rotation === 90 || rotation === 270;
-      const bboxW = is90or270 ? obj.depth : obj.width;
-      const bboxH = is90or270 ? obj.width : obj.depth;
-      const wrapperLeft = obj.x + (obj.width - bboxW) / 2;
-      const wrapperTop = obj.y + (obj.depth - bboxH) / 2;
+      const bboxW = is90or270 ? depth : width;
+      const bboxH = is90or270 ? width : depth;
+      const wrapperLeft = obj.x + (width - bboxW) / 2;
+      const wrapperTop = obj.y + (depth - bboxH) / 2;
       minX = Math.min(minX, wrapperLeft);
       minY = Math.min(minY, wrapperTop);
       maxX = Math.max(maxX, wrapperLeft + bboxW);
