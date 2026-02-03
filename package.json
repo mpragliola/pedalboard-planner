@@ -11,7 +11,12 @@
     "test": "vitest",
     "test:run": "vitest run",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "deploy": "gh-pages -d dist",
+    "process": "node scripts/process-images.js",
+    "check-devices": "npx tsx scripts/check-devices.ts",
+    "convert-to-png": "node scripts/convert-to-png.js",
+    "remove-backup-files": "node scripts/remove-backup-files.js",
+    "distribute-images": "pwsh -File scripts/distribute-processed-images.ps1"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.1.0",
@@ -21,6 +26,8 @@
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "image-size": "^1.1.1",
+    "tsx": "^4.7.0",
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
     "@vitejs/plugin-react": "^4.2.1",
