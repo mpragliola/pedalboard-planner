@@ -34,7 +34,8 @@ export const DEBOUNCE_SAVE_MS = 400;
 
 // Drag thresholds (px)
 export const DRAG_THRESHOLD_PX = 6;
-export const MOVE_THRESHOLD_PX = 10;
+/** Max movement during long-press before cancelling (scroll vs hold). Higher on mobile for finger drift. */
+export const MOVE_THRESHOLD_PX = 20;
 
 // UI Layout constants
 export const TOOLBAR_GAP_PX = 8;

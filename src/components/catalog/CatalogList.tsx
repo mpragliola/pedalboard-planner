@@ -105,6 +105,16 @@ export function CatalogList({
     }
   });
 
+  useLayoutEffect(() => {
+    const el = listRef.current;
+    if (!el) return;
+    const handler = (e: TouchEvent) => {
+      if ((e.target as Element).closest(".catalog-list-item")) e.preventDefault();
+    };
+    el.addEventListener("touchstart", handler, { passive: false });
+    return () => el.removeEventListener("touchstart", handler);
+  }, []);
+
   const listClassName = `catalog-list catalog-list--${viewMode}`;
   const minHeight = viewMode === "grid" || viewMode === "large" ? 120 : size * 28;
 
@@ -216,6 +226,16 @@ export function CatalogListGrouped({
       scrollRestoreRef.current = null;
     }
   });
+
+  useLayoutEffect(() => {
+    const el = listRef.current;
+    if (!el) return;
+    const handler = (e: TouchEvent) => {
+      if ((e.target as Element).closest(".catalog-list-item")) e.preventDefault();
+    };
+    el.addEventListener("touchstart", handler, { passive: false });
+    return () => el.removeEventListener("touchstart", handler);
+  }, []);
 
   const listClassName = `catalog-list catalog-list--${viewMode}`;
   const minHeight = viewMode === "grid" || viewMode === "large" ? 120 : size * 28;

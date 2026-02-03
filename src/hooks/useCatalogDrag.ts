@@ -1,5 +1,4 @@
 import { useState, useCallback, useRef } from "react";
-import { capturePointer } from "../lib/pointerCapture";
 
 export interface CatalogDragState {
   templateId: string;
@@ -46,12 +45,16 @@ export function useCatalogDrag({ canvasRef, zoomRef, panRef, onDropOnCanvas }: U
       const zoom = zoomRef.current;
       const pan = panRef.current;
       if (canvas && zoom && pan) {
-        const r = canvas.getBoundingClientRect();
+        const viewport =
+          typeof canvas.querySelector === "function"
+            ? (canvas.querySelector(".canvas-viewport") as HTMLElement | null)
+            : null;
+        const r = viewport ? viewport.getBoundingClientRect() : canvas.getBoundingClientRect();
         const isWithinCanvas = clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom;
 
         if (isWithinCanvas) {
-          const x = (clientX - r.left - pan.x) / zoom;
-          const y = (clientY - r.top - pan.y) / zoom;
+          const x = viewport ? (clientX - r.left) / zoom : (clientX - r.left - pan.x) / zoom;
+          const y = viewport ? (clientY - r.top) / zoom : (clientY - r.top - pan.y) / zoom;
           onDropOnCanvas(data.mode, data.templateId, x, y);
         }
       }
@@ -67,31 +70,20 @@ export function useCatalogDrag({ canvasRef, zoomRef, panRef, onDropOnCanvas }: U
       templateId: string,
       mode: "boards" | "devices",
       imageUrl: string | null,
-      pointerId: number,
+      _pointerId: number,
       clientX: number,
       clientY: number,
       widthMm: number,
       depthMm: number
     ) => {
-      // Cleanup any existing drag
       releaseRef.current();
       document.body.classList.add("catalog-dragging");
 
       setDragState({ templateId, mode, imageUrl, widthMm, depthMm });
       setPosition({ x: clientX, y: clientY });
-
-      const { release } = capturePointer(pointerId, {
-        onMove: (e) => {
-          setPosition({ x: e.clientX, y: e.clientY });
-        },
-        onEnd: (e) => {
-          endDrag(e.clientX, e.clientY);
-        },
-      });
-
-      releaseRef.current = release;
+      /* No second capture – useCatalogItemDrag keeps a single capture for the entire flow (fixes mobile) */
     },
-    [endDrag]
+    []
   );
 
   const shouldIgnoreClick = useCallback(() => {
