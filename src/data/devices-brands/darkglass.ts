@@ -1,18 +1,28 @@
 import type { DeviceTemplate } from "../devices";
+import { deviceId } from "../../lib/slug";
 
-/** Standard Darkglass pedal size (mm); use where exact dimensions unknown. */
-const WDH_PEDAL: [number, number, number] = [120, 95, 57];
+const BRAND = "Darkglass";
+const BRAND_SLUG = "darkglass";
 
-function row(model: string, name: string, wdh: [number, number, number], image: string | null): DeviceTemplate {
+/** Image path under images/devices/ (e.g. img("darkglass-bk1-gal-1.png") → "darkglass/darkglass-bk1-gal-1.png") */
+const img = (filename: string) => `${BRAND_SLUG}/${filename}`;
+
+// Grouped shared WDH dimensions:
+const WDH_180_120_60: [number, number, number] = [180, 120, 60]; // Aggressively Distorting Advanced Machine, Alpha-Omega Photon, Microtubes Infinity
+const WDH_125_96_57: [number, number, number] = [125, 96, 57]; // Alpha-Omega Ultra, Kaamos, Luminal Boost Ultra, Microtubes BK7 Ultra, Microtubes X Ultra, Vintage Ultra
+const WDH_94_120_46: [number, number, number] = [94, 120, 46]; // Alpha-Omega, Microtubes B7K, Microtubes X7, Vintage Deluxe
+const WDH_75_111_43: [number, number, number] = [75, 111, 43]; // Harmonic Booster, Hyper Luminal, Microtubes Pedal, Microtubes B3K, Vintage Microtubes
+const WDH_50_100_45: [number, number, number] = [50, 100, 45]; // BK1, Duality Fuzz
+const WDH_64_111_35: [number, number, number] = [64, 111, 35]; // Element
+const WDH_50_100_36_5: [number, number, number] = [50, 100, 36.5]; // NSG
+
+function row(model: string, wdh: [number, number, number], image: string | null): DeviceTemplate {
   return {
-    id: `device-darkglass-${model
-      .toLowerCase()
-      .replace(/\s+/g, "-")
-      .replace(/[^a-z0-9-]/g, "")}`,
+    id: deviceId(BRAND_SLUG, model),
     type: "pedal",
-    brand: "Darkglass",
+    brand: BRAND,
     model,
-    name: name || `Darkglass ${model}`,
+    name: `${BRAND} ${model}`,
     wdh,
     image,
   };
@@ -21,74 +31,28 @@ function row(model: string, name: string, wdh: [number, number, number], image: 
 export const DARKGLASS_DEVICE_TEMPLATES: DeviceTemplate[] = [
   row(
     "Aggressively Distorting Advanced Machine",
-    "Darkglass ADAM",
-    WDH_PEDAL,
-    "darkglass/darkglass-aggressively-distorting-advanced-machine-product-gal-1.png"
+    WDH_180_120_60,
+    img("darkglass-aggressively-distorting-advanced-machine-product-gal-1.png")
   ),
-  row("Alpha-Omega", "Darkglass Alpha-Omega", WDH_PEDAL, "darkglass/darkglass-alpha-omega-gal-1.png"),
-  row(
-    "Alpha-Omega Photon",
-    "Darkglass Alpha-Omega Photon",
-    WDH_PEDAL,
-    "darkglass/darkglass-alpha-omega-photon-gal-1.png"
-  ),
-  row("Alpha-Omega Ultra", "Darkglass Alpha-Omega Ultra", WDH_PEDAL, "darkglass/darkglass-alpha-omega-ultra-gal-1.png"),
-  row("BK1", "Darkglass BK1", WDH_PEDAL, "darkglass/darkglass-bk1-gal-1.png"),
-  row("Duality Fuzz", "Darkglass Duality Fuzz", WDH_PEDAL, "darkglass/darkglass-duality-fuzz-gal-1.png"),
-  row("Element", "Darkglass Element", WDH_PEDAL, "darkglass/darkglass-element-gal-1.png"),
-  row(
-    "Harmonic Booster",
-    "Darkglass Harmonic Booster",
-    WDH_PEDAL,
-    "darkglass/darkglass-harmonic-booster-product-gal-1.png"
-  ),
-  row("Hyper Luminal", "Darkglass Hyper Luminal", WDH_PEDAL, "darkglass/darkglass-hyper-luminal-product-gal-1.png"),
-  row("Kaamos", "Darkglass Kaamos", WDH_PEDAL, "darkglass/darkglass-kaamos-product-gal-1.png"),
-  row(
-    "Luminal Boost Ultra",
-    "Darkglass Luminal Boost Ultra",
-    WDH_PEDAL,
-    "darkglass/darkglass-luminal-boost-ultra-gal-1.png"
-  ),
-  row(
-    "Microtubes Pedal",
-    "Darkglass Microtubes Pedal",
-    WDH_PEDAL,
-    "darkglass/darkglass-microtubes-b3k-product-gal-1.png"
-  ),
-  row("Microtubes B3K", "Darkglass Microtubes B3K", WDH_PEDAL, "darkglass/darkglass-microtubes-b3k-product-gal-1.png"),
-  row("Microtubes B7K", "Darkglass Microtubes B7K", WDH_PEDAL, "darkglass/darkglass-microtubes-b7k-product-gal-1.png"),
-  row(
-    "Microtubes BK7 Ultra",
-    "Darkglass Microtubes BK7 Ultra",
-    WDH_PEDAL,
-    "darkglass/darkglass-microtubes-bk7-ultra-gal-1.png"
-  ),
-  row(
-    "Microtubes Infinity",
-    "Darkglass Microtubes Infinity",
-    WDH_PEDAL,
-    "darkglass/darkglass-microtubes-infinity-product-gal-1.png"
-  ),
-  row(
-    "Microtubes X Ultra",
-    "Darkglass Microtubes X Ultra",
-    WDH_PEDAL,
-    "darkglass/darkglass-microtubes-x-ultra-gal-1.png"
-  ),
-  row("Microtubes X7", "Darkglass Microtubes X7", WDH_PEDAL, "darkglass/darkglass-microtubes-x7-product-gal-1.png"),
-  row(
-    "NSG",
-    "Darkglass NSG",
-    WDH_PEDAL,
-    "darkglass/darkglass-nsg-product-gal-1_fc08d2d3-4f48-432e-9eac-ddb2a454f405.png"
-  ),
-  row("Vintage Deluxe", "Darkglass Vintage Deluxe", WDH_PEDAL, "darkglass/darkglass-vintage-deluxe-gal-1.png"),
-  row(
-    "Vintage Microtubes",
-    "Darkglass Vintage Microtubes",
-    WDH_PEDAL,
-    "darkglass/darkglass-vintage-microtubes-product-gal-1.png"
-  ),
-  row("Vintage Ultra", "Darkglass Vintage Ultra", WDH_PEDAL, "darkglass/darkglass-vintage-ultra-gal-1.png"),
+  row("Alpha-Omega", WDH_94_120_46, img("darkglass-alpha-omega-gal-1.png")),
+  row("Alpha-Omega Photon", WDH_180_120_60, img("darkglass-alpha-omega-photon-gal-1.png")),
+  row("Alpha-Omega Ultra", WDH_125_96_57, img("darkglass-alpha-omega-ultra-gal-1.png")),
+  row("BK1", WDH_50_100_45, img("darkglass-bk1-gal-1.png")),
+  row("Duality Fuzz", WDH_50_100_45, img("darkglass-duality-fuzz-gal-1.png")),
+  row("Element", WDH_64_111_35, img("darkglass-element-gal-1.png")),
+  row("Harmonic Booster", WDH_75_111_43, img("darkglass-harmonic-booster-product-gal-1.png")),
+  row("Hyper Luminal", WDH_75_111_43, img("darkglass-hyper-luminal-product-gal-1.png")),
+  row("Kaamos", WDH_125_96_57, img("darkglass-kaamos-product-gal-1.png")),
+  row("Luminal Boost Ultra", WDH_125_96_57, img("darkglass-luminal-boost-ultra-gal-1.png")),
+  row("Microtubes Pedal", WDH_75_111_43, img("darkglass-microtubes-b3k-product-gal-1.png")),
+  row("Microtubes B3K", WDH_75_111_43, img("darkglass-microtubes-b3k-product-gal-1.png")),
+  row("Microtubes B7K", WDH_94_120_46, img("darkglass-microtubes-b7k-product-gal-1.png")),
+  row("Microtubes BK7 Ultra", WDH_125_96_57, img("darkglass-microtubes-bk7-ultra-gal-1.png")),
+  row("Microtubes Infinity", WDH_180_120_60, img("darkglass-microtubes-infinity-product-gal-1.png")),
+  row("Microtubes X Ultra", WDH_125_96_57, img("darkglass-microtubes-x-ultra-gal-1.png")),
+  row("Microtubes X7", WDH_94_120_46, img("darkglass-microtubes-x7-product-gal-1.png")),
+  row("NSG", WDH_50_100_36_5, img("darkglass-nsg-product-gal-1_fc08d2d3-4f48-432e-9eac-ddb2a454f405.png")),
+  row("Vintage Deluxe", WDH_94_120_46, img("darkglass-vintage-deluxe-gal-1.png")),
+  row("Vintage Microtubes", WDH_75_111_43, img("darkglass-vintage-microtubes-product-gal-1.png")),
+  row("Vintage Ultra", WDH_125_96_57, img("darkglass-vintage-ultra-gal-1.png")),
 ];
