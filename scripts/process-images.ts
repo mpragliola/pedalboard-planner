@@ -28,10 +28,53 @@
  */
 
 import { execSync, spawnSync, type SpawnSyncReturns } from "child_process";
-import { existsSync, readdirSync, rmSync, mkdirSync, renameSync } from "fs";
+import { existsSync, readdirSync, rmSync, mkdirSync, renameSync, openSync, readSync, closeSync } from "fs";
 import { join, dirname, extname, basename, parse as pathParse } from "path";
 import { fileURLToPath } from "url";
 import { config } from "dotenv";
+
+/** Image magic bytes (first bytes) for PNG, JPEG, WebP, AVIF. */
+function isImageByMagic(filePath: string): boolean {
+  let fd: number;
+  try {
+    fd = openSync(filePath, "r");
+  } catch {
+    return false;
+  }
+  const buf = Buffer.alloc(16);
+  try {
+    const n = readSync(fd, buf, 0, 16, 0);
+    closeSync(fd);
+    if (n < 3) return false;
+    // PNG: 89 50 4E 47 0D 0A 1A 0A
+    if (n >= 8 && buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) return true;
+    // JPEG: FF D8 FF
+    if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return true;
+    // WebP: RIFF....WEBP
+    if (
+      n >= 12 &&
+      buf[0] === 0x52 &&
+      buf[1] === 0x49 &&
+      buf[2] === 0x46 &&
+      buf[3] === 0x46 &&
+      buf[8] === 0x57 &&
+      buf[9] === 0x45 &&
+      buf[10] === 0x42 &&
+      buf[11] === 0x50
+    )
+      return true;
+    // AVIF: ....ftyp (bytes 4–7) then brand often "avif" or "mif1"
+    if (n >= 12 && buf[4] === 0x66 && buf[5] === 0x74 && buf[6] === 0x79 && buf[7] === 0x70) return true;
+    return false;
+  } catch {
+    try {
+      closeSync(fd);
+    } catch {
+      // ignore
+    }
+    return false;
+  }
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -111,12 +154,18 @@ if (!dryRun) {
   if (!noBorders) mkdirSync(tempBorderDir, { recursive: true });
 }
 
-// Get source files
+// Get source files (by extension or by content magic bytes for extensionless files)
 const imageExts = [".png", ".jpg", ".jpeg", ".webp", ".avif"];
-const files = readdirSync(targetDir).filter((f) => {
-  const ext = extname(f).toLowerCase();
-  return imageExts.includes(ext);
-});
+const dirEntries = readdirSync(targetDir, { withFileTypes: true });
+const files = dirEntries
+  .filter((e) => e.isFile())
+  .map((e) => e.name)
+  .filter((f) => {
+    const ext = extname(f).toLowerCase();
+    if (imageExts.includes(ext)) return true;
+    // Include extensionless or unknown-extension files if content looks like an image
+    return isImageByMagic(join(targetDir, f));
+  });
 
 log(`Found ${files.length} images in ${targetDir}`);
 
