@@ -30,7 +30,7 @@ function escapeCsvField(value: string): string {
 }
 
 function buildComponentListCsv(
-  objects: { brand?: string; model?: string; type?: string; name?: string; id: string }[],
+  objects: { brand?: string; model?: string; type?: string; name?: string; id: string; templateId?: string }[],
   connectors: Connector[],
   getObjectName: (id: string) => string
 ): string {
@@ -38,7 +38,7 @@ function buildComponentListCsv(
   rows.push("Components");
   rows.push(["Brand", "Model", "Type"].map(escapeCsvField).join(","));
   for (const obj of objects) {
-    const isCustom = obj.id.startsWith("board-custom-") || obj.id.startsWith("device-custom-");
+    const isCustom = obj.templateId === "board-custom" || obj.templateId === "device-custom";
     const model = isCustom ? obj.name ?? "" : obj.model ?? "";
     rows.push([obj.brand ?? "", model, obj.type ?? ""].map(escapeCsvField).join(","));
   }
@@ -205,7 +205,7 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
               </thead>
               <tbody>
                 {objects.map((obj) => {
-                  const isCustom = obj.id.startsWith("board-custom-") || obj.id.startsWith("device-custom-");
+                  const isCustom = obj.templateId === "board-custom" || obj.templateId === "device-custom";
                   return (
                     <tr key={obj.id}>
                       <td>{obj.brand || "—"}</td>
