@@ -1,16 +1,8 @@
 import { useApp } from "../../context/AppContext";
 import { getObjectDimensions } from "../../lib/stateManager";
+import { formatDimension } from "../../lib/rulerFormat";
 import { InfoLine } from "./InfoLine";
 import "./SelectionInfoPopup.css";
-
-function formatDimension(mm: number, unit: "mm" | "in"): string {
-  if (unit === "in") {
-    const inches = mm / 25.4;
-    return `${inches.toFixed(2)} in`;
-  }
-  const cm = mm / 10;
-  return `${mm} mm (${cm.toFixed(1)} cm)`;
-}
 
 export function SelectionInfoPopup() {
   const { objects, selectedObjectIds, unit } = useApp();

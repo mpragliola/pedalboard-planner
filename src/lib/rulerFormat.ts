@@ -7,3 +7,12 @@ export function formatLength(mm: number, unit: 'mm' | 'in'): string {
   }
   return mm >= 0.1 ? `${mm.toFixed(1)} mm` : `${mm.toFixed(2)} mm`
 }
+
+/** Like formatLength but includes cm in parentheses for mm unit. Useful for dimension displays. */
+export function formatDimension(mm: number, unit: 'mm' | 'in'): string {
+  if (unit === 'in') {
+    return `${(mm * MM_TO_IN).toFixed(2)} in`
+  }
+  const cm = mm / 10
+  return `${mm} mm (${cm.toFixed(1)} cm)`
+}
