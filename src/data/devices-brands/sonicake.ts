@@ -8,7 +8,7 @@ export const SONICAKE_DEVICE_TEMPLATES: DeviceTemplate[] = [
     brand: "Sonicake",
     model: "Pocket Master",
     name: "Sonicake Pocket Master",
-    wdh: [73, 129, 59],
+    wdh: [103, 85, 28],
     image: "sonicake/sonicake-pocket-master.png",
   },
 ];

@@ -26,6 +26,7 @@ import { KEMPER_DEVICE_TEMPLATES } from "./devices-brands/kemper";
 import { LINE6_DEVICE_TEMPLATES } from "./devices-brands/line6";
 import { MIPRO_DEVICE_TEMPLATES } from "./devices-brands/mipro";
 import { MISSION_DEVICE_TEMPLATES } from "./devices-brands/mission";
+import { MORPHEUS_DEVICE_TEMPLATES } from "./devices-brands/morpheus";
 import { MONO_DEVICE_TEMPLATES } from "./devices-brands/mono";
 import { MOOER_DEVICE_TEMPLATES } from "./devices-brands/mooer";
 import { MORNINGSTAR_DEVICE_TEMPLATES } from "./devices-brands/morningstar";
@@ -99,6 +100,7 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
   ...LINE6_DEVICE_TEMPLATES,
   ...MIPRO_DEVICE_TEMPLATES,
   ...MISSION_DEVICE_TEMPLATES,
+  ...MORPHEUS_DEVICE_TEMPLATES,
   ...MONO_DEVICE_TEMPLATES,
   ...MOOER_DEVICE_TEMPLATES,
   ...MORNINGSTAR_DEVICE_TEMPLATES,
