@@ -122,11 +122,11 @@ export function CatalogDndProvider({ children }: { children: React.ReactNode }) 
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
-      const { active, over } = event;
+      const { active } = event;
       const { x, y } = lastPointerRef.current;
       const data = active.data.current as CatalogDragData | undefined;
       forceCleanup();
-      if (over?.id === CANVAS_DROP_ID && data) {
+      if (data) {
         placeFromCatalog(x, y, { mode: data.mode, templateId: data.templateId });
       }
     },

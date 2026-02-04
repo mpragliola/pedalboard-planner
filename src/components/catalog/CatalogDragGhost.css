@@ -22,8 +22,8 @@ body.catalog-dragging * {
   align-items: center;
   justify-content: center;
   border-radius: 6px;
-  overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  overflow: visible; /* allow drop-shadow to show */
+  opacity: 0.7;
 }
 
 /* When inside our custom wrapper, stay in flow so wrapper gets correct size; wrapper's translate(-50%,-50%) then centers the ghost on cursor */
@@ -40,10 +40,12 @@ body.catalog-dragging * {
   -webkit-user-drag: none;
   user-drag: none;
   pointer-events: none;
+  filter: drop-shadow(0 16px 48px rgba(0, 0, 0, 0.35));
 }
 
 .catalog-drag-ghost-placeholder {
   width: 100%;
   height: 100%;
   display: block;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
 }

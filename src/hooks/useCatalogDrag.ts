@@ -16,27 +16,18 @@ export function useCatalogDrag({ canvasRef, zoomRef, panRef, onDropOnCanvas }: U
   const ignoreNextClickRef = useRef(false);
 
   const placeFromCatalog = useCallback(
-    (
-      clientX: number,
-      clientY: number,
-      data: { mode: "boards" | "devices"; templateId: string }
-    ) => {
+    (clientX: number, clientY: number, data: { mode: "boards" | "devices"; templateId: string }) => {
       const canvas = canvasRef.current;
       const zoom = zoomRef.current;
       const pan = panRef.current;
       if (!canvas || zoom == null || !pan) return;
 
-      const viewport =
-        typeof canvas.querySelector === "function"
-          ? (canvas.querySelector(".canvas-viewport") as HTMLElement | null)
-          : null;
-      const r = viewport ? viewport.getBoundingClientRect() : canvas.getBoundingClientRect();
-      const isWithinCanvas =
-        clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom;
+      const r = canvas.getBoundingClientRect();
+      const isWithinCanvas = clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom;
 
       if (isWithinCanvas) {
-        const x = viewport ? (clientX - r.left) / zoom : (clientX - r.left - pan.x) / zoom;
-        const y = viewport ? (clientY - r.top) / zoom : (clientY - r.top - pan.y) / zoom;
+        const x = (clientX - r.left - pan.x) / zoom;
+        const y = (clientY - r.top - pan.y) / zoom;
         onDropOnCanvas(data.mode, data.templateId, x, y);
       }
 

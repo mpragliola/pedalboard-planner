@@ -97,8 +97,8 @@ describe("useCatalogDrag", () => {
       });
     });
 
-    // With viewport: (clientX - r.left) / zoom, (clientY - r.top) / zoom → (300-100)/2=100, (150-50)/2=50
-    expect(onDropOnCanvas).toHaveBeenCalledWith("devices", "device-boss-ds-1", 100, 50);
+    // Canvas rect + pan: (clientX - r.left - pan.x) / zoom → (300-100-100)/2=50, (150-50-50)/2=25
+    expect(onDropOnCanvas).toHaveBeenCalledWith("devices", "device-boss-ds-1", 50, 25);
   });
 
   it("shouldIgnoreCatalogClick returns false initially, true after placeFromCatalog, then false after consumed", () => {
