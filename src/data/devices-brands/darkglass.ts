@@ -13,6 +13,7 @@ const WDH_64_111_35: [number, number, number] = [64, 111, 35];
 const WDH_50_100_36_5: [number, number, number] = [50, 100, 36.5];
 
 export const DARKGLASS_DEVICE_TEMPLATES: DeviceTemplate[] = [
+  pedal("Anagram", WDH_75_111_43, img("darkglass-anagram.png")),
   pedal(
     "Aggressively Distorting Advanced Machine",
     WDH_180_120_60,
