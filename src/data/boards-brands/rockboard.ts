@@ -31,6 +31,6 @@ export const ROCKBOARD_BOARD_TEMPLATES: BoardTemplate[] = rockboardTemplatesRaw.
     model,
     name: `RockBoard ${model}`,
     wdh,
-    image: image ? `rockboard/warwick-${image}` : null,
+    image: image ? `rockboard/warwick-rockboard-${image}` : null,
   };
 });
