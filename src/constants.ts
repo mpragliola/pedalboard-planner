@@ -1,5 +1,5 @@
 import type { CanvasObjectType } from "./types";
-import type { ConnectorKind, ConnectorLinkType } from "./types";
+import type { ConnectorKind } from "./types";
 import type { DeviceType } from "./data/devices";
 
 /** Base URL for static assets (e.g. '' or '/pedal/'). Use for image paths so they resolve from app root. */
@@ -75,11 +75,25 @@ export const initialObjects: CanvasObjectType[] = [];
 /** Default fill color when a board or device has no image (and no custom color). */
 export const DEFAULT_OBJECT_COLOR = "rgb(72, 72, 82)";
 
-/** Connector link type options (audio, midi, expression). */
-export const CONNECTOR_TYPE_OPTIONS: { value: ConnectorLinkType; label: string }[] = [
-  { value: "audio", label: "Audio" },
-  { value: "midi", label: "MIDI" },
-  { value: "expression", label: "Expression" },
+/** Predefined connector name options (endpoint labels: Input, Output, etc.). */
+export const CONNECTOR_NAME_OPTIONS: string[] = [
+  "Input",
+  "In L",
+  "In R",
+  "MIDI In",
+  "MIDI Out",
+  "MIDI Thru",
+  "MIDI Out/thru",
+  "Exp In",
+  "Output",
+  "Out L",
+  "Out R",
+  "Send",
+  "Send 1",
+  "Send 2",
+  "Return",
+  "Return 1",
+  "Return 2",
 ];
 
 /** Physical connector kind options. */

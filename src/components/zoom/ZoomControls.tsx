@@ -1,9 +1,11 @@
 import {
   faCrosshairs,
   faEye,
+  faLayerGroup,
   faList,
   faMinus,
   faPlus,
+  faPlug,
   faRuler,
   faSlash,
   faSquare,
@@ -17,7 +19,7 @@ import { ComponentListModal } from '../componentlist/ComponentListModal'
 import './ZoomControls.css'
 
 export function ZoomControls() {
-  const { zoomIn, zoomOut, showGrid, setShowGrid, xray, setXray, ruler, setRuler, lineRuler, setLineRuler, centerView } = useApp()
+  const { zoomIn, zoomOut, showGrid, setShowGrid, xray, setXray, ruler, setRuler, lineRuler, setLineRuler, cableLayer, setCableLayer, cablesVisible, setCablesVisible, centerView } = useApp()
   const [componentListOpen, setComponentListOpen] = useState(false)
   const [measurementExpanded, setMeasurementExpanded] = useState(false)
   const [viewExpanded, setViewExpanded] = useState(false)
@@ -37,7 +39,27 @@ export function ZoomControls() {
         onClick={zoomOut}
         className="zoom-out"
       />
+      <ZoomButton
+        label="Cable layer"
+        title="Draw cables (click to add points, double-click to finish). Hold SHIFT to disable snap."
+        icon={faPlug}
+        onClick={() => {
+          setRuler(() => false)
+          setLineRuler(() => false)
+          setCableLayer((v) => !v)
+        }}
+        active={cableLayer}
+        className="cable-layer-toggle"
+      />
       <div className={`view-tools-group ${viewExpanded ? 'expanded' : ''}`}>
+        <ZoomButton
+          label="View options"
+          title={viewExpanded ? 'Hide view options' : 'View options'}
+          icon={faEye}
+          onClick={() => setViewExpanded((v) => !v)}
+          active={showGrid || xray || !cablesVisible}
+          className={`view-group-toggle ${viewExpanded ? 'open' : ''}`}
+        />
         <div className="view-tools-secondary">
           <ZoomButton
             label="Center view"
@@ -62,17 +84,25 @@ export function ZoomControls() {
             active={xray}
             className="xray-toggle"
           />
+          <ZoomButton
+            label="Show cables"
+            title="Show or hide cables on the canvas"
+            icon={faLayerGroup}
+            onClick={() => setCablesVisible((v) => !v)}
+            active={cablesVisible}
+            className="cables-visible-toggle"
+          />
         </div>
-        <ZoomButton
-          label="View options"
-          title={viewExpanded ? 'Hide view options' : 'View options'}
-          icon={faEye}
-          onClick={() => setViewExpanded((v) => !v)}
-          active={showGrid || xray}
-          className={`view-group-toggle ${viewExpanded ? 'open' : ''}`}
-        />
       </div>
       <div className={`measurement-tools-group ${measurementExpanded ? 'expanded' : ''}`}>
+        <ZoomButton
+          label="Measurement tools"
+          title={measurementExpanded ? 'Hide measurement tools' : 'Measurement tools'}
+          icon={faRuler}
+          onClick={() => setMeasurementExpanded((v) => !v)}
+          active={ruler || lineRuler}
+          className={`measurement-group-toggle ${measurementExpanded ? 'open' : ''}`}
+        />
         <div className="measurement-tools-secondary">
           <ZoomButton
             label="Ruler"
@@ -80,6 +110,7 @@ export function ZoomControls() {
             icon={faSquare}
             onClick={() => {
               setLineRuler(() => false)
+              setCableLayer(() => false)
               setRuler((v) => !v)
             }}
             active={ruler}
@@ -91,24 +122,17 @@ export function ZoomControls() {
             icon={faSlash}
             onClick={() => {
               setRuler(() => false)
+              setCableLayer(() => false)
               setLineRuler((v) => !v)
             }}
             active={lineRuler}
             className="line-ruler-toggle"
           />
         </div>
-        <ZoomButton
-          label="Measurement tools"
-          title={measurementExpanded ? 'Hide measurement tools' : 'Measurement tools'}
-          icon={faRuler}
-          onClick={() => setMeasurementExpanded((v) => !v)}
-          active={ruler || lineRuler}
-          className={`measurement-group-toggle ${measurementExpanded ? 'open' : ''}`}
-        />
       </div>
       <ZoomButton
         label="Component list"
-        title="Components and connectors (materials)"
+        title="Components and cables (materials)"
         icon={faList}
         onClick={() => setComponentListOpen(true)}
         className="component-list-toggle"

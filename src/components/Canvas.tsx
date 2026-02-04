@@ -4,6 +4,8 @@ import { CanvasObject } from "./CanvasObject";
 import { Grid } from "./zoom/Grid";
 import { RulerOverlay } from "./ruler/RulerOverlay";
 import { LineRulerOverlay } from "./ruler/LineRulerOverlay";
+import { CableLayerOverlay } from "./cable/CableLayerOverlay";
+import { CablePaths } from "./cable/CablePaths";
 import { SelectionToolbar } from "./selection/SelectionToolbar";
 import { useApp } from "../context/AppContext";
 import { CANVAS_DROP_ID } from "./catalog/CatalogDndProvider";
@@ -28,6 +30,9 @@ export function Canvas() {
     xray,
     ruler,
     lineRuler,
+    cableLayer,
+    cablesVisible,
+    cables,
     unit,
     isPanning,
     spaceDown,
@@ -114,9 +119,11 @@ export function Canvas() {
             />
           ))}
         </div>
+        <CablePaths cables={cables} visible={cablesVisible} />
       </div>
       {ruler && <RulerOverlay />}
       {lineRuler && <LineRulerOverlay />}
+      {cableLayer && <CableLayerOverlay />}
     </div>
   );
 }

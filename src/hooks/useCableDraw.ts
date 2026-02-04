@@ -1,0 +1,174 @@
+import { useState, useCallback, useRef, type MutableRefObject } from "react";
+import { snapToObjects } from "../lib/snapToBoundingBox";
+import type { CanvasObjectType } from "../types";
+import type { CableSegment } from "../types";
+
+export interface UseCableDrawOptions {
+  clientToCanvas: (clientX: number, clientY: number) => { x: number; y: number };
+  objects: CanvasObjectType[];
+  getObjectDimensions: (o: CanvasObjectType) => [number, number, number];
+  onDoubleClickExit?: () => void;
+  /** Ref to callback when user clicks within tolerance of the last point (to finish the cable). */
+  onFinishClickRef?: MutableRefObject<(() => void) | undefined>;
+}
+
+const MIN_SEGMENT_LENGTH = 0.5;
+/** If click release is within this distance (mm) of the last vertex and we have segments, treat as "finish". */
+const FINISH_CLICK_TOLERANCE_MM = 15;
+
+export interface UseCableDrawResult {
+  segments: CableSegment[];
+  segmentStart: { x: number; y: number } | null;
+  currentEnd: { x: number; y: number } | null;
+  onPointerDown: (e: React.PointerEvent) => void;
+  onPointerMove: (e: React.PointerEvent) => void;
+  onPointerUp: (e: React.PointerEvent) => void;
+  onDoubleClick: (e: React.MouseEvent) => void;
+  /** Returns the segments that would be committed (for showing in Add Cable dialog). */
+  getFinalSegments: () => CableSegment[];
+  /** Clear drawing state (segments, segmentStart, currentEnd). */
+  clearDrawing: () => void;
+  hasSegments: boolean;
+  hasPreview: boolean;
+}
+
+/**
+ * Polyline drawing with optional snap to object bounding boxes. SHIFT disables snap.
+ * Double-click exits without persisting (like line ruler). Use addCable() to persist the current polyline.
+ */
+export function useCableDraw({
+  clientToCanvas,
+  objects,
+  getObjectDimensions,
+  onDoubleClickExit,
+  onFinishClickRef,
+}: UseCableDrawOptions): UseCableDrawResult {
+  const [segments, setSegments] = useState<CableSegment[]>([]);
+  const [segmentStart, setSegmentStart] = useState<{ x: number; y: number } | null>(null);
+  const [currentEnd, setCurrentEnd] = useState<{ x: number; y: number } | null>(null);
+  const pointerDownRef = useRef<{ x: number; y: number } | null>(null);
+
+  const resolvePoint = useCallback(
+    (clientX: number, clientY: number, shiftKey: boolean) => {
+      const raw = clientToCanvas(clientX, clientY);
+      if (shiftKey) return raw;
+      return snapToObjects(raw.x, raw.y, objects, getObjectDimensions);
+    },
+    [clientToCanvas, objects, getObjectDimensions]
+  );
+
+  const onPointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      if (e.button !== 0) return;
+      if ((e.nativeEvent as MouseEvent).detail === 2) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (segments.length >= 1 || segmentStart) {
+          onFinishClickRef?.current?.();
+        } else {
+          onDoubleClickExit?.();
+        }
+        return;
+      }
+      e.preventDefault();
+      e.stopPropagation();
+      const point = resolvePoint(e.clientX, e.clientY, e.shiftKey);
+      pointerDownRef.current = point;
+      if (!segmentStart) {
+        setSegmentStart(point);
+        setCurrentEnd(point);
+      }
+    },
+    [resolvePoint, segmentStart, segments.length, onDoubleClickExit, onFinishClickRef]
+  );
+
+  const onPointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      if (!segmentStart) return;
+      const point = resolvePoint(e.clientX, e.clientY, e.shiftKey);
+      setCurrentEnd(point);
+    },
+    [resolvePoint, segmentStart]
+  );
+
+  const onPointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      if (e.button !== 0) return;
+      pointerDownRef.current = null;
+      if (!segmentStart || !currentEnd) return;
+      const releasePoint = resolvePoint(e.clientX, e.clientY, e.shiftKey);
+      const len = Math.hypot(releasePoint.x - segmentStart.x, releasePoint.y - segmentStart.y);
+      // Click near last vertex with at least one segment → treat as "finish" (don't add tiny segment)
+      if (segments.length >= 1 && len <= FINISH_CLICK_TOLERANCE_MM) {
+        onFinishClickRef?.current?.();
+        return;
+      }
+      if (len > MIN_SEGMENT_LENGTH) {
+        setSegments((prev) => [
+          ...prev,
+          {
+            x1: segmentStart.x,
+            y1: segmentStart.y,
+            x2: releasePoint.x,
+            y2: releasePoint.y,
+          },
+        ]);
+      }
+      setSegmentStart(releasePoint);
+      setCurrentEnd(releasePoint);
+    },
+    [resolvePoint, segmentStart, currentEnd, segments.length, onFinishClickRef]
+  );
+
+  const onDoubleClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (segments.length >= 1 || (segmentStart && currentEnd)) {
+        onFinishClickRef?.current?.();
+      } else {
+        setSegments([]);
+        setSegmentStart(null);
+        setCurrentEnd(null);
+        onDoubleClickExit?.();
+      }
+    },
+    [segments.length, segmentStart, currentEnd, onDoubleClickExit, onFinishClickRef]
+  );
+
+  const getFinalSegments = useCallback((): CableSegment[] => {
+    const len =
+      segmentStart && currentEnd ? Math.hypot(currentEnd.x - segmentStart.x, currentEnd.y - segmentStart.y) : 0;
+    return len > MIN_SEGMENT_LENGTH
+      ? [
+          ...segments,
+          {
+            x1: segmentStart!.x,
+            y1: segmentStart!.y,
+            x2: currentEnd!.x,
+            y2: currentEnd!.y,
+          },
+        ]
+      : segments;
+  }, [segmentStart, currentEnd, segments]);
+
+  const clearDrawing = useCallback(() => {
+    setSegments([]);
+    setSegmentStart(null);
+    setCurrentEnd(null);
+  }, []);
+
+  return {
+    segments,
+    segmentStart,
+    currentEnd,
+    onPointerDown,
+    onPointerMove,
+    onPointerUp,
+    onDoubleClick,
+    getFinalSegments,
+    clearDrawing,
+    hasSegments: segments.length > 0,
+    hasPreview: segmentStart !== null && currentEnd !== null,
+  };
+}

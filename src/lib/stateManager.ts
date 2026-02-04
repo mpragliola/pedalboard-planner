@@ -1,4 +1,4 @@
-import type { CanvasObjectType, Connector } from "../types";
+import type { CanvasObjectType, Cable } from "../types";
 import { DEVICE_TEMPLATES } from "../data/devices";
 import { BOARD_TEMPLATES } from "../data/boards";
 import { MM_TO_PX } from "../constants";
@@ -12,7 +12,7 @@ export interface SavedState {
   pan?: { x: number; y: number };
   showGrid?: boolean;
   unit?: "mm" | "in";
-  connectors?: Connector[];
+  cables?: Cable[];
 }
 
 /** Build a lookup map from template id to image path. */
@@ -62,7 +62,7 @@ function isCustomObject(o: CanvasObjectType): boolean {
   return o.templateId === "board-custom" || o.templateId === "device-custom";
 }
 
-/** Strip image from all objects; keep name only for custom elements. Omit width/depth/height when template has known dimensions (restored from template on load). Round coordinates to 2 decimals. */
+/** Strip image from all objects; keep name only for custom elements. Omit width /depth/height when template has known dimensions (restored from template on load). Round coordinates to 2 decimals. */
 function serializeObjects(objects: CanvasObjectType[]): Record<string, unknown>[] {
   return objects.map((o) => {
     const { image, name, width, depth, height, ...rest } = o as CanvasObjectType & {
@@ -166,7 +166,7 @@ export class StateManager {
         pan: validPan,
         showGrid: typeof d.showGrid === "boolean" ? d.showGrid : undefined,
         unit: d.unit === "mm" || d.unit === "in" ? (d.unit as "mm" | "in") : undefined,
-        connectors: StateManager.isValidConnectorArray(d.connectors) ? (d.connectors as Connector[]) : undefined,
+        cables: StateManager.isValidCableArray(d.cables) ? (d.cables as Cable[]) : undefined,
       };
     } catch {
       return null;
@@ -216,20 +216,34 @@ export class StateManager {
     );
   }
 
-  private static isValidConnector(o: unknown): o is Connector {
-    if (typeof o !== "object" || o === null) return false;
-    const c = o as Record<string, unknown>;
+  private static isValidCableSegment(seg: unknown): seg is Cable["segments"][0] {
+    if (typeof seg !== "object" || seg === null) return false;
+    const s = seg as Record<string, unknown>;
     return (
-      typeof c.id === "string" &&
-      typeof c.deviceA === "string" &&
-      typeof c.deviceB === "string" &&
-      typeof c.type === "string" &&
-      typeof c.connectorA === "string" &&
-      typeof c.connectorB === "string"
+      typeof s.x1 === "number" &&
+      typeof s.y1 === "number" &&
+      typeof s.x2 === "number" &&
+      typeof s.y2 === "number"
     );
   }
 
-  private static isValidConnectorArray(arr: unknown): arr is Connector[] {
-    return Array.isArray(arr) && arr.every(StateManager.isValidConnector);
+  private static isValidCable(o: unknown): o is Cable {
+    if (typeof o !== "object" || o === null) return false;
+    const c = o as Record<string, unknown>;
+    if (
+      typeof c.id !== "string" ||
+      typeof c.color !== "string" ||
+      typeof c.connectorA !== "string" ||
+      typeof c.connectorB !== "string"
+    )
+      return false;
+    if (c.connectorAName !== undefined && typeof c.connectorAName !== "string") return false;
+    if (c.connectorBName !== undefined && typeof c.connectorBName !== "string") return false;
+    if (!Array.isArray(c.segments) || !c.segments.every(StateManager.isValidCableSegment)) return false;
+    return true;
+  }
+
+  private static isValidCableArray(arr: unknown): arr is Cable[] {
+    return Array.isArray(arr) && arr.every(StateManager.isValidCable);
   }
 }

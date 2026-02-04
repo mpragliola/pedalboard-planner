@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { StateManager } from "./stateManager";
 import type { SavedState } from "./stateManager";
-import type { Connector } from "../types";
 
 // A valid object record with all required fields for validation
 const validObject = {
@@ -333,58 +332,6 @@ describe("StateManager.parseState", () => {
     });
   });
 
-  describe("connectors parsing", () => {
-    const validConnector = {
-      id: "conn-1",
-      deviceA: "device-1",
-      deviceB: "device-2",
-      type: "audio",
-      connectorA: "mono jack (TS)",
-      connectorB: "mono jack (TS)",
-    };
-
-    it("parses connectors when valid array", () => {
-      const raw = JSON.stringify({ objects: [validObject], connectors: [validConnector] });
-      const out = StateManager.parseState(raw) as SavedState;
-      expect(out.connectors).toHaveLength(1);
-      expect(out.connectors![0]).toEqual(validConnector);
-    });
-
-    it("parses multiple connectors", () => {
-      const raw = JSON.stringify({
-        objects: [validObject],
-        connectors: [validConnector, { ...validConnector, id: "conn-2" }],
-      });
-      const out = StateManager.parseState(raw) as SavedState;
-      expect(out.connectors).toHaveLength(2);
-    });
-
-    it("ignores connectors when not an array", () => {
-      const raw = JSON.stringify({ objects: [validObject], connectors: validConnector });
-      const out = StateManager.parseState(raw) as SavedState;
-      expect(out.connectors).toBeUndefined();
-    });
-
-    it("ignores connectors when array contains invalid items", () => {
-      const invalidConnector = { ...validConnector };
-      delete (invalidConnector as Record<string, unknown>).deviceA;
-      const raw = JSON.stringify({ objects: [validObject], connectors: [invalidConnector] });
-      const out = StateManager.parseState(raw) as SavedState;
-      expect(out.connectors).toBeUndefined();
-    });
-
-    it("ignores connectors when fields have wrong types", () => {
-      const raw = JSON.stringify({ objects: [validObject], connectors: [{ ...validConnector, id: 123 }] });
-      const out = StateManager.parseState(raw) as SavedState;
-      expect(out.connectors).toBeUndefined();
-    });
-
-    it("handles empty connectors array", () => {
-      const raw = JSON.stringify({ objects: [validObject], connectors: [] });
-      const out = StateManager.parseState(raw) as SavedState;
-      expect(out.connectors).toEqual([]);
-    });
-  });
 });
 
 describe("StateManager.serializeState", () => {
@@ -523,20 +470,6 @@ describe("StateManager.serializeState", () => {
       const state: SavedState = { objects: [], unit: "in" };
       const ser = StateManager.serializeState(state);
       expect(ser.unit).toBe("in");
-    });
-
-    it("preserves connectors", () => {
-      const connector: Connector = {
-        id: "c1",
-        deviceA: "d1",
-        deviceB: "d2",
-        type: "audio",
-        connectorA: "mono jack (TS)",
-        connectorB: "mono jack (TS)",
-      };
-      const state: SavedState = { objects: [], connectors: [connector] };
-      const ser = StateManager.serializeState(state);
-      expect(ser.connectors).toEqual([connector]);
     });
   });
 });

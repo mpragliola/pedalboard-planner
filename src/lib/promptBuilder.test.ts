@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { PromptBuilder } from "./promptBuilder";
-import type { CanvasObjectType } from "../types";
-import type { Connector } from "../types";
+import type { CanvasObjectType, Cable } from "../types";
 
 const baseObject = (overrides: Partial<CanvasObjectType> & { id: string; name: string }): CanvasObjectType =>
   ({
@@ -22,7 +21,8 @@ const defaultOptions = {
   includeMaterials: false,
   includeCommentsAndTips: false,
   location: "",
-  connectors: [] as Connector[],
+  cables: [] as Cable[],
+  unit: "mm" as const,
   getObjectName: (id: string) => id,
 };
 
@@ -55,34 +55,54 @@ describe("PromptBuilder", () => {
     });
   });
 
-  describe("getConnectorList", () => {
-    it("returns empty string when no connectors", () => {
+  describe("getCableList", () => {
+    it("returns empty string when no cables", () => {
       const pb = new PromptBuilder([], defaultOptions);
-      expect(pb.getConnectorList()).toBe("");
+      expect(pb.getCableList()).toBe("");
     });
 
-    it("formats connector line with type and device names", () => {
-      const getObjectName = (id: string) => (id === "d1" ? "Pedal A" : "Pedal B");
+    it("formats cable with connectors and length in mm (no hex color)", () => {
       const pb = new PromptBuilder([], {
         ...defaultOptions,
-        connectors: [
+        unit: "mm",
+        cables: [
           {
-            id: "c1",
-            deviceA: "d1",
-            deviceB: "d2",
-            type: "audio",
+            id: "cab1",
+            segments: [
+              { x1: 0, y1: 0, x2: 100, y2: 0 },
+              { x1: 100, y1: 0, x2: 100, y2: 50 },
+            ],
+            color: "#333",
             connectorA: "mono jack (TS)",
+            connectorB: "mono jack (TS)",
+          },
+        ],
+        getObjectName: (id: string) => id,
+      });
+      const list = pb.getCableList();
+      expect(list).not.toContain("#333");
+      expect(list).toContain("Cable:");
+      expect(list).toContain("mono jack (TS)");
+      expect(list).toContain("at least 150 mm");
+    });
+
+    it("formats cable length in inches when unit is in", () => {
+      const pb = new PromptBuilder([], {
+        ...defaultOptions,
+        unit: "in",
+        cables: [
+          {
+            id: "cab1",
+            segments: [{ x1: 0, y1: 0, x2: 254, y2: 0 }],
+            color: "#000",
+            connectorA: "stereo jack (TRS)",
             connectorB: "stereo jack (TRS)",
           },
         ],
-        getObjectName,
+        getObjectName: (id: string) => id,
       });
-      const list = pb.getConnectorList();
-      expect(list).toContain("audio");
-      expect(list).toContain("Pedal A");
-      expect(list).toContain("Pedal B");
-      expect(list).toContain("mono jack (TS)");
-      expect(list).toContain("stereo jack (TRS)");
+      const list = pb.getCableList();
+      expect(list).toContain("at least 10.00 in");
     });
   });
 
@@ -95,16 +115,25 @@ describe("PromptBuilder", () => {
       expect(out).toContain("estimate the total price");
     });
 
-    it("includes materials and connector list when includeMaterials is true", () => {
+    it("includes materials when includeMaterials is true", () => {
       const pb = new PromptBuilder([], {
         ...defaultOptions,
         includeMaterials: true,
-        connectors: [
+        getObjectName: (id) => id,
+      });
+      const out = pb.build();
+      expect(out).toContain("cables, velcro");
+    });
+
+    it("includes cable layer list when includeMaterials is true and cables exist", () => {
+      const pb = new PromptBuilder([], {
+        ...defaultOptions,
+        includeMaterials: true,
+        cables: [
           {
-            id: "c1",
-            deviceA: "d1",
-            deviceB: "d2",
-            type: "audio",
+            id: "cab1",
+            segments: [{ x1: 0, y1: 0, x2: 200, y2: 0 }],
+            color: "#333",
             connectorA: "mono jack (TS)",
             connectorB: "mono jack (TS)",
           },
@@ -112,8 +141,9 @@ describe("PromptBuilder", () => {
         getObjectName: (id) => id,
       });
       const out = pb.build();
-      expect(out).toContain("cables, velcro");
-      expect(out).toContain("Connector list:");
+      expect(out).toContain("Cables (drawn on cable layer):");
+      expect(out).toContain("at least 200 mm");
+      expect(out).not.toContain("#333");
     });
 
     it("excludes materials when includeMaterials is false", () => {

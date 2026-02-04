@@ -16,7 +16,7 @@ import { useBoardDeviceFilters } from "../hooks/useBoardDeviceFilters";
 import { useHistory } from "../hooks/useHistory";
 import { useCatalogDrag } from "../hooks/useCatalogDrag";
 import { normalizeRotation } from "../lib/geometry";
-import type { CanvasObjectType, Connector } from "../types";
+import type { CanvasObjectType, Cable } from "../types";
 
 const stateManager = new StateManager("pedal/state");
 
@@ -38,6 +38,10 @@ interface AppContextValue {
   setRuler: (fn: (v: boolean) => boolean) => void;
   lineRuler: boolean;
   setLineRuler: (fn: (v: boolean) => boolean) => void;
+  cableLayer: boolean;
+  setCableLayer: (fn: (v: boolean) => boolean) => void;
+  cablesVisible: boolean;
+  setCablesVisible: (fn: (v: boolean) => boolean) => void;
   unit: "mm" | "in";
   setUnit: (u: "mm" | "in") => void;
   isPanning: boolean;
@@ -85,14 +89,19 @@ interface AppContextValue {
   shouldIgnoreCatalogClick: () => boolean;
   onCustomBoardCreate: (params: { widthMm: number; depthMm: number; color: string; name: string }) => void;
   onCustomDeviceCreate: (params: { widthMm: number; depthMm: number; color: string; name: string }) => void;
-  onCustomCreate: (mode: "boards" | "devices", params: { widthMm: number; depthMm: number; color: string; name: string }) => void;
+  onCustomCreate: (
+    mode: "boards" | "devices",
+    params: { widthMm: number; depthMm: number; color: string; name: string }
+  ) => void;
   // Floating UI visibility
   floatingUiVisible: boolean;
   setFloatingUiVisible: React.Dispatch<React.SetStateAction<boolean>>;
   panelExpanded: boolean;
   setPanelExpanded: React.Dispatch<React.SetStateAction<boolean>>;
-  connectors: Connector[];
-  setConnectors: React.Dispatch<React.SetStateAction<Connector[]>>;
+  cables: Cable[];
+  setCables: React.Dispatch<React.SetStateAction<Cable[]>>;
+  /** Add a cable and persist to storage immediately (so cables don't disappear). */
+  addCableAndPersist: (cable: Cable) => void;
   // Pedalboard file: new / load / save
   newBoard: () => void;
   loadBoardFromFile: (file: File) => void;
@@ -137,15 +146,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [xray, setXray] = useState(false);
   const [ruler, setRuler] = useState(false);
   const [lineRuler, setLineRuler] = useState(false);
+  const [cableLayer, setCableLayer] = useState(false);
+  const [cablesVisible, setCablesVisible] = useState(true);
   const [unit, setUnit] = useState<"mm" | "in">(savedState?.unit ?? "mm");
   const [catalogMode, setCatalogMode] = useState<CatalogMode>("boards");
   const [selectedObjectIds, setSelectedObjectIds] = useState<string[]>([]);
   const [floatingUiVisible, setFloatingUiVisible] = useState(true);
   const [panelExpanded, setPanelExpanded] = useState(false);
-  const [connectors, setConnectors] = useState<Connector[]>(savedState?.connectors ?? []);
+  const [cables, setCables] = useState<Cable[]>(savedState?.cables ?? []);
   const dropdownPanelRef = useRef<HTMLDivElement>(null);
 
   const clearDragStateRef = useRef<() => void>(() => {});
+
+  /** Ref updated each render so addCableAndPersist can save synchronously with latest state. */
+  const stateForSaveRef = useRef<SavedState>({
+    objects: initialObjects,
+    past: [],
+    future: [],
+    zoom: 1,
+    pan: { x: 0, y: 0 },
+    showGrid: false,
+    unit: "mm",
+    cables: [],
+  });
 
   const {
     zoom,
@@ -265,7 +288,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const template = templates.find((t) => t.id === id);
       if (!template) return;
 
-      const subtype = mode === "boards" ? "board" : "device" as const;
+      const subtype = mode === "boards" ? "board" : ("device" as const);
       const w = template.wdh[0] * MM_TO_PX;
       const d = template.wdh[1] * MM_TO_PX;
       const newObj = createObjectFromTemplate(subtype, template, canvasX - w / 2, canvasY - d / 2);
@@ -318,9 +341,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     (id: string) => {
       setObjects((prev) => prev.filter((o) => o.id !== id));
       setSelectedObjectIds((prev) => prev.filter((sid) => sid !== id));
-      setConnectors((prev) => prev.filter((c) => c.deviceA !== id && c.deviceB !== id));
     },
-    [setObjects, setConnectors]
+    [setObjects]
   );
 
   const handleRotateObject = useCallback(
@@ -348,7 +370,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (state.objects?.length) initNextObjectIdFromObjects(state.objects);
       replaceHistory(state.objects ?? initialObjects, state.past ?? [], state.future ?? []);
       setSelectedObjectIds([]);
-      setConnectors(state.connectors ?? []);
+      setCables(state.cables ?? []);
       setUnit(state.unit ?? "mm");
       setShowGrid(state.showGrid ?? false);
       if (typeof state.zoom === "number") setZoom(state.zoom);
@@ -356,13 +378,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setPan(state.pan);
       }
     },
-    [replaceHistory, setZoom, setPan, setConnectors]
+    [replaceHistory, setZoom, setPan, setCables]
   );
 
   const newBoard = useCallback(() => {
     replaceHistory(initialObjects, [], []);
     setSelectedObjectIds([]);
-    setConnectors([]);
+    setCables([]);
     setUnit("mm");
     setShowGrid(false);
     setZoom(1);
@@ -389,7 +411,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       pan,
       showGrid,
       unit,
-      connectors,
+      cables,
     };
     const payload = StateManager.serializeState(state);
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
@@ -399,7 +421,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     a.download = `pedalboard-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [objects, zoom, pan, showGrid, unit, connectors]);
+  }, [objects, zoom, pan, showGrid, unit, cables]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -431,13 +453,48 @@ export function AppProvider({ children }: { children: ReactNode }) {
         pan,
         showGrid,
         unit,
-        connectors,
+        cables,
       });
     }, DEBOUNCE_SAVE_MS);
     return () => {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     };
-  }, [objects, past, future, zoom, pan, showGrid, unit, connectors]);
+  }, [objects, past, future, zoom, pan, showGrid, unit, cables]);
+
+  // Persist immediately when cables change (cables are user data; don't rely only on debounce)
+  useEffect(() => {
+    stateManager.save({
+      objects,
+      past,
+      future,
+      zoom,
+      pan,
+      showGrid,
+      unit,
+      cables,
+    });
+  }, [cables]);
+
+  stateForSaveRef.current = {
+    objects,
+    past,
+    future,
+    zoom,
+    pan,
+    showGrid,
+    unit,
+    cables,
+  };
+
+  const addCableAndPersist = useCallback((cable: Cable) => {
+    const current = stateForSaveRef.current;
+    const newCables = [...(current.cables ?? []), cable];
+    setCables(newCables);
+    stateManager.save({
+      ...current,
+      cables: newCables,
+    });
+  }, []);
 
   const value: AppContextValue = {
     canvasRef,
@@ -453,6 +510,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setRuler,
     lineRuler,
     setLineRuler,
+    cableLayer,
+    setCableLayer,
+    cablesVisible,
+    setCablesVisible,
     unit,
     setUnit,
     isPanning,
@@ -493,8 +554,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setFloatingUiVisible,
     panelExpanded,
     setPanelExpanded,
-    connectors,
-    setConnectors,
+    cables,
+    setCables,
+    addCableAndPersist,
     newBoard,
     loadBoardFromFile,
     saveBoardToFile,

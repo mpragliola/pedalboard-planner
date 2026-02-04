@@ -1,0 +1,103 @@
+.add-cable-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 280px;
+}
+
+.add-cable-field label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #444;
+  margin-bottom: 6px;
+}
+
+.add-cable-color-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.add-cable-color-input {
+  width: 44px;
+  height: 32px;
+  padding: 2px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  cursor: pointer;
+  background: #fff;
+}
+
+.add-cable-color-hex {
+  flex: 1;
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+}
+
+.add-cable-select {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.add-cable-sublabel {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #666;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+.add-cable-combo {
+  width: 100%;
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+.add-cable-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.add-cable-btn {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.add-cable-confirm {
+  background: rgba(100, 120, 200, 0.9);
+  color: #fff;
+}
+
+.add-cable-confirm:hover {
+  background: rgba(80, 100, 180, 1);
+}
+
+.add-cable-cancel {
+  background: rgba(0, 0, 0, 0.08);
+  color: #333;
+}
+
+.add-cable-cancel:hover {
+  background: rgba(0, 0, 0, 0.12);
+}

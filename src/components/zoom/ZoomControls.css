@@ -15,7 +15,7 @@
 .view-tools-group,
 .measurement-tools-group {
   display: flex;
-  flex-direction: row;
+  flex-direction: row-reverse;
   align-items: center;
   gap: 8px;
 }
@@ -33,16 +33,16 @@
 }
 
 .view-tools-group.expanded .view-tools-secondary {
-  max-width: 156px;
-  /* 44*3 + 8*2 for 3 buttons */
+  max-width: 200px;
+  /* 44*4 + 8*3 for 4 buttons */
   overflow: visible;
   opacity: 1;
   transition: max-width 0.3s ease-out, opacity 0.2s ease-in;
 }
 
 .measurement-tools-group.expanded .measurement-tools-secondary {
-  max-width: 104px;
-  /* 44px + 8px + 44px for 2 buttons */
+  max-width: 96px;
+  /* 44*2 + 8 for 2 buttons (Ruler, Line ruler) */
   overflow: visible;
   opacity: 1;
   transition: max-width 0.3s ease-out, opacity 0.2s ease-in;

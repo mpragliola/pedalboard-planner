@@ -1,0 +1,282 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useApp } from "../../context/AppContext";
+import { getObjectDimensions } from "../../lib/stateManager";
+import { buildRoundedPathD, DEFAULT_JOIN_RADIUS } from "../../lib/polylinePath";
+import { formatLength } from "../../lib/rulerFormat";
+import { useCanvasCoords } from "../../hooks/useCanvasCoords";
+import { useCableDraw } from "../../hooks/useCableDraw";
+import { AddCableModal } from "./AddCableModal";
+import type { Cable, CableSegment } from "../../types";
+import "../ruler/RulerOverlay.css";
+import "./CableLayerOverlay.css";
+
+const DEFAULT_CABLE_COLOR = "#333";
+const CABLE_STROKE_WIDTH_MM = 5;
+const ENDPOINT_DOT_RADIUS_PX = 5;
+
+export function CableLayerOverlay() {
+  const { canvasRef, zoom, pan, unit, objects, addCableAndPersist, setCableLayer } = useApp();
+  const { clientToCanvas, toScreen } = useCanvasCoords(canvasRef, zoom, pan);
+  const [pendingSegments, setPendingSegments] = useState<CableSegment[] | null>(null);
+  const finishClickRef = useRef<() => void>(() => {});
+
+  const exitMode = useCallback(() => {
+    setCableLayer(() => false);
+  }, [setCableLayer]);
+
+  const {
+    segments,
+    segmentStart,
+    currentEnd,
+    onPointerDown,
+    onPointerMove,
+    onPointerUp,
+    onDoubleClick,
+    getFinalSegments,
+    clearDrawing,
+    hasSegments,
+    hasPreview,
+  } = useCableDraw({
+    clientToCanvas,
+    objects,
+    getObjectDimensions,
+    onDoubleClickExit: exitMode,
+    onFinishClickRef: finishClickRef,
+  });
+
+  const openAddCableModal = useCallback(() => {
+    const final = getFinalSegments();
+    if (final.length > 0) setPendingSegments(final);
+  }, [getFinalSegments]);
+
+  useEffect(() => {
+    finishClickRef.current = openAddCableModal;
+  }, [openAddCableModal]);
+
+  const handleAddCableConfirm = useCallback(
+    (cable: Cable) => {
+      addCableAndPersist(cable);
+      clearDrawing();
+      setPendingSegments(null);
+    },
+    [addCableAndPersist, clearDrawing]
+  );
+
+  const handleAddCableCancel = useCallback(() => {
+    setPendingSegments(null);
+  }, []);
+
+  const lastTapRef = useRef<{ time: number; clientX: number; clientY: number } | null>(null);
+  const DOUBLE_TAP_MS = 350;
+  const DOUBLE_TAP_PX = 50;
+
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      if (pendingSegments !== null) return;
+      if (e.button !== 0 && e.pointerType !== "touch") return;
+      const now = Date.now();
+      const last = lastTapRef.current;
+      if (
+        last &&
+        now - last.time < DOUBLE_TAP_MS &&
+        Math.hypot(e.clientX - last.clientX, e.clientY - last.clientY) < DOUBLE_TAP_PX
+      ) {
+        lastTapRef.current = null;
+        e.preventDefault();
+        e.stopPropagation();
+        if (hasSegments || hasPreview) {
+          openAddCableModal();
+          try {
+            (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+          } catch {
+            /* may not have capture */
+          }
+        } else {
+          exitMode();
+        }
+        return;
+      }
+      onPointerDown(e);
+      if (e.button === 0 || e.pointerType === "touch") {
+        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+      }
+    },
+    [pendingSegments, onPointerDown, exitMode, hasSegments, hasPreview, openAddCableModal]
+  );
+
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      if (pendingSegments !== null) return;
+      onPointerMove(e);
+    },
+    [pendingSegments, onPointerMove]
+  );
+
+  const handlePointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      if (pendingSegments !== null) return;
+      onPointerUp(e);
+      try {
+        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+      } catch {
+        /* may not have capture */
+      }
+      if (e.button === 0 || e.pointerType === "touch") {
+        lastTapRef.current = { time: Date.now(), clientX: e.clientX, clientY: e.clientY };
+      }
+    },
+    [pendingSegments, onPointerUp]
+  );
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (pendingSegments !== null) {
+        if (e.key === "Escape") setPendingSegments(null);
+        return;
+      }
+      if (e.key === "Escape") exitMode();
+      if (e.key === "Enter" && (hasSegments || hasPreview)) {
+        e.preventDefault();
+        openAddCableModal();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [exitMode, hasSegments, hasPreview, openAddCableModal, pendingSegments]);
+
+  const joinRadiusPx = DEFAULT_JOIN_RADIUS * zoom;
+  const strokeWidthPx = CABLE_STROKE_WIDTH_MM * zoom;
+
+  const points = (() => {
+    if (segments.length === 0 && segmentStart) {
+      return [toScreen(segmentStart.x, segmentStart.y)];
+    }
+    if (segments.length === 0) return [];
+    const pts = [toScreen(segments[0].x1, segments[0].y1), ...segments.map((s) => toScreen(s.x2, s.y2))];
+    if (hasPreview && currentEnd) {
+      pts.push(toScreen(currentEnd.x, currentEnd.y));
+    }
+    return pts;
+  })();
+
+  const committedPathD =
+    segments.length > 0
+      ? buildRoundedPathD(
+          [toScreen(segments[0].x1, segments[0].y1), ...segments.map((s) => toScreen(s.x2, s.y2))],
+          joinRadiusPx
+        )
+      : "";
+
+  const p1Screen = segmentStart && hasPreview ? toScreen(segmentStart.x, segmentStart.y) : null;
+  const p2Screen = currentEnd && hasPreview ? toScreen(currentEnd.x, currentEnd.y) : null;
+  const previewPathD = p1Screen && p2Screen ? `M ${p1Screen.x} ${p1Screen.y} L ${p2Screen.x} ${p2Screen.y}` : "";
+
+  const firstPoint = points[0];
+  const lastPoint = points.length > 1 ? points[points.length - 1] : null;
+
+  const committedLength = useMemo(
+    () => segments.reduce((sum, s) => sum + Math.hypot(s.x2 - s.x1, s.y2 - s.y1), 0),
+    [segments]
+  );
+  const currentLength =
+    segmentStart && currentEnd ? Math.hypot(currentEnd.x - segmentStart.x, currentEnd.y - segmentStart.y) : 0;
+  const totalLength = committedLength + currentLength;
+
+  const popupCenter =
+    hasSegments || hasPreview
+      ? hasPreview && segmentStart && currentEnd
+        ? {
+            x: pan.x + ((segmentStart.x + currentEnd.x) / 2) * zoom,
+            y: pan.y + ((segmentStart.y + currentEnd.y) / 2) * zoom,
+          }
+        : segments.length > 0
+        ? {
+            x: pan.x + segments[segments.length - 1].x2 * zoom,
+            y: pan.y + segments[segments.length - 1].y2 * zoom,
+          }
+        : segmentStart
+        ? { x: pan.x + segmentStart.x * zoom, y: pan.y + segmentStart.y * zoom }
+        : null
+      : null;
+
+  const showBothLengths = hasPreview && totalLength > committedLength + 0.01;
+
+  return (
+    <div
+      className={`cable-layer-overlay ruler-overlay${pendingSegments !== null ? " cable-layer-modal-open" : ""}`}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onDoubleClick={onDoubleClick}
+    >
+      <svg className="cable-layer-svg ruler-diagonal" style={{ left: 0, top: 0 }}>
+        {committedPathD && (
+          <path
+            d={committedPathD}
+            fill="none"
+            stroke={DEFAULT_CABLE_COLOR}
+            strokeWidth={strokeWidthPx}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
+        )}
+        {previewPathD && (
+          <path
+            d={previewPathD}
+            fill="none"
+            stroke={DEFAULT_CABLE_COLOR}
+            strokeWidth={strokeWidthPx}
+            strokeOpacity={0.85}
+            strokeLinecap="round"
+          />
+        )}
+        {firstPoint && (
+          <circle cx={firstPoint.x} cy={firstPoint.y} r={ENDPOINT_DOT_RADIUS_PX} className="cable-endpoint-dot" />
+        )}
+        {lastPoint && (
+          <circle cx={lastPoint.x} cy={lastPoint.y} r={ENDPOINT_DOT_RADIUS_PX} className="cable-endpoint-dot" />
+        )}
+      </svg>
+      {(hasSegments || hasPreview) && popupCenter && totalLength > 0 && (
+        <div
+          className="ruler-popup"
+          style={{
+            left: popupCenter.x,
+            top: popupCenter.y - 6,
+            transform: "translate(-50%, -100%)",
+          }}
+        >
+          <div className="ruler-popup-row">
+            <span>Length</span>
+            <span>
+              {showBothLengths
+                ? `${formatLength(committedLength, unit)} (${formatLength(totalLength, unit)})`
+                : formatLength(totalLength, unit)}
+            </span>
+          </div>
+        </div>
+      )}
+      {(hasSegments || hasPreview) && (
+        <div className="cable-layer-actions">
+          <button
+            type="button"
+            className="cable-layer-add-btn"
+            onClick={openAddCableModal}
+            title="Add cable (Enter). Stay in cable mode to draw more; double-tap to exit."
+          >
+            Add cable
+          </button>
+          <p className="cable-layer-hint" aria-hidden>
+            Draw another or double-tap to exit
+          </p>
+        </div>
+      )}
+      <AddCableModal
+        open={pendingSegments !== null}
+        segments={pendingSegments ?? []}
+        onConfirm={handleAddCableConfirm}
+        onCancel={handleAddCableCancel}
+      />
+    </div>
+  );
+}

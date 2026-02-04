@@ -26,8 +26,6 @@ export interface CanvasObjectType {
   name: string
 }
 
-export type ConnectorLinkType = 'audio' | 'midi' | 'expression'
-
 export type ConnectorKind =
   | 'mono jack (TS)'
   | 'stereo jack (TRS)'
@@ -37,11 +35,22 @@ export type ConnectorKind =
   | 'XLR male'
   | 'XLR female'
 
-export interface Connector {
+/** One segment of a cable or polyline (canvas coordinates). */
+export interface CableSegment {
+  x1: number
+  y1: number
+  x2: number
+  y2: number
+}
+
+export interface Cable {
   id: string
-  deviceA: string
-  deviceB: string
-  type: ConnectorLinkType
+  segments: CableSegment[]
+  color: string
   connectorA: ConnectorKind
   connectorB: ConnectorKind
+  /** Optional label for connector A (e.g. "Input", "Out L"). */
+  connectorAName?: string
+  /** Optional label for connector B (e.g. "Output", "In R"). */
+  connectorBName?: string
 }
