@@ -45,6 +45,18 @@ function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
+/** Safely extract a string value from a loosely-typed record. */
+function str(o: Record<string, unknown>, key: string, fallback = ""): string {
+  const v = o[key];
+  return typeof v === "string" ? v : fallback;
+}
+
+/** Safely extract a number value from a loosely-typed record. */
+function num(o: Record<string, unknown>, key: string, fallback = 0): number {
+  const v = o[key];
+  return typeof v === "number" ? v : fallback;
+}
+
 /** Custom elements have templateId of board-custom or device-custom. */
 function isCustomObject(o: CanvasObjectType): boolean {
   return o.templateId === "board-custom" || o.templateId === "device-custom";
@@ -86,45 +98,18 @@ function serializeObjects(objects: CanvasObjectType[]): Record<string, unknown>[
 /** Restore image and dimensions from template when loading. Name derived from brand+model if missing. */
 function normalizeLoadedObjects(objects: Record<string, unknown>[]): CanvasObjectType[] {
   return objects.map((o) => {
-    const templateId =
-      typeof (o as { templateId?: string }).templateId === "string"
-        ? (o as { templateId: string }).templateId
-        : undefined;
-    const name =
-      typeof (o as { name?: unknown }).name === "string"
-        ? (o as { name: string }).name
-        : `${(o as { brand?: string }).brand ?? ""} ${(o as { model?: string }).model ?? ""}`.trim() ||
-          (typeof (o as { type?: string }).type === "string" ? (o as { type: string }).type : "Object");
+    const templateId = str(o, "templateId") || undefined;
+    const brand = str(o, "brand");
+    const model = str(o, "model");
+    const type = str(o, "type");
+    const name = str(o, "name") || `${brand} ${model}`.trim() || type || "Object";
     const image = templateId ? templateImageMap.get(templateId) ?? null : null;
+    /* For known templates, always use template dims as source of truth. */
     const wdh = templateId ? templateWdhMap.get(templateId) : undefined;
-    /* For known templates, always use template as source of truth. Only use saved dims for custom objects. */
-    const width = wdh
-      ? wdh[0]
-      : typeof (o as { width?: number }).width === "number"
-      ? (o as { width: number }).width
-      : 0;
-    const depth = wdh
-      ? wdh[1]
-      : typeof (o as { depth?: number }).depth === "number"
-      ? (o as { depth: number }).depth
-      : 0;
-    const height = wdh
-      ? wdh[2]
-      : typeof (o as { height?: number }).height === "number"
-      ? (o as { height: number }).height
-      : 0;
-    return {
-      ...o,
-      templateId,
-      type: typeof (o as { type?: string }).type === "string" ? (o as { type: string }).type : "",
-      brand: typeof (o as { brand?: string }).brand === "string" ? (o as { brand: string }).brand : "",
-      model: typeof (o as { model?: string }).model === "string" ? (o as { model: string }).model : "",
-      image,
-      name,
-      width,
-      depth,
-      height,
-    } as CanvasObjectType;
+    const width = wdh ? wdh[0] : num(o, "width");
+    const depth = wdh ? wdh[1] : num(o, "depth");
+    const height = wdh ? wdh[2] : num(o, "height");
+    return { ...o, templateId, type, brand, model, image, name, width, depth, height } as CanvasObjectType;
   });
 }
 
@@ -150,54 +135,38 @@ export class StateManager {
     try {
       const data = JSON.parse(json) as unknown;
       if (typeof data !== "object" || data === null || !("objects" in data)) return null;
-      const rawObjects = (data as SavedState).objects as unknown[];
+      const d = data as Record<string, unknown>;
+      const rawObjects = d.objects;
       if (!Array.isArray(rawObjects) || rawObjects.some((o) => typeof o !== "object" || o === null)) return null;
       const rawObjRecords = rawObjects as Record<string, unknown>[];
       if (!rawObjRecords.every(StateManager.isValidObjectRecord)) return null;
       const objects = normalizeLoadedObjects(rawObjRecords);
-      const past = (data as SavedState).past as unknown[] | undefined;
-      const future = (data as SavedState).future as unknown[] | undefined;
-      const pastValid =
-        Array.isArray(past) &&
-        past.every(
-          (arr: unknown) =>
-            Array.isArray(arr) && (arr as Record<string, unknown>[]).every(StateManager.isValidObjectRecord)
-        );
-      const futureValid =
-        Array.isArray(future) &&
-        future.every(
-          (arr: unknown) =>
-            Array.isArray(arr) && (arr as Record<string, unknown>[]).every(StateManager.isValidObjectRecord)
-        );
-      const pan = (data as SavedState).pan;
+
+      const isValidSnapshot = (arr: unknown) =>
+        Array.isArray(arr) && (arr as Record<string, unknown>[]).every(StateManager.isValidObjectRecord);
+      const past = Array.isArray(d.past) && d.past.every(isValidSnapshot)
+        ? d.past.map((arr: unknown) => normalizeLoadedObjects(arr as Record<string, unknown>[]))
+        : undefined;
+      const future = Array.isArray(d.future) && d.future.every(isValidSnapshot)
+        ? d.future.map((arr: unknown) => normalizeLoadedObjects(arr as Record<string, unknown>[]))
+        : undefined;
+
+      const pan = d.pan as Record<string, unknown> | undefined;
+      const validPan =
+        typeof pan === "object" && pan !== null &&
+        typeof pan.x === "number" && typeof pan.y === "number"
+          ? { x: pan.x, y: pan.y }
+          : undefined;
+
       return {
         objects,
-        past:
-          pastValid && Array.isArray(past)
-            ? past.map((arr: unknown) => normalizeLoadedObjects(arr as Record<string, unknown>[]))
-            : undefined,
-        future:
-          futureValid && Array.isArray(future)
-            ? future.map((arr: unknown) => normalizeLoadedObjects(arr as Record<string, unknown>[]))
-            : undefined,
-        zoom: typeof (data as SavedState).zoom === "number" ? (data as SavedState).zoom : undefined,
-        pan:
-          typeof pan === "object" &&
-          pan !== null &&
-          "x" in pan &&
-          "y" in pan &&
-          typeof (pan as { x: unknown; y: unknown }).x === "number" &&
-          typeof (pan as { x: unknown; y: unknown }).y === "number"
-            ? (pan as { x: number; y: number })
-            : undefined,
-        showGrid: typeof (data as SavedState).showGrid === "boolean" ? (data as SavedState).showGrid : undefined,
-        unit:
-          (data as SavedState).unit === "mm" || (data as SavedState).unit === "in"
-            ? (data as SavedState).unit
-            : undefined,
-        connectors: StateManager.isValidConnectorArray((data as SavedState).connectors)
-          ? (data as SavedState).connectors
-          : undefined,
+        past,
+        future,
+        zoom: typeof d.zoom === "number" ? d.zoom : undefined,
+        pan: validPan,
+        showGrid: typeof d.showGrid === "boolean" ? d.showGrid : undefined,
+        unit: d.unit === "mm" || d.unit === "in" ? (d.unit as "mm" | "in") : undefined,
+        connectors: StateManager.isValidConnectorArray(d.connectors) ? (d.connectors as Connector[]) : undefined,
       };
     } catch {
       return null;
