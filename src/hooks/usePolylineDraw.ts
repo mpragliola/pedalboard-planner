@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useMemo } from "react";
 
 export type Segment = { x1: number; y1: number; x2: number; y2: number };
 
@@ -114,7 +114,10 @@ export function usePolylineDraw(
     [onDoubleClickExit]
   );
 
-  const committedLength = segments.reduce((sum, s) => sum + Math.hypot(s.x2 - s.x1, s.y2 - s.y1), 0);
+  const committedLength = useMemo(
+    () => segments.reduce((sum, s) => sum + Math.hypot(s.x2 - s.x1, s.y2 - s.y1), 0),
+    [segments]
+  );
   const currentLength =
     segmentStart && currentEnd ? Math.hypot(currentEnd.x - segmentStart.x, currentEnd.y - segmentStart.y) : 0;
   const totalLength = committedLength + currentLength;
