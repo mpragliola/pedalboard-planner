@@ -206,14 +206,12 @@ describe("StateManager.parseState", () => {
       expect(out.objects[0].name).toBe("pedal");
     });
 
-    it("uses empty type string when brand and model are empty", () => {
-      // When type is empty string, name becomes empty string (type is used as fallback)
+    it("falls back to 'Object' when brand, model, and type are all empty", () => {
       const obj = { ...validObject, brand: "", model: "", type: "" };
       delete (obj as Record<string, unknown>).name;
       const raw = JSON.stringify({ objects: [obj] });
       const out = StateManager.parseState(raw) as SavedState;
-      // The logic uses type as fallback, so empty type -> empty name
-      expect(out.objects[0].name).toBe("");
+      expect(out.objects[0].name).toBe("Object");
     });
   });
 
