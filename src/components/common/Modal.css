@@ -1,12 +1,17 @@
-/* Native dialog reset and styling */
+/* Native dialog: fill viewport so backdrop clicks hit the dialog; center content with flex */
 .modal-dialog {
-  border: none;
-  border-radius: 12px;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
   padding: 0;
-  max-width: 90vw;
-  max-height: 90vh;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  background: #fff;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 11000;
 }
 
 /* Native backdrop styling */
@@ -24,12 +29,16 @@
   }
 }
 
-/* Content wrapper */
+/* Content wrapper: the visible box, centered by the dialog flex */
 .modal-content {
   display: flex;
   flex-direction: column;
+  max-width: 90vw;
   max-height: 90vh;
   overflow: hidden;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
 /* Header */
@@ -77,8 +86,8 @@
   flex: 1;
 }
 
-/* Animation */
-.modal-dialog[open] {
+/* Animation: apply to the content box so it appears centered from the start */
+.modal-dialog[open] .modal-content {
   animation: modal-slide-in 0.2s ease-out;
 }
 

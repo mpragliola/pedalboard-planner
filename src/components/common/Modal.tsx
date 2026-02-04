@@ -62,6 +62,8 @@ export function Modal({
     return () => dialog.removeEventListener("close", handleClose);
   }, [onClose]);
 
+  if (!open) return null;
+
   const modal = (
     <dialog
       ref={dialogRef}
