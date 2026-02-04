@@ -1,27 +1,16 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useApp } from '../../context/AppContext'
+import { useCanvasCoords } from '../../hooks/useCanvasCoords'
 import { formatLength } from '../../lib/rulerFormat'
 import './RulerOverlay.css'
 
 export function RulerOverlay() {
   const { canvasRef, zoom, pan, unit, setRuler } = useApp()
+  const { clientToCanvas, toScreen } = useCanvasCoords(canvasRef, zoom, pan)
   const [rect, setRect] = useState<{ x1: number; y1: number; x2: number; y2: number } | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const dragStartRef = useRef<{ x: number; y: number } | null>(null)
   const overlayRef = useRef<HTMLDivElement>(null)
-
-  const clientToCanvas = useCallback(
-    (clientX: number, clientY: number) => {
-      const el = canvasRef.current
-      if (!el) return { x: 0, y: 0 }
-      const r = el.getBoundingClientRect()
-      return {
-        x: (clientX - r.left - pan.x) / zoom,
-        y: (clientY - r.top - pan.y) / zoom,
-      }
-    },
-    [canvasRef, pan.x, pan.y, zoom]
-  )
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
@@ -89,15 +78,14 @@ export function RulerOverlay() {
   const w = rect ? Math.abs(rect.x2 - rect.x1) : 0
   const h = rect ? Math.abs(rect.y2 - rect.y1) : 0
   const diagonal = rect ? Math.hypot(w, h) : 0
-  const left = rect ? pan.x + Math.min(rect.x1, rect.x2) * zoom : 0
-  const top = rect ? pan.y + Math.min(rect.y1, rect.y2) * zoom : 0
+  const screenMin = rect ? toScreen(Math.min(rect.x1, rect.x2), Math.min(rect.y1, rect.y2)) : { x: 0, y: 0 }
+  const left = screenMin.x
+  const top = screenMin.y
   const width = w * zoom
   const height = h * zoom
   const hasMeasure = w > 0 || h > 0
-  const diagX1 = rect ? pan.x + rect.x1 * zoom : 0
-  const diagY1 = rect ? pan.y + rect.y1 * zoom : 0
-  const diagX2 = rect ? pan.x + rect.x2 * zoom : 0
-  const diagY2 = rect ? pan.y + rect.y2 * zoom : 0
+  const screenP1 = rect ? toScreen(rect.x1, rect.y1) : { x: 0, y: 0 }
+  const screenP2 = rect ? toScreen(rect.x2, rect.y2) : { x: 0, y: 0 }
 
   return (
     <div
@@ -125,10 +113,10 @@ export function RulerOverlay() {
               style={{ left: 0, top: 0 }}
             >
               <line
-                x1={diagX1}
-                y1={diagY1}
-                x2={diagX2}
-                y2={diagY2}
+                x1={screenP1.x}
+                y1={screenP1.y}
+                x2={screenP2.x}
+                y2={screenP2.y}
                 stroke="#e67e22"
                 strokeWidth="2"
               />

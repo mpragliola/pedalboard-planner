@@ -11,10 +11,6 @@ import { AppProvider, useApp } from "./context/AppContext";
 import { ConfirmationProvider } from "./context/ConfirmationContext";
 import "./App.css";
 
-export type { BoardType } from "./data/boards";
-export type { DeviceType } from "./data/devices";
-export type { CanvasObjectType, ObjectSubtype } from "./types";
-
 function AppContent() {
   const { dropdownPanelRef, floatingUiVisible, setFloatingUiVisible, panelExpanded, setPanelExpanded } = useApp();
   return (

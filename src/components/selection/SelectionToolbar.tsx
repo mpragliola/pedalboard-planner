@@ -1,12 +1,11 @@
 import { faArrowDown, faRotateRight, faTrash } from "@fortawesome/free-solid-svg-icons";
-import { useEffect, useState } from "react";
 import type { CanvasObjectType } from "../../types";
 import { getObjectDimensions } from "../../lib/stateManager";
 import { useConfirmation } from "../../context/ConfirmationContext";
+import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { SelectionToolbarButton } from "./SelectionToolbarButton";
 import "./SelectionToolbar.css";
 
-const TABLET_MEDIA = "(max-width: 768px)";
 const TOOLBAR_GAP = 8;
 const TOOLBAR_HEIGHT = 36;
 
@@ -25,15 +24,7 @@ interface SelectionToolbarProps {
 
 export function SelectionToolbar({ obj, onDelete, onRotate, onSendToBack }: SelectionToolbarProps) {
   const { requestConfirmation } = useConfirmation();
-  const [scaleUp, setScaleUp] = useState(
-    () => typeof window !== "undefined" && window.matchMedia(TABLET_MEDIA).matches
-  );
-  useEffect(() => {
-    const m = window.matchMedia(TABLET_MEDIA);
-    const onChange = () => setScaleUp(m.matches);
-    m.addEventListener("change", onChange);
-    return () => m.removeEventListener("change", onChange);
-  }, []);
+  const scaleUp = useMediaQuery("(max-width: 768px)");
 
   const [width, depth] = getObjectDimensions(obj);
   const centerX = obj.x + width / 2;

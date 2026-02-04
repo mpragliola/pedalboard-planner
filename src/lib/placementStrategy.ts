@@ -3,8 +3,6 @@ export interface PlacementContext {
   canvasRect: DOMRect;
   pan: { x: number; y: number };
   zoom: number;
-  catalogRect: DOMRect | undefined;
-  boardMenuRect: DOMRect | undefined;
   /** Center of the browser viewport (e.g. window.innerWidth/2, window.innerHeight/2). Used so click-to-add places at visual center. */
   viewportCenter?: { x: number; y: number };
 }

@@ -1,5 +1,6 @@
 import type { CanvasObjectType } from "./types";
 import type { ConnectorKind, ConnectorLinkType } from "./types";
+import type { DeviceType } from "./data/devices";
 
 /** Base URL for static assets (e.g. '' or '/pedal/'). Use for image paths so they resolve from app root. */
 export const BASE_URL =
@@ -15,7 +16,6 @@ export const CONNECTOR_ICON_MAP: Record<ConnectorKind, string> = {
   "XLR male": `${BASE_URL}images/connectors/xlr-male.svg`,
   "XLR female": `${BASE_URL}images/connectors/xlr-female.svg`,
 };
-import type { DeviceType } from "./data/devices";
 
 // Zoom constants
 export const ZOOM_MIN = 0.5;

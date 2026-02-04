@@ -3,8 +3,7 @@ import { BOARD_TEMPLATES } from "../data/boards";
 import { DEVICE_TEMPLATES } from "../data/devices";
 import { initialObjects, MM_TO_PX, HISTORY_DEPTH, DEBOUNCE_SAVE_MS, DEFAULT_PLACEMENT_FALLBACK } from "../constants";
 import {
-  createObjectFromBoardTemplate,
-  createObjectFromDeviceTemplate,
+  createObjectFromTemplate,
   createObjectFromCustomBoard,
   createObjectFromCustomDevice,
   initNextObjectIdFromObjects,
@@ -76,8 +75,6 @@ interface AppContextValue {
   filters: ReturnType<typeof useBoardDeviceFilters>;
   onBoardSelect: (templateId: string) => void;
   onDeviceSelect: (templateId: string) => void;
-  onBoardSelectAt: (templateId: string, canvasX: number, canvasY: number) => void;
-  onDeviceSelectAt: (templateId: string, canvasX: number, canvasY: number) => void;
   /** Place a catalog item on the canvas (used by @dnd-kit onDragEnd). */
   placeFromCatalog: (
     clientX: number,
@@ -88,6 +85,7 @@ interface AppContextValue {
   shouldIgnoreCatalogClick: () => boolean;
   onCustomBoardCreate: (params: { widthMm: number; depthMm: number; color: string; name: string }) => void;
   onCustomDeviceCreate: (params: { widthMm: number; depthMm: number; color: string; name: string }) => void;
+  onCustomCreate: (mode: "boards" | "devices", params: { widthMm: number; depthMm: number; color: string; name: string }) => void;
   // Floating UI visibility
   floatingUiVisible: boolean;
   setFloatingUiVisible: React.Dispatch<React.SetStateAction<boolean>>;
@@ -218,8 +216,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       canvasRect: canvasEl.getBoundingClientRect(),
       pan,
       zoom,
-      catalogRect: document.querySelector(".catalog-panel")?.getBoundingClientRect(),
-      boardMenuRect: document.querySelector(".board-menu-wrap")?.getBoundingClientRect(),
       viewportCenter: { x: window.innerWidth / 2, y: window.innerHeight / 2 },
     });
   }, [pan, zoom, canvasRef]);
@@ -269,10 +265,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const template = templates.find((t) => t.id === id);
       if (!template) return;
 
+      const subtype = mode === "boards" ? "board" : "device" as const;
       const w = template.wdh[0] * MM_TO_PX;
       const d = template.wdh[1] * MM_TO_PX;
-      const createFn = mode === "boards" ? createObjectFromBoardTemplate : createObjectFromDeviceTemplate;
-      const newObj = createFn(template as never, canvasX - w / 2, canvasY - d / 2);
+      const newObj = createObjectFromTemplate(subtype, template, canvasX - w / 2, canvasY - d / 2);
 
       setObjects((prev) => [...prev, newObj]);
       (mode === "boards" ? setSelectedBoard : setSelectedDevice)("");
@@ -297,58 +293,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [getPlacementInVisibleViewport, addObjectFromTemplate]
   );
 
-  const handleBoardSelectAt = useCallback(
-    (templateId: string, canvasX: number, canvasY: number) => {
-      addObjectFromTemplate("boards", templateId, canvasX, canvasY);
-    },
-    [addObjectFromTemplate]
-  );
-
-  const handleDeviceSelectAt = useCallback(
-    (templateId: string, canvasX: number, canvasY: number) => {
-      addObjectFromTemplate("devices", templateId, canvasX, canvasY);
-    },
-    [addObjectFromTemplate]
-  );
-
-  const handleDropOnCanvas = useCallback(
-    (mode: "boards" | "devices", templateId: string, x: number, y: number) => {
-      addObjectFromTemplate(mode, templateId, x, y);
-    },
-    [addObjectFromTemplate]
-  );
-
   const { placeFromCatalog, shouldIgnoreCatalogClick } = useCatalogDrag({
     canvasRef,
     zoomRef,
     panRef,
-    onDropOnCanvas: handleDropOnCanvas,
+    onDropOnCanvas: addObjectFromTemplate,
   });
 
-  const handleCustomBoardCreate = useCallback(
-    (params: { widthMm: number; depthMm: number; color: string; name: string }) => {
+  const handleCustomCreate = useCallback(
+    (mode: "boards" | "devices", params: { widthMm: number; depthMm: number; color: string; name: string }) => {
       const { x: cx, y: cy } = getPlacementInVisibleViewport();
       const w = params.widthMm * MM_TO_PX;
       const d = params.depthMm * MM_TO_PX;
-      const newObj = createObjectFromCustomBoard(params, cx - w / 2, cy - d / 2);
+      const createFn = mode === "boards" ? createObjectFromCustomBoard : createObjectFromCustomDevice;
+      const newObj = createFn(params, cx - w / 2, cy - d / 2);
       setObjects((prev) => [...prev, newObj]);
-      setSelectedBoard("");
+      (mode === "boards" ? setSelectedBoard : setSelectedDevice)("");
       setSelectedObjectIds([]);
     },
-    [setSelectedBoard, setSelectedObjectIds, getPlacementInVisibleViewport, setObjects]
-  );
-
-  const handleCustomDeviceCreate = useCallback(
-    (params: { widthMm: number; depthMm: number; color: string; name: string }) => {
-      const { x: cx, y: cy } = getPlacementInVisibleViewport();
-      const w = params.widthMm * MM_TO_PX;
-      const d = params.depthMm * MM_TO_PX;
-      const newObj = createObjectFromCustomDevice(params, cx - w / 2, cy - d / 2);
-      setObjects((prev) => [...prev, newObj]);
-      setSelectedDevice("");
-      setSelectedObjectIds([]);
-    },
-    [setSelectedDevice, setSelectedObjectIds, getPlacementInVisibleViewport, setObjects]
+    [setSelectedBoard, setSelectedDevice, setSelectedObjectIds, getPlacementInVisibleViewport, setObjects]
   );
 
   const handleDeleteObject = useCallback(
@@ -521,12 +484,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     filters,
     onBoardSelect: handleBoardSelect,
     onDeviceSelect: handleDeviceSelect,
-    onBoardSelectAt: handleBoardSelectAt,
-    onDeviceSelectAt: handleDeviceSelectAt,
     placeFromCatalog,
     shouldIgnoreCatalogClick,
-    onCustomBoardCreate: handleCustomBoardCreate,
-    onCustomDeviceCreate: handleCustomDeviceCreate,
+    onCustomBoardCreate: (params) => handleCustomCreate("boards", params),
+    onCustomDeviceCreate: (params) => handleCustomCreate("devices", params),
+    onCustomCreate: handleCustomCreate,
     floatingUiVisible,
     setFloatingUiVisible,
     panelExpanded,

@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback, useMemo } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { CanvasObject } from "./CanvasObject";
 import { Grid } from "./zoom/Grid";
@@ -56,6 +56,7 @@ export function Canvas() {
     return () => el.removeEventListener("transitionend", onEnd);
   }, [canvasAnimating, setCanvasAnimating]);
 
+  const selectedIdSet = useMemo(() => new Set(selectedObjectIds), [selectedObjectIds]);
   const selectedObject = selectedObjectIds.length === 1 ? objects.find((o) => o.id === selectedObjectIds[0]) : null;
 
   // Application units: 1 mm = 1 px; 1 cm = 10 px, 1 in = 25.4 px (match board dimensions)
@@ -104,7 +105,7 @@ export function Canvas() {
               stackIndex={index}
               useImage={obj.image !== null && !imageFailedIds.has(obj.id)}
               isDragging={draggingObjectId === obj.id}
-              isSelected={selectedObjectIds.includes(obj.id)}
+              isSelected={selectedIdSet.has(obj.id)}
               opacity={xray ? 0.5 : 1}
               canvasRef={canvasRef}
               onImageError={() => onImageError(obj.id)}

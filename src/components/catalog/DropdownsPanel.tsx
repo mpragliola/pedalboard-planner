@@ -1,7 +1,8 @@
-import { forwardRef, useState, useEffect } from "react";
+import { forwardRef, useState } from "react";
 import { DEVICE_TYPE_ORDER, DEVICE_TYPE_LABEL } from "../../constants";
 import type { DeviceType } from "../../data/devices";
 import { useApp } from "../../context/AppContext";
+import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { CatalogModeSwitch } from "./CatalogModeSwitch";
 import { TextFilter } from "./TextFilter";
 import { CatalogList, CatalogListGrouped, type CatalogViewMode } from "./CatalogList";
@@ -11,29 +12,13 @@ import "./DropdownsPanel.css";
 
 export type { CatalogMode } from "./CatalogModeSwitch";
 
-const PHONE_MEDIA = "(max-width: 767px)";
-
-function useIsPhone() {
-  const [isPhone, setIsPhone] = useState(() => typeof window !== "undefined" && window.matchMedia(PHONE_MEDIA).matches);
-  useEffect(() => {
-    const m = window.matchMedia(PHONE_MEDIA);
-    const fn = () => setIsPhone(m.matches);
-    m.addEventListener("change", fn);
-    return () => m.removeEventListener("change", fn);
-  }, []);
-  return isPhone;
-}
-
 export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel(_props, ref) {
   const {
     catalogMode,
     setCatalogMode,
     unit,
     filters,
-    onBoardSelect,
-    onDeviceSelect,
-    onCustomBoardCreate,
-    onCustomDeviceCreate,
+    onCustomCreate,
   } = useApp();
 
   const {
@@ -75,7 +60,7 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
     resetDeviceFilters,
   } = filters;
 
-  const isPhone = useIsPhone();
+  const isPhone = useMediaQuery("(max-width: 767px)");
   const listSize = isPhone ? 1 : 5;
 
   const [filtersExpanded, setFiltersExpanded] = useState(false);
@@ -289,7 +274,6 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
                 depthMm: t.wdh[1],
                 color: t.color,
               }))}
-              onAdd={onBoardSelect}
               catalogMode="boards"
               viewMode={catalogViewMode}
               onViewModeChange={setCatalogViewMode}
@@ -319,7 +303,7 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
                   unit={unit}
                   defaultWidth={400}
                   defaultDepth={200}
-                  onCreate={onCustomBoardCreate}
+                  onCreate={(params) => onCustomCreate("boards", params)}
                 />
               </div>
             </div>
@@ -421,7 +405,6 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
               label="Add device"
               size={listSize}
               groups={deviceGroups}
-              onAdd={onDeviceSelect}
               catalogMode="devices"
               viewMode={catalogViewMode}
               onViewModeChange={setCatalogViewMode}
@@ -451,7 +434,7 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
                   unit={unit}
                   defaultWidth={75}
                   defaultDepth={120}
-                  onCreate={onCustomDeviceCreate}
+                  onCreate={(params) => onCustomCreate("devices", params)}
                 />
               </div>
             </div>

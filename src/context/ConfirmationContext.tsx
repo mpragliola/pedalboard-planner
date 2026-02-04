@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { ConfirmationDialog } from '../components/confirmation/ConfirmationDialog'
 
@@ -41,7 +41,7 @@ export function ConfirmationProvider({ children }: { children: ReactNode }) {
     setPending(null)
   }, [pending])
 
-  const value: ConfirmationContextValue = { requestConfirmation }
+  const value = useMemo(() => ({ requestConfirmation }), [requestConfirmation])
 
   return (
     <ConfirmationContext.Provider value={value}>

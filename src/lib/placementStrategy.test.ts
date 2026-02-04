@@ -7,8 +7,6 @@ describe("visibleViewportPlacement", () => {
       canvasRect: new DOMRect(0, 0, 800, 600),
       pan: { x: 0, y: 0 },
       zoom: 1,
-      catalogRect: undefined,
-      boardMenuRect: undefined,
     };
     const result = visibleViewportPlacement(ctx);
     expect(result).toEqual({ x: 400, y: 300 });
@@ -19,8 +17,6 @@ describe("visibleViewportPlacement", () => {
       canvasRect: new DOMRect(0, 0, 800, 600),
       pan: { x: 100, y: 50 },
       zoom: 1,
-      catalogRect: undefined,
-      boardMenuRect: undefined,
     };
     const result = visibleViewportPlacement(ctx);
     expect(result).toEqual({ x: 300, y: 250 });
@@ -31,8 +27,6 @@ describe("visibleViewportPlacement", () => {
       canvasRect: new DOMRect(0, 0, 800, 600),
       pan: { x: 0, y: 0 },
       zoom: 2,
-      catalogRect: undefined,
-      boardMenuRect: undefined,
     };
     const result = visibleViewportPlacement(ctx);
     expect(result).toEqual({ x: 200, y: 150 });
@@ -43,8 +37,6 @@ describe("visibleViewportPlacement", () => {
       canvasRect: new DOMRect(10, 20, 100, 100),
       pan: { x: 5, y: 7 },
       zoom: 1.5,
-      catalogRect: undefined,
-      boardMenuRect: undefined,
     };
     const result = visibleViewportPlacement(ctx);
     expect(Number.isInteger(result.x)).toBe(true);
