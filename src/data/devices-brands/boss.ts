@@ -185,7 +185,7 @@ const bossPedalsRest: BossRowBase[] = [
 ];
 
 // ——— Controllers ———
-const bossControllers: BossRowBase[] = [
+const bossLoopSwitchers: BossRowBase[] = [
   { model: "ES-5", name: "ES-5", wdh: WDH_ES5, image: "boss-es-5_top_tn.png" },
   { model: "ES-8", name: "ES-8", wdh: WDH_ES8, image: "boss-es-8_top_tn.png" },
 ];
@@ -217,7 +217,7 @@ const bossDevices: BossDeviceRow[] = [
   ...bossMultifxContinued.map((d) => toBossRow(d, "multifx")),
   ...bossMultifxRcRest.map((d) => toBossRow(d, "multifx")),
   ...bossMultifxSyVe.map((d) => toBossRow(d, "multifx")),
-  ...bossControllers.map((d) => toBossRow(d, "controller")),
+  ...bossLoopSwitchers.map((d) => toBossRow(d, "loopswitcher")),
   ...bossWireless.map((d) => toBossRow(d, "wireless")),
 ];
 
