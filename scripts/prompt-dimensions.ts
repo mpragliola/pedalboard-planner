@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
  * Generate LLM prompts to find exact dimensions (width, depth, height in mm) for a brand's devices.
- * Usage: node scripts/prompt-dimensions.js <brand> [--group=N]
- * Example: node scripts/prompt-dimensions.js digitech
- * Example: node scripts/prompt-dimensions.js digitech --group=5
+ * Usage: npx tsx scripts/prompt-dimensions.ts <brand> [--group=N]
+ * Example: npx tsx scripts/prompt-dimensions.ts digitech
+ * Example: npx tsx scripts/prompt-dimensions.ts digitech --group=5
  *
  * If --group=N with N > 1, one prompt will ask about N devices (batched).
  * Output: prompts to be sent to an LLM. The LLM is asked to return TypeScript
@@ -18,8 +18,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = join(__dirname, "..");
 const devicesPath = join(projectRoot, "src", "data", "devices.ts");
 
+type DeviceEntry = { model: string; name: string };
+
 // Parse args: <brand> and optional --group=N
-let brandSlug = null;
+let brandSlug: string | null = null;
 let group = 1;
 for (let i = 2; i < process.argv.length; i++) {
   const arg = process.argv[i];
@@ -32,9 +34,9 @@ for (let i = 2; i < process.argv.length; i++) {
 }
 
 if (!brandSlug) {
-  console.error("Usage: node scripts/prompt-dimensions.js <brand> [--group=N]");
-  console.error("Example: node scripts/prompt-dimensions.js digitech");
-  console.error("Example: node scripts/prompt-dimensions.js digitech --group=5");
+  console.error("Usage: npx tsx scripts/prompt-dimensions.ts <brand> [--group=N]");
+  console.error("Example: npx tsx scripts/prompt-dimensions.ts digitech");
+  console.error("Example: npx tsx scripts/prompt-dimensions.ts digitech --group=5");
   process.exit(1);
 }
 
@@ -42,7 +44,7 @@ if (!brandSlug) {
  * Derive a valid TypeScript constant name from model string.
  * e.g. "Whammy DT" -> "WHAMMY_DT", "GT-1000" -> "GT_1000", "RP360 XP" -> "RP360_XP"
  */
-function modelToConstName(model) {
+function modelToConstName(model: string): string {
   return (
     model
       .toUpperCase()
@@ -55,24 +57,10 @@ function modelToConstName(model) {
   );
 }
 
-/**
- * Parse devices.ts to get the list of brand modules, then we need to load templates.
- * Since we're in plain Node and can't import TS, we parse the devices.ts file to find
- * which brands exist, then read each brand's file and extract model/name via regex.
- */
-function getBrandModuleName(slug) {
-  const part = slug.replace(/-/g, "_");
-  const cap = part
-    .split("_")
-    .map((s) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase())
-    .join("");
-  return `${cap.toUpperCase()}_DEVICE_TEMPLATES`;
-}
-
 // Read devices.ts to see how brands are imported and aggregated
 const devicesContent = readFileSync(devicesPath, "utf-8");
-const brandImports = devicesContent.match(/import \{ (\w+) \} from ["'].*devices-brands\/([^"']+)["']/g) || [];
-const slugToVar = {};
+const brandImports = devicesContent.match(/import \{ (\w+) \} from ["'].*devices-brands\/([^"']+)["']/g) ?? [];
+const slugToVar: Record<string, string> = {};
 for (const line of brandImports) {
   const m = line.match(/from ["'].*devices-brands\/([^"']+)["']/);
   if (m) {
@@ -91,11 +79,11 @@ if (!exportVar) {
 }
 
 const brandFilePath = join(projectRoot, "src", "data", "devices-brands", `${brandFile}.ts`);
-let brandContent;
+let brandContent: string;
 try {
   brandContent = readFileSync(brandFilePath, "utf-8");
 } catch (e) {
-  console.error(`Could not read ${brandFilePath}:`, e.message);
+  console.error(`Could not read ${brandFilePath}:`, (e as Error).message);
   process.exit(1);
 }
 
@@ -106,11 +94,11 @@ try {
  * - multifx("Model", "Name", WDH_XXX, "image.png")
  * - { model: "X", name: "Y", wdh: [...], ... }
  */
-function extractDevices(content, brandDisplay) {
-  const devices = [];
+function extractDevices(content: string, _brandDisplay: string): DeviceEntry[] {
+  const devices: DeviceEntry[] = [];
   // Match function-style: row("Model", "Name", WDH_XXX, "image") or pedal(..., ..., ..., ...)
   const funcRe = /(?:row|pedal|multifx|controller|power)\s*\(\s*["']([^"']*)["']\s*,\s*["']([^"']*)["']/g;
-  let m;
+  let m: RegExpExecArray | null;
   while ((m = funcRe.exec(content)) !== null) {
     devices.push({ model: m[1], name: m[2] });
   }

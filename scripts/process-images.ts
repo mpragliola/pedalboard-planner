@@ -12,9 +12,9 @@
  *   3. TRIMMING - Remove excess transparent space around the subject
  *
  * USAGE:
- *   node scripts/process-images.js              # Full pipeline
- *   node scripts/process-images.js --dry-run    # Preview without changes
- *   node scripts/process-images.js --no-borders # Skip border phase
+ *   npx tsx scripts/process-images.ts              # Full pipeline
+ *   npx tsx scripts/process-images.ts --dry-run   # Preview without changes
+ *   npx tsx scripts/process-images.ts --no-borders # Skip border phase
  *
  * REQUIREMENTS:
  *   - ImageMagick (magick) in PATH
@@ -27,7 +27,7 @@
  * ============================================================================
  */
 
-import { execSync, spawnSync } from "child_process";
+import { execSync, spawnSync, type SpawnSyncReturns } from "child_process";
 import { existsSync, readdirSync, rmSync, mkdirSync, renameSync } from "fs";
 import { join, dirname, extname, basename, parse as pathParse } from "path";
 import { fileURLToPath } from "url";
@@ -49,12 +49,12 @@ const noBorders = args.includes("--no-borders");
 
 // Resolve paths
 const defaultTargetDir = join(projectRoot, "public", "images", "devices", "_");
-const targetDir = process.env.IMAGE_PROCESS_DIR || defaultTargetDir;
+const targetDir = process.env.IMAGE_PROCESS_DIR ?? defaultTargetDir;
 const outputDir = join(targetDir, "processed");
 const tempBorderDir = join(targetDir, "temp_borders");
 
 // Find rembg
-function findRembg() {
+function findRembg(): string | null {
   if (process.env.REMBG_PATH && existsSync(process.env.REMBG_PATH)) {
     return process.env.REMBG_PATH;
   }
@@ -81,19 +81,23 @@ if (!existsSync(targetDir)) {
 }
 
 /** Quote path for shell (spaces in filenames break magick/rembg on Windows). */
-function quotePath(p) {
+function quotePath(p: string): string {
   return /\s/.test(p) ? `"${p.replace(/"/g, '\\"')}"` : p;
 }
 
 // Helper to run commands
-function run(cmd, args, options = {}) {
-  if (dryRun) return { status: 0 };
-  const quoted = args.map((a) => (typeof a === "string" && /\s/.test(a) ? quotePath(a) : a));
+function run(
+  cmd: string,
+  runArgs: (string | number)[],
+  options: Record<string, unknown> = {}
+): SpawnSyncReturns<Buffer> {
+  if (dryRun) return { status: 0 } as SpawnSyncReturns<Buffer>;
+  const quoted = runArgs.map((a) => (typeof a === "string" && /\s/.test(a) ? quotePath(a) : String(a)));
   return spawnSync(cmd, quoted, { stdio: "inherit", shell: true, ...options });
 }
 
 // Logging
-function log(msg) {
+function log(msg: string): void {
   console.log(`[process-images] ${msg}`);
 }
 
@@ -132,7 +136,7 @@ if (!noBorders && files.length > 0) {
 // PHASE 2: Background removal
 const rembgInputDir = noBorders ? targetDir : tempBorderDir;
 log("Phase 2: Background removal (rembg)...");
-const rembgArgs = ["p"];
+const rembgArgs: string[] = ["p"];
 if (process.env.REMBG_ALPHA_MATTING === "1" || process.env.REMBG_ALPHA_MATTING === "true") {
   rembgArgs.push("-a");
   const erode = process.env.REMBG_ERODE_SIZE;
@@ -174,10 +178,10 @@ if (!dryRun) {
     // Overwrite input with trimmed image
     if (existsSync(tempTrimPath)) {
       try {
-        // Remove the original file
         rmSync(filePath, { force: true });
-      } catch {}
-      // Rename the trimmed file to the original file name
+      } catch {
+        // ignore
+      }
       try {
         renameSync(tempTrimPath, filePath);
       } catch (e) {
