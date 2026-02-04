@@ -12,21 +12,18 @@ import {
   type Modifier,
 } from "@dnd-kit/core";
 import { useApp } from "../../context/AppContext";
-import { LONG_PRESS_MS, MOVE_THRESHOLD_PX } from "../../constants";
+import { LONG_PRESS_MS, MOVE_THRESHOLD_PX, MM_TO_PX } from "../../constants";
 import { DEFAULT_OBJECT_COLOR } from "../../constants";
 import "./CatalogDragGhost.css";
 
 const CANVAS_DROP_ID = "canvas-drop";
-const GHOST_MAX_PX = 80;
 const SAFETY_NET_MS = 8000;
 
-function ghostDimensions(widthMm: number, depthMm: number): { w: number; h: number } {
-  const max = Math.max(widthMm, depthMm);
-  if (max <= 0) return { w: GHOST_MAX_PX, h: GHOST_MAX_PX };
-  const scale = GHOST_MAX_PX / max;
+/** Real object size in px (same as on canvas: 1 mm = 1 px). */
+function realSizePx(widthMm: number, depthMm: number): { w: number; h: number } {
   return {
-    w: Math.round(widthMm * scale),
-    h: Math.round(depthMm * scale),
+    w: Math.round(widthMm * MM_TO_PX),
+    h: Math.round(depthMm * MM_TO_PX),
   };
 }
 
@@ -38,8 +35,10 @@ export interface CatalogDragData {
   depthMm: number;
 }
 
-function CatalogDragOverlayContent({ data }: { data: CatalogDragData }) {
-  const { w, h } = ghostDimensions(data.widthMm, data.depthMm);
+function CatalogDragOverlayContent({ data, zoom = 1 }: { data: CatalogDragData; zoom?: number }) {
+  const { w: baseW, h: baseH } = realSizePx(data.widthMm, data.depthMm);
+  const w = Math.round(baseW * zoom);
+  const h = Math.round(baseH * zoom);
   return (
     <div className="catalog-drag-ghost" style={{ width: w, height: h }} aria-hidden>
       {data.imageUrl ? (
@@ -52,7 +51,7 @@ function CatalogDragOverlayContent({ data }: { data: CatalogDragData }) {
 }
 
 export function CatalogDndProvider({ children }: { children: React.ReactNode }) {
-  const { placeFromCatalog } = useApp();
+  const { placeFromCatalog, zoom } = useApp();
   const lastPointerRef = useRef({ x: 0, y: 0 });
   const [activeData, setActiveData] = useState<CatalogDragData | null>(null);
   /** Pointer position during drag; we position our own ghost from this so it's always centered. */
@@ -172,7 +171,7 @@ export function CatalogDndProvider({ children }: { children: React.ReactNode }) 
         style={{ opacity: 0, pointerEvents: "none" }}
         modifiers={[captureInitialPointer]}
       >
-        {activeData ? <CatalogDragOverlayContent data={activeData} /> : null}
+        {activeData ? <CatalogDragOverlayContent data={activeData} zoom={zoom} /> : null}
       </DragOverlay>
       {/* Our ghost: fixed position from pointer, always centered */}
       {showCustomGhost && (
@@ -187,7 +186,7 @@ export function CatalogDndProvider({ children }: { children: React.ReactNode }) 
             pointerEvents: "none",
           }}
         >
-          <CatalogDragOverlayContent data={activeData} />
+          <CatalogDragOverlayContent data={activeData} zoom={zoom} />
         </div>
       )}
     </DndContext>
