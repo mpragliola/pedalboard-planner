@@ -4,7 +4,6 @@ import { deviceId } from "../../lib/slug";
 const WDH_H9: [number, number, number] = [170, 136, 68];
 const WDH_PEDAL: [number, number, number] = [102, 108, 43];
 const WDH_FACTOR: [number, number, number] = [190, 122, 54];
-const WDH_PEDAL_WIDE: [number, number, number] = [178, 71, 121];
 const WDH_H9_MAX: [number, number, number] = [118, 133, 50];
 
 const eventideDevices: Omit<DeviceTemplate, "type" | "brand" | "id" | "name">[] = [
