@@ -40,7 +40,6 @@ interface CatalogListProps {
   label: string;
   size: number;
   options: CatalogListOption[];
-  onAdd: (id: string) => void;
   /** 'boards' | 'devices' – used for drag-from-catalog drop on canvas */
   catalogMode: "boards" | "devices";
   /** Controlled view mode */
@@ -97,7 +96,6 @@ export function CatalogList({
   label,
   size,
   options,
-  onAdd: _onAdd,
   catalogMode,
   viewMode,
   onViewModeChange,
@@ -188,7 +186,6 @@ interface CatalogListGroupedProps {
   label: string;
   size: number;
   groups: { deviceType?: DeviceType; label: string; options: CatalogListGroupOption[] }[];
-  onAdd: (id: string) => void;
   catalogMode: "boards" | "devices";
   /** Controlled view mode */
   viewMode: CatalogViewMode;
@@ -201,7 +198,6 @@ export function CatalogListGrouped({
   label,
   size,
   groups,
-  onAdd: _onAddGrouped,
   catalogMode,
   viewMode,
   onViewModeChange,
