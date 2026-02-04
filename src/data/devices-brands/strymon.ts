@@ -1,11 +1,23 @@
 import type { DeviceTemplate } from "../devices";
-import { deviceId } from "../../lib/slug";
+import { deviceTemplate } from "../deviceHelpers";
 
 const WDH_SMALL: [number, number, number] = [171, 130, 48];
 const WDH_COMPACT: [number, number, number] = [114, 102, 44];
 const WDH_POWER_UNIT: [number, number, number] = [81, 58, 33];
 
-const strymonDevices: Omit<DeviceTemplate, "id" | "name" | "brand">[] = [
+function strymonImage(filename: string): string {
+  const base = filename.endsWith(".png") ? filename.slice(0, -4) : filename;
+  const name = base.startsWith("strymon-") ? base : `strymon-${base}`;
+  return `strymon/${name}.png`;
+}
+
+type StrymonRow = {
+  type: "pedal" | "power" | "controller";
+  model: string;
+  wdh: [number, number, number];
+  image: string;
+};
+const strymonRows: StrymonRow[] = [
   { type: "power", model: "Zuma", wdh: WDH_POWER_UNIT, image: "zuma" },
   { type: "pedal", model: "BigSky MX", wdh: [178, 127, 48], image: "bigsky-mx" },
   { type: "pedal", model: "BigSky", wdh: WDH_SMALL, image: "bigsky" },
@@ -34,19 +46,11 @@ const strymonDevices: Omit<DeviceTemplate, "id" | "name" | "brand">[] = [
   { type: "pedal", model: "Zelzah", wdh: WDH_COMPACT, image: "zelzah" },
 ];
 
-// Inline all strings in the helper to avoid constants
-function strymonImagePath(image: string | null): string | null {
-  if (!image) return null;
-  let base = image;
-  if (base.endsWith(".png")) base = base.slice(0, -4);
-  if (base.startsWith("strymon-")) base = base.slice("strymon-".length);
-  return `strymon/strymon-${base}.png`;
-}
-
-export const STRYMON_DEVICE_TEMPLATES: DeviceTemplate[] = strymonDevices.map((d) => ({
-  ...d,
-  name: `Strymon ${d.model}`,
-  id: deviceId("strymon", d.model),
-  brand: "Strymon",
-  image: strymonImagePath(d.image),
-}));
+export const STRYMON_DEVICE_TEMPLATES: DeviceTemplate[] = strymonRows.map((d) =>
+  deviceTemplate("strymon", "Strymon", {
+    type: d.type,
+    model: d.model,
+    wdh: d.wdh,
+    image: strymonImage(d.image),
+  })
+);

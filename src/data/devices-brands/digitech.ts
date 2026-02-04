@@ -1,52 +1,40 @@
 import type { DeviceTemplate } from "../devices";
+import { createBrandHelpers } from "../deviceHelpers";
+import { Wdh } from "../../wdh";
 
-/** Whammy / Ricochet size (mm). */
-const WDH_WHAMMY: [number, number, number] = [170, 196, 61];
-/** RP series multifx (smaller units). */
-const WDH_RP_SMALL: [number, number, number] = [235, 180, 65];
-/** RP 1000 / large multifx. */
-const WDH_RP_LARGE: [number, number, number] = [430, 280, 75];
+const { pedal, multifx, img } = createBrandHelpers("digitech", "DigiTech");
 
-function pedal(model: string, name: string, wdh: [number, number, number], image: string | null): DeviceTemplate {
-  return {
-    id: `device-digitech-${model
-      .toLowerCase()
-      .replace(/\s+/g, "-")
-      .replace(/[^a-z0-9-]/g, "")}`,
-    type: "pedal",
-    brand: "DigiTech",
-    model,
-    name: name || `DigiTech ${model}`,
-    wdh,
-    image,
-  };
-}
+// DigiTech Pedal Dimensions (Width × Depth × Height in mm)
 
-function multifx(model: string, name: string, wdh: [number, number, number], image: string | null): DeviceTemplate {
-  return {
-    id: `device-digitech-${model
-      .toLowerCase()
-      .replace(/\s+/g, "-")
-      .replace(/[^a-z0-9-]/g, "")}`,
-    type: "multifx",
-    brand: "DigiTech",
-    model,
-    name: name || `DigiTech ${model}`,
-    wdh,
-    image,
-  };
-}
+// Whammy Series
+const WDH_WHAMMY_DT: Wdh = [165, 197, 64];
+const WDH_WHAMMY_RICOCHET: Wdh = [73, 120, 44];
+
+// Pitch Shifters
+const WDH_THE_DROP: Wdh = [73, 120, 44];
+const WDH_THE_WEAPON: Wdh = [79, 125, 54];
+
+// RP Series
+const WDH_RP55: Wdh = [127, 164, 54];
+const WDH_RP100: Wdh = [127, 152, 54]; // Estimated - exact specs not found
+const WDH_RP150: Wdh = [222, 270, 67];
+const WDH_RP255: Wdh = [222, 368, 64];
+const WDH_RP350: Wdh = [152.4, 127, 53.9];
+const WDH_RP355: Wdh = [222, 445, 64];
+const WDH_RP360_XP: Wdh = [216, 292, 51];
+const WDH_RP1000: Wdh = [495, 273, 95];
 
 export const DIGITECH_DEVICE_TEMPLATES: DeviceTemplate[] = [
-  pedal("Whammy DT", "DigiTech Whammy DT", WDH_WHAMMY, "digitech/digitech-whammy.png"),
-  pedal("Whammy Ricochet", "DigiTech Whammy Ricochet", WDH_WHAMMY, "digitech/digitech-whammy-ricochet.png"),
-  pedal("The Drop", "DigiTech The Drop Pitch Shifter", WDH_WHAMMY, "digitech/digitech-the-drop-pitch-shifter.png"),
-  pedal("The Weapon", "DigiTech The Weapon", WDH_WHAMMY, "digitech/digitech-the-weapon.png"),
-  multifx("RP55", "DigiTech RP55", WDH_RP_SMALL, "digitech/digitech-rp55.png"),
-  multifx("RP100", "DigiTech RP100", WDH_RP_SMALL, "digitech/digitech-rp100.png"),
-  multifx("RP150", "DigiTech RP150", WDH_RP_SMALL, "digitech/digitech-rp150.png"),
-  multifx("RP255", "DigiTech RP255", WDH_RP_SMALL, "digitech/digitech-rp255.png"),
-  multifx("RP355", "DigiTech RP355", WDH_RP_SMALL, "digitech/digitech-rp355.png"),
-  multifx("RP360 XP", "DigiTech RP360 XP", WDH_RP_SMALL, "digitech/digitech-rp360-xp.png"),
-  multifx("RP1000", "DigiTech RP1000", WDH_RP_LARGE, "digitech/digitech-rp1000.png"),
+  pedal("Whammy DT", WDH_WHAMMY_DT, img("digitech-whammy.png")),
+  pedal("Whammy Ricochet", WDH_WHAMMY_RICOCHET, img("digitech-whammy-ricochet.png")),
+  pedal("The Drop", WDH_THE_DROP, img("digitech-the-drop-pitch-shifter.png")),
+  pedal("The Weapon", WDH_THE_WEAPON, img("digitech-the-weapon.png")),
+  multifx("RP55", WDH_RP55, img("digitech-rp55.png")),
+  multifx("RP100", WDH_RP100, img("digitech-rp100.png")),
+  multifx("RP150", WDH_RP150, img("digitech-rp150.png")),
+  multifx("RP255", WDH_RP255, img("digitech-rp255.png")),
+  multifx("RP350", WDH_RP350, null),
+  multifx("RP355", WDH_RP355, img("digitech-rp355.png")),
+  multifx("RP360 XP", WDH_RP360_XP, img("digitech-rp360-xp.png")),
+  multifx("RP1000", WDH_RP1000, img("digitech-rp1000.png")),
 ];

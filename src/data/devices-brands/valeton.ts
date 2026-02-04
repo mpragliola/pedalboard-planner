@@ -1,7 +1,11 @@
 import type { DeviceTemplate } from "../devices";
-import { deviceId } from "../../lib/slug";
+import { deviceTemplate } from "../deviceHelpers";
 
-const valetonDevices: Omit<DeviceTemplate, "type" | "brand" | "id" | "name">[] = [
+function valetonImage(filename: string | null): string | null {
+  return filename ? `valeton/valeton${filename}` : null;
+}
+
+const valetonRows: { model: string; wdh: [number, number, number]; image: string | null }[] = [
   { model: "GP-100", wdh: [290, 190, 60], image: "-gp100.png" },
   { model: "GP-200", wdh: [345, 220, 65], image: null },
   { model: "GP-200LT", wdh: [270, 180, 60], image: null },
@@ -68,11 +72,11 @@ const valetonDevices: Omit<DeviceTemplate, "type" | "brand" | "id" | "name">[] =
   { model: "GP-50", wdh: [150, 100, 55], image: "-gp50.png" },
 ];
 
-export const VALETON_DEVICE_TEMPLATES: DeviceTemplate[] = valetonDevices.map((d) => ({
-  ...d,
-  name: `Valeton ${d.model}`,
-  id: deviceId("valeton", d.model),
-  type: "multifx",
-  brand: "Valeton",
-  image: d.image ? "valeton/valeton" + d.image : null,
-}));
+export const VALETON_DEVICE_TEMPLATES: DeviceTemplate[] = valetonRows.map((d) =>
+  deviceTemplate("valeton", "Valeton", {
+    type: "multifx",
+    model: d.model,
+    wdh: d.wdh,
+    image: valetonImage(d.image),
+  })
+);

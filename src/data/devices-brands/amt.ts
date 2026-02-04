@@ -1,13 +1,8 @@
 import type { DeviceTemplate } from "../devices";
+import { createBrandHelpers } from "../deviceHelpers";
+
+const { expression, img } = createBrandHelpers("amt", "AMT");
 
 export const AMT_DEVICE_TEMPLATES: DeviceTemplate[] = [
-  {
-    id: "device-amt-ex50",
-    type: "expression",
-    brand: "AMT",
-    model: "EX-50 Expression Pedal",
-    name: "AMT EX-50 Expression Pedal",
-    wdh: [62, 110, 58],
-    image: "amt/amt-ex-50.png",
-  },
+  expression("EX-50 Expression Pedal", [62, 110, 58], img("amt-ex-50.png")),
 ];

@@ -1,5 +1,6 @@
 import type { DeviceTemplate } from "../devices";
+import { createBrandHelpers } from "../deviceHelpers";
 
-export const WALRUS_DEVICE_TEMPLATES: DeviceTemplate[] = [
-  { id: "device-walrus-standard", type: "pedal", brand: "Walrus Audio", model: "Standard", name: "Walrus Audio Standard", wdh: [67, 122, 57], image: null },
-];
+const { pedal } = createBrandHelpers("walrus", "Walrus Audio");
+
+export const WALRUS_DEVICE_TEMPLATES: DeviceTemplate[] = [pedal("Standard", [67, 122, 57], null)];

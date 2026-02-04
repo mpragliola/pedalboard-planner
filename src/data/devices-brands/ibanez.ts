@@ -1,6 +1,9 @@
 import type { DeviceTemplate } from "../devices";
+import { createBrandHelpers } from "../deviceHelpers";
+
+const { pedal, img } = createBrandHelpers("ibanez", "Ibanez");
 
 export const IBANEZ_DEVICE_TEMPLATES: DeviceTemplate[] = [
-  { id: "device-ts808", type: "pedal", brand: "Ibanez", model: "TS808", name: "TS808", wdh: [70, 125, 52], image: "ibanez/ts808.png" },
-  { id: "device-ibanez-tubescreamer", type: "pedal", brand: "Ibanez", model: "Tube Screamer", name: "Ibanez Tube Screamer", wdh: [70, 124, 53], image: "ibanez/ts808.png" },
+  pedal("TS808", [70, 125, 52], img("ts808.png"), "TS808"),
+  pedal("Tube Screamer", [70, 124, 53], img("ts808.png")),
 ];

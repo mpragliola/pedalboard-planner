@@ -1,5 +1,6 @@
 import type { DeviceTemplate } from "../devices";
+import { createBrandHelpers } from "../deviceHelpers";
 
-export const WAMPLER_DEVICE_TEMPLATES: DeviceTemplate[] = [
-  { id: "device-wampler-standard", type: "pedal", brand: "Wampler", model: "Standard", name: "Wampler Standard", wdh: [64, 118, 57], image: null },
-];
+const { pedal } = createBrandHelpers("wampler", "Wampler");
+
+export const WAMPLER_DEVICE_TEMPLATES: DeviceTemplate[] = [pedal("Standard", [64, 118, 57], null)];

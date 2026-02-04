@@ -1,5 +1,5 @@
 import type { DeviceTemplate } from "../devices";
-import { deviceId } from "../../lib/slug";
+import { deviceTemplate, deviceImage } from "../deviceHelpers";
 
 const WDH_MOOER_GE100: [number, number, number] = [310, 165, 45];
 const WDH_MOOER_GE150_PLUS_LI: [number, number, number] = [320, 170, 46];
@@ -14,7 +14,13 @@ const WDH_MVP: [number, number, number] = [86.6, 125, 60];
 const WDH_X2_V2: [number, number, number] = [75, 115, 60];
 const WDH_MICRO_MINI: [number, number, number] = [93.5, 42, 52];
 
-const mooerDevices: Omit<DeviceTemplate, "id" | "name" | "brand">[] = [
+type MooerRow = {
+  type: "power" | "multifx" | "pedal";
+  model: string;
+  wdh: [number, number, number];
+  image: string | null;
+};
+const mooerRows: MooerRow[] = [
   { type: "power", model: "Macro Power S8", wdh: WDH_MACRO_POWER_S8, image: null },
   { type: "multifx", model: "GE100", wdh: WDH_MOOER_GE100, image: "mooer-ge-100.png" },
   { type: "multifx", model: "GE150 Plus Li", wdh: WDH_MOOER_GE150_PLUS_LI, image: "mooer-ge150plusli.png" },
@@ -35,10 +41,11 @@ const mooerDevices: Omit<DeviceTemplate, "id" | "name" | "brand">[] = [
   { type: "pedal", model: "Ocean Machine II", wdh: WDH_OCEAN_MACHINE_II, image: "ocean-machine-ii.png" },
 ];
 
-export const MOOER_DEVICE_TEMPLATES: DeviceTemplate[] = mooerDevices.map((d) => ({
-  ...d,
-  name: `Mooer ${d.model}`,
-  id: deviceId("mooer", d.model),
-  brand: "Mooer",
-  image: d.image ? "mooer/" + d.image : null,
-}));
+export const MOOER_DEVICE_TEMPLATES: DeviceTemplate[] = mooerRows.map((d) =>
+  deviceTemplate("mooer", "Mooer", {
+    type: d.type,
+    model: d.model,
+    wdh: d.wdh,
+    image: d.image ? deviceImage("mooer", d.image) : null,
+  })
+);

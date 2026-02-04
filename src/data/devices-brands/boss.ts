@@ -1,5 +1,5 @@
 import type { DeviceTemplate } from "../devices";
-import { deviceId } from "../../lib/slug";
+import { deviceTemplate, deviceImage } from "../deviceHelpers";
 import { Wdh } from "../../wdh";
 
 type BossDeviceRow = Omit<DeviceTemplate, "id" | "brand"> & {
@@ -222,16 +222,16 @@ const bossDevices: BossDeviceRow[] = [
 ];
 
 function addBossPrefix(name: string): string {
-  // Only add the prefix if not already present.
   if (/^Boss/i.test(name)) return name;
-  // For entries like 'RE-2 Space Echo' (no 'Boss ' in model), ensure 'Boss ' prefix, except for entries where 'Boss ' is purposely omitted
   return `Boss ${name}`;
 }
 
-export const BOSS_DEVICE_TEMPLATES: DeviceTemplate[] = bossDevices.map((d) => ({
-  ...d,
-  id: deviceId("boss", d.model),
-  brand: "Boss",
-  name: addBossPrefix(d.name),
-  image: d.image ? "boss/" + d.image : null,
-}));
+export const BOSS_DEVICE_TEMPLATES: DeviceTemplate[] = bossDevices.map((d) =>
+  deviceTemplate("boss", "Boss", {
+    type: d.type,
+    model: d.model,
+    wdh: d.wdh,
+    name: addBossPrefix(d.name),
+    image: d.image ? deviceImage("boss", d.image) : null,
+  })
+);

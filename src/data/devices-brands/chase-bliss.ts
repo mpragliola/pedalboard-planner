@@ -1,5 +1,6 @@
 import type { DeviceTemplate } from "../devices";
+import { createBrandHelpers } from "../deviceHelpers";
 
-export const CHASE_BLISS_DEVICE_TEMPLATES: DeviceTemplate[] = [
-  { id: "device-chasebliss-standard", type: "pedal", brand: "Chase Bliss", model: "Standard", name: "Chase Bliss Standard", wdh: [60, 125, 60], image: null },
-];
+const { pedal } = createBrandHelpers("chase-bliss", "Chase Bliss");
+
+export const CHASE_BLISS_DEVICE_TEMPLATES: DeviceTemplate[] = [pedal("Standard", [60, 125, 60], null)];

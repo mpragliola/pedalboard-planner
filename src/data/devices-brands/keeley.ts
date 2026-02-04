@@ -1,5 +1,6 @@
 import type { DeviceTemplate } from "../devices";
+import { createBrandHelpers } from "../deviceHelpers";
 
-export const KEELEY_DEVICE_TEMPLATES: DeviceTemplate[] = [
-  { id: "device-keeley-standard", type: "pedal", brand: "Keeley", model: "Standard", name: "Keeley Standard", wdh: [66, 121, 56], image: null },
-];
+const { pedal } = createBrandHelpers("keeley", "Keeley");
+
+export const KEELEY_DEVICE_TEMPLATES: DeviceTemplate[] = [pedal("Standard", [66, 121, 56], null)];

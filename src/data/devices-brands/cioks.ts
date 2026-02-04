@@ -1,7 +1,7 @@
 import type { DeviceTemplate } from "../devices";
-import { deviceId } from "../../lib/slug";
+import { deviceTemplate, deviceImage } from "../deviceHelpers";
 
-const cioksDevices: Omit<DeviceTemplate, "type" | "brand" | "id" | "name">[] = [
+const cioksRows: { model: string; wdh: [number, number, number]; image: string }[] = [
   { model: "DC7", wdh: [160, 88, 25.4], image: "cioks-dc7.png" },
   { model: "DC10", wdh: [158, 98, 35], image: "cioks-dc10.png" },
   { model: "4", wdh: [74, 88, 25.4], image: "cioks-4.png" },
@@ -12,11 +12,11 @@ const cioksDevices: Omit<DeviceTemplate, "type" | "brand" | "id" | "name">[] = [
   { model: "Crux", wdh: [40, 88, 25.4], image: "cioks-crux.png" },
 ];
 
-export const CIOKS_DEVICE_TEMPLATES: DeviceTemplate[] = cioksDevices.map((d) => ({
-  ...d,
-  name: `Cioks ${d.model}`,
-  id: deviceId("cioks", d.model),
-  type: "power",
-  brand: "Cioks",
-  image: "cioks/" + d.image,
-}));
+export const CIOKS_DEVICE_TEMPLATES: DeviceTemplate[] = cioksRows.map((d) =>
+  deviceTemplate("cioks", "Cioks", {
+    type: "power",
+    model: d.model,
+    wdh: d.wdh,
+    image: deviceImage("cioks", d.image),
+  })
+);

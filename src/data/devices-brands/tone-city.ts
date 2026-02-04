@@ -1,5 +1,6 @@
 import type { DeviceTemplate } from "../devices";
+import { createBrandHelpers } from "../deviceHelpers";
 
-export const TONE_CITY_DEVICE_TEMPLATES: DeviceTemplate[] = [
-  { id: "device-tonecity-tps06", type: "power", brand: "Tone City", model: "TPS-06 Multi Power Supply", name: "Tone City TPS-06 Multi Power Supply", wdh: [150, 80, 35], image: null },
-];
+const { power } = createBrandHelpers("tonecity", "Tone City");
+
+export const TONE_CITY_DEVICE_TEMPLATES: DeviceTemplate[] = [power("TPS-06 Multi Power Supply", [150, 80, 35], null)];

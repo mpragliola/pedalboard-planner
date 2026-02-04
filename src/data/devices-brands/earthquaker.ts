@@ -1,5 +1,6 @@
 import type { DeviceTemplate } from "../devices";
+import { createBrandHelpers } from "../deviceHelpers";
 
-export const EARTHQUAKER_DEVICE_TEMPLATES: DeviceTemplate[] = [
-  { id: "device-eqd-standard", type: "pedal", brand: "EarthQuaker Devices", model: "Standard", name: "EarthQuaker Devices Standard", wdh: [64, 117, 57], image: null },
-];
+const { pedal } = createBrandHelpers("earthquaker", "EarthQuaker Devices");
+
+export const EARTHQUAKER_DEVICE_TEMPLATES: DeviceTemplate[] = [pedal("Standard", [64, 117, 57], null)];

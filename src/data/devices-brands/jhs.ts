@@ -1,5 +1,6 @@
 import type { DeviceTemplate } from "../devices";
+import { createBrandHelpers } from "../deviceHelpers";
 
-export const JHS_DEVICE_TEMPLATES: DeviceTemplate[] = [
-  { id: "device-jhs-standard", type: "pedal", brand: "JHS", model: "Standard", name: "JHS Standard", wdh: [66, 121, 56], image: null },
-];
+const { pedal } = createBrandHelpers("jhs", "JHS");
+
+export const JHS_DEVICE_TEMPLATES: DeviceTemplate[] = [pedal("Standard", [66, 121, 56], null)];

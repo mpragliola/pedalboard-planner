@@ -1,17 +1,13 @@
 import type { Wdh } from "../../wdh";
 import { WDH_ZOOM_AC, WDH_ZOOM_MS } from "../../wdh";
 import type { DeviceTemplate } from "../devices";
-import { deviceId } from "../../lib/slug";
-
-type ZoomRowBase = Omit<DeviceTemplate, "id" | "brand" | "type"> & {
-  type: DeviceTemplate["type"];
-  image: string | null;
-};
+import { deviceTemplate, deviceImage } from "../deviceHelpers";
 
 const WDH_ZOOM_338: Wdh = [338, 180, 77];
 const WDH_ZOOM_SMALL: Wdh = [10, 10, 10];
 
-const zoomMultifx: ZoomRowBase[] = [
+type ZoomRow = { model: string; name: string; wdh: Wdh; type: "multifx" | "pedal"; image: string };
+const zoomMultifx: ZoomRow[] = [
   { model: "G3Xn", name: "Zoom G3Xn", wdh: [318, 181, 57], type: "multifx", image: "g3xn.png" },
   { model: "G5n", name: "Zoom G5n", wdh: [423, 196, 73], type: "multifx", image: "g5n.png" },
   { model: "G11", name: "Zoom G11", wdh: WDH_ZOOM_338, type: "multifx", image: "g11.png" },
@@ -31,7 +27,7 @@ const zoomMultifx: ZoomRowBase[] = [
   { model: "FP-02M", name: "Zoom FP-02M", wdh: WDH_ZOOM_AC, type: "multifx", image: "fp-02m.png" },
 ];
 
-const zoomPedals: ZoomRowBase[] = [
+const zoomPedals: ZoomRow[] = [
   { model: "MS-50G+", name: "Zoom MS-50G+", wdh: WDH_ZOOM_MS, type: "pedal", image: "m50gplus.png" },
   { model: "MS-200D+", name: "Zoom MS-200D+", wdh: WDH_ZOOM_MS, type: "pedal", image: "ms-200dplus.png" },
   { model: "MS-60B+", name: "Zoom MS-60B+", wdh: WDH_ZOOM_MS, type: "pedal", image: "ms-60bplus.png" },
@@ -40,11 +36,14 @@ const zoomPedals: ZoomRowBase[] = [
   { model: "MS-90LP+", name: "Zoom MS-90LP+", wdh: WDH_ZOOM_MS, type: "pedal", image: "ms-90lpplus.png" },
 ];
 
-const zoomRows: ZoomRowBase[] = [...zoomMultifx, ...zoomPedals];
+const zoomRows: ZoomRow[] = [...zoomMultifx, ...zoomPedals];
 
-export const ZOOM_DEVICE_TEMPLATES: DeviceTemplate[] = zoomRows.map((d) => ({
-  ...d,
-  id: deviceId("zoom", d.model),
-  brand: "Zoom",
-  image: d.image ? "zoom/" + d.image : null,
-}));
+export const ZOOM_DEVICE_TEMPLATES: DeviceTemplate[] = zoomRows.map((d) =>
+  deviceTemplate("zoom", "Zoom", {
+    type: d.type,
+    model: d.model,
+    wdh: d.wdh,
+    name: d.name,
+    image: deviceImage("zoom", d.image),
+  })
+);

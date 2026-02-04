@@ -1,5 +1,6 @@
 import type { DeviceTemplate } from "../devices";
+import { createBrandHelpers } from "../deviceHelpers";
 
-export const IK_MULTIMEDIA_DEVICE_TEMPLATES: DeviceTemplate[] = [
-  { id: "device-ik-tonex-pedal", type: "multifx", brand: "IK Multimedia", model: "Tonex Pedal", name: "IK Multimedia Tonex Pedal", wdh: [176, 142, 58], image: null },
-];
+const { multifx } = createBrandHelpers("ik-multimedia", "IK Multimedia");
+
+export const IK_MULTIMEDIA_DEVICE_TEMPLATES: DeviceTemplate[] = [multifx("Tonex Pedal", [176, 142, 58], null)];
