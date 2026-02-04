@@ -1,3 +1,10 @@
+/* App content fills viewport; no scroll – canvas and overlays sit on top */
+.app-content {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
 /* Catalog panel (toggle + body) – used in App.tsx */
 .catalog-panel {
   position: fixed;

@@ -12,12 +12,12 @@
     "test:run": "vitest run",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist",
-    "process": "node scripts/process-images.js",
+    "process": "npx tsx scripts/process-images.ts",
     "check-devices": "npx tsx scripts/check-devices.ts",
     "dump-templates": "npx tsx scripts/dump-templates.ts",
-    "prompt-dimensions": "node scripts/prompt-dimensions.js",
-    "convert-to-png": "node scripts/convert-to-png.js",
-    "remove-backup-files": "node scripts/remove-backup-files.js",
+    "prompt-dimensions": "npx tsx scripts/prompt-dimensions.ts",
+    "convert-to-png": "npx tsx scripts/convert-to-png.ts",
+    "remove-backup-files": "npx tsx scripts/remove-backup-files.ts",
     "distribute-images": "pwsh -File scripts/distribute-processed-images.ps1"
   },
   "dependencies": {
