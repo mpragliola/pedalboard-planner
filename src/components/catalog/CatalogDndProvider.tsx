@@ -20,22 +20,6 @@ const CANVAS_DROP_ID = "canvas-drop";
 const GHOST_MAX_PX = 80;
 const SAFETY_NET_MS = 8000;
 
-/** Centers the drag overlay on the pointer. The default transform keeps the press point under the cursor;
- * we need to add the initial offset (where user pressed on the source) then subtract half overlay size. */
-const centerOverlayOnCursor: Modifier = ({ transform, overlayNodeRect, activeNodeRect, activatorEvent }) => {
-  const w = overlayNodeRect?.width ?? 0;
-  const h = overlayNodeRect?.height ?? 0;
-  const ev = activatorEvent as PointerEvent | null;
-  const rect = activeNodeRect;
-  const offsetX = ev && rect ? ev.clientX - rect.left : 0;
-  const offsetY = ev && rect ? ev.clientY - rect.top : 0;
-  return {
-    ...transform,
-    x: transform.x + offsetX - w / 2,
-    y: transform.y + offsetY - h / 2,
-  };
-};
-
 function ghostDimensions(widthMm: number, depthMm: number): { w: number; h: number } {
   const max = Math.max(widthMm, depthMm);
   if (max <= 0) return { w: GHOST_MAX_PX, h: GHOST_MAX_PX };
@@ -71,6 +55,8 @@ export function CatalogDndProvider({ children }: { children: React.ReactNode }) 
   const { placeFromCatalog } = useApp();
   const lastPointerRef = useRef({ x: 0, y: 0 });
   const [activeData, setActiveData] = useState<CatalogDragData | null>(null);
+  /** Pointer position during drag; we position our own ghost from this so it's always centered. */
+  const [dragPointer, setDragPointer] = useState<{ x: number; y: number } | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -88,10 +74,21 @@ export function CatalogDndProvider({ children }: { children: React.ReactNode }) 
   );
 
   const removeListenersRef = useRef<() => void>(() => {});
+  const initialPointerRef = useRef<{ x: number; y: number } | null>(null);
+
+  const captureInitialPointer: Modifier = ({ activatorEvent, transform }) => {
+    if (activatorEvent && !initialPointerRef.current) {
+      const e = activatorEvent as PointerEvent;
+      initialPointerRef.current = { x: e.clientX, y: e.clientY };
+    }
+    return transform;
+  };
 
   const forceCleanup = useCallback(() => {
     document.body.classList.remove("catalog-dragging");
     setActiveData(null);
+    setDragPointer(null);
+    initialPointerRef.current = null;
     removeListenersRef.current();
     removeListenersRef.current = () => {};
   }, []);
@@ -99,11 +96,17 @@ export function CatalogDndProvider({ children }: { children: React.ReactNode }) 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const data = event.active.data.current as CatalogDragData | undefined;
     if (!data) return;
+    const ev = event.activatorEvent as PointerEvent | undefined;
+    const initial = ev ? { x: ev.clientX, y: ev.clientY } : null;
+    initialPointerRef.current = initial;
+    if (initial) lastPointerRef.current = initial;
     setActiveData(data);
+    setDragPointer(initial);
     document.body.classList.add("catalog-dragging");
 
     const onMove = (e: PointerEvent) => {
       lastPointerRef.current = { x: e.clientX, y: e.clientY };
+      setDragPointer({ x: e.clientX, y: e.clientY });
     };
     const onUpOrCancel = (e: PointerEvent) => {
       lastPointerRef.current = { x: e.clientX, y: e.clientY };
@@ -151,6 +154,9 @@ export function CatalogDndProvider({ children }: { children: React.ReactNode }) 
     };
   }, [activeData, forceCleanup]);
 
+  const ghostPos = dragPointer ?? initialPointerRef.current ?? lastPointerRef.current;
+  const showCustomGhost = activeData != null;
+
   return (
     <DndContext
       sensors={sensors}
@@ -159,9 +165,31 @@ export function CatalogDndProvider({ children }: { children: React.ReactNode }) 
       onDragCancel={handleDragCancel}
     >
       {children}
-      <DragOverlay dropAnimation={null} zIndex={70000} modifiers={[centerOverlayOnCursor]}>
+      {/* Invisible overlay so dnd-kit still runs collision/drag logic */}
+      <DragOverlay
+        dropAnimation={null}
+        zIndex={0}
+        style={{ opacity: 0, pointerEvents: "none" }}
+        modifiers={[captureInitialPointer]}
+      >
         {activeData ? <CatalogDragOverlayContent data={activeData} /> : null}
       </DragOverlay>
+      {/* Our ghost: fixed position from pointer, always centered */}
+      {showCustomGhost && (
+        <div
+          className="catalog-drag-ghost-wrapper"
+          style={{
+            position: "fixed",
+            left: ghostPos.x,
+            top: ghostPos.y,
+            transform: "translate(-50%, -50%)",
+            zIndex: 70000,
+            pointerEvents: "none",
+          }}
+        >
+          <CatalogDragOverlayContent data={activeData} />
+        </div>
+      )}
     </DndContext>
   );
 }

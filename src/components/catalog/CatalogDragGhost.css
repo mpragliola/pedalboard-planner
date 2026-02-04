@@ -26,6 +26,12 @@ body.catalog-dragging * {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
+/* When inside our custom wrapper, stay in flow so wrapper gets correct size; wrapper's translate(-50%,-50%) then centers the ghost on cursor */
+.catalog-drag-ghost-wrapper .catalog-drag-ghost {
+  position: relative;
+  z-index: 0;
+}
+
 .catalog-drag-ghost-image {
   width: 100%;
   height: 100%;
