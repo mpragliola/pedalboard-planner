@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect } from 'react'
-import { createPortal } from 'react-dom'
 import { useApp } from '../../context/AppContext'
 import { LocationLoader } from '../../lib/locationLoader'
 import { PromptBuilder } from '../../lib/promptBuilder'
+import { Modal } from '../common/Modal'
 import './GptModal.css'
 
 interface GptModalProps {
@@ -82,117 +82,100 @@ export function GptModal({ open, onClose }: GptModalProps) {
     }
   }, [open])
 
-  if (!open) return null
-
-  const modal = (
-    <div
-      className="gpt-modal-backdrop"
-      aria-hidden
-      onClick={(e) => e.target === e.currentTarget && onClose()}
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="Price estimate prompt"
+      className="gpt-modal"
+      ariaLabel="Price estimate prompt"
     >
-      <div
-        className="gpt-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Price estimate prompt"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <header className="gpt-modal-header">
-          <h2 className="gpt-modal-title">Price estimate prompt</h2>
-          <button type="button" className="gpt-modal-close" onClick={onClose} aria-label="Close">
-            ×
-          </button>
-        </header>
-        <div className="gpt-modal-body">
-          <p className="gpt-modal-intro">
-            Build a prompt for an LLM (ChatGPT, Claude, Gemini, etc.) to estimate the
-            total price of your pedalboard and have tips and suggestions.
-            Copy it and paste into your favourite LLM. <br />
-            <small>Disclaimer: the prices will be estimated and there is no guarantee of accuracy.
-              Always check the results and use your best judgement.</small>
-          </p>
+      <p className="gpt-modal-intro">
+        Build a prompt for an LLM (ChatGPT, Claude, Gemini, etc.) to estimate the
+        total price of your pedalboard and have tips and suggestions.
+        Copy it and paste into your favourite LLM. <br />
+        <small>Disclaimer: the prices will be estimated and there is no guarantee of accuracy.
+          Always check the results and use your best judgement.</small>
+      </p>
 
-          <div className="gpt-modal-options">
-            <label className="gpt-modal-check">
-              <input
-                type="checkbox"
-                checked={includeLocation}
-                onChange={(e) => setIncludeLocation(e.target.checked)}
-              />
-              <span>Include my location (prices and stores near me)</span>
-            </label>
-            {includeLocation && (
-              <div className="gpt-modal-location-row">
-                <input
-                  key={`location-${locationInputKey}`}
-                  type="text"
-                  className="gpt-modal-location-input"
-                  placeholder="e.g. Rome, Italy"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  aria-label="Your location"
-                />
-                <button
-                  type="button"
-                  className="gpt-modal-location-btn"
-                  onClick={loadLocationFromBrowser}
-                  disabled={locationLoading}
-                  title="Use browser location"
-                >
-                  {locationLoading ? '…' : 'Load from browser'}
-                </button>
-              </div>
-            )}
-            {includeLocation && locationError && (
-              <p className="gpt-modal-error" role="alert">
-                {locationError}
-              </p>
-            )}
-
-            <label className="gpt-modal-check">
-              <input
-                type="checkbox"
-                checked={includeMaterials}
-                onChange={(e) => setIncludeMaterials(e.target.checked)}
-              />
-              <span>Include materials (cables, velcro, etc.) in the estimate</span>
-            </label>
-
-            <label className="gpt-modal-check">
-              <input
-                type="checkbox"
-                checked={includeCommentsAndTips}
-                onChange={(e) => setIncludeCommentsAndTips(e.target.checked)}
-              />
-              <span>Include comments and tips</span>
-            </label>
-          </div>
-
-          <div className="gpt-modal-prompt-wrap">
-            <label className="gpt-modal-label" htmlFor="gpt-prompt-text">
-              Prompt (you can edit before copying)
-            </label>
-            <textarea
-              id="gpt-prompt-text"
-              className="gpt-modal-textarea"
-              value={promptText}
-              onChange={(e) => setPromptText(e.target.value)}
-              rows={14}
-              spellCheck={false}
+      <div className="gpt-modal-options">
+        <label className="gpt-modal-check">
+          <input
+            type="checkbox"
+            checked={includeLocation}
+            onChange={(e) => setIncludeLocation(e.target.checked)}
+          />
+          <span>Include my location (prices and stores near me)</span>
+        </label>
+        {includeLocation && (
+          <div className="gpt-modal-location-row">
+            <input
+              key={`location-${locationInputKey}`}
+              type="text"
+              className="gpt-modal-location-input"
+              placeholder="e.g. Rome, Italy"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              aria-label="Your location"
             />
+            <button
+              type="button"
+              className="gpt-modal-location-btn"
+              onClick={loadLocationFromBrowser}
+              disabled={locationLoading}
+              title="Use browser location"
+            >
+              {locationLoading ? '…' : 'Load from browser'}
+            </button>
           </div>
+        )}
+        {includeLocation && locationError && (
+          <p className="gpt-modal-error" role="alert">
+            {locationError}
+          </p>
+        )}
 
-          <div className="gpt-modal-actions">
-            <button type="button" className="gpt-modal-copy-btn" onClick={handleCopy}>
-              {copied ? 'Copied!' : 'Copy to clipboard'}
-            </button>
-            <button type="button" className="gpt-modal-close-btn" onClick={onClose}>
-              Close
-            </button>
-          </div>
-        </div>
+        <label className="gpt-modal-check">
+          <input
+            type="checkbox"
+            checked={includeMaterials}
+            onChange={(e) => setIncludeMaterials(e.target.checked)}
+          />
+          <span>Include materials (cables, velcro, etc.) in the estimate</span>
+        </label>
+
+        <label className="gpt-modal-check">
+          <input
+            type="checkbox"
+            checked={includeCommentsAndTips}
+            onChange={(e) => setIncludeCommentsAndTips(e.target.checked)}
+          />
+          <span>Include comments and tips</span>
+        </label>
       </div>
-    </div>
+
+      <div className="gpt-modal-prompt-wrap">
+        <label className="gpt-modal-label" htmlFor="gpt-prompt-text">
+          Prompt (you can edit before copying)
+        </label>
+        <textarea
+          id="gpt-prompt-text"
+          className="gpt-modal-textarea"
+          value={promptText}
+          onChange={(e) => setPromptText(e.target.value)}
+          rows={14}
+          spellCheck={false}
+        />
+      </div>
+
+      <div className="gpt-modal-actions">
+        <button type="button" className="gpt-modal-copy-btn" onClick={handleCopy}>
+          {copied ? 'Copied!' : 'Copy to clipboard'}
+        </button>
+        <button type="button" className="gpt-modal-close-btn" onClick={onClose}>
+          Close
+        </button>
+      </div>
+    </Modal>
   )
-  return createPortal(modal, document.body)
 }
