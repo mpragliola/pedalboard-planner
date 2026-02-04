@@ -1,11 +1,14 @@
 import { useRef, useState, useLayoutEffect, useCallback } from "react";
 import {
+  faLinkSlash,
   faChevronDown,
   faChevronRight,
+  faGaugeHigh,
   faGuitar,
   faLayerGroup,
   faPlug,
   faSliders,
+  faVolumeHigh,
   faWifi,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -18,9 +21,12 @@ import "./CatalogList.css";
 const DEVICE_TYPE_ICON: Record<DeviceType, IconDefinition> = {
   pedal: faGuitar,
   multifx: faLayerGroup,
+  expression: faGaugeHigh,
+  volume: faVolumeHigh,
   power: faPlug,
   controller: faSliders,
   wireless: faWifi,
+  loopswitcher: faLinkSlash,
 };
 
 export type CatalogViewMode = "text" | "list" | "grid" | "large";
@@ -91,15 +97,7 @@ function ViewModeToggle({ mode, onChange }: { mode: CatalogViewMode; onChange: (
   );
 }
 
-export function CatalogList({
-  id,
-  label,
-  size,
-  options,
-  catalogMode,
-  viewMode,
-  onViewModeChange,
-}: CatalogListProps) {
+export function CatalogList({ id, label, size, options, catalogMode, viewMode, onViewModeChange }: CatalogListProps) {
   const listRef = useRef<HTMLDivElement>(null);
   const scrollRestoreRef = useRef<number | null>(null);
 

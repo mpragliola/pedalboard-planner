@@ -47,7 +47,15 @@ import { WALRUS_DEVICE_TEMPLATES } from "./devices-brands/walrus";
 import { WAMPLER_DEVICE_TEMPLATES } from "./devices-brands/wampler";
 import { ZOOM_DEVICE_TEMPLATES } from "./devices-brands/zoom";
 
-export type DeviceType = "power" | "controller" | "pedal" | "multifx" | "wireless";
+export type DeviceType =
+  | "power"
+  | "controller"
+  | "pedal"
+  | "multifx"
+  | "wireless"
+  | "expression"
+  | "volume"
+  | "loopswitcher";
 
 export interface DeviceTemplate {
   id: string;
