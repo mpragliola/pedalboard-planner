@@ -74,6 +74,7 @@ export function CatalogDndProvider({ children }: { children: React.ReactNode }) 
 
   const removeListenersRef = useRef<() => void>(() => {});
   const initialPointerRef = useRef<{ x: number; y: number } | null>(null);
+  const capturedPointerIdRef = useRef<number | null>(null);
 
   const captureInitialPointer: Modifier = ({ activatorEvent, transform }) => {
     if (activatorEvent && !initialPointerRef.current) {
@@ -84,6 +85,15 @@ export function CatalogDndProvider({ children }: { children: React.ReactNode }) 
   };
 
   const forceCleanup = useCallback(() => {
+    const pointerId = capturedPointerIdRef.current;
+    if (pointerId != null) {
+      try {
+        document.body.releasePointerCapture(pointerId);
+      } catch {
+        // Already released (e.g. on pointerup)
+      }
+      capturedPointerIdRef.current = null;
+    }
     document.body.classList.remove("catalog-dragging");
     setActiveData(null);
     setDragPointer(null);
@@ -99,6 +109,10 @@ export function CatalogDndProvider({ children }: { children: React.ReactNode }) 
     const initial = ev ? { x: ev.clientX, y: ev.clientY } : null;
     initialPointerRef.current = initial;
     if (initial) lastPointerRef.current = initial;
+    if (ev != null) {
+      document.body.setPointerCapture(ev.pointerId);
+      capturedPointerIdRef.current = ev.pointerId;
+    }
     setActiveData(data);
     setDragPointer(initial);
     document.body.classList.add("catalog-dragging");
