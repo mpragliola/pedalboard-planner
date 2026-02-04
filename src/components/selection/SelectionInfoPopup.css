@@ -1,6 +1,6 @@
 .selection-info-popup {
   position: fixed;
-  top: 76px; /* below file menu (24px + ~44px menu height + 8px gap) */
+  top: 24px; /* file menu moved into catalog panel */
   right: 24px;
   z-index: 1000;
   background: rgba(255, 255, 255, 0.9);
