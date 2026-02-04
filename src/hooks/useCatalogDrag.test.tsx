@@ -4,8 +4,12 @@ import { useCatalogDrag } from "./useCatalogDrag";
 
 function createMockCanvas() {
   const rect = { left: 100, top: 50, right: 500, bottom: 400, width: 400, height: 350 };
+  const canvas = {
+    getBoundingClientRect: () => rect,
+    querySelector: vi.fn((sel: string) => (sel === ".canvas-viewport" ? { getBoundingClientRect: () => rect } : null)),
+  } as unknown as HTMLDivElement;
   return {
-    ref: { current: { getBoundingClientRect: () => rect } as HTMLDivElement },
+    ref: { current: canvas },
     zoomRef: { current: 1 },
     panRef: { current: { x: 0, y: 0 } },
   };
@@ -20,7 +24,7 @@ describe("useCatalogDrag", () => {
     mocks = createMockCanvas();
   });
 
-  it("returns null catalogDrag initially", () => {
+  it("exposes placeFromCatalog and shouldIgnoreCatalogClick", () => {
     const { result } = renderHook(() =>
       useCatalogDrag({
         canvasRef: mocks.ref,
@@ -29,10 +33,11 @@ describe("useCatalogDrag", () => {
         onDropOnCanvas,
       })
     );
-    expect(result.current.catalogDrag).toBeNull();
+    expect(typeof result.current.placeFromCatalog).toBe("function");
+    expect(typeof result.current.shouldIgnoreCatalogClick).toBe("function");
   });
 
-  it("sets catalogDrag state when startCatalogDrag is called", () => {
+  it("calls onDropOnCanvas when placeFromCatalog is called with point inside canvas", () => {
     const { result } = renderHook(() =>
       useCatalogDrag({
         canvasRef: mocks.ref,
@@ -43,68 +48,16 @@ describe("useCatalogDrag", () => {
     );
 
     act(() => {
-      result.current.startCatalogDrag(
-        "device-boss-ds-1",
-        "devices",
-        "images/devices/boss/ds1.png",
-        1,
-        200,
-        200,
-        73,
-        129
-      );
-    });
-
-    expect(result.current.catalogDrag).toEqual({
-      templateId: "device-boss-ds-1",
-      mode: "devices",
-      imageUrl: "images/devices/boss/ds1.png",
-      widthMm: 73,
-      depthMm: 129,
-    });
-    expect(result.current.catalogDragPosition).toEqual({ x: 200, y: 200 });
-  });
-
-  it("adds catalog-dragging class to body when drag starts", () => {
-    const { result } = renderHook(() =>
-      useCatalogDrag({
-        canvasRef: mocks.ref,
-        zoomRef: mocks.zoomRef,
-        panRef: mocks.panRef,
-        onDropOnCanvas,
-      })
-    );
-
-    act(() => {
-      result.current.startCatalogDrag("device-boss-ds-1", "devices", null, 1, 0, 0, 73, 129);
-    });
-
-    expect(document.body.classList.contains("catalog-dragging")).toBe(true);
-  });
-
-  it("calls onDropOnCanvas when endCatalogDrag is called with point inside canvas", () => {
-    const { result } = renderHook(() =>
-      useCatalogDrag({
-        canvasRef: mocks.ref,
-        zoomRef: mocks.zoomRef,
-        panRef: mocks.panRef,
-        onDropOnCanvas,
-      })
-    );
-
-    act(() => {
-      result.current.startCatalogDrag("device-boss-ds-1", "devices", null, 1, 0, 0, 73, 129);
-    });
-
-    act(() => {
-      result.current.endCatalogDrag(150, 100); // inside canvas (100-500, 50-400)
+      result.current.placeFromCatalog(150, 100, {
+        mode: "devices",
+        templateId: "device-boss-ds-1",
+      });
     });
 
     expect(onDropOnCanvas).toHaveBeenCalledWith("devices", "device-boss-ds-1", 50, 50);
-    expect(result.current.catalogDrag).toBeNull();
   });
 
-  it("does not call onDropOnCanvas when end point is outside canvas", () => {
+  it("does not call onDropOnCanvas when placeFromCatalog point is outside canvas", () => {
     const { result } = renderHook(() =>
       useCatalogDrag({
         canvasRef: mocks.ref,
@@ -115,35 +68,13 @@ describe("useCatalogDrag", () => {
     );
 
     act(() => {
-      result.current.startCatalogDrag("device-boss-ds-1", "devices", null, 1, 0, 0, 73, 129);
-    });
-
-    act(() => {
-      result.current.endCatalogDrag(50, 50); // outside canvas (left of 100)
+      result.current.placeFromCatalog(50, 50, {
+        mode: "devices",
+        templateId: "device-boss-ds-1",
+      });
     });
 
     expect(onDropOnCanvas).not.toHaveBeenCalled();
-  });
-
-  it("removes catalog-dragging class when endCatalogDrag is called", () => {
-    const { result } = renderHook(() =>
-      useCatalogDrag({
-        canvasRef: mocks.ref,
-        zoomRef: mocks.zoomRef,
-        panRef: mocks.panRef,
-        onDropOnCanvas,
-      })
-    );
-
-    act(() => {
-      result.current.startCatalogDrag("device-boss-ds-1", "devices", null, 1, 0, 0, 73, 129);
-    });
-    expect(document.body.classList.contains("catalog-dragging")).toBe(true);
-
-    act(() => {
-      result.current.endCatalogDrag(150, 100);
-    });
-    expect(document.body.classList.contains("catalog-dragging")).toBe(false);
   });
 
   it("handles zoom when converting drop coordinates", () => {
@@ -160,18 +91,17 @@ describe("useCatalogDrag", () => {
     );
 
     act(() => {
-      result.current.startCatalogDrag("device-boss-ds-1", "devices", null, 1, 0, 0, 73, 129);
+      result.current.placeFromCatalog(300, 150, {
+        mode: "devices",
+        templateId: "device-boss-ds-1",
+      });
     });
 
-    act(() => {
-      result.current.endCatalogDrag(300, 150);
-    });
-
-    // (300 - 100 - 100) / 2 = 50, (150 - 50 - 50) / 2 = 25
-    expect(onDropOnCanvas).toHaveBeenCalledWith("devices", "device-boss-ds-1", 50, 25);
+    // With viewport: (clientX - r.left) / zoom, (clientY - r.top) / zoom → (300-100)/2=100, (150-50)/2=50
+    expect(onDropOnCanvas).toHaveBeenCalledWith("devices", "device-boss-ds-1", 100, 50);
   });
 
-  it("updates position when setCatalogDragPosition is called", () => {
+  it("shouldIgnoreCatalogClick returns false initially, true after placeFromCatalog, then false after consumed", () => {
     const { result } = renderHook(() =>
       useCatalogDrag({
         canvasRef: mocks.ref,
@@ -181,14 +111,17 @@ describe("useCatalogDrag", () => {
       })
     );
 
-    act(() => {
-      result.current.startCatalogDrag("device-boss-ds-1", "devices", null, 1, 0, 0, 73, 129);
-    });
+    expect(result.current.shouldIgnoreCatalogClick()).toBe(false);
+    expect(result.current.shouldIgnoreCatalogClick()).toBe(false);
 
     act(() => {
-      result.current.setCatalogDragPosition({ x: 300, y: 250 });
+      result.current.placeFromCatalog(150, 100, {
+        mode: "devices",
+        templateId: "device-boss-ds-1",
+      });
     });
 
-    expect(result.current.catalogDragPosition).toEqual({ x: 300, y: 250 });
+    expect(result.current.shouldIgnoreCatalogClick()).toBe(true);
+    expect(result.current.shouldIgnoreCatalogClick()).toBe(false);
   });
 });

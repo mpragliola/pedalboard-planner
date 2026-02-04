@@ -12,7 +12,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { DEFAULT_OBJECT_COLOR } from "../../constants";
 import type { DeviceType } from "../../data/devices";
-import { useCatalogItemDrag, type CatalogItemDragOption } from "../../hooks/useCatalogItemDrag";
+import { CatalogDraggableItem } from "./CatalogDndProvider";
 import "./CatalogList.css";
 
 const DEVICE_TYPE_ICON: Record<DeviceType, IconDefinition> = {
@@ -25,8 +25,12 @@ const DEVICE_TYPE_ICON: Record<DeviceType, IconDefinition> = {
 
 export type CatalogViewMode = "text" | "list" | "grid" | "large";
 
-export interface CatalogListOption extends CatalogItemDragOption {
+export interface CatalogListOption {
+  id: string;
   name: string;
+  image?: string | null;
+  widthMm?: number;
+  depthMm?: number;
   /** Color for placeholder when no image */
   color?: string;
 }
@@ -93,7 +97,7 @@ export function CatalogList({
   label,
   size,
   options,
-  onAdd,
+  onAdd: _onAdd,
   catalogMode,
   viewMode,
   onViewModeChange,
@@ -101,20 +105,7 @@ export function CatalogList({
   const listRef = useRef<HTMLDivElement>(null);
   const scrollRestoreRef = useRef<number | null>(null);
 
-  const handleAdd = useCallback(
-    (optId: string) => {
-      if (listRef.current) scrollRestoreRef.current = listRef.current.scrollTop;
-      onAdd(optId);
-    },
-    [onAdd]
-  );
-
-  const { handlePointerDown, imageBase } = useCatalogItemDrag({
-    catalogMode,
-    defaultWidthMm: 100,
-    defaultDepthMm: 100,
-    onTap: handleAdd,
-  });
+  const imageBase = catalogMode === "boards" ? "images/boards/" : "images/devices/";
 
   useLayoutEffect(() => {
     const el = listRef.current;
@@ -124,16 +115,6 @@ export function CatalogList({
       scrollRestoreRef.current = null;
     }
   });
-
-  useLayoutEffect(() => {
-    const el = listRef.current;
-    if (!el) return;
-    const handler = (e: TouchEvent) => {
-      if ((e.target as Element).closest(".catalog-list-item")) e.preventDefault();
-    };
-    el.addEventListener("touchstart", handler, { passive: false });
-    return () => el.removeEventListener("touchstart", handler);
-  }, []);
 
   const listClassName = `catalog-list catalog-list--${viewMode}`;
   const minHeight = viewMode === "grid" || viewMode === "large" ? 120 : size * 28;
@@ -160,14 +141,15 @@ export function CatalogList({
           <div className="catalog-list-empty">No matches</div>
         ) : (
           options.map((opt) => (
-            <button
+            <CatalogDraggableItem
               key={opt.id}
-              type="button"
-              role="option"
+              id={opt.id}
+              catalogMode={catalogMode}
+              imageUrl={opt.image ? `${imageBase}${opt.image}` : null}
+              widthMm={opt.widthMm ?? 100}
+              depthMm={opt.depthMm ?? 100}
               className="catalog-list-item"
-              onPointerDown={(e) => handlePointerDown(e, opt)}
-              onContextMenu={(e) => e.preventDefault()}
-              title={`Add ${opt.name} at center, or long-press to drag`}
+              title={`Long-press to drag ${opt.name} onto the board`}
             >
               {viewMode !== "text" && (
                 <span className="catalog-list-item-thumb">
@@ -182,18 +164,22 @@ export function CatalogList({
                 </span>
               )}
               <span className="catalog-list-item-text">{opt.name}</span>
-            </button>
+            </CatalogDraggableItem>
           ))
         )}
       </div>
-      <p className="catalog-list-hint">Click to add, long-press to drag</p>
+      <p className="catalog-list-hint">Long-press to drag onto the board</p>
     </>
   );
 }
 
-export interface CatalogListGroupOption extends CatalogItemDragOption {
+export interface CatalogListGroupOption {
+  id: string;
   name: string;
   type: string;
+  image?: string | null;
+  widthMm?: number;
+  depthMm?: number;
   color?: string;
 }
 
@@ -215,7 +201,7 @@ export function CatalogListGrouped({
   label,
   size,
   groups,
-  onAdd,
+  onAdd: _onAddGrouped,
   catalogMode,
   viewMode,
   onViewModeChange,
@@ -233,20 +219,7 @@ export function CatalogListGrouped({
     });
   }, []);
 
-  const handleAdd = useCallback(
-    (optId: string) => {
-      if (listRef.current) scrollRestoreRef.current = listRef.current.scrollTop;
-      onAdd(optId);
-    },
-    [onAdd]
-  );
-
-  const { handlePointerDown, imageBase } = useCatalogItemDrag({
-    catalogMode,
-    defaultWidthMm: 75,
-    defaultDepthMm: 120,
-    onTap: handleAdd,
-  });
+  const imageBase = catalogMode === "boards" ? "images/boards/" : "images/devices/";
 
   useLayoutEffect(() => {
     const el = listRef.current;
@@ -256,16 +229,6 @@ export function CatalogListGrouped({
       scrollRestoreRef.current = null;
     }
   });
-
-  useLayoutEffect(() => {
-    const el = listRef.current;
-    if (!el) return;
-    const handler = (e: TouchEvent) => {
-      if ((e.target as Element).closest(".catalog-list-item")) e.preventDefault();
-    };
-    el.addEventListener("touchstart", handler, { passive: false });
-    return () => el.removeEventListener("touchstart", handler);
-  }, []);
 
   const listClassName = `catalog-list catalog-list--${viewMode}`;
   const minHeight = viewMode === "grid" || viewMode === "large" ? 120 : size * 28;
@@ -343,14 +306,15 @@ export function CatalogListGrouped({
                     }
                   >
                     {groupOptions.map((opt) => (
-                      <button
+                      <CatalogDraggableItem
                         key={opt.id}
-                        type="button"
-                        role="option"
+                        id={opt.id}
+                        catalogMode={catalogMode}
+                        imageUrl={opt.image ? `${imageBase}${opt.image}` : null}
+                        widthMm={opt.widthMm ?? 75}
+                        depthMm={opt.depthMm ?? 120}
                         className="catalog-list-item"
-                        onPointerDown={(e) => handlePointerDown(e, opt)}
-                        onContextMenu={(e) => e.preventDefault()}
-                        title={`Add ${opt.name} at center, or long-press to drag`}
+                        title={`Long-press to drag ${opt.name} onto the board`}
                       >
                         {viewMode !== "text" && (
                           <span className="catalog-list-item-thumb">
@@ -365,7 +329,7 @@ export function CatalogListGrouped({
                           </span>
                         )}
                         <span className="catalog-list-item-text">{opt.name}</span>
-                      </button>
+                      </CatalogDraggableItem>
                     ))}
                   </div>
                 </div>
@@ -374,7 +338,7 @@ export function CatalogListGrouped({
           )
         )}
       </div>
-      <p className="catalog-list-hint">Click to add, long-press to drag</p>
+      <p className="catalog-list-hint">Long-press to drag onto the board</p>
     </>
   );
 }

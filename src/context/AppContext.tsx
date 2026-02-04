@@ -77,29 +77,13 @@ interface AppContextValue {
   onDeviceSelect: (templateId: string) => void;
   onBoardSelectAt: (templateId: string, canvasX: number, canvasY: number) => void;
   onDeviceSelectAt: (templateId: string, canvasX: number, canvasY: number) => void;
-  /** Long-press drag from catalog: state and position for ghost; startCatalogDrag starts it, pointerup ends it. */
-  catalogDrag: {
-    templateId: string;
-    mode: "boards" | "devices";
-    imageUrl: string | null;
-    widthMm: number;
-    depthMm: number;
-  } | null;
-  catalogDragPosition: { x: number; y: number };
-  setCatalogDragPosition: React.Dispatch<React.SetStateAction<{ x: number; y: number }>>;
-  startCatalogDrag: (
-    templateId: string,
-    mode: "boards" | "devices",
-    imageUrl: string | null,
-    pointerId: number,
+  /** Place a catalog item on the canvas (used by @dnd-kit onDragEnd). */
+  placeFromCatalog: (
     clientX: number,
     clientY: number,
-    widthMm: number,
-    depthMm: number
+    data: { mode: "boards" | "devices"; templateId: string }
   ) => void;
-  /** Called when catalog drag ends (pointer up/cancel); does placement and cleanup. */
-  endCatalogDrag: (clientX: number, clientY: number) => void;
-  /** Returns true if the last interaction was a catalog drag end (so click handlers should not add). */
+  /** Returns true if the last interaction was a catalog drop (so click handlers should not close panel). */
   shouldIgnoreCatalogClick: () => boolean;
   onCustomBoardCreate: (params: { widthMm: number; depthMm: number; color: string; name: string }) => void;
   onCustomDeviceCreate: (params: { widthMm: number; depthMm: number; color: string; name: string }) => void;
@@ -334,14 +318,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [addObjectFromTemplate]
   );
 
-  const {
-    catalogDrag,
-    catalogDragPosition,
-    setCatalogDragPosition,
-    startCatalogDrag,
-    endCatalogDrag,
-    shouldIgnoreCatalogClick,
-  } = useCatalogDrag({
+  const { placeFromCatalog, shouldIgnoreCatalogClick } = useCatalogDrag({
     canvasRef,
     zoomRef,
     panRef,
@@ -546,11 +523,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     onDeviceSelect: handleDeviceSelect,
     onBoardSelectAt: handleBoardSelectAt,
     onDeviceSelectAt: handleDeviceSelectAt,
-    catalogDrag,
-    catalogDragPosition,
-    setCatalogDragPosition,
-    startCatalogDrag,
-    endCatalogDrag,
+    placeFromCatalog,
     shouldIgnoreCatalogClick,
     onCustomBoardCreate: handleCustomBoardCreate,
     onCustomDeviceCreate: handleCustomDeviceCreate,

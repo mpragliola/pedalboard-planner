@@ -1,14 +1,24 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useCallback } from "react";
+import { useDroppable } from "@dnd-kit/core";
 import { CanvasObject } from "./CanvasObject";
 import { Grid } from "./zoom/Grid";
 import { RulerOverlay } from "./ruler/RulerOverlay";
 import { LineRulerOverlay } from "./ruler/LineRulerOverlay";
 import { SelectionToolbar } from "./selection/SelectionToolbar";
 import { useApp } from "../context/AppContext";
+import { CANVAS_DROP_ID } from "./catalog/CatalogDndProvider";
 import "./Canvas.css";
 
 export function Canvas() {
   const viewportRef = useRef<HTMLDivElement>(null);
+  const { setNodeRef: setDroppableRef } = useDroppable({ id: CANVAS_DROP_ID });
+  const mergeViewportRef = useCallback(
+    (el: HTMLDivElement | null) => {
+      (viewportRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+      setDroppableRef(el);
+    },
+    [setDroppableRef]
+  );
   const {
     canvasRef,
     zoom,
@@ -73,7 +83,7 @@ export function Canvas() {
         }}
       />
       <div
-        ref={viewportRef}
+        ref={mergeViewportRef}
         className="canvas-viewport"
         style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }}
       >

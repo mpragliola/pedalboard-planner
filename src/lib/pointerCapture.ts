@@ -6,8 +6,8 @@
 export interface PointerCaptureHandlers {
   /** Called on pointermove. Return false to end capture early. */
   onMove?: (e: PointerEvent) => void | false;
-  /** Called on pointerup or pointercancel */
-  onEnd?: (e: PointerEvent) => void;
+  /** Called on pointerup or pointercancel. Return false to keep listening (ignore this end). */
+  onEnd?: (e: PointerEvent) => void | false;
   /** If true, calls preventDefault on move events (default: true) */
   preventDefaultOnMove?: boolean;
 }
@@ -54,8 +54,8 @@ export function capturePointer(pointerId: number, handlers: PointerCaptureHandle
 
   const handleEnd = (e: PointerEvent) => {
     if (e.pointerId !== pointerId || released) return;
-    release();
-    onEnd?.(e);
+    const keepListening = onEnd?.(e) === false;
+    if (!keepListening) release();
   };
 
   const release = () => {
@@ -95,7 +95,7 @@ export function capturePointerWithPosition(
   options: {
     initialPosition: { x: number; y: number };
     onMove?: (position: { x: number; y: number }, e: PointerEvent) => void | false;
-    onEnd?: (position: { x: number; y: number }, e: PointerEvent) => void;
+    onEnd?: (position: { x: number; y: number }, e: PointerEvent) => void | false;
     preventDefaultOnMove?: boolean;
   }
 ): PointerCaptureResult & { getPosition: () => { x: number; y: number } } {
@@ -109,7 +109,7 @@ export function capturePointerWithPosition(
     },
     onEnd: (e) => {
       position = { x: e.clientX, y: e.clientY };
-      options.onEnd?.(position, e);
+      return options.onEnd?.(position, e);
     },
   });
 

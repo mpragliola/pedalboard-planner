@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Canvas } from "./components/Canvas";
 import { BoardMenu } from "./components/boardmenu/BoardMenu";
 import { DropdownsPanel } from "./components/catalog/DropdownsPanel";
-import { CatalogDragGhost } from "./components/catalog/CatalogDragGhost";
+import { CatalogDndProvider } from "./components/catalog/CatalogDndProvider";
 import { ZoomControls } from "./components/zoom/ZoomControls";
 import { SelectionInfoPopup } from "./components/selection/SelectionInfoPopup";
 import { HistoryControls } from "./components/history/HistoryControls";
@@ -24,7 +24,6 @@ function AppContent() {
       role="application"
       aria-label="Pedalboard editor"
     >
-      <CatalogDragGhost />
       <Canvas />
       <div className={`catalog-panel${panelExpanded ? " panel-expanded" : ""}`}>
         <div className="catalog-panel-head">
@@ -72,7 +71,9 @@ function App() {
   return (
     <ConfirmationProvider>
       <AppProvider>
-        <AppContent />
+        <CatalogDndProvider>
+          <AppContent />
+        </CatalogDndProvider>
       </AppProvider>
     </ConfirmationProvider>
   );

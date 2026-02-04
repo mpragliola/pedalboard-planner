@@ -51,6 +51,7 @@
   width: 100%;
   max-height: 14em;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* momentum scroll on iOS */
   padding: 2px 0;
   border: 1px solid #ccc;
   border-radius: 4px;
@@ -394,9 +395,9 @@
 }
 
 /* Focus styles */
-/* All catalog items: prevent OS from stealing touch (long-press menu, scroll) on mobile */
+/* Allow vertical scroll when touch starts on item; prevent text callout only */
 .catalog-list-item {
-  touch-action: none;
+  touch-action: pan-y;
   -webkit-touch-callout: none;
 }
 
@@ -406,12 +407,11 @@
 }
 
 /* ========== LONG-PRESS FEEDBACK ========== */
-/* While pressing/holding - subtle scale and highlight; touch-action:none prevents OS long-press gestures */
+/* While pressing/holding - subtle scale and highlight; keep pan-y so list can still scroll until long-press fires */
 .catalog-list-item.catalog-item-pressing {
   transform: scale(0.97);
   background: rgba(10, 132, 255, 0.08);
   transition: transform 0.15s ease-out, background 0.15s ease-out;
-  touch-action: none;
 }
 
 /* Grid/large mode: also add border highlight */
