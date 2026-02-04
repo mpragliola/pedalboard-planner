@@ -1,6 +1,7 @@
 import type { RefObject } from "react";
 import { DEFAULT_OBJECT_COLOR, BASE_URL } from "../constants";
 import { getObjectDimensions } from "../lib/stateManager";
+import { normalizeRotation } from "../lib/geometry";
 import type { CanvasObjectType } from "../types";
 import "./CanvasObject.css";
 
@@ -33,8 +34,6 @@ function tooltipText(obj: CanvasObjectType): string {
   ].filter(Boolean);
   return parts.join(" · ") || obj.name;
 }
-
-const normalizeRotation = (r: number) => ((r % 360) + 360) % 360;
 
 const STACK_BASE = 1;
 const STACK_DRAGGING = 10000;

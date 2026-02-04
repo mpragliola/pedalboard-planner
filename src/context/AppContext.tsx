@@ -16,6 +16,7 @@ import { useObjectDrag } from "../hooks/useObjectDrag";
 import { useBoardDeviceFilters } from "../hooks/useBoardDeviceFilters";
 import { useHistory } from "../hooks/useHistory";
 import { useCatalogDrag } from "../hooks/useCatalogDrag";
+import { normalizeRotation } from "../lib/geometry";
 import type { CanvasObjectType, Connector } from "../types";
 
 const stateManager = new StateManager("pedal/state");
@@ -227,7 +228,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const centerView = useCallback(() => {
     const el = canvasRef.current;
     if (!el || objects.length === 0) return;
-    const normalizeRotation = (r: number) => ((r % 360) + 360) % 360;
     let minX = Infinity;
     let minY = Infinity;
     let maxX = -Infinity;
