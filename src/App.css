@@ -4,7 +4,8 @@
   top: 24px;
   left: 24px;
   z-index: 200;
-  width: 180px;
+  width: 240px;
+  min-width: 240px;
   display: flex;
   flex-direction: column;
   background: rgba(255, 255, 255, 0.9);
@@ -30,8 +31,8 @@ body.catalog-dragging .catalog-panel {
 
 @media (min-width: 1024px) {
   .catalog-panel {
-    width: 216px;
-    /* 20% wider on large screens */
+    width: 280px;
+    min-width: 280px;
   }
 }
 
@@ -44,6 +45,7 @@ body.catalog-dragging .catalog-panel {
 @media (min-width: 1920px) {
   .catalog-panel {
     width: 400px;
+    min-width: 400px;
   }
 }
 
