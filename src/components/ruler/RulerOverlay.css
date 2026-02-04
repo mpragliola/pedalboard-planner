@@ -11,7 +11,13 @@
   position: absolute;
   border: 2px solid #e67e22;
   background: rgba(230, 126, 34, 0.12);
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: grab;
+}
+
+.ruler-overlay.ruler-overlay--grabbing,
+.ruler-overlay.ruler-overlay--grabbing .ruler-rect {
+  cursor: grabbing;
 }
 
 .ruler-diagonal {
