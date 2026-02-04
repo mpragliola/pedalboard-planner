@@ -1,15 +1,22 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
+import { DRAG_THRESHOLD_PX } from '../../constants'
 import { useApp } from '../../context/AppContext'
 import { useCanvasCoords } from '../../hooks/useCanvasCoords'
 import { formatLength } from '../../lib/rulerFormat'
 import './RulerOverlay.css'
 
+type Rect = { x1: number; y1: number; x2: number; y2: number }
+type DragStart =
+  | { clientX: number; clientY: number; x: number; y: number; rect?: undefined }
+  | { clientX: number; clientY: number; x: number; y: number; rect: Rect }
+
 export function RulerOverlay() {
   const { canvasRef, zoom, pan, unit, setRuler } = useApp()
   const { clientToCanvas, toScreen } = useCanvasCoords(canvasRef, zoom, pan)
-  const [rect, setRect] = useState<{ x1: number; y1: number; x2: number; y2: number } | null>(null)
+  const [rect, setRect] = useState<Rect | null>(null)
   const [isDragging, setIsDragging] = useState(false)
-  const dragStartRef = useRef<{ x: number; y: number } | null>(null)
+  const dragStartRef = useRef<DragStart | null>(null)
+  const hasMovedRef = useRef(false)
   const overlayRef = useRef<HTMLDivElement>(null)
 
   const handlePointerDown = useCallback(
@@ -17,13 +24,16 @@ export function RulerOverlay() {
       if (e.button !== 0) return
       e.preventDefault()
       e.stopPropagation()
-      // If we already have a committed rectangle (not drawing), next click exits ruler mode
+      const { x, y } = clientToCanvas(e.clientX, e.clientY)
+      // If we already have a committed rectangle, start a potential drag (click without move will exit later)
       if (rect && !isDragging) {
-        setRuler(() => false)
+        dragStartRef.current = { clientX: e.clientX, clientY: e.clientY, x, y, rect: { ...rect } }
+        hasMovedRef.current = false
+        setIsDragging(true)
+        overlayRef.current?.setPointerCapture(e.pointerId)
         return
       }
-      const { x, y } = clientToCanvas(e.clientX, e.clientY)
-      dragStartRef.current = { x, y }
+      dragStartRef.current = { clientX: e.clientX, clientY: e.clientY, x, y }
       setIsDragging(true)
       setRect({ x1: x, y1: y, x2: x, y2: y })
       overlayRef.current?.setPointerCapture(e.pointerId)
@@ -33,14 +43,29 @@ export function RulerOverlay() {
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent) => {
-      if (!dragStartRef.current) return
+      const start = dragStartRef.current
+      if (!start) return
       const { x, y } = clientToCanvas(e.clientX, e.clientY)
-      setRect({
-        x1: dragStartRef.current.x,
-        y1: dragStartRef.current.y,
-        x2: x,
-        y2: y,
-      })
+      if (start.rect) {
+        // Moving existing rectangle
+        const dist = Math.hypot(e.clientX - start.clientX, e.clientY - start.clientY)
+        if (dist >= DRAG_THRESHOLD_PX) hasMovedRef.current = true
+        const dx = x - start.x
+        const dy = y - start.y
+        setRect({
+          x1: start.rect.x1 + dx,
+          y1: start.rect.y1 + dy,
+          x2: start.rect.x2 + dx,
+          y2: start.rect.y2 + dy,
+        })
+      } else {
+        setRect({
+          x1: start.x,
+          y1: start.y,
+          x2: x,
+          y2: y,
+        })
+      }
     },
     [clientToCanvas]
   )
@@ -49,10 +74,14 @@ export function RulerOverlay() {
     (e: React.PointerEvent) => {
       if (e.button !== 0) return
       overlayRef.current?.releasePointerCapture(e.pointerId)
-      setIsDragging(false)
+      const wasMovingRect = dragStartRef.current?.rect != null
+      const didMove = hasMovedRef.current
       dragStartRef.current = null
+      setIsDragging(false)
+      // Only exit ruler when user clicked on existing rect without dragging
+      if (wasMovingRect && !didMove) setRuler(() => false)
     },
-    []
+    [setRuler]
   )
 
   useEffect(() => {
