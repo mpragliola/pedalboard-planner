@@ -18,6 +18,7 @@ type Camera = {
   fov: number;
 };
 type ImageCacheEntry = HTMLImageElement | "error";
+type ZAnimState = { current: number; target: number };
 
 const FALLBACK_COLOR: Rgb = { r: 72, g: 72, b: 82 };
 const ROTATE_SPEED_RAD = Math.PI / 5;
@@ -29,6 +30,8 @@ const MIN_PITCH = 0.15;
 const MAX_PITCH = 1.2;
 const PITCH_OFFSET_MIN = -1.1;
 const PITCH_OFFSET_MAX = 1.1;
+const Z_ANIM_SPEED = 30;
+const Z_ANIM_EPS = 0.05;
 
 function vec3Sub(a: Vec3, b: Vec3): Vec3 {
   return { x: a.x - b.x, y: a.y - b.y, z: a.z - b.z };
@@ -288,8 +291,7 @@ function isFaceVisible(points: Vec3[], normal: Vec3, camera: Camera): boolean {
   return vec3Dot(normal, viewDir) > 0;
 }
 
-function buildFaces(objects: CanvasObjectType[], yaw: number, pitchOffset: number): Face[] {
-  const stacked = computeStackedObjects(objects);
+function buildFaces(stacked: StackedObject[], yaw: number, pitchOffset: number): Face[] {
   const metrics = getSceneMetrics(stacked);
   const pitch = clamp(metrics.basePitch + pitchOffset, MIN_PITCH, MAX_PITCH);
   const camera = createCamera(metrics.center, metrics.radius, yaw, pitch);
@@ -524,6 +526,8 @@ export function Mini3DOverlay() {
   const objectsRef = useRef(objects);
   const sizeRef = useRef(size);
   const imageCacheRef = useRef<Map<string, ImageCacheEntry>>(new Map());
+  const zAnimRef = useRef<Map<string, ZAnimState>>(new Map());
+  const autoRotateRef = useRef(autoRotate);
 
   useEffect(() => {
     if (!showMini3d) return;
@@ -547,8 +551,58 @@ export function Mini3DOverlay() {
     sizeRef.current = size;
   }, [size]);
 
+  useEffect(() => {
+    autoRotateRef.current = autoRotate;
+  }, [autoRotate]);
+
   const notifyImageLoaded = useCallback(() => {
     setImageTick((v) => v + 1);
+  }, []);
+
+  const syncZTargets = useCallback((stacked: StackedObject[]): boolean => {
+    const map = zAnimRef.current;
+    const seen = new Set<string>();
+    let active = false;
+    for (const item of stacked) {
+      const id = item.obj.id;
+      seen.add(id);
+      const target = item.baseZ;
+      const entry = map.get(id);
+      if (!entry) {
+        map.set(id, { current: target, target });
+        continue;
+      }
+      if (Math.abs(entry.target - target) > Z_ANIM_EPS) {
+        entry.target = target;
+      }
+      if (Math.abs(entry.current - entry.target) > Z_ANIM_EPS) active = true;
+    }
+    for (const [id] of map) {
+      if (!seen.has(id)) map.delete(id);
+    }
+    return active;
+  }, []);
+
+  const updateZAnimation = useCallback((dt: number): boolean => {
+    const map = zAnimRef.current;
+    if (map.size === 0) return false;
+    const alpha = 1 - Math.exp(-Z_ANIM_SPEED * dt);
+    let active = false;
+    for (const entry of map.values()) {
+      const diff = entry.target - entry.current;
+      if (Math.abs(diff) <= Z_ANIM_EPS) {
+        entry.current = entry.target;
+        continue;
+      }
+      entry.current += diff * alpha;
+      if (Math.abs(entry.target - entry.current) > Z_ANIM_EPS) active = true;
+    }
+    return active;
+  }, []);
+
+  const getAnimatedBaseZ = useCallback((id: string, fallback: number): number => {
+    const entry = zAnimRef.current.get(id);
+    return entry ? entry.current : fallback;
   }, []);
 
   const drawScene = useCallback(
@@ -573,7 +627,13 @@ export function Mini3DOverlay() {
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      const faces = buildFaces(currentObjects, yaw, pitchOffset);
+      const stackedTargets = computeStackedObjects(currentObjects);
+      const needsZAnim = syncZTargets(stackedTargets);
+      const stackedAnimated = stackedTargets.map((item) => ({
+        ...item,
+        baseZ: getAnimatedBaseZ(item.obj.id, item.baseZ),
+      }));
+      const faces = buildFaces(stackedAnimated, yaw, pitchOffset);
       if (faces.length === 0) return;
       faces.sort((a, b) => {
         const byMax = b.maxDepth - a.maxDepth;
@@ -626,9 +686,36 @@ export function Mini3DOverlay() {
         }
         drawQuad(ctx, face.points, fill, stroke);
       }
+
+      if (needsZAnim) startRenderLoop();
     },
-    [showMini3d, notifyImageLoaded]
+    [showMini3d, notifyImageLoaded, syncZTargets, getAnimatedBaseZ]
   );
+
+  const startRenderLoop = useCallback(() => {
+    if (rafRef.current != null) return;
+    lastTimeRef.current = null;
+    const step = (time: number) => {
+      if (lastTimeRef.current == null) lastTimeRef.current = time;
+      const dt = (time - lastTimeRef.current) / 1000;
+      lastTimeRef.current = time;
+      let keepRunning = false;
+      if (autoRotateRef.current) {
+        yawRef.current = (yawRef.current + ROTATE_SPEED_RAD * dt) % (Math.PI * 2);
+        keepRunning = true;
+      }
+      const zActive = updateZAnimation(dt);
+      if (zActive) keepRunning = true;
+      drawScene(yawRef.current, pitchRef.current, objectsRef.current, sizeRef.current);
+      if (keepRunning) {
+        rafRef.current = requestAnimationFrame(step);
+      } else {
+        rafRef.current = null;
+        lastTimeRef.current = null;
+      }
+    };
+    rafRef.current = requestAnimationFrame(step);
+  }, [drawScene, updateZAnimation]);
 
   const handleRotatePointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
@@ -673,22 +760,18 @@ export function Mini3DOverlay() {
   }, [objects, size, showMini3d, imageTick, drawScene]);
 
   useEffect(() => {
-    if (!showMini3d || !autoRotate) return;
-    const step = (time: number) => {
-      if (lastTimeRef.current == null) lastTimeRef.current = time;
-      const dt = (time - lastTimeRef.current) / 1000;
-      lastTimeRef.current = time;
-      yawRef.current = (yawRef.current + ROTATE_SPEED_RAD * dt) % (Math.PI * 2);
-      drawScene(yawRef.current, pitchRef.current, objectsRef.current, sizeRef.current);
-      rafRef.current = requestAnimationFrame(step);
-    };
-    rafRef.current = requestAnimationFrame(step);
+    if (!showMini3d) return;
+    if (autoRotate) startRenderLoop();
+  }, [autoRotate, showMini3d, startRenderLoop]);
+
+  useEffect(() => {
+    if (!showMini3d) return;
     return () => {
       if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
       lastTimeRef.current = null;
     };
-  }, [autoRotate, showMini3d, drawScene]);
+  }, [showMini3d]);
 
   if (!showMini3d) return null;
 
