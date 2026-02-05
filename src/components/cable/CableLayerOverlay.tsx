@@ -357,6 +357,7 @@ export function CableLayerOverlay() {
       {(hasSegments || hasPreview) && popupCenter && totalLength > 0 && (
         <div
           className="ruler-popup"
+          data-no-canvas-zoom
           style={{
             left: popupCenter.x,
             top: popupCenter.y - 6,
@@ -374,7 +375,7 @@ export function CableLayerOverlay() {
         </div>
       )}
       {(hasSegments || hasPreview) && (
-        <div className="cable-layer-actions">
+        <div className="cable-layer-actions" data-no-canvas-zoom>
           <div className="cable-layer-buttons">
             <button
               type="button"

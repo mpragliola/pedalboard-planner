@@ -143,10 +143,14 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
    * being set when this effect first runs (Canvas mounts after AppProvider). */
   useEffect(() => {
     const onWheel = (e: WheelEvent) => {
+      const target = e.target as Element | null;
+      if (!target) return;
+      if (target.closest("[data-no-canvas-zoom]")) return;
       // Skip wheel zoom when any modal dialog is open so wheel can scroll inside modals.
       if (document.querySelector('dialog[open], [role="dialog"][aria-modal="true"]')) return;
       const el = canvasRef.current;
       if (!el) return;
+      if (!el.contains(target)) return;
       const rect = el.getBoundingClientRect();
       if (
         e.clientX < rect.left ||

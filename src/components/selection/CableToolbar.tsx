@@ -61,6 +61,7 @@ export function CableToolbar({ cable, onEdit, onDelete }: CableToolbarProps) {
   return (
     <div
       className="selection-toolbar cable-toolbar"
+      data-no-canvas-zoom
       style={{
         left: `${left}px`,
         top: `${top}px`,

@@ -148,6 +148,7 @@ export function RulerOverlay() {
           {hasMeasure && (
             <div
               className="ruler-popup"
+              data-no-canvas-zoom
               style={{
                 left: left + width / 2,
                 top: top - 6,

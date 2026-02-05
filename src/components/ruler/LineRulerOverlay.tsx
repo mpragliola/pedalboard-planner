@@ -139,6 +139,7 @@ export function LineRulerOverlay() {
       {((hasSegments || hasPreview) && popupCenter && totalLength > 0) && (
         <div
           className="ruler-popup"
+          data-no-canvas-zoom
           style={{
             left: popupCenter.x,
             top: popupCenter.y - 6,

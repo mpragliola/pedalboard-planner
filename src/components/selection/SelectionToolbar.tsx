@@ -58,6 +58,7 @@ export function SelectionToolbar({ obj, onDelete, onRotate, onSendToBack }: Sele
   return (
     <div
       className="selection-toolbar"
+      data-no-canvas-zoom
       style={{
         left: `${left}px`,
         top: `${top}px`,
