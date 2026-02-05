@@ -124,16 +124,18 @@ function ConnectorPicker({
         aria-expanded={overlayOpen}
         onClick={() => setOverlayOpen(true)}
       >
-        {iconSrc && (
-          <img
-            src={iconSrc}
-            alt=""
-            className="add-cable-connector-trigger-icon"
-            width={20}
-            height={20}
-          />
-        )}
-        <span className="add-cable-connector-trigger-label">{currentOption?.label ?? value}</span>
+        <span className="add-cable-connector-trigger-content">
+          {iconSrc && (
+            <img
+              src={iconSrc}
+              alt=""
+              className="add-cable-connector-trigger-icon"
+              width={24}
+              height={24}
+            />
+          )}
+          <span className="add-cable-connector-trigger-label">{currentOption?.label ?? value}</span>
+        </span>
         <span className="add-cable-connector-chevron" aria-hidden>▾</span>
       </button>
       {overlay}

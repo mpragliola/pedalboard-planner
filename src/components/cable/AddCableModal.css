@@ -152,7 +152,6 @@
   width: 100%;
   min-height: 44px;
   padding: 8px 12px;
-  font-size: 0.8125rem;
   font-family: inherit;
   color: #111;
   background: #fff;
@@ -170,14 +169,27 @@
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
+/* Selection display: icon on top, label below with small font */
+.add-cable-connector-trigger-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
 .add-cable-connector-trigger-icon {
   flex-shrink: 0;
   object-fit: contain;
 }
 
 .add-cable-connector-trigger-label {
-  flex: 1;
-  min-width: 0;
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: var(--add-cable-muted, #6b7280);
+  line-height: 1.2;
+  text-align: center;
 }
 
 .add-cable-connector-chevron {
@@ -352,7 +364,8 @@
 /* —— Label combobox (input + suggestions dropdown) —— */
 .add-cable-label-combo {
   position: relative;
-  min-width: 6rem;
+  min-width: 4rem;
+  max-width: 7rem;
   display: flex;
   align-items: stretch;
   border: 1px solid var(--add-cable-border, #e5e7eb);
@@ -370,10 +383,11 @@
 .add-cable-label-combo-input {
   flex: 1;
   min-width: 0;
-  min-height: 44px;
+  min-height: 40px;
   border: none;
   border-radius: 8px 0 0 8px;
-  padding: 8px 12px;
+  padding: 6px 8px;
+  font-size: 0.8125rem;
   -webkit-user-select: text;
   user-select: text;
   touch-action: manipulation;
@@ -386,14 +400,14 @@
 
 .add-cable-label-combo-btn {
   flex-shrink: 0;
-  width: 36px;
-  min-height: 44px;
+  width: 28px;
+  min-height: 40px;
   padding: 0;
   border: none;
   border-left: 1px solid var(--add-cable-border, #e5e7eb);
   border-radius: 0 8px 8px 0;
   background: transparent;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--add-cable-muted, #9ca3af);
   cursor: pointer;
   display: flex;
