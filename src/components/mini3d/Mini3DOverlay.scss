@@ -4,8 +4,8 @@
   position: fixed;
   bottom: vars.$floating-panel-offset;
   left: vars.$floating-panel-offset;
-  width: clamp(vars.$mini3d-width-min, 25vw, vars.$mini3d-width-max);
-  height: clamp(vars.$mini3d-height-min, 25vh, vars.$mini3d-height-max);
+  width: clamp(vars.$mini3d-width-min, 50vw, vars.$mini3d-width-max);
+  height: clamp(vars.$mini3d-height-min, 50vh, vars.$mini3d-height-max);
   z-index: vars.$z-mini3d;
   pointer-events: auto;
   opacity: 0.85;
