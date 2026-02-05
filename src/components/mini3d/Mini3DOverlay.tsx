@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useApp } from "../../context/AppContext";
+import { useUi } from "../../context/UiContext";
 import { BASE_URL, DEFAULT_OBJECT_COLOR } from "../../constants";
 import { getObjectDimensions } from "../../lib/stateManager";
 import { normalizeRotation } from "../../lib/geometry";
@@ -506,7 +507,8 @@ function drawTexturedQuad(
 }
 
 export function Mini3DOverlay() {
-  const { objects, showMini3d } = useApp();
+  const { objects } = useApp();
+  const { showMini3d } = useUi();
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });

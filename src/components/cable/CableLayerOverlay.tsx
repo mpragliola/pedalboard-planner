@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useApp } from "../../context/AppContext";
+import { useUi } from "../../context/UiContext";
 import { getObjectDimensions } from "../../lib/stateManager";
 import { buildRoundedPathD, buildSmoothPathD, DEFAULT_JOIN_RADIUS } from "../../lib/polylinePath";
 import { formatLength } from "../../lib/rulerFormat";
@@ -22,7 +23,8 @@ const CABLE_STROKE_WIDTH_MM = 5;
 const ENDPOINT_DOT_RADIUS_PX = 5;
 
 export function CableLayerOverlay() {
-  const { canvasRef, zoom, pan, unit, objects, addCableAndPersist, setCableLayer, spaceDown } = useApp();
+  const { canvasRef, zoom, pan, unit, objects, addCableAndPersist, spaceDown } = useApp();
+  const { setCableLayer } = useUi();
   const { clientToCanvas, toScreen } = useCanvasCoords(canvasRef, zoom, pan);
   const [pendingSegments, setPendingSegments] = useState<CableSegment[] | null>(null);
   const finishClickRef = useRef<() => void>(() => {});

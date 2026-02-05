@@ -10,6 +10,7 @@ import { AddCableModal } from "./cable/AddCableModal";
 import { SelectionToolbar } from "./selection/SelectionToolbar";
 import { CableToolbar } from "./selection/CableToolbar";
 import { useApp } from "../context/AppContext";
+import { useUi } from "../context/UiContext";
 import { CANVAS_DROP_ID } from "./catalog/CatalogDndProvider";
 import "./Canvas.scss";
 
@@ -28,12 +29,6 @@ export function Canvas() {
     zoom,
     pan,
     tileSize,
-    showGrid,
-    xray,
-    ruler,
-    lineRuler,
-    cableLayer,
-    cablesVisible,
     cables,
     unit,
     isPanning,
@@ -41,7 +36,6 @@ export function Canvas() {
     canvasAnimating,
     setCanvasAnimating,
     handleCanvasPointerDown,
-    setFloatingUiVisible,
     shouldIgnoreCatalogClick,
     objects,
     selectedObjectIds,
@@ -59,6 +53,7 @@ export function Canvas() {
     setCables,
     setSelectedCableId,
   } = useApp();
+  const { showGrid, xray, ruler, lineRuler, cableLayer, cablesVisible, setFloatingUiVisible } = useUi();
 
   const [editingCableId, setEditingCableId] = useState<string | null>(null);
   const selectedCable = selectedCableId ? cables.find((c) => c.id === selectedCableId) : null;

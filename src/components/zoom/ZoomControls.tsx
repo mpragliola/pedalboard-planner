@@ -15,12 +15,14 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import { useState } from 'react'
 import { useApp } from '../../context/AppContext'
+import { useUi } from '../../context/UiContext'
 import { ZoomButton } from './ZoomButton'
 import { ComponentListModal } from '../componentlist/ComponentListModal'
 import './ZoomControls.scss'
 
 export function ZoomControls() {
-  const { zoomIn, zoomOut, showGrid, setShowGrid, xray, setXray, showMini3d, setShowMini3d, ruler, setRuler, lineRuler, setLineRuler, cableLayer, setCableLayer, cablesVisible, setCablesVisible, centerView } = useApp()
+  const { zoomIn, zoomOut, centerView } = useApp()
+  const { showGrid, setShowGrid, xray, setXray, showMini3d, setShowMini3d, ruler, setRuler, lineRuler, setLineRuler, cableLayer, setCableLayer, cablesVisible, setCablesVisible } = useUi()
   const [componentListOpen, setComponentListOpen] = useState(false)
   const [measurementExpanded, setMeasurementExpanded] = useState(false)
   const [viewExpanded, setViewExpanded] = useState(false)

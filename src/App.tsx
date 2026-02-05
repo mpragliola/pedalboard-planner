@@ -16,7 +16,8 @@ import { useUi } from "./context/UiContext";
 import "./App.scss";
 
 function AppContent() {
-  const { dropdownPanelRef, floatingUiVisible, setFloatingUiVisible, panelExpanded, setPanelExpanded } = useApp();
+  const { dropdownPanelRef } = useApp();
+  const { floatingUiVisible, setFloatingUiVisible, panelExpanded, setPanelExpanded } = useUi();
   const { open: settingsOpen, setOpen: setSettingsOpen } = useSettingsModal();
   return (
     <div

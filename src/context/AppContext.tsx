@@ -17,6 +17,7 @@ import { useHistory } from "../hooks/useHistory";
 import { useCatalogDrag } from "../hooks/useCatalogDrag";
 import { normalizeRotation } from "../lib/geometry";
 import type { CanvasObjectType, Cable } from "../types";
+import { UiProvider, type UiContextValue } from "./UiContext";
 
 const stateManager = new StateManager("pedal/state");
 
@@ -30,20 +31,6 @@ interface AppContextValue {
   zoom: number;
   pan: { x: number; y: number };
   tileSize: number;
-  showGrid: boolean;
-  setShowGrid: (fn: (v: boolean) => boolean) => void;
-  xray: boolean;
-  setXray: (fn: (v: boolean) => boolean) => void;
-  showMini3d: boolean;
-  setShowMini3d: (fn: (v: boolean) => boolean) => void;
-  ruler: boolean;
-  setRuler: (fn: (v: boolean) => boolean) => void;
-  lineRuler: boolean;
-  setLineRuler: (fn: (v: boolean) => boolean) => void;
-  cableLayer: boolean;
-  setCableLayer: (fn: (v: boolean) => boolean) => void;
-  cablesVisible: boolean;
-  setCablesVisible: (fn: (v: boolean) => boolean) => void;
   unit: "mm" | "in";
   setUnit: (u: "mm" | "in") => void;
   isPanning: boolean;
@@ -96,11 +83,6 @@ interface AppContextValue {
     mode: "boards" | "devices",
     params: { widthMm: number; depthMm: number; color: string; name: string }
   ) => void;
-  // Floating UI visibility
-  floatingUiVisible: boolean;
-  setFloatingUiVisible: React.Dispatch<React.SetStateAction<boolean>>;
-  panelExpanded: boolean;
-  setPanelExpanded: React.Dispatch<React.SetStateAction<boolean>>;
   cables: Cable[];
   setCables: React.Dispatch<React.SetStateAction<Cable[]>>;
   /** Add a cable and persist to storage immediately (so cables don't disappear). */
@@ -563,79 +545,161 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [setCables]
   );
 
-  const value: AppContextValue = {
-    canvasRef,
-    dropdownPanelRef,
-    zoom,
-    pan,
-    tileSize,
-    showGrid,
-    setShowGrid,
-    xray,
-    setXray,
-    showMini3d,
-    setShowMini3d,
-    ruler,
-    setRuler,
-    lineRuler,
-    setLineRuler,
-    cableLayer,
-    setCableLayer,
-    cablesVisible,
-    setCablesVisible,
-    unit,
-    setUnit,
-    isPanning,
-    spaceDown,
-    zoomIn,
-    zoomOut,
-    centerView,
-    canvasAnimating,
-    setCanvasAnimating,
-    handleCanvasPointerDown,
-    objects,
-    setObjects,
-    selectedObjectIds,
-    setSelectedObjectIds,
-    imageFailedIds,
-    draggingObjectId,
-    onImageError: handleImageError,
-    onObjectPointerDown: handleObjectPointerDown,
-    onDragEnd: clearDragState,
-    onDeleteObject: handleDeleteObject,
-    onRotateObject: handleRotateObject,
-    onSendToBack: handleSendToBack,
-    onBringToFront: handleBringToFront,
-    undo,
-    redo,
-    canUndo,
-    canRedo,
-    catalogMode,
-    setCatalogMode,
-    filters,
-    onBoardSelect: handleBoardSelect,
-    onDeviceSelect: handleDeviceSelect,
-    placeFromCatalog,
-    shouldIgnoreCatalogClick,
-    onCustomBoardCreate: (params) => handleCustomCreate("boards", params),
-    onCustomDeviceCreate: (params) => handleCustomCreate("devices", params),
-    onCustomCreate: handleCustomCreate,
-    floatingUiVisible,
-    setFloatingUiVisible,
-    panelExpanded,
-    setPanelExpanded,
-    cables,
-    setCables,
-    addCableAndPersist,
-    selectedCableId,
-    setSelectedCableId,
-    onCablePointerDown: handleCablePointerDown,
-    newBoard,
-    loadBoardFromFile,
-    saveBoardToFile,
-  };
+  const uiValue = useMemo<UiContextValue>(
+    () => ({
+      showGrid,
+      setShowGrid,
+      xray,
+      setXray,
+      showMini3d,
+      setShowMini3d,
+      ruler,
+      setRuler,
+      lineRuler,
+      setLineRuler,
+      cableLayer,
+      setCableLayer,
+      cablesVisible,
+      setCablesVisible,
+      floatingUiVisible,
+      setFloatingUiVisible,
+      panelExpanded,
+      setPanelExpanded,
+    }),
+    [
+      showGrid,
+      setShowGrid,
+      xray,
+      setXray,
+      showMini3d,
+      setShowMini3d,
+      ruler,
+      setRuler,
+      lineRuler,
+      setLineRuler,
+      cableLayer,
+      setCableLayer,
+      cablesVisible,
+      setCablesVisible,
+      floatingUiVisible,
+      setFloatingUiVisible,
+      panelExpanded,
+      setPanelExpanded,
+    ]
+  );
 
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+  const value = useMemo<AppContextValue>(
+    () => ({
+      canvasRef,
+      dropdownPanelRef,
+      zoom,
+      pan,
+      tileSize,
+      unit,
+      setUnit,
+      isPanning,
+      spaceDown,
+      zoomIn,
+      zoomOut,
+      centerView,
+      canvasAnimating,
+      setCanvasAnimating,
+      handleCanvasPointerDown,
+      objects,
+      setObjects,
+      selectedObjectIds,
+      setSelectedObjectIds,
+      imageFailedIds,
+      draggingObjectId,
+      onImageError: handleImageError,
+      onObjectPointerDown: handleObjectPointerDown,
+      onDragEnd: clearDragState,
+      onDeleteObject: handleDeleteObject,
+      onRotateObject: handleRotateObject,
+      onSendToBack: handleSendToBack,
+      onBringToFront: handleBringToFront,
+      undo,
+      redo,
+      canUndo,
+      canRedo,
+      catalogMode,
+      setCatalogMode,
+      filters,
+      onBoardSelect: handleBoardSelect,
+      onDeviceSelect: handleDeviceSelect,
+      placeFromCatalog,
+      shouldIgnoreCatalogClick,
+      onCustomBoardCreate: (params) => handleCustomCreate("boards", params),
+      onCustomDeviceCreate: (params) => handleCustomCreate("devices", params),
+      onCustomCreate: handleCustomCreate,
+      cables,
+      setCables,
+      addCableAndPersist,
+      selectedCableId,
+      setSelectedCableId,
+      onCablePointerDown: handleCablePointerDown,
+      newBoard,
+      loadBoardFromFile,
+      saveBoardToFile,
+    }),
+    [
+      canvasRef,
+      dropdownPanelRef,
+      zoom,
+      pan,
+      tileSize,
+      unit,
+      setUnit,
+      isPanning,
+      spaceDown,
+      zoomIn,
+      zoomOut,
+      centerView,
+      canvasAnimating,
+      setCanvasAnimating,
+      handleCanvasPointerDown,
+      objects,
+      setObjects,
+      selectedObjectIds,
+      setSelectedObjectIds,
+      imageFailedIds,
+      draggingObjectId,
+      handleImageError,
+      handleObjectPointerDown,
+      clearDragState,
+      handleDeleteObject,
+      handleRotateObject,
+      handleSendToBack,
+      handleBringToFront,
+      undo,
+      redo,
+      canUndo,
+      canRedo,
+      catalogMode,
+      setCatalogMode,
+      filters,
+      handleBoardSelect,
+      handleDeviceSelect,
+      placeFromCatalog,
+      shouldIgnoreCatalogClick,
+      handleCustomCreate,
+      cables,
+      setCables,
+      addCableAndPersist,
+      selectedCableId,
+      setSelectedCableId,
+      handleCablePointerDown,
+      newBoard,
+      loadBoardFromFile,
+      saveBoardToFile,
+    ]
+  );
+
+  return (
+    <UiProvider value={uiValue}>
+      <AppContext.Provider value={value}>{children}</AppContext.Provider>
+    </UiProvider>
+  );
 }
 
 export function useApp(): AppContextValue {
