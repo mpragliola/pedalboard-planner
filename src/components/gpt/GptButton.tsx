@@ -2,7 +2,7 @@ import { faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useState } from 'react'
 import { GptModal } from './GptModal'
-import './GptButton.css'
+import './GptButton.scss'
 
 export function GptButton() {
   const [open, setOpen] = useState(false)

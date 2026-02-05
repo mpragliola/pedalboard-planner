@@ -1,6 +1,6 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
-import './SelectionToolbarButton.css'
+import './SelectionToolbarButton.scss'
 
 interface SelectionToolbarButtonProps {
   icon: IconDefinition

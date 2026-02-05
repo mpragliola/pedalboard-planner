@@ -1,7 +1,7 @@
 import { faRedo, faUndo } from '@fortawesome/free-solid-svg-icons'
 import { useApp } from '../../context/AppContext'
 import { HistoryButton } from './HistoryButton'
-import './HistoryControls.css'
+import './HistoryControls.scss'
 
 export function HistoryControls() {
   const { undo, redo, canUndo, canRedo } = useApp()

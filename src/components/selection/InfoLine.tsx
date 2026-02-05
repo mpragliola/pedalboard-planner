@@ -1,4 +1,4 @@
-import './InfoLine.css'
+import './InfoLine.scss'
 
 interface InfoLineProps {
   label: string

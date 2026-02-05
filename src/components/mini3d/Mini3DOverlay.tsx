@@ -4,7 +4,7 @@ import { BASE_URL, DEFAULT_OBJECT_COLOR } from "../../constants";
 import { getObjectDimensions } from "../../lib/stateManager";
 import { normalizeRotation } from "../../lib/geometry";
 import type { CanvasObjectType } from "../../types";
-import "./Mini3DOverlay.css";
+import "./Mini3DOverlay.scss";
 
 type Vec2 = { x: number; y: number };
 type Vec3 = { x: number; y: number; z: number };

@@ -11,7 +11,7 @@ import { SelectionToolbar } from "./selection/SelectionToolbar";
 import { CableToolbar } from "./selection/CableToolbar";
 import { useApp } from "../context/AppContext";
 import { CANVAS_DROP_ID } from "./catalog/CatalogDndProvider";
-import "./Canvas.css";
+import "./Canvas.scss";
 
 export function Canvas() {
   const viewportRef = useRef<HTMLDivElement>(null);

@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { CABLE_TERMINAL_START_COLOR, CABLE_TERMINAL_END_COLOR } from "../../constants";
 import { buildRoundedPathD, DEFAULT_JOIN_RADIUS } from "../../lib/polylinePath";
 import type { Cable } from "../../types";
-import "./CablePaths.css";
+import "./CablePaths.scss";
 
 const CABLE_STROKE_WIDTH_MM = 5;
 /** Extra stroke width for selected cable halo (mm), so halo = CABLE_STROKE_WIDTH_MM + 2 * HALO_EXTRA_MM. */

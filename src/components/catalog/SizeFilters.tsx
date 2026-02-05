@@ -1,4 +1,4 @@
-import './SizeFilters.css'
+import './SizeFilters.scss'
 
 interface SizeFiltersProps {
   unitLabel: string

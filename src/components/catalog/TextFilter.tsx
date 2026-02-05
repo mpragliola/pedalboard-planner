@@ -1,4 +1,4 @@
-import './TextFilter.css'
+import './TextFilter.scss'
 
 interface TextFilterProps {
   id: string

@@ -16,7 +16,7 @@ import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { DEFAULT_OBJECT_COLOR } from "../../constants";
 import type { DeviceType } from "../../data/devices";
 import { CatalogDraggableItem } from "./CatalogDndProvider";
-import "./CatalogList.css";
+import "./CatalogList.scss";
 
 const DEVICE_TYPE_ICON: Record<DeviceType, IconDefinition> = {
   pedal: faGuitar,

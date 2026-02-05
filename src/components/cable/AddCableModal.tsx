@@ -5,7 +5,7 @@ import { ModalContext } from "../../context/ModalContext";
 import { CONNECTOR_ICON_MAP, CONNECTOR_KIND_OPTIONS, CONNECTOR_NAME_OPTIONS } from "../../constants";
 import { CABLE_TERMINAL_START_COLOR, CABLE_TERMINAL_END_COLOR } from "../../constants";
 import type { Cable, CableSegment, ConnectorKind } from "../../types";
-import "./AddCableModal.css";
+import "./AddCableModal.scss";
 
 const DEFAULT_COLOR = "#333";
 

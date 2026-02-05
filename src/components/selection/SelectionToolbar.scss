@@ -1,0 +1,21 @@
+@use "../../styles/variables" as vars;
+
+.selection-toolbar {
+  position: absolute;
+  z-index: 50000;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  background: var(--toolbar-bg, vars.$color-toolbar-bg);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px vars.$black-30;
+  pointer-events: auto;
+}
+
+@media (max-width: 768px) {
+  .selection-toolbar {
+    transform: scale(1.5);
+    transform-origin: center center;
+  }
+}

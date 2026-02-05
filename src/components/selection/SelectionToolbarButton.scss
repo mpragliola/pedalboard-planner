@@ -1,0 +1,31 @@
+@use "../../styles/variables" as vars;
+
+.selection-toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: vars.$color-surface-strong;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.selection-toolbar-btn:hover {
+  background: rgba(vars.$color-white, 0.12);
+  color: vars.$color-text-inverse;
+}
+
+.selection-toolbar-btn-danger:hover {
+  background: rgba(220, 53, 69, 0.4);
+  color: vars.$color-danger-accent;
+}
+
+.selection-toolbar-btn-icon {
+  font-size: 1.125rem;
+  line-height: 1;
+}

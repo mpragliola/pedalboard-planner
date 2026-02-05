@@ -12,7 +12,8 @@ import { AppProvider, useApp } from "./context/AppContext";
 import { ConfirmationProvider } from "./context/ConfirmationContext";
 import { SettingsModalProvider, useSettingsModal } from "./context/SettingsModalContext";
 import { SettingsModal } from "./components/settings/SettingsModal";
-import "./App.css";
+import { useUi } from "./context/UiContext";
+import "./App.scss";
 
 function AppContent() {
   const { dropdownPanelRef, floatingUiVisible, setFloatingUiVisible, panelExpanded, setPanelExpanded } = useApp();

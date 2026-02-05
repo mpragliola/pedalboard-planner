@@ -1,7 +1,7 @@
 import { faGear } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useSettingsModal } from "../../context/SettingsModalContext";
-import "./SettingsButton.css";
+import "./SettingsButton.scss";
 
 export function SettingsButton() {
   const { setOpen } = useSettingsModal();

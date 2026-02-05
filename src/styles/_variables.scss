@@ -1,0 +1,105 @@
+// Typography
+$font-family-base: "Open Sans", system-ui, sans-serif;
+
+// Core colors
+$color-white: #fff;
+$color-black: #000;
+
+// Text
+$color-text-emphasis: #111;
+$color-text-strong: #222;
+$color-text: #333;
+$color-text-soft: #444;
+$color-text-muted: #555;
+$color-text-subtle: #666;
+$color-text-secondary: #6b7280;
+$color-text-secondary-dark: #374151;
+$color-text-tertiary: #9ca3af;
+$color-text-dim: #777;
+$color-text-faint: #999;
+$color-text-disabled: #888;
+$color-text-inverse: $color-white;
+$color-text-light: #e8e8e8;
+
+// Surfaces
+$color-surface: #fff;
+$color-surface-muted: #f0f0f0;
+$color-surface-soft: #f5f5f5;
+$color-surface-subtle: #f3f4f6;
+$color-surface-strong: #e0e0e0;
+$color-surface-outline: #e5e7eb;
+$color-surface-neutral: #e5e5e5;
+$color-surface-tint: #f8f8f8;
+$color-surface-highlight: #fafafa;
+$color-surface-blue: #e8f0f8;
+$color-surface-ghost: #eee;
+$color-surface-faint: #f9f9f9;
+
+// Borders
+$color-border: #ccc;
+$color-border-strong: #aaa;
+
+// Accents & links
+$color-primary: #0a84ff;
+$color-primary-strong: #1d4ed8;
+$color-primary-alt: #3b82f6;
+$color-primary-ink: #2563eb;
+$color-link: #0066cc;
+$color-link-hover: #0070e0;
+$color-accent-soft: #6478c8;
+$color-accent-muted: #668;
+$color-accent-ink: #334;
+
+// Status
+$color-warning: #e67e22;
+
+$color-danger: #c00;
+$color-danger-strong: #d32f2f;
+$color-danger-deep: #b71c1c;
+$color-danger-accent: #ff6b7a;
+$color-danger-tint: #fee;
+
+// UI
+$color-toolbar-bg: #2d2d2d;
+
+// Alpha helpers
+$black-04: rgba($color-black, 0.04);
+$black-05: rgba($color-black, 0.05);
+$black-06: rgba($color-black, 0.06);
+$black-08: rgba($color-black, 0.08);
+$black-10: rgba($color-black, 0.1);
+$black-12: rgba($color-black, 0.12);
+$black-15: rgba($color-black, 0.15);
+$black-20: rgba($color-black, 0.2);
+$black-22: rgba($color-black, 0.22);
+$black-25: rgba($color-black, 0.25);
+$black-30: rgba($color-black, 0.3);
+$black-35: rgba($color-black, 0.35);
+$black-39: rgba($color-black, 0.39);
+$black-40: rgba($color-black, 0.4);
+$black-50: rgba($color-black, 0.5);
+
+$white-35: rgba($color-white, 0.35);
+$white-18: rgba($color-white, 0.18);
+$white-60: rgba($color-white, 0.6);
+$white-90: rgba($color-white, 0.9);
+
+$primary-08: rgba($color-primary, 0.08);
+$primary-15: rgba($color-primary, 0.15);
+$primary-25: rgba($color-primary, 0.25);
+$primary-alt-15: rgba($color-primary-alt, 0.15);
+$accent-soft-25: rgba($color-accent-soft, 0.25);
+$warning-12: rgba($color-warning, 0.12);
+
+// Radii
+$radius-xs: 3px;
+$radius-sm: 4px;
+$radius-md: 6px;
+$radius-lg: 8px;
+$radius-xl: 12px;
+$radius-2xl: 24px;
+
+// Motion
+$transition-fast: 0.15s;
+$transition-medium: 0.25s;
+$transition-slow: 0.35s;

@@ -6,7 +6,7 @@ import { useConfirmation } from "../../context/ConfirmationContext";
 import { GptButton } from "../gpt/GptButton";
 import { InfoButton } from "../info/InfoButton";
 import { SettingsButton } from "../settings/SettingsButton";
-import "./BoardMenu.css";
+import "./BoardMenu.scss";
 
 export function BoardMenu() {
   const { newBoard, loadBoardFromFile, saveBoardToFile } = useApp();

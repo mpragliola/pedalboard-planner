@@ -1,6 +1,6 @@
 import { useApp } from "../../context/AppContext";
 import { Modal } from "../common/Modal";
-import "./SettingsModal.css";
+import "./SettingsModal.scss";
 
 interface SettingsModalProps {
   open: boolean;

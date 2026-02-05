@@ -2,7 +2,7 @@ import { faCircleInfo } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useState } from 'react'
 import { InfoModal } from './InfoModal'
-import './InfoButton.css'
+import './InfoButton.scss'
 
 export function InfoButton() {
   const [open, setOpen] = useState(false)

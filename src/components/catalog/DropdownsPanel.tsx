@@ -8,7 +8,7 @@ import { TextFilter } from "./TextFilter";
 import { CatalogList, CatalogListGrouped, type CatalogViewMode } from "./CatalogList";
 import { CustomItemForm } from "./CustomItemForm";
 import { SizeFilters } from "./SizeFilters";
-import "./DropdownsPanel.css";
+import "./DropdownsPanel.scss";
 
 export type { CatalogMode } from "./CatalogModeSwitch";
 

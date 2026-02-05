@@ -1,6 +1,6 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
-import './HistoryButton.css'
+import './HistoryButton.scss'
 
 interface HistoryButtonProps {
   icon: IconDefinition

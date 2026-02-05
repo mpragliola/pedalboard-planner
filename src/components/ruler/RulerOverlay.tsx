@@ -3,7 +3,7 @@ import { DRAG_THRESHOLD_PX } from "../../constants";
 import { useApp } from "../../context/AppContext";
 import { useCanvasCoords } from "../../hooks/useCanvasCoords";
 import { formatLength } from "../../lib/rulerFormat";
-import "./RulerOverlay.css";
+import "./RulerOverlay.scss";
 
 type Rect = { x1: number; y1: number; x2: number; y2: number };
 type DragStart =

@@ -1,5 +1,5 @@
 import { createPortal } from "react-dom";
-import "./InfoModal.css";
+import "./InfoModal.scss";
 
 interface InfoModalProps {
   open: boolean;

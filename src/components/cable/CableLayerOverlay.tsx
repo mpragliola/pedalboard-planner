@@ -9,8 +9,8 @@ import { useCablePhysics } from "../../hooks/useCablePhysics";
 import { AddCableModal } from "./AddCableModal";
 import { CABLE_TERMINAL_START_COLOR, CABLE_TERMINAL_END_COLOR } from "../../constants";
 import type { Cable, CableSegment } from "../../types";
-import "../ruler/RulerOverlay.css";
-import "./CableLayerOverlay.css";
+import "../ruler/RulerOverlay.scss";
+import "./CableLayerOverlay.scss";
 
 /** Current (in-progress) cable: dashed, black, 0.5 opacity to distinguish from laid-down cables. */
 const CURRENT_CABLE_STROKE = "#000";

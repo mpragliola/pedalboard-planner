@@ -14,7 +14,7 @@ import {
 import { useApp } from "../../context/AppContext";
 import { LONG_PRESS_MS, MOVE_THRESHOLD_PX, MM_TO_PX } from "../../constants";
 import { DEFAULT_OBJECT_COLOR } from "../../constants";
-import "./CatalogDragGhost.css";
+import "./CatalogDragGhost.scss";
 
 const CANVAS_DROP_ID = "canvas-drop";
 const SAFETY_NET_MS = 8000;

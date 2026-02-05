@@ -1,0 +1,71 @@
+@use "../../styles/variables" as vars;
+
+.zoom-controls.floating-controls {
+  position: fixed;
+  z-index: 10100;
+}
+
+.zoom-controls {
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.view-tools-group,
+.measurement-tools-group {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  gap: 8px;
+}
+
+.view-tools-secondary,
+.measurement-tools-secondary {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-width 0.25s ease-out, opacity 0.2s ease-out;
+}
+
+.view-tools-group.expanded .view-tools-secondary {
+  max-width: 252px;
+  /* 44*5 + 8*4 for 5 buttons */
+  overflow: visible;
+  opacity: 1;
+  transition: max-width 0.3s ease-out, opacity 0.2s ease-in;
+}
+
+.measurement-tools-group.expanded .measurement-tools-secondary {
+  max-width: 96px;
+  /* 44*2 + 8 for 2 buttons (Ruler, Line ruler) */
+  overflow: visible;
+  opacity: 1;
+  transition: max-width 0.3s ease-out, opacity 0.2s ease-in;
+}
+
+.zoom-btn.view-group-toggle,
+.zoom-btn.measurement-group-toggle {
+  transition: color 0.2s ease;
+}
+
+.zoom-btn.view-group-toggle.open,
+.zoom-btn.measurement-group-toggle.open {
+  color: vars.$color-text-faint;
+}
+
+.zoom-btn.view-group-toggle.open:hover,
+.zoom-btn.measurement-group-toggle.open:hover {
+  color: vars.$color-text-dim;
+}
+
+.zoom-btn.view-group-toggle.open.active,
+.zoom-btn.measurement-group-toggle.open.active {
+  color: vars.$color-accent-muted;
+}

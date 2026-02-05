@@ -1,0 +1,41 @@
+@use "./styles/variables" as vars;
+
+:root {
+  font-family: vars.$font-family-base;
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+html {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+#root {
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}

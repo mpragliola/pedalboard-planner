@@ -1,4 +1,4 @@
-import './CatalogModeSwitch.css'
+import './CatalogModeSwitch.scss'
 
 export type CatalogMode = 'boards' | 'devices'
 

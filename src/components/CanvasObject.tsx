@@ -3,7 +3,7 @@ import { DEFAULT_OBJECT_COLOR, BASE_URL } from "../constants";
 import { getObjectDimensions } from "../lib/stateManager";
 import { normalizeRotation } from "../lib/geometry";
 import type { CanvasObjectType } from "../types";
-import "./CanvasObject.css";
+import "./CanvasObject.scss";
 
 /** Resolve image URL so relative paths work from app root (e.g. when BASE_URL is set). */
 function imageSrc(path: string | null | undefined): string {

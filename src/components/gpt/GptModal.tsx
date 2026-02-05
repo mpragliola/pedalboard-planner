@@ -3,7 +3,7 @@ import { useApp } from '../../context/AppContext'
 import { LocationLoader } from '../../lib/locationLoader'
 import { PromptBuilder } from '../../lib/promptBuilder'
 import { Modal } from '../common/Modal'
-import './GptModal.css'
+import './GptModal.scss'
 
 interface GptModalProps {
   open: boolean

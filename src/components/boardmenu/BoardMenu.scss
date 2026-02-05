@@ -1,0 +1,80 @@
+@use "../../styles/variables" as vars;
+
+.board-menu-wrap {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 100;
+}
+
+.board-menu {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  background: vars.$white-90;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px vars.$black-20;
+}
+
+.board-menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: vars.$color-text;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.board-menu-btn:hover {
+  background: vars.$black-06;
+}
+
+.board-menu-btn:active {
+  background: vars.$black-10;
+}
+
+.board-menu-file-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* GPT, Info, Settings buttons in file menu – match board-menu-btn size */
+.board-menu .gpt-btn,
+.board-menu .info-btn,
+.board-menu .settings-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+.board-menu .gpt-btn,
+.board-menu .info-btn,
+.board-menu .settings-btn {
+  background: transparent;
+}
+.board-menu .gpt-btn:hover,
+.board-menu .info-btn:hover,
+.board-menu .settings-btn:hover {
+  background: vars.$black-06;
+  box-shadow: none;
+}
+.board-menu .gpt-btn:active,
+.board-menu .info-btn:active,
+.board-menu .settings-btn:active {
+  background: vars.$black-10;
+}

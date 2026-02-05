@@ -17,7 +17,7 @@ import { useState } from 'react'
 import { useApp } from '../../context/AppContext'
 import { ZoomButton } from './ZoomButton'
 import { ComponentListModal } from '../componentlist/ComponentListModal'
-import './ZoomControls.css'
+import './ZoomControls.scss'
 
 export function ZoomControls() {
   const { zoomIn, zoomOut, showGrid, setShowGrid, xray, setXray, showMini3d, setShowMini3d, ruler, setRuler, lineRuler, setLineRuler, cableLayer, setCableLayer, cablesVisible, setCablesVisible, centerView } = useApp()

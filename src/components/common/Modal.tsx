@@ -1,7 +1,7 @@
 import { useRef, useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { ModalContext } from "../../context/ModalContext";
-import "./Modal.css";
+import "./Modal.scss";
 
 interface ModalProps {
   open: boolean;

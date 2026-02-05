@@ -1,4 +1,4 @@
-import './Grid.css'
+import './Grid.scss'
 
 interface GridProps {
   visible: boolean

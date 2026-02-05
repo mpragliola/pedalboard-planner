@@ -1,0 +1,25 @@
+@use "../../styles/variables" as vars;
+
+/* Grid lives inside canvas-viewport so it shares the same transform/scale as objects (1 px = 1 mm). */
+/* Thin lines every 1 unit; slightly thicker line every 10 units. */
+.canvas-grid {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  --grid-size: 10px;
+  background-image:
+    /* major: every 10 lines */
+    linear-gradient(to right, vars.$white-35 1px, transparent 1px),
+    linear-gradient(to bottom, vars.$white-35 1px, transparent 1px),
+    /* fine: every line, thinner */
+    linear-gradient(to right, vars.$white-18 0.5px, transparent 0.5px),
+    linear-gradient(to bottom, vars.$white-18 0.5px, transparent 0.5px);
+  background-size:
+    calc(10 * var(--grid-size)) calc(10 * var(--grid-size)),
+    calc(10 * var(--grid-size)) calc(10 * var(--grid-size)),
+    var(--grid-size) var(--grid-size),
+    var(--grid-size) var(--grid-size);
+}

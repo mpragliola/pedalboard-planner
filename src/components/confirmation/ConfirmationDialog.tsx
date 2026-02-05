@@ -1,6 +1,6 @@
 import { useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import "./ConfirmationDialog.css";
+import "./ConfirmationDialog.scss";
 
 export interface ConfirmationDialogProps {
   open: boolean;

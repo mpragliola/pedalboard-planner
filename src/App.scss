@@ -1,0 +1,231 @@
+@use "./styles/variables" as vars;
+
+/* App content fills viewport; no scroll - canvas and overlays sit on top */
+.app-content {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* Catalog panel (toggle + body) - used in App.tsx */
+.catalog-panel {
+  position: fixed;
+  top: 24px;
+  left: 24px;
+  z-index: 200;
+  width: 240px;
+  min-width: 240px;
+  display: flex;
+  flex-direction: column;
+  background: vars.$white-90;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px vars.$black-20;
+  overflow: hidden;
+  transition: transform 0.25s ease-out, opacity 0.25s ease-out, width 0.2s ease-out, max-width 0.2s ease-out;
+}
+
+/* Slide entire panel out during catalog drag */
+body.catalog-dragging .catalog-panel {
+  transform: translateX(calc(-100% - 24px));
+  opacity: 0.3;
+  transition: transform 0.2s ease-in, opacity 0.2s ease-in;
+}
+
+/* On mobile: slide up instead of left */
+@media (max-width: 767px) {
+  body.catalog-dragging .catalog-panel {
+    transform: translateY(calc(-100% - 24px));
+  }
+}
+
+@media (min-width: 1024px) {
+  .catalog-panel {
+    width: 280px;
+    min-width: 280px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .catalog-panel {
+    width: 320px;
+  }
+}
+
+@media (min-width: 1920px) {
+  .catalog-panel {
+    width: 400px;
+    min-width: 400px;
+  }
+}
+
+.catalog-panel-head {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  border-bottom: 1px solid vars.$black-06;
+}
+
+/* File menu (New, Load, Save, GPT, Info, Settings) embedded in catalog head */
+.catalog-panel-head .board-menu {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.panel-expand-btn {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: 6px 10px;
+  color: vars.$color-text-soft;
+  background: vars.$black-04;
+  border: 1px solid vars.$black-15;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  font-size: 1rem;
+  min-width: 36px;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.panel-expand-btn svg {
+  display: block;
+  width: 0.9em;
+  height: 0.9em;
+}
+
+.panel-expand-btn:hover {
+  background: vars.$black-05;
+  color: vars.$color-text;
+}
+
+.catalog-panel.panel-expanded {
+  width: calc(100vw - 48px);
+  max-width: 800px;
+}
+
+/* Hide expand button only on very small screens where layout is constrained */
+@media (max-width: 480px) {
+  .panel-expand-btn {
+    display: none;
+  }
+}
+
+.catalog-panel-toggle {
+  padding: 4px 8px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: vars.$color-text;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.catalog-panel-toggle:hover {
+  background: vars.$black-06;
+}
+
+.catalog-panel-toggle-icon {
+  display: block;
+}
+
+.catalog-panel-body {
+  max-height: 75vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition: max-height 0.3s ease-out;
+}
+
+.catalog-panel-body.minimized {
+  max-height: 0;
+  pointer-events: none;
+}
+
+.catalog-panel-body .floating-dropdowns {
+  position: relative;
+  top: 0;
+  left: 0;
+  width: 100%;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+  max-height: none;
+}
+
+@media (max-width: 768px) {
+  .catalog-panel-toggle {
+    font-size: 0.975rem;
+  }
+}
+
+/* Mobile and tablet portrait: cap width so panel isn't too wide */
+@media (max-width: 768px) and (orientation: portrait) {
+  .catalog-panel {
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-width: min(300px, calc(100vw - 24px));
+  }
+}
+
+/* Small mobile landscape: keep catalog from covering whole screen so filters + canvas visible */
+@media (max-width: 767px) and (orientation: landscape) {
+  .catalog-panel {
+    max-height: 85vh;
+  }
+
+  .catalog-panel-body {
+    max-height: 50vh;
+    overflow-y: auto;
+  }
+}
+
+/* Disclaimer */
+.disclaimer {
+  position: fixed;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  margin: 0;
+  padding: 4px 12px;
+  font-size: 0.7rem;
+  color: rgba(vars.$color-white, 0.7);
+  background: vars.$black-35;
+  border-radius: 6px;
+  pointer-events: none;
+  white-space: nowrap;
+  max-width: calc(100vw - 24px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Footer */
+.copyright {
+  position: fixed;
+  bottom: 8px;
+  left: 12px;
+  z-index: 100;
+  font-size: 0.9rem;
+  color: vars.$white-60;
+  font-weight: 500;
+}
+
+.copyright a {
+  color: rgba(vars.$color-white, 0.75);
+  text-decoration: none;
+}
+
+.copyright a:hover {
+  text-decoration: underline;
+}

@@ -4,7 +4,7 @@ import { getObjectDimensions } from "../../lib/stateManager";
 import { useConfirmation } from "../../context/ConfirmationContext";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { SelectionToolbarButton } from "./SelectionToolbarButton";
-import "./SelectionToolbar.css";
+import "./SelectionToolbar.scss";
 
 const TOOLBAR_GAP = 8;
 const TOOLBAR_HEIGHT = 36;

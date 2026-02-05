@@ -1,0 +1,39 @@
+@use "../../styles/variables" as vars;
+
+.catalog-mode-switch {
+  display: flex;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px vars.$black-20;
+  background: vars.$white-90;
+  margin-bottom: 6px;
+}
+
+.catalog-mode-btn {
+  flex: 1;
+  padding: 4px 8px;
+  border: none;
+  background: transparent;
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: vars.$color-text-subtle;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  text-transform: uppercase;
+}
+
+.catalog-mode-btn:hover {
+  background: vars.$black-06;
+  color: vars.$color-text;
+}
+
+.catalog-mode-btn.active {
+  background: vars.$accent-soft-25;
+  color: vars.$color-accent-ink;
+}
+
+@media (max-width: 768px) {
+  .catalog-mode-btn {
+    font-size: 0.91rem;
+  }
+}

@@ -1,0 +1,108 @@
+@use "../../styles/variables" as vars;
+
+/* Native dialog styling */
+.confirmation-dialog {
+  border: none;
+  border-radius: 12px;
+  padding: 0;
+  background: vars.$color-surface;
+  box-shadow: 0 8px 32px vars.$black-25;
+  min-width: 320px;
+  max-width: min(400px, calc(100vw - 48px));
+  /* Restore centering removed by global reset */
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  margin: 0;
+}
+
+.confirmation-dialog::backdrop {
+  background: vars.$black-35;
+  animation: confirmation-fade-in 0.15s ease-out;
+}
+
+@keyframes confirmation-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.confirmation-dialog[open] {
+  animation: confirmation-scale-in 0.2s ease-out;
+}
+
+@keyframes confirmation-scale-in {
+  from {
+    opacity: 0;
+    scale: 0.98;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+.confirmation-content {
+  padding: 20px 24px;
+}
+
+.confirmation-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: vars.$color-text-strong;
+  margin: 0 0 10px;
+}
+
+.confirmation-message {
+  font-size: 0.85rem;
+  color: vars.$color-text-soft;
+  line-height: 1.45;
+  margin: 0 0 20px;
+}
+
+.confirmation-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.confirmation-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  border: none;
+}
+
+.confirmation-cancel {
+  background: vars.$black-06;
+  color: vars.$color-text-soft;
+}
+
+.confirmation-cancel:hover {
+  background: vars.$black-10;
+  color: vars.$color-text-strong;
+}
+
+.confirmation-confirm {
+  background: vars.$color-primary;
+  color: vars.$color-text-inverse;
+}
+
+.confirmation-confirm:hover {
+  background: vars.$color-link-hover;
+}
+
+.confirmation-confirm.confirmation-danger {
+  background: vars.$color-danger-strong;
+}
+
+.confirmation-confirm.confirmation-danger:hover {
+  background: vars.$color-danger-deep;
+}

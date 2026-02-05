@@ -1,0 +1,23 @@
+@use "../../styles/variables" as vars;
+
+.gpt-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  background: linear-gradient(180deg, vars.$color-surface-tint 0%, vars.$color-text-light 100%);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: vars.$color-text;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.gpt-btn:hover {
+  background: linear-gradient(180deg, vars.$color-surface 0%, vars.$color-surface-muted 100%);
+  box-shadow: 0 1px 4px vars.$black-10;
+}
+
+.gpt-btn:active {
+  background: vars.$color-surface-neutral;
+}

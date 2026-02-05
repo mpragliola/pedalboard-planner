@@ -4,7 +4,7 @@ import { buildRoundedPathD, DEFAULT_JOIN_RADIUS } from '../../lib/polylinePath'
 import { formatLength } from '../../lib/rulerFormat'
 import { useCanvasCoords } from '../../hooks/useCanvasCoords'
 import { usePolylineDraw } from '../../hooks/usePolylineDraw'
-import './RulerOverlay.css'
+import './RulerOverlay.scss'
 
 export function LineRulerOverlay() {
   const { canvasRef, zoom, pan, unit, setLineRuler } = useApp()

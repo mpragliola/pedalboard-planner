@@ -7,7 +7,7 @@ import { useConfirmation } from "../../context/ConfirmationContext";
 import { BASE_URL, CONNECTOR_ICON_MAP, DEFAULT_OBJECT_COLOR } from "../../constants";
 import { formatLengthCm } from "../../lib/rulerFormat";
 import type { Cable, CanvasObjectType, ConnectorKind } from "../../types";
-import "./ComponentListModal.css";
+import "./ComponentListModal.scss";
 
 function imageSrc(path: string | null | undefined): string {
   if (!path) return "";
