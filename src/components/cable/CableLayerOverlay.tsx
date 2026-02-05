@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useApp } from "../../context/AppContext";
 import { getObjectDimensions } from "../../lib/stateManager";
-import { buildRoundedPathD, DEFAULT_JOIN_RADIUS } from "../../lib/polylinePath";
+import { buildRoundedPathD, buildSmoothPathD, DEFAULT_JOIN_RADIUS } from "../../lib/polylinePath";
 import { formatLength } from "../../lib/rulerFormat";
 import { useCanvasCoords } from "../../hooks/useCanvasCoords";
 import { useCableDraw } from "../../hooks/useCableDraw";
+import { useCablePhysics } from "../../hooks/useCablePhysics";
 import { AddCableModal } from "./AddCableModal";
 import { CABLE_TERMINAL_START_COLOR, CABLE_TERMINAL_END_COLOR } from "../../constants";
 import type { Cable, CableSegment } from "../../types";
@@ -51,6 +52,8 @@ export function CableLayerOverlay() {
     onDoubleClickExit: exitMode,
     onFinishClickRef: finishClickRef,
   });
+
+  const physicsPoints = useCablePhysics(segmentStart, currentEnd, hasPreview && pendingSegments === null);
 
   const openAddCableModal = useCallback(() => {
     const final = getFinalSegments();
@@ -247,9 +250,13 @@ export function CableLayerOverlay() {
         )
       : "";
 
-  const p1Screen = segmentStart && hasPreview ? toScreen(segmentStart.x, segmentStart.y) : null;
-  const p2Screen = currentEnd && hasPreview ? toScreen(currentEnd.x, currentEnd.y) : null;
-  const previewPathD = p1Screen && p2Screen ? `M ${p1Screen.x} ${p1Screen.y} L ${p2Screen.x} ${p2Screen.y}` : "";
+  const physicsScreenPoints = physicsPoints.map((p) => toScreen(p.x, p.y));
+  const previewPathD =
+    physicsScreenPoints.length >= 2
+      ? buildSmoothPathD(physicsScreenPoints)
+      : segmentStart && currentEnd && hasPreview
+        ? `M ${toScreen(segmentStart.x, segmentStart.y).x} ${toScreen(segmentStart.x, segmentStart.y).y} L ${toScreen(currentEnd.x, currentEnd.y).x} ${toScreen(currentEnd.x, currentEnd.y).y}`
+        : "";
 
   const firstPoint = points[0];
   const lastPoint = points.length > 1 ? points[points.length - 1] : null;
