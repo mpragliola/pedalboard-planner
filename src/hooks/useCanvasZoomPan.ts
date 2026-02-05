@@ -143,6 +143,7 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
    * being set when this effect first runs (Canvas mounts after AppProvider). */
   useEffect(() => {
     const onWheel = (e: WheelEvent) => {
+      if (document.querySelector("dialog[open]")) return;
       const el = canvasRef.current;
       if (!el) return;
       const rect = el.getBoundingClientRect();
