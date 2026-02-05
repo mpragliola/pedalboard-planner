@@ -2,31 +2,12 @@ import { useState, useEffect, useRef, useContext } from "react";
 import { createPortal } from "react-dom";
 import { Modal } from "../common/Modal";
 import { ModalContext } from "../../context/ModalContext";
-import { CONNECTOR_ICON_MAP, CONNECTOR_KIND_OPTIONS, CONNECTOR_NAME_OPTIONS } from "../../constants";
+import { CONNECTOR_ICON_MAP, CONNECTOR_KIND_OPTIONS, CONNECTOR_NAME_OPTIONS, CABLE_COLORS, CABLE_COLOR_OPTIONS } from "../../constants";
 import { CABLE_TERMINAL_START_COLOR, CABLE_TERMINAL_END_COLOR } from "../../constants";
 import type { Cable, CableSegment, ConnectorKind } from "../../types";
 import "./AddCableModal.scss";
 
-const DEFAULT_COLOR = "#333";
-
-const CABLE_COLOR_OPTIONS: string[] = [
-  "#333",
-  "#000",
-  "#fff",
-  "#c00",
-  "#06c",
-  "#080",
-  "#c90",
-  "#609",
-  "#f80",
-  "#0aa",
-  "#666",
-  "#a52a2a",
-  "#ff69b4",
-  "#2e8b57",
-  "#ffd700",
-  "#4a4a4a",
-];
+const DEFAULT_COLOR = CABLE_COLORS[0].hex;
 
 function nextCableId(): string {
   return `cable-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -317,16 +298,16 @@ export function AddCableModal({ open, segments, onConfirm, onCancel, initialCabl
         <div className="add-cable-row add-cable-color-row">
           <span className="add-cable-label">Color</span>
           <div className="add-cable-color-swatches" role="group" aria-label="Cable color">
-            {CABLE_COLOR_OPTIONS.map((hex) => (
+            {CABLE_COLORS.map((cableColor) => (
               <button
-                key={hex}
+                key={cableColor.hex}
                 type="button"
-                className={`add-cable-color-swatch-btn${color === hex ? " add-cable-color-swatch-btn-selected" : ""}`}
-                style={{ backgroundColor: hex }}
-                onClick={() => setColor(hex)}
-                title={hex}
-                aria-label={`Color ${hex}`}
-                aria-pressed={color === hex}
+                className={`add-cable-color-swatch-btn${color === cableColor.hex ? " add-cable-color-swatch-btn-selected" : ""}`}
+                style={{ backgroundColor: cableColor.hex }}
+                onClick={() => setColor(cableColor.hex)}
+                title={cableColor.label}
+                aria-label={cableColor.label}
+                aria-pressed={color === cableColor.hex}
               />
             ))}
           </div>
