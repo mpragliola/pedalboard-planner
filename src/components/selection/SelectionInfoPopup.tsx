@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useApp } from "../../context/AppContext";
 import { getObjectDimensions } from "../../lib/stateManager";
-import { formatDimension, formatLength } from "../../lib/rulerFormat";
+import { formatDimension, formatLengthCmOrInches } from "../../lib/rulerFormat";
 import { InfoLine } from "./InfoLine";
 import "./SelectionInfoPopup.css";
 
@@ -32,7 +32,7 @@ export function SelectionInfoPopup() {
         <div className="info-title">Cable</div>
         <InfoLine label="Connector A" value={connectorALabel} />
         <InfoLine label="Connector B" value={connectorBLabel} />
-        <InfoLine label="Length" value={formatLength(lengthMm, unit)} />
+        <InfoLine label="Length" value={formatLengthCmOrInches(lengthMm, unit)} />
       </div>
     );
   }
