@@ -73,6 +73,10 @@ export function CableLayerOverlay() {
     setPendingSegments(null);
   }, []);
 
+  /* Ref so ESC handler always sees current drawing state (avoids stale closure) */
+  const hasDrawingRef = useRef(false);
+  hasDrawingRef.current = !!(hasSegments || hasPreview);
+
   const lastTapRef = useRef<{ time: number; clientX: number; clientY: number } | null>(null);
   const DOUBLE_TAP_MS = 350;
   const DOUBLE_TAP_PX = 50;
@@ -172,7 +176,8 @@ export function CableLayerOverlay() {
         } catch {
           /* ok */
         }
-        if (hasSegments || hasPreview) openAddCableModal();
+        /* Only open modal when release was over Add cable button, not Cancel */
+        if (hit?.closest?.(".cable-layer-add-btn") && (hasSegments || hasPreview)) openAddCableModal();
         if (e.button === 0 || e.pointerType === "touch") {
           lastTapRef.current = { time: Date.now(), clientX: e.clientX, clientY: e.clientY };
         }
@@ -197,15 +202,23 @@ export function CableLayerOverlay() {
         if (e.key === "Escape") setPendingSegments(null);
         return;
       }
-      if (e.key === "Escape") exitMode();
-      if (e.key === "Enter" && (hasSegments || hasPreview)) {
+      if (e.key === "Escape") {
+        if (hasDrawingRef.current) {
+          e.preventDefault();
+          clearDrawing();
+        } else {
+          exitMode();
+        }
+        return;
+      }
+      if (e.key === "Enter" && hasDrawingRef.current) {
         e.preventDefault();
         openAddCableModal();
       }
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [exitMode, hasSegments, hasPreview, openAddCableModal, pendingSegments]);
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => window.removeEventListener("keydown", handleKeyDown, true);
+  }, [exitMode, openAddCableModal, pendingSegments, clearDrawing]);
 
   const joinRadiusPx = DEFAULT_JOIN_RADIUS * zoom;
   const strokeWidthPx = CABLE_STROKE_WIDTH_MM * zoom;
@@ -267,6 +280,16 @@ export function CableLayerOverlay() {
 
   const showBothLengths = hasPreview && totalLength > committedLength + 0.01;
 
+  const handleContextMenu = useCallback(
+    (e: React.MouseEvent) => {
+      if (hasSegments || hasPreview) {
+        e.preventDefault();
+        clearDrawing();
+      }
+    },
+    [hasSegments, hasPreview, clearDrawing]
+  );
+
   return (
     <div
       className={`cable-layer-overlay ruler-overlay${pendingSegments !== null ? " cable-layer-modal-open" : ""}`}
@@ -274,6 +297,7 @@ export function CableLayerOverlay() {
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
+      onContextMenu={handleContextMenu}
     >
       <svg className="cable-layer-svg ruler-diagonal" style={{ left: 0, top: 0 }}>
         {committedPathD && (
@@ -327,14 +351,24 @@ export function CableLayerOverlay() {
       )}
       {(hasSegments || hasPreview) && (
         <div className="cable-layer-actions">
-          <button
-            type="button"
-            className="cable-layer-add-btn"
-            onClick={openAddCableModal}
-            title="Add cable (Enter). Stay in cable mode to draw more; double-tap to exit."
-          >
-            Add cable
-          </button>
+          <div className="cable-layer-buttons">
+            <button
+              type="button"
+              className="cable-layer-cancel-btn"
+              onClick={clearDrawing}
+              title="Cancel current cable (Esc or right-click). Start drawing again."
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="cable-layer-add-btn"
+              onClick={openAddCableModal}
+              title="Add cable (Enter). Stay in cable mode to draw more; double-tap to exit."
+            >
+              Add cable
+            </button>
+          </div>
           <p className="cable-layer-hint" aria-hidden>
             Draw another or double-tap to exit
           </p>

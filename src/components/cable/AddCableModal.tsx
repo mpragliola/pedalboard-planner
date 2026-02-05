@@ -6,6 +6,25 @@ import "./AddCableModal.css";
 
 const DEFAULT_COLOR = "#333";
 
+const CABLE_COLOR_OPTIONS: string[] = [
+  "#333",
+  "#000",
+  "#fff",
+  "#c00",
+  "#06c",
+  "#080",
+  "#c90",
+  "#609",
+  "#f80",
+  "#0aa",
+  "#666",
+  "#a52a2a",
+  "#ff69b4",
+  "#2e8b57",
+  "#ffd700",
+  "#4a4a4a",
+];
+
 function nextCableId(): string {
   return `cable-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
@@ -121,7 +140,9 @@ export function AddCableModal({ open, segments, onConfirm, onCancel, initialCabl
   useEffect(() => {
     if (open) {
       if (initialCable) {
-        setColor(initialCable.color);
+        setColor(
+          CABLE_COLOR_OPTIONS.includes(initialCable.color) ? initialCable.color : CABLE_COLOR_OPTIONS[0]
+        );
         setConnectorA(initialCable.connectorA);
         setConnectorB(initialCable.connectorB);
         setConnectorAName(initialCable.connectorAName ?? "");
@@ -164,24 +185,20 @@ export function AddCableModal({ open, segments, onConfirm, onCancel, initialCabl
     >
       <div className="add-cable-form">
         <div className="add-cable-row add-cable-color-row">
-          <label htmlFor="add-cable-color" className="add-cable-label">Color</label>
-          <div className="add-cable-color-inputs">
-            <input
-              id="add-cable-color"
-              type="color"
-              value={color}
-              onChange={(e) => setColor(e.target.value)}
-              className="add-cable-color-swatch"
-              aria-label="Cable color"
-            />
-            <input
-              type="text"
-              value={color}
-              onChange={(e) => setColor(e.target.value)}
-              className="add-cable-color-hex"
-              placeholder="#333"
-              aria-label="Hex color"
-            />
+          <span className="add-cable-label">Color</span>
+          <div className="add-cable-color-swatches" role="group" aria-label="Cable color">
+            {CABLE_COLOR_OPTIONS.map((hex) => (
+              <button
+                key={hex}
+                type="button"
+                className={`add-cable-color-swatch-btn${color === hex ? " add-cable-color-swatch-btn-selected" : ""}`}
+                style={{ backgroundColor: hex }}
+                onClick={() => setColor(hex)}
+                title={hex}
+                aria-label={`Color ${hex}`}
+                aria-pressed={color === hex}
+              />
+            ))}
           </div>
         </div>
 
