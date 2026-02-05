@@ -17,10 +17,24 @@
 .add-cable-modal .modal-content {
   border-radius: 14px;
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  width: 100%;
+  max-width: min(320px, 90vw);
 }
 
 .add-cable-modal .modal-body {
   padding: 20px 24px 24px;
+}
+
+@media (min-width: 600px) {
+  .add-cable-modal .modal-content {
+    max-width: min(420px, 90vw);
+  }
+}
+
+@media (min-width: 900px) {
+  .add-cable-modal .modal-content {
+    max-width: min(480px, 90vw);
+  }
 }
 
 .add-cable-form {
@@ -28,7 +42,7 @@
   flex-direction: column;
   gap: 20px;
   min-width: 260px;
-  max-width: 320px;
+  max-width: 100%;
 }
 
 .add-cable-label {
@@ -96,7 +110,7 @@
 
 .add-cable-endpoint {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto minmax(0, 150px) 1fr;
   align-items: center;
   gap: 10px;
 }
@@ -143,6 +157,7 @@
 .add-cable-connector-picker {
   position: relative;
   min-width: 0;
+  max-width: 150px;
 }
 
 .add-cable-connector-trigger-btn {
@@ -365,7 +380,7 @@
 .add-cable-label-combo {
   position: relative;
   min-width: 4rem;
-  max-width: 7rem;
+  width: 100%;
   display: flex;
   align-items: stretch;
   border: 1px solid var(--add-cable-border, #e5e7eb);
