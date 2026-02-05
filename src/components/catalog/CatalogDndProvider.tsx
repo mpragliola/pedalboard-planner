@@ -85,15 +85,7 @@ export function CatalogDndProvider({ children }: { children: React.ReactNode }) 
   };
 
   const forceCleanup = useCallback(() => {
-    const pointerId = capturedPointerIdRef.current;
-    if (pointerId != null) {
-      try {
-        document.body.releasePointerCapture(pointerId);
-      } catch {
-        // Already released (e.g. on pointerup)
-      }
-      capturedPointerIdRef.current = null;
-    }
+    capturedPointerIdRef.current = null;
     document.body.classList.remove("catalog-dragging");
     setActiveData(null);
     setDragPointer(null);
@@ -109,10 +101,12 @@ export function CatalogDndProvider({ children }: { children: React.ReactNode }) 
     const initial = ev ? { x: ev.clientX, y: ev.clientY } : null;
     initialPointerRef.current = initial;
     if (initial) lastPointerRef.current = initial;
-    if (ev != null) {
-      document.body.setPointerCapture(ev.pointerId);
-      capturedPointerIdRef.current = ev.pointerId;
-    }
+    /*
+     * Do NOT call document.body.setPointerCapture here – it steals capture from
+     * dnd-kit's managed element, triggering lostpointercapture → dragCancel.
+     * Our capture-phase document listeners already track the pointer reliably.
+     */
+    capturedPointerIdRef.current = ev?.pointerId ?? null;
     setActiveData(data);
     setDragPointer(initial);
     document.body.classList.add("catalog-dragging");
@@ -124,13 +118,23 @@ export function CatalogDndProvider({ children }: { children: React.ReactNode }) 
     const onUpOrCancel = (e: PointerEvent) => {
       lastPointerRef.current = { x: e.clientX, y: e.clientY };
     };
+    /*
+     * Prevent browser from interpreting the touch as a scroll/pan gesture.
+     * touch-action is evaluated at touchstart time, so the pan-y on catalog items
+     * would otherwise let the browser fire pointercancel during vertical movement.
+     */
+    const onTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
+    };
     document.addEventListener("pointermove", onMove, true);
     document.addEventListener("pointerup", onUpOrCancel, true);
     document.addEventListener("pointercancel", onUpOrCancel, true);
+    document.addEventListener("touchmove", onTouchMove, { passive: false, capture: true });
     removeListenersRef.current = () => {
       document.removeEventListener("pointermove", onMove, true);
       document.removeEventListener("pointerup", onUpOrCancel, true);
       document.removeEventListener("pointercancel", onUpOrCancel, true);
+      document.removeEventListener("touchmove", onTouchMove, true);
     };
   }, []);
 

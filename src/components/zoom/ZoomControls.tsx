@@ -41,7 +41,7 @@ export function ZoomControls() {
       />
       <ZoomButton
         label="Cable layer"
-        title="Draw cables (click to add points, double-click to finish). Hold SHIFT to disable snap."
+        title="Draw cables (click to add points, double-click to finish). SHIFT: disable snap. Ctrl: 45° lines (H/V/diagonals)."
         icon={faPlug}
         onClick={() => {
           setRuler(() => false)

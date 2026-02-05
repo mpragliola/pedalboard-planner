@@ -43,10 +43,12 @@ export function Canvas() {
     shouldIgnoreCatalogClick,
     objects,
     selectedObjectIds,
+    selectedCableId,
     imageFailedIds,
     draggingObjectId,
     onImageError,
     onObjectPointerDown,
+    onCablePointerDown,
     onDragEnd,
     onDeleteObject,
     onRotateObject,
@@ -119,7 +121,12 @@ export function Canvas() {
             />
           ))}
         </div>
-        <CablePaths cables={cables} visible={cablesVisible} />
+        <CablePaths
+          cables={cables}
+          visible={cablesVisible}
+          selectedCableId={selectedCableId}
+          onCablePointerDown={onCablePointerDown}
+        />
       </div>
       {ruler && <RulerOverlay />}
       {lineRuler && <LineRulerOverlay />}

@@ -8,16 +8,21 @@ const ENDPOINT_DOT_RADIUS = 4;
 const CANVAS_HALF = 2500;
 const CANVAS_SIZE = CANVAS_HALF * 2;
 
+/** Hit area stroke width (mm) – invisible path for easier clicking. */
+const HIT_STROKE_MM = 16;
+
 interface CablePathsProps {
   cables: Cable[];
   visible: boolean;
+  selectedCableId: string | null;
+  onCablePointerDown: (id: string, e: React.PointerEvent) => void;
 }
 
 /**
  * Renders cables in canvas (world) coordinates inside the viewport so they
  * pan and zoom smoothly with the same CSS transform as the rest of the canvas.
  */
-export function CablePaths({ cables, visible }: CablePathsProps) {
+export function CablePaths({ cables, visible, selectedCableId, onCablePointerDown }: CablePathsProps) {
   const { paths, endpoints } = useMemo(() => {
     const joinRadius = DEFAULT_JOIN_RADIUS;
     const paths: { id: string; d: string; color: string }[] = [];
@@ -61,20 +66,37 @@ export function CablePaths({ cables, visible }: CablePathsProps) {
         top: -CANVAS_HALF,
         width: CANVAS_SIZE,
         height: CANVAS_SIZE,
-        pointerEvents: "none",
+        pointerEvents: visible ? "stroke" : "none",
         zIndex: 1000,
       }}
     >
       {paths.map((p) => (
-        <path
-          key={p.id}
-          d={p.d}
-          fill="none"
-          stroke={p.color}
-          strokeWidth={CABLE_STROKE_WIDTH_MM}
-          strokeLinejoin="round"
-          strokeLinecap="round"
-        />
+        <g key={p.id}>
+          {/* Invisible wide stroke for hit area */}
+          <path
+            d={p.d}
+            fill="none"
+            stroke="transparent"
+            strokeWidth={HIT_STROKE_MM}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+            style={{ cursor: "pointer" }}
+            onPointerDown={(e) => onCablePointerDown(p.id, e)}
+          />
+          <path
+            d={p.d}
+            fill="none"
+            stroke={p.color}
+            strokeWidth={CABLE_STROKE_WIDTH_MM}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+            style={{
+              pointerEvents: "none",
+              opacity: selectedCableId === p.id ? 1 : undefined,
+              filter: selectedCableId === p.id ? "drop-shadow(0 0 4px rgba(10, 132, 255, 0.6))" : undefined,
+            }}
+          />
+        </g>
       ))}
       {endpoints.map((pt, i) => (
         <circle

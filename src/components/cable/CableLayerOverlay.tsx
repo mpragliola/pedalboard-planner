@@ -15,10 +15,13 @@ const CABLE_STROKE_WIDTH_MM = 5;
 const ENDPOINT_DOT_RADIUS_PX = 5;
 
 export function CableLayerOverlay() {
-  const { canvasRef, zoom, pan, unit, objects, addCableAndPersist, setCableLayer } = useApp();
+  const { canvasRef, zoom, pan, unit, objects, addCableAndPersist, setCableLayer, spaceDown } = useApp();
   const { clientToCanvas, toScreen } = useCanvasCoords(canvasRef, zoom, pan);
   const [pendingSegments, setPendingSegments] = useState<CableSegment[] | null>(null);
   const finishClickRef = useRef<() => void>(() => {});
+  /** Active pointer IDs – when >=2 we're pinch-zooming and suppress cable drawing. */
+  const activePointersRef = useRef<Set<number>>(new Set());
+  const isPinchingRef = useRef(false);
 
   const exitMode = useCallback(() => {
     setCableLayer(() => false);
@@ -31,7 +34,6 @@ export function CableLayerOverlay() {
     onPointerDown,
     onPointerMove,
     onPointerUp,
-    onDoubleClick,
     getFinalSegments,
     clearDrawing,
     hasSegments,
@@ -74,6 +76,30 @@ export function CableLayerOverlay() {
     (e: React.PointerEvent) => {
       if (pendingSegments !== null) return;
       if (e.button !== 0 && e.pointerType !== "touch") return;
+      /* Let clicks on the action buttons through (Add cable, etc.) */
+      if ((e.target as HTMLElement).closest(".cable-layer-actions")) return;
+
+      /* Space+drag → let canvas handle panning */
+      if (spaceDown) return;
+
+      /* Track active pointers for pinch detection */
+      activePointersRef.current.add(e.pointerId);
+      if (activePointersRef.current.size >= 2) {
+        /* Multi-touch detected → release any capture so pinch-to-zoom works */
+        isPinchingRef.current = true;
+        const el = e.currentTarget as HTMLElement;
+        for (const pid of activePointersRef.current) {
+          try {
+            el.releasePointerCapture(pid);
+          } catch {
+            /* ok */
+          }
+        }
+        return;
+      }
+
+      if (isPinchingRef.current) return;
+
       const now = Date.now();
       const last = lastTapRef.current;
       if (
@@ -101,12 +127,21 @@ export function CableLayerOverlay() {
         (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
       }
     },
-    [pendingSegments, onPointerDown, exitMode, hasSegments, hasPreview, openAddCableModal]
+    [pendingSegments, spaceDown, onPointerDown, exitMode, hasSegments, hasPreview, openAddCableModal]
   );
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent) => {
-      if (pendingSegments !== null) return;
+      if (pendingSegments !== null || isPinchingRef.current) return;
+      /* When pointer moves over Add cable button, release capture so the button can receive the click */
+      const hit = document.elementFromPoint(e.clientX, e.clientY);
+      if (hit?.closest?.(".cable-layer-actions")) {
+        try {
+          (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+        } catch {
+          /* ok */
+        }
+      }
       onPointerMove(e);
     },
     [pendingSegments, onPointerMove]
@@ -114,7 +149,27 @@ export function CableLayerOverlay() {
 
   const handlePointerUp = useCallback(
     (e: React.PointerEvent) => {
-      if (pendingSegments !== null) return;
+      const wasPinching = isPinchingRef.current;
+      activePointersRef.current.delete(e.pointerId);
+      const lastPointerReleased = activePointersRef.current.size === 0;
+      if (lastPointerReleased) isPinchingRef.current = false;
+      if (pendingSegments !== null || isPinchingRef.current) return;
+      /* Don't add a segment when releasing the last finger after a pinch */
+      if (lastPointerReleased && wasPinching) return;
+      /* With pointer capture, e.target is the overlay; use elementFromPoint to see where release actually was */
+      const hit = document.elementFromPoint(e.clientX, e.clientY);
+      if (hit?.closest?.(".cable-layer-actions")) {
+        try {
+          (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+        } catch {
+          /* ok */
+        }
+        if (hasSegments || hasPreview) openAddCableModal();
+        if (e.button === 0 || e.pointerType === "touch") {
+          lastTapRef.current = { time: Date.now(), clientX: e.clientX, clientY: e.clientY };
+        }
+        return;
+      }
       onPointerUp(e);
       try {
         (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
@@ -125,7 +180,7 @@ export function CableLayerOverlay() {
         lastTapRef.current = { time: Date.now(), clientX: e.clientX, clientY: e.clientY };
       }
     },
-    [pendingSegments, onPointerUp]
+    [pendingSegments, onPointerUp, hasSegments, hasPreview, openAddCableModal]
   );
 
   useEffect(() => {
@@ -207,7 +262,7 @@ export function CableLayerOverlay() {
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
-      onDoubleClick={onDoubleClick}
+      onPointerCancel={handlePointerUp}
     >
       <svg className="cable-layer-svg ruler-diagonal" style={{ left: 0, top: 0 }}>
         {committedPathD && (
