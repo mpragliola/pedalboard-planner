@@ -13,6 +13,8 @@ interface ModalProps {
   showCloseButton?: boolean;
   /** aria-label for the dialog */
   ariaLabel?: string;
+  /** Ignore backdrop clicks for this many ms after opening (avoids double-click closing immediately) */
+  ignoreBackdropClickForMs?: number;
 }
 
 /**
@@ -31,8 +33,10 @@ export function Modal({
   className = "",
   showCloseButton = true,
   ariaLabel,
+  ignoreBackdropClickForMs = 0,
 }: ModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const openedAtRef = useRef<number>(0);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -40,6 +44,7 @@ export function Modal({
 
     if (open && !dialog.open) {
       dialog.showModal();
+      openedAtRef.current = Date.now();
     } else if (!open && dialog.open) {
       dialog.close();
     }
@@ -47,9 +52,9 @@ export function Modal({
 
   // Handle backdrop click (click outside content)
   const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
-    if (e.target === dialogRef.current) {
-      onClose();
-    }
+    if (e.target !== dialogRef.current) return;
+    if (ignoreBackdropClickForMs > 0 && Date.now() - openedAtRef.current < ignoreBackdropClickForMs) return;
+    onClose();
   };
 
   // Handle native close event (Escape key)

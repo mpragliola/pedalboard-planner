@@ -16,3 +16,10 @@ export function formatDimension(mm: number, unit: 'mm' | 'in'): string {
   const cm = mm / 10
   return `${mm} mm (${cm.toFixed(1)} cm)`
 }
+
+/** Format length in cm when unit is mm, otherwise same as formatLength (inches). For lists/tables. */
+export function formatLengthCmOrInches(mm: number, unit: 'mm' | 'in'): string {
+  if (unit === 'in') return formatLength(mm, unit)
+  const cm = mm / 10
+  return cm >= 0.1 ? `${cm.toFixed(1)} cm` : `${cm.toFixed(2)} cm`
+}

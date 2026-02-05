@@ -148,6 +148,7 @@ export function AddCableModal({ open, segments, onConfirm, onCancel }: AddCableM
       title="Add cable"
       className="add-cable-modal"
       ariaLabel="Add cable – choose color and connectors"
+      ignoreBackdropClickForMs={200}
     >
       <div className="add-cable-form">
         <div className="add-cable-row add-cable-color-row">

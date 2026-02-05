@@ -1,10 +1,40 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faFileCsv } from "@fortawesome/free-solid-svg-icons";
 import { useApp } from "../../context/AppContext";
 import { useConfirmation } from "../../context/ConfirmationContext";
-import { CONNECTOR_ICON_MAP } from "../../constants";
-import type { Cable, ConnectorKind } from "../../types";
+import { BASE_URL, CONNECTOR_ICON_MAP, DEFAULT_OBJECT_COLOR } from "../../constants";
+import { formatLength, formatLengthCmOrInches } from "../../lib/rulerFormat";
+import type { Cable, CanvasObjectType, ConnectorKind } from "../../types";
 import "./ComponentListModal.css";
+
+function imageSrc(path: string | null | undefined): string {
+  if (!path) return "";
+  if (path.startsWith("/") || path.startsWith("http")) return path;
+  const base = BASE_URL.endsWith("/") ? BASE_URL : `${BASE_URL}/`;
+  return `${base}${path}`;
+}
+
+function ComponentThumbnail({ obj }: { obj: CanvasObjectType }) {
+  const hasImage = obj.image != null && obj.image !== "";
+  return (
+    <div className="component-list-thumbnail" title={obj.name}>
+      {hasImage ? (
+        <img src={imageSrc(obj.image)} alt="" className="component-list-thumbnail-img" />
+      ) : (
+        <span
+          className="component-list-thumbnail-color"
+          style={{ backgroundColor: obj.color ?? DEFAULT_OBJECT_COLOR }}
+        />
+      )}
+    </div>
+  );
+}
+
+function cableLengthMm(segments: Cable["segments"]): number {
+  return segments.reduce((sum, s) => sum + Math.hypot(s.x2 - s.x1, s.y2 - s.y1), 0);
+}
 
 function ConnectorIcon({ kind, title }: { kind: ConnectorKind; title: string }) {
   const src = CONNECTOR_ICON_MAP[kind];
@@ -47,8 +77,10 @@ function buildComponentListCsv(
   }
   rows.push("");
   rows.push("Cables");
+  const cableLengthMmForCsv = (c: Cable) =>
+    c.segments.reduce((sum, s) => sum + Math.hypot(s.x2 - s.x1, s.y2 - s.y1), 0);
   rows.push(
-    ["ID", "Connector A", "Connector A name", "Connector B", "Connector B name", "Segments"]
+    ["ID", "Connector A", "Connector A name", "Connector B", "Connector B name", "Length (mm)", "Segments"]
       .map(escapeCsvField)
       .join(",")
   );
@@ -60,6 +92,7 @@ function buildComponentListCsv(
         cable.connectorAName ?? "",
         cable.connectorB,
         cable.connectorBName ?? "",
+        String(cableLengthMmForCsv(cable).toFixed(1)),
         String(cable.segments.length),
       ]
         .map(escapeCsvField)
@@ -80,8 +113,13 @@ function downloadCsv(content: string, filename: string) {
 }
 
 export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
-  const { objects, cables, setCables, onDeleteObject } = useApp();
+  const { objects, cables, setCables, onDeleteObject, unit } = useApp();
   const { requestConfirmation } = useConfirmation();
+
+  const cableLengthsMm = useMemo(
+    () => cables.map((c) => cableLengthMm(c.segments)),
+    [cables]
+  );
 
   const getObjectName = useCallback((id: string) => objects.find((o) => o.id === id)?.name ?? id, [objects]);
 
@@ -137,6 +175,7 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
               aria-label="Export to CSV"
               title="Export components and cables to CSV"
             >
+              <FontAwesomeIcon icon={faFileCsv} className="component-list-modal-export-btn-icon" />
               Export to CSV
             </button>
             <button type="button" className="component-list-modal-close" onClick={onClose} aria-label="Close">
@@ -151,6 +190,7 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
             <table className="component-list-table">
               <thead>
                 <tr>
+                  <th className="component-list-thumbnail-col" aria-label="Thumbnail" />
                   <th>Brand</th>
                   <th>Model</th>
                   <th>Type</th>
@@ -162,6 +202,9 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
                   const isCustom = obj.templateId === "board-custom" || obj.templateId === "device-custom";
                   return (
                     <tr key={obj.id}>
+                      <td className="component-list-thumbnail-cell">
+                        <ComponentThumbnail obj={obj} />
+                      </td>
                       <td>{obj.brand || "—"}</td>
                       <td>{isCustom ? obj.name || "—" : obj.model || "—"}</td>
                       <td>{obj.type || "—"}</td>
@@ -195,6 +238,7 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
                     <th>Color</th>
                     <th>Connector A</th>
                     <th>Connector B</th>
+                    <th>Length</th>
                     <th aria-label="Actions" />
                   </tr>
                 </thead>
@@ -229,6 +273,7 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
                           ) : null}
                         </span>
                       </td>
+                      <td>{formatLengthCmOrInches(cableLengthsMm[index], unit)}</td>
                       <td className="connectors-actions">
                         <button
                           type="button"

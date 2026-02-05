@@ -10,10 +10,12 @@ import type { Cable, CableSegment } from "../../types";
 import "../ruler/RulerOverlay.css";
 import "./CableLayerOverlay.css";
 
-/** Current (in-progress) cable: dotted, black, 0.5 opacity to distinguish from laid-down cables. */
+/** Current (in-progress) cable: dashed, black, 0.5 opacity to distinguish from laid-down cables. */
 const CURRENT_CABLE_STROKE = "#000";
 const CURRENT_CABLE_OPACITY = 0.5;
-const CURRENT_CABLE_DASH_ARRAY = "4 4";
+/** Dash/gap scale relative to stroke width so dashes stay visible at any zoom. */
+const CURRENT_CABLE_DASH_SCALE = 3;
+const CURRENT_CABLE_GAP_SCALE = 2;
 const CABLE_STROKE_WIDTH_MM = 5;
 const ENDPOINT_DOT_RADIUS_PX = 5;
 
@@ -114,7 +116,10 @@ export function CableLayerOverlay() {
         e.preventDefault();
         e.stopPropagation();
         if (hasSegments || hasPreview) {
-          openAddCableModal();
+          /* Defer opening so the upcoming pointerup/click is delivered to the overlay, not the modal backdrop */
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => openAddCableModal());
+          });
           try {
             (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
           } catch {
@@ -204,6 +209,9 @@ export function CableLayerOverlay() {
 
   const joinRadiusPx = DEFAULT_JOIN_RADIUS * zoom;
   const strokeWidthPx = CABLE_STROKE_WIDTH_MM * zoom;
+  const dashLengthPx = strokeWidthPx * CURRENT_CABLE_DASH_SCALE;
+  const gapLengthPx = strokeWidthPx * CURRENT_CABLE_GAP_SCALE;
+  const currentCableStrokeDasharray = `${dashLengthPx} ${gapLengthPx}`;
 
   const points = (() => {
     if (segments.length === 0 && segmentStart) {
@@ -275,7 +283,7 @@ export function CableLayerOverlay() {
             stroke={CURRENT_CABLE_STROKE}
             strokeWidth={strokeWidthPx}
             strokeOpacity={CURRENT_CABLE_OPACITY}
-            strokeDasharray={CURRENT_CABLE_DASH_ARRAY}
+            strokeDasharray={currentCableStrokeDasharray}
             strokeLinejoin="round"
             strokeLinecap="round"
           />
@@ -287,7 +295,7 @@ export function CableLayerOverlay() {
             stroke={CURRENT_CABLE_STROKE}
             strokeWidth={strokeWidthPx}
             strokeOpacity={CURRENT_CABLE_OPACITY}
-            strokeDasharray={CURRENT_CABLE_DASH_ARRAY}
+            strokeDasharray={currentCableStrokeDasharray}
             strokeLinecap="round"
           />
         )}
