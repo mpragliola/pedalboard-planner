@@ -106,9 +106,12 @@ export interface AddCableModalProps {
   segments: CableSegment[];
   onConfirm: (cable: Cable) => void;
   onCancel: () => void;
+  /** When set, modal is in edit mode: pre-fill from cable, keep id and segments, title "Edit cable". */
+  initialCable?: Cable | null;
 }
 
-export function AddCableModal({ open, segments, onConfirm, onCancel }: AddCableModalProps) {
+export function AddCableModal({ open, segments, onConfirm, onCancel, initialCable }: AddCableModalProps) {
+  const isEdit = Boolean(initialCable);
   const [color, setColor] = useState(DEFAULT_COLOR);
   const [connectorA, setConnectorA] = useState<ConnectorKind>("mono jack (TS)");
   const [connectorB, setConnectorB] = useState<ConnectorKind>("mono jack (TS)");
@@ -117,19 +120,28 @@ export function AddCableModal({ open, segments, onConfirm, onCancel }: AddCableM
 
   useEffect(() => {
     if (open) {
-      setColor(DEFAULT_COLOR);
-      setConnectorA("mono jack (TS)");
-      setConnectorB("mono jack (TS)");
-      setConnectorAName("");
-      setConnectorBName("");
+      if (initialCable) {
+        setColor(initialCable.color);
+        setConnectorA(initialCable.connectorA);
+        setConnectorB(initialCable.connectorB);
+        setConnectorAName(initialCable.connectorAName ?? "");
+        setConnectorBName(initialCable.connectorBName ?? "");
+      } else {
+        setColor(DEFAULT_COLOR);
+        setConnectorA("mono jack (TS)");
+        setConnectorB("mono jack (TS)");
+        setConnectorAName("");
+        setConnectorBName("");
+      }
     }
-  }, [open]);
+  }, [open, initialCable]);
 
   const handleConfirm = () => {
-    if (segments.length === 0) return;
+    const segs = isEdit && initialCable ? initialCable.segments : segments;
+    if (segs.length === 0) return;
     const cable: Cable = {
-      id: nextCableId(),
-      segments,
+      id: isEdit && initialCable ? initialCable.id : nextCableId(),
+      segments: segs,
       color,
       connectorA,
       connectorB,
@@ -145,9 +157,9 @@ export function AddCableModal({ open, segments, onConfirm, onCancel }: AddCableM
     <Modal
       open={open}
       onClose={onCancel}
-      title="Add cable"
+      title={isEdit ? "Edit cable" : "Add cable"}
       className="add-cable-modal"
-      ariaLabel="Add cable – choose color and connectors"
+      ariaLabel={isEdit ? "Edit cable – color and connectors" : "Add cable – choose color and connectors"}
       ignoreBackdropClickForMs={200}
     >
       <div className="add-cable-form">
@@ -226,7 +238,7 @@ export function AddCableModal({ open, segments, onConfirm, onCancel }: AddCableM
             Cancel
           </button>
           <button type="button" className="add-cable-btn add-cable-confirm" onClick={handleConfirm}>
-            Add cable
+            {isEdit ? "Save" : "Add cable"}
           </button>
         </div>
       </div>

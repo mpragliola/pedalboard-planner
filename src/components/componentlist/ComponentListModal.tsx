@@ -113,8 +113,28 @@ function downloadCsv(content: string, filename: string) {
 }
 
 export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
-  const { objects, cables, setCables, onDeleteObject, unit } = useApp();
+  const { objects, cables, setCables, onDeleteObject, unit, setSelectedObjectIds, setSelectedCableId } = useApp();
   const { requestConfirmation } = useConfirmation();
+
+  const handleComponentRowDoubleClick = useCallback(
+    (obj: { id: string }) => (e: React.MouseEvent) => {
+      if ((e.target as HTMLElement).closest("button")) return;
+      setSelectedCableId(null);
+      setSelectedObjectIds([obj.id]);
+      onClose();
+    },
+    [setSelectedObjectIds, setSelectedCableId, onClose]
+  );
+
+  const handleCableRowDoubleClick = useCallback(
+    (cableId: string) => (e: React.MouseEvent) => {
+      if ((e.target as HTMLElement).closest("button")) return;
+      setSelectedObjectIds([]);
+      setSelectedCableId(cableId);
+      onClose();
+    },
+    [setSelectedObjectIds, setSelectedCableId, onClose]
+  );
 
   const cableLengthsMm = useMemo(
     () => cables.map((c) => cableLengthMm(c.segments)),
@@ -201,7 +221,11 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
                 {objects.map((obj) => {
                   const isCustom = obj.templateId === "board-custom" || obj.templateId === "device-custom";
                   return (
-                    <tr key={obj.id}>
+                    <tr
+                      key={obj.id}
+                      onDoubleClick={handleComponentRowDoubleClick(obj)}
+                      className="component-list-row-clickable"
+                    >
                       <td className="component-list-thumbnail-cell">
                         <ComponentThumbnail obj={obj} />
                       </td>
@@ -244,7 +268,11 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
                 </thead>
                 <tbody>
                   {cables.map((cable, index) => (
-                    <tr key={cable.id}>
+                    <tr
+                      key={cable.id}
+                      onDoubleClick={handleCableRowDoubleClick(cable.id)}
+                      className="component-list-row-clickable"
+                    >
                       <td>Cable {index + 1}</td>
                       <td>
                         <span

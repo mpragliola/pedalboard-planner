@@ -3,6 +3,9 @@ import { buildRoundedPathD, DEFAULT_JOIN_RADIUS } from "../../lib/polylinePath";
 import type { Cable } from "../../types";
 
 const CABLE_STROKE_WIDTH_MM = 5;
+/** Extra stroke width for selected cable halo (mm), so halo = CABLE_STROKE_WIDTH_MM + 2 * HALO_EXTRA_MM. */
+const HALO_EXTRA_MM = 4;
+const SELECTED_CABLE_HALO_COLOR = "rgba(10, 132, 255, 0.7)";
 const ENDPOINT_DOT_RADIUS = 4;
 /** Canvas-space SVG extent (covers -CANVAS_HALF..CANVAS_HALF) so cables stay visible when panning. */
 const CANVAS_HALF = 2500;
@@ -83,6 +86,18 @@ export function CablePaths({ cables, visible, selectedCableId, onCablePointerDow
             style={{ cursor: "pointer" }}
             onPointerDown={(e) => onCablePointerDown(p.id, e)}
           />
+          {/* Thicker stroke behind cable when selected – always visible, no filter */}
+          {selectedCableId === p.id && (
+            <path
+              d={p.d}
+              fill="none"
+              stroke={SELECTED_CABLE_HALO_COLOR}
+              strokeWidth={CABLE_STROKE_WIDTH_MM + 2 * HALO_EXTRA_MM}
+              strokeLinejoin="round"
+              strokeLinecap="round"
+              style={{ pointerEvents: "none" }}
+            />
+          )}
           <path
             d={p.d}
             fill="none"
@@ -90,11 +105,7 @@ export function CablePaths({ cables, visible, selectedCableId, onCablePointerDow
             strokeWidth={CABLE_STROKE_WIDTH_MM}
             strokeLinejoin="round"
             strokeLinecap="round"
-            style={{
-              pointerEvents: "none",
-              opacity: selectedCableId === p.id ? 1 : undefined,
-              filter: selectedCableId === p.id ? "drop-shadow(0 0 4px rgba(10, 132, 255, 0.6))" : undefined,
-            }}
+            style={{ pointerEvents: "none" }}
           />
         </g>
       ))}
