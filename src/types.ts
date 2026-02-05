@@ -28,12 +28,16 @@ export interface CanvasObjectType {
 
 export type ConnectorKind =
   | 'mono jack (TS)'
+  | 'mono jack (TS mini)'
   | 'stereo jack (TRS)'
+  | 'stereo jack (TRS mini)'
   | 'MIDI (DIN)'
+  | 'MIDI (DIN female)'
   | 'MIDI (TRS)'
   | 'two mono jacks (TSx2)'
   | 'XLR male'
   | 'XLR female'
+  | 'Ethernet'
 
 /** One segment of a cable or polyline (canvas coordinates). */
 export interface CableSegment {
