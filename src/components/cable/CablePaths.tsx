@@ -111,6 +111,7 @@ export function CablePaths({ cables, visible, selectedCableId, onCablePointerDow
         height: CANVAS_SIZE,
         pointerEvents: visible ? "stroke" : "none",
         zIndex: 1000,
+        colorScheme: "normal",
       }}
     >
       {paths.map((p) => (

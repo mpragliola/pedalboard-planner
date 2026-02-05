@@ -55,8 +55,8 @@ export interface CableColor {
 
 /** Predefined cable colors matching standard audio/guitar cable colors. Fixed hex values – not affected by OS dark/light settings. */
 export const CABLE_COLORS: CableColor[] = [
-  { hex: "#000000", label: "Black" },
   { hex: "#333333", label: "Dark Grey" },
+  { hex: "#000000", label: "Black" },
   { hex: "#666666", label: "Grey" },
   { hex: "#CCCCCC", label: "Light Grey" },
   { hex: "#FFFFFF", label: "White" },
