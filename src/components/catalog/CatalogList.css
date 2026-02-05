@@ -129,7 +129,7 @@
   height: 36px;
   border-radius: 4px;
   overflow: hidden;
-  background: #f0f0f0;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -213,7 +213,7 @@
   height: 48px;
   border-radius: 4px;
   overflow: hidden;
-  background: #f0f0f0;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -289,7 +289,7 @@
   height: 72px;
   border-radius: 6px;
   overflow: hidden;
-  background: #f0f0f0;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
