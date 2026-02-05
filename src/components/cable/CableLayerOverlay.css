@@ -19,8 +19,8 @@
   pointer-events: none;
 }
 
-.cable-endpoint-dot {
-  fill: rgba(255, 255, 255, 0.9);
+/* Only style endpoint dots inside this overlay (drawing preview). Laid-down cables use .cable-endpoint-dot in CablePaths with start/end colors. */
+.cable-layer-overlay .cable-endpoint-dot {
   stroke: rgba(0, 0, 0, 0.25);
   stroke-width: 1;
 }

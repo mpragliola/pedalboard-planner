@@ -6,6 +6,7 @@ import { formatLength } from "../../lib/rulerFormat";
 import { useCanvasCoords } from "../../hooks/useCanvasCoords";
 import { useCableDraw } from "../../hooks/useCableDraw";
 import { AddCableModal } from "./AddCableModal";
+import { CABLE_TERMINAL_START_COLOR, CABLE_TERMINAL_END_COLOR } from "../../constants";
 import type { Cable, CableSegment } from "../../types";
 import "../ruler/RulerOverlay.css";
 import "./CableLayerOverlay.css";
@@ -324,10 +325,26 @@ export function CableLayerOverlay() {
           />
         )}
         {firstPoint && (
-          <circle cx={firstPoint.x} cy={firstPoint.y} r={ENDPOINT_DOT_RADIUS_PX} className="cable-endpoint-dot" />
+          <circle
+            cx={firstPoint.x}
+            cy={firstPoint.y}
+            r={ENDPOINT_DOT_RADIUS_PX}
+            className="cable-endpoint-dot"
+            fill={CABLE_TERMINAL_START_COLOR}
+            stroke="rgba(0, 0, 0, 0.25)"
+            strokeWidth="1"
+          />
         )}
         {lastPoint && (
-          <circle cx={lastPoint.x} cy={lastPoint.y} r={ENDPOINT_DOT_RADIUS_PX} className="cable-endpoint-dot" />
+          <circle
+            cx={lastPoint.x}
+            cy={lastPoint.y}
+            r={ENDPOINT_DOT_RADIUS_PX}
+            className="cable-endpoint-dot"
+            fill={CABLE_TERMINAL_END_COLOR}
+            stroke="rgba(0, 0, 0, 0.25)"
+            strokeWidth="1"
+          />
         )}
       </svg>
       {(hasSegments || hasPreview) && popupCenter && totalLength > 0 && (

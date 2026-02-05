@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { Modal } from "../common/Modal";
 import { ModalContext } from "../../context/ModalContext";
 import { CONNECTOR_ICON_MAP, CONNECTOR_KIND_OPTIONS, CONNECTOR_NAME_OPTIONS } from "../../constants";
+import { CABLE_TERMINAL_START_COLOR, CABLE_TERMINAL_END_COLOR } from "../../constants";
 import type { Cable, CableSegment, ConnectorKind } from "../../types";
 import "./AddCableModal.css";
 
@@ -324,7 +325,13 @@ export function AddCableModal({ open, segments, onConfirm, onCancel, initialCabl
         <div className="add-cable-endpoints">
           <span className="add-cable-label">Endpoints</span>
           <div className="add-cable-endpoint">
-            <span className="add-cable-endpoint-badge" aria-hidden>A</span>
+            <span
+              className="add-cable-endpoint-badge add-cable-endpoint-badge-a"
+              style={{ backgroundColor: CABLE_TERMINAL_START_COLOR, color: "#1a4d1a" }}
+              aria-hidden
+            >
+              A
+            </span>
             <ConnectorPicker
               id="add-cable-connector-a"
               label=""
@@ -339,7 +346,13 @@ export function AddCableModal({ open, segments, onConfirm, onCancel, initialCabl
             />
           </div>
           <div className="add-cable-endpoint">
-            <span className="add-cable-endpoint-badge" aria-hidden>B</span>
+            <span
+              className="add-cable-endpoint-badge add-cable-endpoint-badge-b"
+              style={{ backgroundColor: CABLE_TERMINAL_END_COLOR, color: "#b35c00" }}
+              aria-hidden
+            >
+              B
+            </span>
             <ConnectorPicker
               id="add-cable-connector-b"
               label=""

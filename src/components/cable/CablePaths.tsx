@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { CABLE_TERMINAL_START_COLOR, CABLE_TERMINAL_END_COLOR } from "../../constants";
 import { buildRoundedPathD, DEFAULT_JOIN_RADIUS } from "../../lib/polylinePath";
 import type { Cable } from "../../types";
 import "./CablePaths.css";
@@ -70,11 +71,10 @@ interface CablePathsProps {
  * pan and zoom smoothly with the same CSS transform as the rest of the canvas.
  */
 export function CablePaths({ cables, visible, selectedCableId, onCablePointerDown }: CablePathsProps) {
-  const { paths, endpoints, connectorLabels } = useMemo(() => {
+  const { paths, endpointDots, connectorLabels } = useMemo(() => {
     const joinRadius = DEFAULT_JOIN_RADIUS;
     const paths: { id: string; d: string; color: string }[] = [];
-    const endpointSet = new Set<string>();
-    const endpoints: { x: number; y: number }[] = [];
+    const endpointDots: { x: number; y: number; type: "start" | "end" }[] = [];
     const connectorLabels: { id: string; a: ConnectorLabel; b: ConnectorLabel }[] = [];
 
     for (const cable of cables) {
@@ -89,18 +89,11 @@ export function CablePaths({ cables, visible, selectedCableId, onCablePointerDow
       if (labels) connectorLabels.push({ id: cable.id, ...labels });
       const first = points[0];
       const last = points[points.length - 1];
-      const key = (x: number, y: number) => `${x.toFixed(1)},${y.toFixed(1)}`;
-      if (!endpointSet.has(key(first.x, first.y))) {
-        endpointSet.add(key(first.x, first.y));
-        endpoints.push(first);
-      }
-      if (!endpointSet.has(key(last.x, last.y))) {
-        endpointSet.add(key(last.x, last.y));
-        endpoints.push(last);
-      }
+      endpointDots.push({ x: first.x, y: first.y, type: "start" });
+      endpointDots.push({ x: last.x, y: last.y, type: "end" });
     }
 
-    return { paths, endpoints, connectorLabels };
+    return { paths, endpointDots, connectorLabels };
   }, [cables]);
 
   if (!visible || cables.length === 0) return null;
@@ -156,14 +149,14 @@ export function CablePaths({ cables, visible, selectedCableId, onCablePointerDow
           />
         </g>
       ))}
-      {endpoints.map((pt, i) => (
+      {endpointDots.map((dot, i) => (
         <circle
           key={i}
-          cx={pt.x}
-          cy={pt.y}
+          cx={dot.x}
+          cy={dot.y}
           r={ENDPOINT_DOT_RADIUS}
           className="cable-endpoint-dot"
-          fill="rgba(255, 255, 255, 0.9)"
+          fill={dot.type === "start" ? CABLE_TERMINAL_START_COLOR : CABLE_TERMINAL_END_COLOR}
           stroke="rgba(0, 0, 0, 0.25)"
           strokeWidth="1"
         />

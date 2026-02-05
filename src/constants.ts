@@ -37,6 +37,10 @@ export const DRAG_THRESHOLD_PX = 6;
 /** Max movement during long-press before cancelling (scroll vs hold). Higher on mobile for finger drift. */
 export const MOVE_THRESHOLD_PX = 20;
 
+/** Cable terminal colors: start (A) = light green, end (B) = light orange. Used on canvas dots and in Add/Edit cable modal. */
+export const CABLE_TERMINAL_START_COLOR = "#9ee69e";
+export const CABLE_TERMINAL_END_COLOR = "#ffb74d";
+
 // UI Layout constants
 export const TOOLBAR_GAP_PX = 8;
 export const TOOLBAR_HEIGHT_PX = 36;
