@@ -370,9 +370,13 @@
 .add-cable-label-combo-input {
   flex: 1;
   min-width: 0;
+  min-height: 44px;
   border: none;
   border-radius: 8px 0 0 8px;
   padding: 8px 12px;
+  -webkit-user-select: text;
+  user-select: text;
+  touch-action: manipulation;
 }
 
 .add-cable-label-combo-input:focus {

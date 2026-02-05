@@ -207,7 +207,13 @@ function LabelCombo({
     );
 
   return (
-    <div className="add-cable-label-combo">
+    <div
+      className="add-cable-label-combo"
+      onClick={(e) => {
+        if ((e.target as HTMLElement).closest(".add-cable-label-combo-btn")) return;
+        inputRef.current?.focus();
+      }}
+    >
       <input
         ref={inputRef}
         id={id}
@@ -215,12 +221,14 @@ function LabelCombo({
         className="add-cable-name add-cable-label-combo-input"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Label"
+        placeholder="Label (optional)"
         aria-label={ariaLabel}
         aria-expanded={open}
-        aria-haspopup="dialog"
+        aria-haspopup="listbox"
         aria-controls={open ? `${id}-list` : undefined}
         autoComplete="off"
+        inputMode="text"
+        readOnly={false}
       />
       <button
         type="button"
