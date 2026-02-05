@@ -29,6 +29,29 @@ const DEVICE_TYPE_ICON: Record<DeviceType, IconDefinition> = {
   loopswitcher: faLinkSlash,
 };
 
+function buildPlaceholderStyle(
+  widthMm: number | undefined,
+  depthMm: number | undefined,
+  color: string
+) {
+  const w = typeof widthMm === "number" && widthMm > 0 ? widthMm : 1;
+  const d = typeof depthMm === "number" && depthMm > 0 ? depthMm : 1;
+  const ratio = w / d;
+  const safeRatio = Number.isFinite(ratio) && ratio > 0 ? ratio : 1;
+  if (safeRatio >= 1) {
+    return {
+      backgroundColor: color,
+      width: "100%",
+      height: `${(1 / safeRatio) * 100}%`,
+    };
+  }
+  return {
+    backgroundColor: color,
+    width: `${safeRatio * 100}%`,
+    height: "100%",
+  };
+}
+
 export type CatalogViewMode = "text" | "list" | "grid" | "large";
 
 export interface CatalogListOption {
@@ -154,7 +177,7 @@ export function CatalogList({ id, label, size, options, catalogMode, viewMode, o
                   ) : (
                     <span
                       className="catalog-list-item-placeholder"
-                      style={{ backgroundColor: opt.color ?? DEFAULT_OBJECT_COLOR }}
+                      style={buildPlaceholderStyle(opt.widthMm, opt.depthMm, opt.color ?? DEFAULT_OBJECT_COLOR)}
                     />
                   )}
                 </span>
@@ -317,7 +340,7 @@ export function CatalogListGrouped({
                             ) : (
                               <span
                                 className="catalog-list-item-placeholder"
-                                style={{ backgroundColor: opt.color ?? DEFAULT_OBJECT_COLOR }}
+                                style={buildPlaceholderStyle(opt.widthMm, opt.depthMm, opt.color ?? DEFAULT_OBJECT_COLOR)}
                               />
                             )}
                           </span>
