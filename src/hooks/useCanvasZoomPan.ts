@@ -138,12 +138,26 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
     [zoomToward]
   );
 
+  /* Attach wheel to document and only handle when cursor is over canvas so zoom works
+   * even when overlays (cable layer, etc.) are on top, and so we don't depend on ref
+   * being set when this effect first runs (Canvas mounts after AppProvider). */
   useEffect(() => {
-    const el = canvasRef.current;
-    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      const el = canvasRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      if (
+        e.clientX < rect.left ||
+        e.clientX > rect.right ||
+        e.clientY < rect.top ||
+        e.clientY > rect.bottom
+      )
+        return;
+      handleWheelZoom(e);
+    };
     const wheelOptions = { passive: false, capture: true } as const;
-    el.addEventListener("wheel", handleWheelZoom, wheelOptions);
-    return () => el.removeEventListener("wheel", handleWheelZoom, wheelOptions);
+    document.addEventListener("wheel", onWheel, wheelOptions);
+    return () => document.removeEventListener("wheel", onWheel, wheelOptions);
   }, [handleWheelZoom]);
 
   /* Pinch-to-zoom (touch) */
