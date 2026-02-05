@@ -1,5 +1,6 @@
 import {
   faCrosshairs,
+  faCube,
   faEye,
   faLayerGroup,
   faList,
@@ -19,7 +20,7 @@ import { ComponentListModal } from '../componentlist/ComponentListModal'
 import './ZoomControls.css'
 
 export function ZoomControls() {
-  const { zoomIn, zoomOut, showGrid, setShowGrid, xray, setXray, ruler, setRuler, lineRuler, setLineRuler, cableLayer, setCableLayer, cablesVisible, setCablesVisible, centerView } = useApp()
+  const { zoomIn, zoomOut, showGrid, setShowGrid, xray, setXray, showMini3d, setShowMini3d, ruler, setRuler, lineRuler, setLineRuler, cableLayer, setCableLayer, cablesVisible, setCablesVisible, centerView } = useApp()
   const [componentListOpen, setComponentListOpen] = useState(false)
   const [measurementExpanded, setMeasurementExpanded] = useState(false)
   const [viewExpanded, setViewExpanded] = useState(false)
@@ -57,7 +58,7 @@ export function ZoomControls() {
           title={viewExpanded ? 'Hide view options' : 'View options'}
           icon={faEye}
           onClick={() => setViewExpanded((v) => !v)}
-          active={showGrid || xray || !cablesVisible}
+          active={showGrid || xray || !cablesVisible || showMini3d}
           className={`view-group-toggle ${viewExpanded ? 'open' : ''}`}
         />
         <div className="view-tools-secondary">
@@ -91,6 +92,14 @@ export function ZoomControls() {
             onClick={() => setCablesVisible((v) => !v)}
             active={cablesVisible}
             className="cables-visible-toggle"
+          />
+          <ZoomButton
+            label="3D view"
+            title="Toggle 3D miniature overlay"
+            icon={faCube}
+            onClick={() => setShowMini3d((v) => !v)}
+            active={showMini3d}
+            className="mini3d-toggle"
           />
         </div>
       </div>

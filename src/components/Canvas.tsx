@@ -55,6 +55,7 @@ export function Canvas() {
     onDeleteObject,
     onRotateObject,
     onSendToBack,
+    onBringToFront,
     setCables,
     setSelectedCableId,
   } = useApp();
@@ -111,6 +112,7 @@ export function Canvas() {
               onDelete={onDeleteObject}
               onRotate={onRotateObject}
               onSendToBack={onSendToBack}
+              onBringToFront={onBringToFront}
             />
           )}
           {selectedCable && (

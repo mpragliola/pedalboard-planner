@@ -1,4 +1,4 @@
-import { faArrowDown, faRotateRight, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faArrowDown, faArrowUp, faRotateRight, faTrash } from "@fortawesome/free-solid-svg-icons";
 import type { CanvasObjectType } from "../../types";
 import { getObjectDimensions } from "../../lib/stateManager";
 import { useConfirmation } from "../../context/ConfirmationContext";
@@ -12,6 +12,7 @@ const TOOLBAR_HEIGHT = 36;
 const ICONS = {
   rotate: faRotateRight,
   sendToBack: faArrowDown,
+  bringToFront: faArrowUp,
   delete: faTrash,
 } as const;
 
@@ -20,9 +21,10 @@ interface SelectionToolbarProps {
   onDelete: (id: string) => void;
   onRotate: (id: string) => void;
   onSendToBack: (id: string) => void;
+  onBringToFront: (id: string) => void;
 }
 
-export function SelectionToolbar({ obj, onDelete, onRotate, onSendToBack }: SelectionToolbarProps) {
+export function SelectionToolbar({ obj, onDelete, onRotate, onSendToBack, onBringToFront }: SelectionToolbarProps) {
   const { requestConfirmation } = useConfirmation();
   const scaleUp = useMediaQuery("(max-width: 768px)");
 
@@ -54,6 +56,11 @@ export function SelectionToolbar({ obj, onDelete, onRotate, onSendToBack }: Sele
     e.preventDefault();
     onSendToBack(obj.id);
   };
+  const handleBringToFront = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    onBringToFront(obj.id);
+  };
 
   return (
     <div
@@ -74,6 +81,12 @@ export function SelectionToolbar({ obj, onDelete, onRotate, onSendToBack }: Sele
         title="Send to back"
         ariaLabel="Send to back"
         onClick={handleSendToBack}
+      />
+      <SelectionToolbarButton
+        icon={ICONS.bringToFront}
+        title="Bring to front"
+        ariaLabel="Bring to front"
+        onClick={handleBringToFront}
       />
       <SelectionToolbarButton icon={ICONS.delete} title="Delete" ariaLabel="Delete" onClick={handleDelete} danger />
     </div>

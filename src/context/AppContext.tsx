@@ -34,6 +34,8 @@ interface AppContextValue {
   setShowGrid: (fn: (v: boolean) => boolean) => void;
   xray: boolean;
   setXray: (fn: (v: boolean) => boolean) => void;
+  showMini3d: boolean;
+  setShowMini3d: (fn: (v: boolean) => boolean) => void;
   ruler: boolean;
   setRuler: (fn: (v: boolean) => boolean) => void;
   lineRuler: boolean;
@@ -68,6 +70,7 @@ interface AppContextValue {
   onDeleteObject: (id: string) => void;
   onRotateObject: (id: string) => void;
   onSendToBack: (id: string) => void;
+  onBringToFront: (id: string) => void;
   // History
   undo: () => void;
   redo: () => void;
@@ -177,6 +180,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [imageFailedIds, setImageFailedIds] = useState<Set<string>>(new Set());
   const [showGrid, setShowGrid] = useState(false);
   const [xray, setXray] = useState(false);
+  const [showMini3d, setShowMini3d] = useState(false);
   const [ruler, setRuler] = useState(false);
   const [lineRuler, setLineRuler] = useState(false);
   const [cableLayer, setCableLayer] = useState(false);
@@ -409,6 +413,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [setObjects]
   );
 
+  const handleBringToFront = useCallback(
+    (id: string) => {
+      setObjects((prev) => {
+        const i = prev.findIndex((o) => o.id === id);
+        if (i < 0 || i === prev.length - 1) return prev;
+        const obj = prev[i];
+        const next = prev.slice(0, i).concat(prev.slice(i + 1));
+        return [...next, obj];
+      });
+    },
+    [setObjects]
+  );
+
   const loadBoardState = useCallback(
     (state: SavedState) => {
       if (state.objects?.length) initNextObjectIdFromObjects(state.objects);
@@ -556,6 +573,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setShowGrid,
     xray,
     setXray,
+    showMini3d,
+    setShowMini3d,
     ruler,
     setRuler,
     lineRuler,
@@ -586,6 +605,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     onDeleteObject: handleDeleteObject,
     onRotateObject: handleRotateObject,
     onSendToBack: handleSendToBack,
+    onBringToFront: handleBringToFront,
     undo,
     redo,
     canUndo,

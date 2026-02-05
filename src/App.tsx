@@ -7,6 +7,7 @@ import { CatalogDndProvider } from "./components/catalog/CatalogDndProvider";
 import { ZoomControls } from "./components/zoom/ZoomControls";
 import { SelectionInfoPopup } from "./components/selection/SelectionInfoPopup";
 import { HistoryControls } from "./components/history/HistoryControls";
+import { Mini3DOverlay } from "./components/mini3d/Mini3DOverlay";
 import { AppProvider, useApp } from "./context/AppContext";
 import { ConfirmationProvider } from "./context/ConfirmationContext";
 import { SettingsModalProvider, useSettingsModal } from "./context/SettingsModalContext";
@@ -24,6 +25,7 @@ function AppContent() {
       aria-label="Pedalboard editor"
     >
       <Canvas />
+      <Mini3DOverlay />
       <div className={`catalog-panel${panelExpanded ? " panel-expanded" : ""}`}>
         <div className="catalog-panel-head">
           <button
