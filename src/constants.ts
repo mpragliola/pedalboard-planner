@@ -25,6 +25,8 @@ export const CONNECTOR_ICON_MAP: Record<ConnectorKind, string> = {
 export const ZOOM_MIN = 0.5;
 export const ZOOM_MAX = 3;
 export const ZOOM_STEP = 0.25;
+/** Threshold for distinguishing pinch-to-zoom from two-finger panning. Ratio < this or > 1/this = pinch. */
+export const PINCH_DETECTION_THRESHOLD = 0.95;
 
 /** Scale: board/device template dimensions are in mm; convert to px for canvas. 1 mm = 1 px. */
 export const MM_TO_PX = 1;

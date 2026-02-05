@@ -8,6 +8,7 @@ import {
   WHEEL_THROTTLE_MS,
   WHEEL_TRANSITION_MS,
   WHEEL_ZOOM_FACTOR,
+  PINCH_DETECTION_THRESHOLD,
 } from "../constants";
 
 function dist(a: { clientX: number; clientY: number }, b: { clientX: number; clientY: number }) {
@@ -40,6 +41,9 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
     initialPan: { x: number; y: number };
     centerX: number;
     centerY: number;
+    mode: "pinch" | "pan"; // 'pinch' for zoom, 'pan' for two-finger drag
+    prevCenterX: number;
+    prevCenterY: number;
   } | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const zoomRef = useRef(zoom);
@@ -166,7 +170,7 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
     return () => document.removeEventListener("wheel", onWheel, wheelOptions);
   }, [handleWheelZoom]);
 
-  /* Pinch-to-zoom (touch) */
+  /* Pinch-to-zoom (touch) and two-finger pan */
   useEffect(() => {
     const el = canvasRef.current;
     if (!el) return;
@@ -183,6 +187,9 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
           initialPan: { ...panRef.current },
           centerX: c.x,
           centerY: c.y,
+          mode: "pan", // Start in pan mode; switch to pinch if distance changes significantly
+          prevCenterX: c.x,
+          prevCenterY: c.y,
         };
       }
     };
@@ -191,8 +198,27 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
         e.preventDefault();
         const d = dist(e.touches[0], e.touches[1]);
         const scale = d / pinchRef.current.initialDistance;
-        const newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, pinchRef.current.initialZoom * scale));
-        zoomToward(newZoom, pinchRef.current.centerX, pinchRef.current.centerY);
+        const c = center(e.touches[0], e.touches[1]);
+
+        // Detect if this is pinch-to-zoom or two-finger pan
+        // If the distance ratio deviates significantly from 1.0, it's a pinch
+        if (scale < PINCH_DETECTION_THRESHOLD || scale > 1 / PINCH_DETECTION_THRESHOLD) {
+          // It's a pinch-to-zoom gesture
+          pinchRef.current.mode = "pinch";
+          const newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, pinchRef.current.initialZoom * scale));
+          zoomToward(newZoom, pinchRef.current.centerX, pinchRef.current.centerY);
+        } else {
+          // It's a two-finger pan gesture; move based on center point movement
+          pinchRef.current.mode = "pan";
+          const dx = c.x - pinchRef.current.prevCenterX;
+          const dy = c.y - pinchRef.current.prevCenterY;
+          setPan({
+            x: panRef.current.x + dx,
+            y: panRef.current.y + dy,
+          });
+          pinchRef.current.prevCenterX = c.x;
+          pinchRef.current.prevCenterY = c.y;
+        }
       }
     };
     const handleTouchEnd = (e: TouchEvent) => {

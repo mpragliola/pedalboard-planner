@@ -523,6 +523,7 @@ export function Mini3DOverlay() {
     startYaw: number;
     startPitch: number;
   } | null>(null);
+  const activePointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
   const rafRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number | null>(null);
   const objectsRef = useRef(objects);
@@ -721,18 +722,45 @@ export function Mini3DOverlay() {
 
   const handleRotatePointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      if (e.button !== 1) return;
-      e.preventDefault();
-      e.stopPropagation();
-      setAutoRotate(false);
-      rotateDragRef.current = {
-        pointerId: e.pointerId,
-        startX: e.clientX,
-        startY: e.clientY,
-        startYaw: yawRef.current,
-        startPitch: pitchRef.current,
-      };
-      containerRef.current?.setPointerCapture(e.pointerId);
+      activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+      // Start rotation with middle mouse button
+      if (e.button === 1) {
+        e.preventDefault();
+        e.stopPropagation();
+        setAutoRotate(false);
+        rotateDragRef.current = {
+          pointerId: e.pointerId,
+          startX: e.clientX,
+          startY: e.clientY,
+          startYaw: yawRef.current,
+          startPitch: pitchRef.current,
+        };
+        containerRef.current?.setPointerCapture(e.pointerId);
+        return;
+      }
+
+      // For touch, always prevent default to avoid browser gestures
+      if (e.pointerType === "touch") {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
+      // Start rotation with two simultaneous touch pointers
+      if (e.pointerType === "touch" && activePointersRef.current.size === 2) {
+        setAutoRotate(false);
+        const pointers = Array.from(activePointersRef.current.values());
+        const centerX = (pointers[0].x + pointers[1].x) / 2;
+        const centerY = (pointers[0].y + pointers[1].y) / 2;
+        rotateDragRef.current = {
+          pointerId: e.pointerId, // Store second pointer ID for touch-specific logic
+          startX: centerX,
+          startY: centerY,
+          startYaw: yawRef.current,
+          startPitch: pitchRef.current,
+        };
+        // Don't use setPointerCapture for multi-touch; rely on direct events
+      }
     },
     [setAutoRotate]
   );
@@ -740,9 +768,25 @@ export function Mini3DOverlay() {
   const handleRotatePointerMove = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       const drag = rotateDragRef.current;
-      if (!drag || e.pointerId !== drag.pointerId) return;
-      const dx = e.clientX - drag.startX;
-      const dy = e.clientY - drag.startY;
+      if (!drag) return;
+
+      // Update pointer position
+      activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+      let currentX = e.clientX;
+      let currentY = e.clientY;
+
+      // For two-finger touch, use center point of both touches
+      if (activePointersRef.current.size === 2) {
+        e.preventDefault();
+        e.stopPropagation();
+        const pointers = Array.from(activePointersRef.current.values());
+        currentX = (pointers[0].x + pointers[1].x) / 2;
+        currentY = (pointers[0].y + pointers[1].y) / 2;
+      }
+
+      const dx = currentX - drag.startX;
+      const dy = currentY - drag.startY;
       yawRef.current = drag.startYaw + dx * ROTATE_DRAG_SENS;
       pitchRef.current = clamp(drag.startPitch + dy * ROTATE_PITCH_SENS, PITCH_OFFSET_MIN, PITCH_OFFSET_MAX);
       drawScene(yawRef.current, pitchRef.current, objectsRef.current, sizeRef.current);
@@ -751,10 +795,25 @@ export function Mini3DOverlay() {
   );
 
   const handleRotatePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    activePointersRef.current.delete(e.pointerId);
+
     const drag = rotateDragRef.current;
-    if (!drag || e.pointerId !== drag.pointerId) return;
-    rotateDragRef.current = null;
-    containerRef.current?.releasePointerCapture(e.pointerId);
+    if (!drag) return;
+
+    // End rotation if this is a middle-mouse drag
+    const isMiddleMouseDrag = e.button === 1;
+    
+    // End rotation for touch if we fall below 2 pointers
+    const isTouchDragEndedByPointerCount = e.pointerType === "touch" && activePointersRef.current.size < 2;
+
+    if (isMiddleMouseDrag || isTouchDragEndedByPointerCount) {
+      rotateDragRef.current = null;
+      try {
+        containerRef.current?.releasePointerCapture(e.pointerId);
+      } catch {
+        /* OK if pointer was already released */
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -768,10 +827,28 @@ export function Mini3DOverlay() {
 
   useEffect(() => {
     if (!showMini3d) return;
+    const el = containerRef.current;
+    if (!el) return;
+
+    const handleTouchMove = (e: TouchEvent) => {
+      // Prevent default on touchmove when we have 2 pointers and are rotating
+      if (e.touches.length >= 2 && rotateDragRef.current) {
+        e.preventDefault();
+      }
+    };
+
+    el.addEventListener("touchmove", handleTouchMove, { passive: false });
+    return () => el.removeEventListener("touchmove", handleTouchMove);
+  }, [showMini3d]);
+
+  useEffect(() => {
+    if (!showMini3d) return;
     return () => {
       if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
       lastTimeRef.current = null;
+      rotateDragRef.current = null;
+      activePointersRef.current.clear();
     };
   }, [showMini3d]);
 
