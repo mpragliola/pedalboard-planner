@@ -3,12 +3,12 @@
 /* Native dialog styling */
 .confirmation-dialog {
   border: none;
-  border-radius: 12px;
+  border-radius: vars.$modal-radius;
   padding: 0;
   background: vars.$color-surface;
-  box-shadow: 0 8px 32px vars.$black-25;
+  box-shadow: vars.$modal-shadow;
   min-width: 320px;
-  max-width: min(400px, calc(100vw - 48px));
+  max-width: vars.$modal-max-width-sm;
   /* Restore centering removed by global reset */
   position: fixed;
   top: 50%;
@@ -19,7 +19,7 @@
 
 .confirmation-dialog::backdrop {
   background: vars.$black-35;
-  animation: confirmation-fade-in 0.15s ease-out;
+  animation: confirmation-fade-in vars.$duration-backdrop vars.$ease-out;
 }
 
 @keyframes confirmation-fade-in {
@@ -32,7 +32,7 @@
 }
 
 .confirmation-dialog[open] {
-  animation: confirmation-scale-in 0.2s ease-out;
+  animation: confirmation-scale-in vars.$duration-modal vars.$ease-out;
 }
 
 @keyframes confirmation-scale-in {
@@ -47,36 +47,36 @@
 }
 
 .confirmation-content {
-  padding: 20px 24px;
+  padding: vars.$space-20 vars.$space-24;
 }
 
 .confirmation-title {
   font-size: 0.95rem;
   font-weight: 700;
   color: vars.$color-text-strong;
-  margin: 0 0 10px;
+  margin: 0 0 vars.$space-10;
 }
 
 .confirmation-message {
   font-size: 0.85rem;
   color: vars.$color-text-soft;
   line-height: 1.45;
-  margin: 0 0 20px;
+  margin: 0 0 vars.$space-20;
 }
 
 .confirmation-actions {
   display: flex;
-  gap: 10px;
+  gap: vars.$space-10;
   justify-content: flex-end;
 }
 
 .confirmation-btn {
-  padding: 8px 16px;
-  border-radius: 8px;
+  padding: vars.$space-8 vars.$space-16;
+  border-radius: vars.$radius-lg;
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: background vars.$duration-fast, color vars.$duration-fast;
   border: none;
 }
 

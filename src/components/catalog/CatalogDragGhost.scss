@@ -18,12 +18,12 @@ body.catalog-dragging * {
 
 .catalog-drag-ghost {
   position: fixed;
-  z-index: 70000;
+  z-index: vars.$z-drag-ghost;
   pointer-events: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
+  border-radius: vars.$radius-md;
   overflow: visible; /* allow drop-shadow to show */
   opacity: 0.7;
 }

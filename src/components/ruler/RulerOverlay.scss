@@ -3,7 +3,7 @@
 .ruler-overlay {
   position: absolute;
   inset: 0;
-  z-index: 10001;
+  z-index: vars.$z-ruler;
   cursor: crosshair;
   pointer-events: auto;
   touch-action: none;
@@ -34,21 +34,21 @@
   position: absolute;
   background: rgba(28, 28, 32, 0.95);
   color: vars.$color-text-light;
-  padding: 4px 8px;
-  border-radius: 4px;
+  padding: vars.$space-4 vars.$space-8;
+  border-radius: vars.$radius-sm;
   font-size: 0.7rem;
   white-space: nowrap;
-  box-shadow: 0 2px 6px vars.$black-40;
+  box-shadow: vars.$shadow-tooltip;
   pointer-events: none;
 }
 
 .ruler-popup-row {
   display: flex;
   justify-content: space-between;
-  gap: 10px;
+  gap: vars.$space-10;
 }
 
 .ruler-popup-row span:first-child {
   color: vars.$color-border-strong;
-  margin-right: 6px;
+  margin-right: vars.$space-6;
 }

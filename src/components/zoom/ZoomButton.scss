@@ -1,15 +1,15 @@
 @use "../../styles/variables" as vars;
 
 .zoom-btn {
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
-  min-height: 44px;
+  width: vars.$zoom-button-size;
+  height: vars.$zoom-button-size;
+  min-width: vars.$zoom-button-size;
+  min-height: vars.$zoom-button-size;
   flex-shrink: 0;
   border: none;
   border-radius: 50%;
-  background: vars.$white-90;
-  box-shadow: 0 2px 6px vars.$black-20, 0 4px 16px vars.$black-12;
+  background: vars.$panel-bg;
+  box-shadow: vars.$shadow-control;
   font-size: 1.5rem;
   font-weight: 300;
   line-height: 1;
@@ -18,14 +18,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    transform vars.$duration-fast vars.$ease-standard,
+    box-shadow vars.$duration-fast vars.$ease-standard;
   box-sizing: border-box;
   aspect-ratio: 1;
 }
 
 .zoom-btn:hover {
   transform: scale(1.08);
-  box-shadow: 0 4px 12px vars.$black-22, 0 6px 20px vars.$black-15;
+  box-shadow: vars.$shadow-control-hover;
 }
 
 .zoom-btn:active {
@@ -38,10 +40,10 @@
 }
 
 .zoom-btn.zoom-in {
-  padding-bottom: 2px;
+  padding-bottom: vars.$space-2;
 }
 
 .zoom-btn.zoom-out {
   font-size: 2rem;
-  padding-bottom: 4px;
+  padding-bottom: vars.$space-4;
 }

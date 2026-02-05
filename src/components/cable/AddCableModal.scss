@@ -219,7 +219,7 @@
 .add-cable-picker-overlay {
   position: fixed;
   inset: 0;
-  z-index: 12000;
+  z-index: vars.$z-add-cable-modal;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -451,7 +451,7 @@
   box-shadow: 0 10px 24px vars.$black-10, 0 0 0 1px vars.$black-04;
   max-height: min(220px, 50vh);
   overflow-y: auto;
-  z-index: 1000;
+  z-index: vars.$z-popover;
   -webkit-overflow-scrolling: touch;
 }
 

@@ -2,36 +2,36 @@
 
 .board-menu-wrap {
   position: fixed;
-  top: 24px;
-  right: 24px;
-  z-index: 100;
+  top: vars.$floating-panel-offset;
+  right: vars.$floating-panel-offset;
+  z-index: vars.$z-board-menu;
 }
 
 .board-menu {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 10px;
-  background: vars.$white-90;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px vars.$black-20;
+  gap: vars.$space-4;
+  padding: vars.$panel-head-padding;
+  background: vars.$panel-bg;
+  border-radius: vars.$panel-radius;
+  box-shadow: vars.$panel-shadow;
 }
 
 .board-menu-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: vars.$control-size-xl;
+  height: vars.$control-size-xl;
   padding: 0;
   border: none;
-  border-radius: 6px;
+  border-radius: vars.$radius-md;
   background: transparent;
   font-size: 1.1rem;
   line-height: 1;
   color: vars.$color-text;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background vars.$duration-fast vars.$ease-standard;
 }
 
 .board-menu-btn:hover {
@@ -50,12 +50,12 @@
   pointer-events: none;
 }
 
-/* GPT, Info, Settings buttons in file menu – match board-menu-btn size */
+/* GPT, Info, Settings buttons in file menu - match board-menu-btn size */
 .board-menu .gpt-btn,
 .board-menu .info-btn,
 .board-menu .settings-btn {
-  width: 32px;
-  height: 32px;
+  width: vars.$control-size-xl;
+  height: vars.$control-size-xl;
   padding: 0;
   display: flex;
   align-items: center;

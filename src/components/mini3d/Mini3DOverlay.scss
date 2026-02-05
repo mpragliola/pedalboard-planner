@@ -2,11 +2,11 @@
 
 .mini3d-overlay {
   position: fixed;
-  bottom: 24px;
-  left: 24px;
-  width: clamp(180px, 25vw, 420px);
-  height: clamp(140px, 25vh, 320px);
-  z-index: 500;
+  bottom: vars.$floating-panel-offset;
+  left: vars.$floating-panel-offset;
+  width: clamp(vars.$mini3d-width-min, 25vw, vars.$mini3d-width-max);
+  height: clamp(vars.$mini3d-height-min, 25vh, vars.$mini3d-height-max);
+  z-index: vars.$z-mini3d;
   pointer-events: auto;
   opacity: 0.85;
   cursor: pointer;
@@ -21,9 +21,9 @@
 
 @media (max-width: 768px) {
   .mini3d-overlay {
-    bottom: 12px;
-    left: 12px;
-    width: clamp(160px, 35vw, 320px);
-    height: clamp(120px, 35vh, 260px);
+    bottom: vars.$floating-panel-offset-sm;
+    left: vars.$floating-panel-offset-sm;
+    width: clamp(vars.$mini3d-width-min-mobile, 35vw, vars.$mini3d-width-max-mobile);
+    height: clamp(vars.$mini3d-height-min-mobile, 35vh, vars.$mini3d-height-max-mobile);
   }
 }

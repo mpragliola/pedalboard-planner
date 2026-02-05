@@ -2,17 +2,17 @@
 
 .history-controls.floating-controls {
   position: fixed;
-  z-index: 10200;
+  z-index: vars.$z-history-controls;
 }
 
 .history-controls {
-  bottom: 24px;
+  bottom: vars.$floating-panel-offset;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 6px;
-  padding: 4px;
-  background: vars.$white-90;
-  border-radius: 24px;
-  box-shadow: 0 2px 8px vars.$black-20;
+  gap: vars.$space-6;
+  padding: vars.$space-4;
+  background: vars.$panel-bg;
+  border-radius: vars.$radius-2xl;
+  box-shadow: vars.$panel-shadow;
 }

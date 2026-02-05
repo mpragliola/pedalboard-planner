@@ -2,22 +2,22 @@
 
 .floating-dropdowns.floating-controls {
   position: fixed;
-  z-index: 100;
+  z-index: vars.$z-dropdown-panel;
 }
 
 .floating-dropdowns {
-  top: 24px;
-  left: 24px;
-  max-height: calc(100vh - 48px);
+  top: vars.$floating-panel-offset;
+  left: vars.$floating-panel-offset;
+  max-height: calc(100vh - #{vars.$space-48});
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 12px;
-  background: vars.$white-90;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px vars.$black-20;
-  transition: width 0.2s ease;
+  gap: vars.$space-12;
+  padding: vars.$space-12;
+  background: vars.$panel-bg;
+  border-radius: vars.$panel-radius;
+  box-shadow: vars.$panel-shadow;
+  transition: width vars.$duration-modal vars.$ease-standard;
 }
 
 .catalog-switches-row {

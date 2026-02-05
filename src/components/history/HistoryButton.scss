@@ -1,8 +1,8 @@
 @use "../../styles/variables" as vars;
 
 .history-btn {
-  width: 30px;
-  height: 30px;
+  width: vars.$history-button-size;
+  height: vars.$history-button-size;
   border: none;
   border-radius: 50%;
   background: transparent;
@@ -12,7 +12,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.15s, transform 0.1s, opacity 0.15s;
+  transition:
+    background vars.$duration-fast,
+    transform 0.1s,
+    opacity vars.$duration-fast;
 }
 
 .history-btn:hover:not(:disabled) {

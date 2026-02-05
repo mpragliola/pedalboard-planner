@@ -2,14 +2,14 @@
 
 .selection-toolbar {
   position: absolute;
-  z-index: 50000;
+  z-index: vars.$z-toolbar;
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px;
+  gap: vars.$space-4;
+  padding: vars.$space-4;
   background: var(--toolbar-bg, vars.$color-toolbar-bg);
-  border-radius: 8px;
-  box-shadow: 0 4px 12px vars.$black-30;
+  border-radius: vars.$panel-radius;
+  box-shadow: vars.$shadow-float-strong;
   pointer-events: auto;
 }
 

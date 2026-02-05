@@ -2,16 +2,16 @@
 
 .zoom-controls.floating-controls {
   position: fixed;
-  z-index: 10100;
+  z-index: vars.$z-zoom-controls;
 }
 
 .zoom-controls {
-  bottom: 24px;
-  right: 24px;
+  bottom: vars.$floating-panel-offset;
+  right: vars.$floating-panel-offset;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 8px;
+  gap: vars.$space-8;
 }
 
 .view-tools-group,
@@ -19,7 +19,7 @@
   display: flex;
   flex-direction: row-reverse;
   align-items: center;
-  gap: 8px;
+  gap: vars.$space-8;
 }
 
 .view-tools-secondary,
@@ -27,32 +27,38 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 8px;
+  gap: vars.$space-8;
   max-width: 0;
   overflow: hidden;
   opacity: 0;
-  transition: max-width 0.25s ease-out, opacity 0.2s ease-out;
+  transition:
+    max-width vars.$duration-medium vars.$ease-out,
+    opacity vars.$duration-fast vars.$ease-out;
 }
 
 .view-tools-group.expanded .view-tools-secondary {
-  max-width: 252px;
+  max-width: vars.$zoom-secondary-max-width;
   /* 44*5 + 8*4 for 5 buttons */
   overflow: visible;
   opacity: 1;
-  transition: max-width 0.3s ease-out, opacity 0.2s ease-in;
+  transition:
+    max-width vars.$duration-slow vars.$ease-out,
+    opacity vars.$duration-fast vars.$ease-in;
 }
 
 .measurement-tools-group.expanded .measurement-tools-secondary {
-  max-width: 96px;
+  max-width: vars.$zoom-measurement-max-width;
   /* 44*2 + 8 for 2 buttons (Ruler, Line ruler) */
   overflow: visible;
   opacity: 1;
-  transition: max-width 0.3s ease-out, opacity 0.2s ease-in;
+  transition:
+    max-width vars.$duration-slow vars.$ease-out,
+    opacity vars.$duration-fast vars.$ease-in;
 }
 
 .zoom-btn.view-group-toggle,
 .zoom-btn.measurement-group-toggle {
-  transition: color 0.2s ease;
+  transition: color vars.$duration-fast vars.$ease-standard;
 }
 
 .zoom-btn.view-group-toggle.open,

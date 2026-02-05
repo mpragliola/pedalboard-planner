@@ -4,15 +4,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 28px;
+  width: vars.$toolbar-button-width;
+  height: vars.$toolbar-button-height;
   padding: 0;
   border: none;
-  border-radius: 6px;
+  border-radius: vars.$radius-md;
   background: transparent;
   color: vars.$color-surface-strong;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: background vars.$duration-fast, color vars.$duration-fast;
 }
 
 .selection-toolbar-btn:hover {

@@ -99,7 +99,138 @@ $radius-lg: 8px;
 $radius-xl: 12px;
 $radius-2xl: 24px;
 
+// Spacing scale
+$space-2: 2px;
+$space-4: 4px;
+$space-6: 6px;
+$space-8: 8px;
+$space-10: 10px;
+$space-12: 12px;
+$space-14: 14px;
+$space-16: 16px;
+$space-18: 18px;
+$space-20: 20px;
+$space-24: 24px;
+$space-28: 28px;
+$space-30: 30px;
+$space-32: 32px;
+$space-36: 36px;
+$space-40: 40px;
+$space-44: 44px;
+$space-48: 48px;
+
+// Layout
+$ui-gutter: $space-24;
+$ui-gutter-sm: $space-12;
+$ui-gutter-xs: $space-8;
+
+$catalog-panel-width: 240px;
+$catalog-panel-width-lg: 280px;
+$catalog-panel-width-xl: 320px;
+$catalog-panel-width-2xl: 400px;
+$catalog-panel-expanded-max-width: 800px;
+$catalog-panel-body-max-height: 75vh;
+$catalog-panel-max-width-mobile: min(300px, calc(100vw - 24px));
+$catalog-panel-max-height-landscape: 85vh;
+$catalog-panel-body-max-height-landscape: 50vh;
+
+$panel-radius: $radius-lg;
+$panel-bg: $white-90;
+$panel-shadow: 0 2px 8px $black-20;
+$panel-head-padding: $space-6 $space-10;
+$panel-toggle-padding: $space-4 $space-8;
+
+$floating-panel-offset: $ui-gutter;
+$floating-panel-offset-sm: $ui-gutter-sm;
+
+$selection-popup-padding: $space-12 $space-16;
+$selection-popup-radius: $radius-lg;
+$selection-popup-shadow: 0 4px 12px $black-15;
+$selection-popup-blur: blur(4px);
+
+$mini3d-width-min: 180px;
+$mini3d-width-max: 420px;
+$mini3d-height-min: 140px;
+$mini3d-height-max: 320px;
+$mini3d-width-min-mobile: 160px;
+$mini3d-width-max-mobile: 320px;
+$mini3d-height-min-mobile: 120px;
+$mini3d-height-max-mobile: 260px;
+
+// Controls
+$control-size-xs: 24px;
+$control-size-sm: 26px;
+$control-size-md: 28px;
+$control-size-lg: 30px;
+$control-size-xl: 32px;
+$control-size-2xl: 36px;
+$control-size-3xl: 40px;
+$control-size-4xl: 44px;
+$control-size-5xl: 48px;
+
+$zoom-button-size: $control-size-4xl;
+$history-button-size: $control-size-lg;
+$toolbar-button-width: $control-size-xl;
+$toolbar-button-height: $control-size-md;
+$panel-expand-min-width: 36px;
+$panel-expand-min-height: $control-size-xl;
+$zoom-secondary-max-width: 252px;
+$zoom-measurement-max-width: 96px;
+
+// Modals
+$modal-radius: $radius-xl;
+$modal-shadow: 0 8px 32px $black-25;
+$modal-shadow-soft: 0 8px 32px $black-20;
+$modal-padding: $space-24;
+$modal-body-padding: $space-16;
+$modal-header-padding: $space-12 $space-16;
+$modal-close-size: 28px;
+$modal-close-size-compact: 26px;
+$modal-max-height: calc(100vh - 48px);
+$modal-max-width-sm: min(400px, calc(100vw - 48px));
+$modal-max-width-md: min(480px, calc(100vw - 48px));
+$modal-max-width-lg: min(560px, calc(100vw - 48px));
+$modal-max-width-xl: min(720px, calc(100vw - 48px));
+
+// Z-index layers
+$z-disclaimer: 100;
+$z-board-menu: 100;
+$z-dropdown-panel: 100;
+$z-catalog-panel: 200;
+$z-selection-popup: 1000;
+$z-popover: 1000;
+$z-mini3d: 500;
+$z-cable-layer: 10001;
+$z-ruler: 10001;
+$z-zoom-controls: 10100;
+$z-history-controls: 10200;
+$z-add-cable-modal: 12000;
+$z-modal: 11000;
+$z-toolbar: 50000;
+$z-info-modal: 60000;
+$z-component-list-modal: 60000;
+$z-gpt-modal: 70000;
+$z-drag-ghost: 70000;
+
+// Shadows
+$shadow-control: 0 2px 6px $black-20, 0 4px 16px $black-12;
+$shadow-control-hover: 0 4px 12px $black-22, 0 6px 20px $black-15;
+$shadow-float: 0 2px 6px $black-20;
+$shadow-float-strong: 0 4px 12px $black-30;
+$shadow-tooltip: 0 2px 6px $black-40;
+
 // Motion
-$transition-fast: 0.15s;
-$transition-medium: 0.25s;
-$transition-slow: 0.35s;
+$duration-fast: 0.15s;
+$duration-medium: 0.25s;
+$duration-slow: 0.35s;
+$duration-modal: 0.2s;
+$duration-backdrop: 0.15s;
+
+$ease-standard: ease;
+$ease-out: ease-out;
+$ease-in: ease-in;
+$ease-in-out: ease-in-out;
+
+$transition-fast: $duration-fast;
+$transition-medium: $duration-medium;
+$transition-slow: $duration-slow;
