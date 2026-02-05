@@ -343,8 +343,8 @@ export function CableLayerOverlay() {
             <span>Length</span>
             <span>
               {showBothLengths
-                ? `${formatLength(committedLength, unit)} (${formatLength(totalLength, unit)})`
-                : formatLength(totalLength, unit)}
+                ? `${formatLength(committedLength, "mm")} (${formatLength(totalLength, "mm")})`
+                : formatLength(totalLength, "mm")}
             </span>
           </div>
         </div>

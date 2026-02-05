@@ -1,0 +1,14 @@
+/* Connector labels next to cable anchors (coordinates in canvas mm, so font in user units) */
+.cable-connector-label {
+  fill: #333;
+  font-size: 4.5px;
+  font-family: inherit;
+  font-weight: 500;
+  user-select: none;
+}
+
+.cable-paths-svg .cable-connector-label {
+  paint-order: stroke;
+  stroke: rgba(255, 255, 255, 0.9);
+  stroke-width: 0.9;
+}

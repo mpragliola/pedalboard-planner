@@ -9,10 +9,13 @@ import { SelectionInfoPopup } from "./components/selection/SelectionInfoPopup";
 import { HistoryControls } from "./components/history/HistoryControls";
 import { AppProvider, useApp } from "./context/AppContext";
 import { ConfirmationProvider } from "./context/ConfirmationContext";
+import { SettingsModalProvider, useSettingsModal } from "./context/SettingsModalContext";
+import { SettingsModal } from "./components/settings/SettingsModal";
 import "./App.css";
 
 function AppContent() {
   const { dropdownPanelRef, floatingUiVisible, setFloatingUiVisible, panelExpanded, setPanelExpanded } = useApp();
+  const { open: settingsOpen, setOpen: setSettingsOpen } = useSettingsModal();
   return (
     <div
       className="app-content"
@@ -53,6 +56,7 @@ function AppContent() {
       <ZoomControls />
       <HistoryControls />
       <SelectionInfoPopup />
+      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <p className="disclaimer" aria-live="polite">
         Prototype — may contain bugs; catalog is incomplete and may have errors.
       </p>
@@ -67,9 +71,11 @@ function App() {
   return (
     <ConfirmationProvider>
       <AppProvider>
-        <CatalogDndProvider>
-          <AppContent />
-        </CatalogDndProvider>
+        <SettingsModalProvider>
+          <CatalogDndProvider>
+            <AppContent />
+          </CatalogDndProvider>
+        </SettingsModalProvider>
       </AppProvider>
     </ConfirmationProvider>
   );

@@ -5,7 +5,7 @@ import { faFileCsv } from "@fortawesome/free-solid-svg-icons";
 import { useApp } from "../../context/AppContext";
 import { useConfirmation } from "../../context/ConfirmationContext";
 import { BASE_URL, CONNECTOR_ICON_MAP, DEFAULT_OBJECT_COLOR } from "../../constants";
-import { formatLength, formatLengthCmOrInches } from "../../lib/rulerFormat";
+import { formatLengthCm } from "../../lib/rulerFormat";
 import type { Cable, CanvasObjectType, ConnectorKind } from "../../types";
 import "./ComponentListModal.css";
 
@@ -301,7 +301,7 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
                           ) : null}
                         </span>
                       </td>
-                      <td>{formatLengthCmOrInches(cableLengthsMm[index], unit)}</td>
+                      <td>{formatLengthCm(cableLengthsMm[index])}</td>
                       <td className="connectors-actions">
                         <button
                           type="button"

@@ -1,5 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useContext } from "react";
+import { createPortal } from "react-dom";
 import { Modal } from "../common/Modal";
+import { ModalContext } from "../../context/ModalContext";
 import { CONNECTOR_ICON_MAP, CONNECTOR_KIND_OPTIONS, CONNECTOR_NAME_OPTIONS } from "../../constants";
 import type { Cable, CableSegment, ConnectorKind } from "../../types";
 import "./AddCableModal.css";
@@ -29,6 +31,7 @@ function nextCableId(): string {
   return `cable-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
+/** Connector type: button opens full-screen overlay picker (reliable on mobile). */
 function ConnectorPicker({
   id,
   label,
@@ -40,25 +43,70 @@ function ConnectorPicker({
   value: ConnectorKind;
   onChange: (kind: ConnectorKind) => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [open]);
-
-  const currentOption = CONNECTOR_KIND_OPTIONS.find((o) => o.value === value);
+  const modalDialogRef = useContext(ModalContext);
+  const [overlayOpen, setOverlayOpen] = useState(false);
   const iconSrc = value ? CONNECTOR_ICON_MAP[value] : null;
+  const currentOption = CONNECTOR_KIND_OPTIONS.find((o) => o.value === value);
+  const portalTarget = (modalDialogRef?.current ?? null) || document.body;
+
+  const overlay =
+    overlayOpen &&
+    createPortal(
+      <div
+        className="add-cable-picker-overlay"
+        role="dialog"
+        aria-label="Choose connector type"
+        onClick={() => setOverlayOpen(false)}
+        onTouchEnd={(e) => e.target === e.currentTarget && setOverlayOpen(false)}
+      >
+        <div
+          className="add-cable-picker-overlay-panel"
+          onClick={(e) => e.stopPropagation()}
+          onTouchEnd={(e) => e.stopPropagation()}
+        >
+          <div className="add-cable-picker-overlay-head">
+            <span className="add-cable-picker-overlay-title">Connector type</span>
+            <button
+              type="button"
+              className="add-cable-picker-overlay-close"
+              onClick={() => setOverlayOpen(false)}
+              aria-label="Close"
+            >
+              ×
+            </button>
+          </div>
+          <ul className="add-cable-picker-overlay-list" role="listbox">
+            {CONNECTOR_KIND_OPTIONS.map((opt) => (
+              <li key={opt.value} role="option" aria-selected={opt.value === value}>
+                <button
+                  type="button"
+                  className="add-cable-picker-overlay-option"
+                  onClick={() => {
+                    onChange(opt.value);
+                    setOverlayOpen(false);
+                  }}
+                >
+                  {CONNECTOR_ICON_MAP[opt.value] && (
+                    <img
+                      src={CONNECTOR_ICON_MAP[opt.value]}
+                      alt=""
+                      width={24}
+                      height={24}
+                      style={{ flexShrink: 0 }}
+                    />
+                  )}
+                  <span>{opt.label}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>,
+      portalTarget
+    );
 
   return (
-    <div ref={containerRef} className="add-cable-connector-picker">
+    <div className="add-cable-connector-picker">
       {label ? (
         <label id={`${id}-label`} htmlFor={id} className="add-cable-connector-picker-label">
           {label}
@@ -69,53 +117,121 @@ function ConnectorPicker({
       <button
         type="button"
         id={id}
-        className="add-cable-connector-trigger"
-        onClick={() => setOpen((o) => !o)}
-        aria-haspopup="listbox"
-        aria-expanded={open}
+        className="add-cable-connector-trigger-btn"
         aria-labelledby={`${id}-label`}
+        aria-haspopup="dialog"
+        aria-expanded={overlayOpen}
+        onClick={() => setOverlayOpen(true)}
       >
-        <span className="add-cable-connector-trigger-content">
-          {iconSrc && (
-            <img src={iconSrc} alt="" className="add-cable-connector-trigger-icon" width={20} height={20} />
-          )}
-          <span className="add-cable-connector-trigger-label">{currentOption?.label ?? value}</span>
-        </span>
-        <span className="add-cable-connector-chevron" aria-hidden>
-          {open ? "▴" : "▾"}
-        </span>
+        {iconSrc && (
+          <img
+            src={iconSrc}
+            alt=""
+            className="add-cable-connector-trigger-icon"
+            width={20}
+            height={20}
+          />
+        )}
+        <span className="add-cable-connector-trigger-label">{currentOption?.label ?? value}</span>
+        <span className="add-cable-connector-chevron" aria-hidden>▾</span>
       </button>
-      {open && (
-        <ul
-          className="add-cable-connector-dropdown"
-          role="listbox"
-          aria-labelledby={`${id}-label`}
+      {overlay}
+    </div>
+  );
+}
+
+/** Combobox: text input + full-screen overlay for suggestions (reliable on mobile). */
+function LabelCombo({
+  id,
+  value,
+  onChange,
+  ariaLabel,
+}: {
+  id: string;
+  value: string;
+  onChange: (v: string) => void;
+  ariaLabel: string;
+}) {
+  const modalDialogRef = useContext(ModalContext);
+  const [open, setOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const portalTarget = (modalDialogRef?.current ?? null) || document.body;
+
+  const overlay =
+    open &&
+    createPortal(
+      <div
+        className="add-cable-picker-overlay"
+        role="dialog"
+        aria-label={ariaLabel}
+        onClick={() => setOpen(false)}
+        onTouchEnd={(e) => e.target === e.currentTarget && setOpen(false)}
+      >
+        <div
+          className="add-cable-picker-overlay-panel"
+          onClick={(e) => e.stopPropagation()}
+          onTouchEnd={(e) => e.stopPropagation()}
         >
-          {CONNECTOR_KIND_OPTIONS.map((opt) => (
-            <li
-              key={opt.value}
-              role="option"
-              aria-selected={opt.value === value}
-              className={`add-cable-connector-option${opt.value === value ? " add-cable-connector-option-selected" : ""}`}
-              onClick={() => {
-                onChange(opt.value);
-                setOpen(false);
-              }}
+          <div className="add-cable-picker-overlay-head">
+            <span className="add-cable-picker-overlay-title">Label</span>
+            <button
+              type="button"
+              className="add-cable-picker-overlay-close"
+              onClick={() => setOpen(false)}
+              aria-label="Close"
             >
-              {CONNECTOR_ICON_MAP[opt.value] && (
-                <img
-                  src={CONNECTOR_ICON_MAP[opt.value]}
-                  alt=""
-                  className="add-cable-connector-option-icon"
-                  width={20}
-                  height={20}
-                />
-              )}
-              <span>{opt.label}</span>
-            </li>
-          ))}
-        </ul>
-      )}
+              ×
+            </button>
+          </div>
+          <ul id={`${id}-list`} className="add-cable-picker-overlay-list" role="listbox">
+            {CONNECTOR_NAME_OPTIONS.map((s) => (
+              <li key={s} role="option" aria-selected={value === s}>
+                <button
+                  type="button"
+                  className="add-cable-picker-overlay-option"
+                  onClick={() => {
+                    onChange(s);
+                    setOpen(false);
+                    inputRef.current?.focus();
+                  }}
+                >
+                  {s}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>,
+      portalTarget
+    );
+
+  return (
+    <div className="add-cable-label-combo">
+      <input
+        ref={inputRef}
+        id={id}
+        type="text"
+        className="add-cable-name add-cable-label-combo-input"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Label"
+        aria-label={ariaLabel}
+        aria-expanded={open}
+        aria-haspopup="dialog"
+        aria-controls={open ? `${id}-list` : undefined}
+        autoComplete="off"
+      />
+      <button
+        type="button"
+        className="add-cable-label-combo-btn"
+        aria-label="Choose suggestion"
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        onClick={() => setOpen(true)}
+      >
+        ▾
+      </button>
+      {overlay}
     </div>
   );
 }
@@ -136,9 +252,11 @@ export function AddCableModal({ open, segments, onConfirm, onCancel, initialCabl
   const [connectorB, setConnectorB] = useState<ConnectorKind>("mono jack (TS)");
   const [connectorAName, setConnectorAName] = useState("");
   const [connectorBName, setConnectorBName] = useState("");
+  const prevOpenRef = useRef(false);
 
   useEffect(() => {
-    if (open) {
+    if (open && !prevOpenRef.current) {
+      prevOpenRef.current = true;
       if (initialCable) {
         setColor(
           CABLE_COLOR_OPTIONS.includes(initialCable.color) ? initialCable.color : CABLE_COLOR_OPTIONS[0]
@@ -155,6 +273,7 @@ export function AddCableModal({ open, segments, onConfirm, onCancel, initialCabl
         setConnectorBName("");
       }
     }
+    if (!open) prevOpenRef.current = false;
   }, [open, initialCable]);
 
   const handleConfirm = () => {
@@ -183,7 +302,7 @@ export function AddCableModal({ open, segments, onConfirm, onCancel, initialCabl
       ariaLabel={isEdit ? "Edit cable – color and connectors" : "Add cable – choose color and connectors"}
       ignoreBackdropClickForMs={200}
     >
-      <div className="add-cable-form">
+      <div className="add-cable-form" style={{ touchAction: "manipulation" }}>
         <div className="add-cable-row add-cable-color-row">
           <span className="add-cable-label">Color</span>
           <div className="add-cable-color-swatches" role="group" aria-label="Cable color">
@@ -212,15 +331,11 @@ export function AddCableModal({ open, segments, onConfirm, onCancel, initialCabl
               value={connectorA}
               onChange={setConnectorA}
             />
-            <input
+            <LabelCombo
               id="add-cable-connector-a-name"
-              type="text"
-              list="connector-name-list"
               value={connectorAName}
-              onChange={(e) => setConnectorAName(e.target.value)}
-              className="add-cable-name"
-              placeholder="Label"
-              aria-label="Connector A label"
+              onChange={setConnectorAName}
+              ariaLabel="Connector A label"
             />
           </div>
           <div className="add-cable-endpoint">
@@ -231,24 +346,14 @@ export function AddCableModal({ open, segments, onConfirm, onCancel, initialCabl
               value={connectorB}
               onChange={setConnectorB}
             />
-            <input
+            <LabelCombo
               id="add-cable-connector-b-name"
-              type="text"
-              list="connector-name-list"
               value={connectorBName}
-              onChange={(e) => setConnectorBName(e.target.value)}
-              className="add-cable-name"
-              placeholder="Label"
-              aria-label="Connector B label"
+              onChange={setConnectorBName}
+              ariaLabel="Connector B label"
             />
           </div>
         </div>
-
-        <datalist id="connector-name-list">
-          {CONNECTOR_NAME_OPTIONS.map((name) => (
-            <option key={name} value={name} />
-          ))}
-        </datalist>
 
         <div className="add-cable-actions">
           <button type="button" className="add-cable-btn add-cable-cancel" onClick={onCancel}>

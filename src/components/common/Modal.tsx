@@ -1,5 +1,6 @@
 import { useRef, useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { ModalContext } from "../../context/ModalContext";
 import "./Modal.css";
 
 interface ModalProps {
@@ -76,19 +77,21 @@ export function Modal({
       aria-label={ariaLabel ?? title}
       onClick={handleBackdropClick}
     >
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        {(title || showCloseButton) && (
-          <header className="modal-header">
-            {title && <h2 className="modal-title">{title}</h2>}
-            {showCloseButton && (
-              <button type="button" className="modal-close" onClick={onClose} aria-label="Close">
-                ×
-              </button>
-            )}
-          </header>
-        )}
-        <div className="modal-body">{children}</div>
-      </div>
+      <ModalContext.Provider value={dialogRef}>
+        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          {(title || showCloseButton) && (
+            <header className="modal-header">
+              {title && <h2 className="modal-title">{title}</h2>}
+              {showCloseButton && (
+                <button type="button" className="modal-close" onClick={onClose} aria-label="Close">
+                  ×
+                </button>
+              )}
+            </header>
+          )}
+          <div className="modal-body">{children}</div>
+        </div>
+      </ModalContext.Provider>
     </dialog>
   );
 
