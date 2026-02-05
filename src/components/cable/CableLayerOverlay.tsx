@@ -10,7 +10,10 @@ import type { Cable, CableSegment } from "../../types";
 import "../ruler/RulerOverlay.css";
 import "./CableLayerOverlay.css";
 
-const DEFAULT_CABLE_COLOR = "#333";
+/** Current (in-progress) cable: dotted, black, 0.5 opacity to distinguish from laid-down cables. */
+const CURRENT_CABLE_STROKE = "#000";
+const CURRENT_CABLE_OPACITY = 0.5;
+const CURRENT_CABLE_DASH_ARRAY = "4 4";
 const CABLE_STROKE_WIDTH_MM = 5;
 const ENDPOINT_DOT_RADIUS_PX = 5;
 
@@ -269,8 +272,10 @@ export function CableLayerOverlay() {
           <path
             d={committedPathD}
             fill="none"
-            stroke={DEFAULT_CABLE_COLOR}
+            stroke={CURRENT_CABLE_STROKE}
             strokeWidth={strokeWidthPx}
+            strokeOpacity={CURRENT_CABLE_OPACITY}
+            strokeDasharray={CURRENT_CABLE_DASH_ARRAY}
             strokeLinejoin="round"
             strokeLinecap="round"
           />
@@ -279,9 +284,10 @@ export function CableLayerOverlay() {
           <path
             d={previewPathD}
             fill="none"
-            stroke={DEFAULT_CABLE_COLOR}
+            stroke={CURRENT_CABLE_STROKE}
             strokeWidth={strokeWidthPx}
-            strokeOpacity={0.85}
+            strokeOpacity={CURRENT_CABLE_OPACITY}
+            strokeDasharray={CURRENT_CABLE_DASH_ARRAY}
             strokeLinecap="round"
           />
         )}

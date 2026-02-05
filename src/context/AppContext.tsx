@@ -102,6 +102,9 @@ interface AppContextValue {
   setCables: React.Dispatch<React.SetStateAction<Cable[]>>;
   /** Add a cable and persist to storage immediately (so cables don't disappear). */
   addCableAndPersist: (cable: Cable) => void;
+  selectedCableId: string | null;
+  setSelectedCableId: React.Dispatch<React.SetStateAction<string | null>>;
+  onCablePointerDown: (id: string, e: React.PointerEvent) => void;
   // Pedalboard file: new / load / save
   newBoard: () => void;
   loadBoardFromFile: (file: File) => void;
@@ -117,29 +120,59 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return state;
   });
 
-  const historyInitial = useMemo(
-    () => ({
-      objects: savedState?.objects ?? initialObjects,
-      past: savedState?.past ?? [],
-      future: savedState?.future ?? [],
-    }),
-    [] // eslint-disable-line react-hooks/exhaustive-deps -- only on mount
-  );
+  /** Compound state so undo/redo covers both objects and cables in a single timeline. */
+  interface BoardState {
+    objects: CanvasObjectType[];
+    cables: Cable[];
+  }
+
+  const historyInitial = useMemo(() => {
+    const objs = savedState?.objects ?? initialObjects;
+    const cbl = savedState?.cables ?? [];
+    return {
+      state: { objects: objs, cables: cbl } as BoardState,
+      past: (savedState?.past ?? []).map((o) => ({ objects: o, cables: cbl })),
+      future: (savedState?.future ?? []).map((o) => ({ objects: o, cables: cbl })),
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- only on mount
 
   const {
-    state: objects,
-    setState: setObjects,
-    replace: replaceHistory,
+    state: boardState,
+    setState: setBoardState,
+    replace: replaceHistoryRaw,
     undo,
     redo,
     canUndo,
     canRedo,
-    past,
-    future,
-  } = useHistory<CanvasObjectType[]>(historyInitial.objects, HISTORY_DEPTH, {
+    past: historyPast,
+    future: historyFuture,
+  } = useHistory<BoardState>(historyInitial.state, HISTORY_DEPTH, {
     initialPast: historyInitial.past,
     initialFuture: historyInitial.future,
   });
+
+  const objects = boardState.objects;
+  const cables = boardState.cables;
+
+  const setObjects = useCallback(
+    (action: CanvasObjectType[] | ((prev: CanvasObjectType[]) => CanvasObjectType[]), saveToHistory = true) => {
+      setBoardState((prev) => {
+        const newObjects = typeof action === "function" ? action(prev.objects) : action;
+        return newObjects === prev.objects ? prev : { ...prev, objects: newObjects };
+      }, saveToHistory);
+    },
+    [setBoardState]
+  );
+
+  const setCables = useCallback(
+    (action: Cable[] | ((prev: Cable[]) => Cable[])) => {
+      setBoardState((prev) => {
+        const newCables = typeof action === "function" ? action(prev.cables) : action;
+        return newCables === prev.cables ? prev : { ...prev, cables: newCables };
+      }, true);
+    },
+    [setBoardState]
+  );
 
   const [imageFailedIds, setImageFailedIds] = useState<Set<string>>(new Set());
   const [showGrid, setShowGrid] = useState(false);
@@ -151,9 +184,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [unit, setUnit] = useState<"mm" | "in">(savedState?.unit ?? "mm");
   const [catalogMode, setCatalogMode] = useState<CatalogMode>("boards");
   const [selectedObjectIds, setSelectedObjectIds] = useState<string[]>([]);
+  const [selectedCableId, setSelectedCableId] = useState<string | null>(null);
   const [floatingUiVisible, setFloatingUiVisible] = useState(true);
   const [panelExpanded, setPanelExpanded] = useState(false);
-  const [cables, setCables] = useState<Cable[]>(savedState?.cables ?? []);
   const dropdownPanelRef = useRef<HTMLDivElement>(null);
 
   const clearDragStateRef = useRef<() => void>(() => {});
@@ -211,6 +244,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const handleObjectPointerDown = useCallback(
     (id: string, e: React.PointerEvent) => {
+      setSelectedCableId(null);
       setSelectedObjectIds([id]);
       handleObjectDragStart(id, e);
     },
@@ -221,11 +255,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     (e: React.PointerEvent) => {
       if (e.button === 0 && !spaceDown && !(e.target as Element).closest(".canvas-object-wrapper")) {
         setSelectedObjectIds([]);
+        setSelectedCableId(null);
       }
       canvasPanPointerDown(e);
     },
     [spaceDown, canvasPanPointerDown]
   );
+
+  const handleCablePointerDown = useCallback((id: string, e: React.PointerEvent) => {
+    e.stopPropagation();
+    setSelectedObjectIds([]);
+    setSelectedCableId(id);
+  }, []);
 
   const handleImageError = useCallback((id: string) => {
     setImageFailedIds((prev) => new Set(prev).add(id));
@@ -296,8 +337,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setObjects((prev) => [...prev, newObj]);
       (mode === "boards" ? setSelectedBoard : setSelectedDevice)("");
       setSelectedObjectIds([]);
+      setSelectedCableId(null);
     },
-    [setSelectedBoard, setSelectedDevice, setSelectedObjectIds, setObjects]
+    [setSelectedBoard, setSelectedDevice, setSelectedObjectIds, setSelectedCableId, setObjects]
   );
 
   const handleBoardSelect = useCallback(
@@ -333,14 +375,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setObjects((prev) => [...prev, newObj]);
       (mode === "boards" ? setSelectedBoard : setSelectedDevice)("");
       setSelectedObjectIds([]);
+      setSelectedCableId(null);
     },
-    [setSelectedBoard, setSelectedDevice, setSelectedObjectIds, getPlacementInVisibleViewport, setObjects]
+    [setSelectedBoard, setSelectedDevice, setSelectedObjectIds, setSelectedCableId, getPlacementInVisibleViewport, setObjects]
   );
 
   const handleDeleteObject = useCallback(
     (id: string) => {
       setObjects((prev) => prev.filter((o) => o.id !== id));
       setSelectedObjectIds((prev) => prev.filter((sid) => sid !== id));
+      setSelectedCableId(null);
     },
     [setObjects]
   );
@@ -368,9 +412,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const loadBoardState = useCallback(
     (state: SavedState) => {
       if (state.objects?.length) initNextObjectIdFromObjects(state.objects);
-      replaceHistory(state.objects ?? initialObjects, state.past ?? [], state.future ?? []);
+      const cbl = state.cables ?? [];
+      replaceHistoryRaw(
+        { objects: state.objects ?? initialObjects, cables: cbl },
+        (state.past ?? []).map((o) => ({ objects: o, cables: cbl })),
+        (state.future ?? []).map((o) => ({ objects: o, cables: cbl }))
+      );
       setSelectedObjectIds([]);
-      setCables(state.cables ?? []);
+      setSelectedCableId(null);
       setUnit(state.unit ?? "mm");
       setShowGrid(state.showGrid ?? false);
       if (typeof state.zoom === "number") setZoom(state.zoom);
@@ -378,18 +427,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setPan(state.pan);
       }
     },
-    [replaceHistory, setZoom, setPan, setCables]
+    [replaceHistoryRaw, setZoom, setPan]
   );
 
   const newBoard = useCallback(() => {
-    replaceHistory(initialObjects, [], []);
+    replaceHistoryRaw({ objects: initialObjects, cables: [] }, [], []);
     setSelectedObjectIds([]);
-    setCables([]);
+    setSelectedCableId(null);
     setUnit("mm");
     setShowGrid(false);
     setZoom(1);
     setPan({ x: 0, y: 0 });
-  }, [replaceHistory, setZoom, setPan]);
+  }, [replaceHistoryRaw, setZoom, setPan]);
 
   const loadBoardFromFile = useCallback(
     (file: File) => {
@@ -439,6 +488,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [undo, redo]);
 
+  // Extract objects-only past/future for persistence (cable undo is in-session only)
+  const pastForSave = useMemo(() => historyPast.map((e) => e.objects), [historyPast]);
+  const futureForSave = useMemo(() => historyFuture.map((e) => e.objects), [historyFuture]);
+
   // Persist state (and undo history) to localStorage, debounced
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
@@ -447,8 +500,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       saveTimeoutRef.current = null;
       stateManager.save({
         objects,
-        past,
-        future,
+        past: pastForSave,
+        future: futureForSave,
         zoom,
         pan,
         showGrid,
@@ -459,26 +512,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     };
-  }, [objects, past, future, zoom, pan, showGrid, unit, cables]);
+  }, [objects, pastForSave, futureForSave, zoom, pan, showGrid, unit, cables]);
 
   // Persist immediately when cables change (cables are user data; don't rely only on debounce)
   useEffect(() => {
     stateManager.save({
       objects,
-      past,
-      future,
+      past: pastForSave,
+      future: futureForSave,
       zoom,
       pan,
       showGrid,
       unit,
       cables,
     });
-  }, [cables]);
+  }, [cables]); // eslint-disable-line react-hooks/exhaustive-deps -- intentionally only on cables
 
   stateForSaveRef.current = {
     objects,
-    past,
-    future,
+    past: pastForSave,
+    future: futureForSave,
     zoom,
     pan,
     showGrid,
@@ -486,15 +539,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     cables,
   };
 
-  const addCableAndPersist = useCallback((cable: Cable) => {
-    const current = stateForSaveRef.current;
-    const newCables = [...(current.cables ?? []), cable];
-    setCables(newCables);
-    stateManager.save({
-      ...current,
-      cables: newCables,
-    });
-  }, []);
+  const addCableAndPersist = useCallback(
+    (cable: Cable) => {
+      setCables((prev) => [...prev, cable]);
+    },
+    [setCables]
+  );
 
   const value: AppContextValue = {
     canvasRef,
@@ -557,6 +607,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     cables,
     setCables,
     addCableAndPersist,
+    selectedCableId,
+    setSelectedCableId,
+    onCablePointerDown: handleCablePointerDown,
     newBoard,
     loadBoardFromFile,
     saveBoardToFile,

@@ -32,8 +32,25 @@ export interface UseCableDrawResult {
   hasPreview: boolean;
 }
 
+/** Constrain direction to nearest 45° from start (0°, 45°, 90°, …), keeping distance. */
+function constrainTo45Degrees(
+  start: { x: number; y: number },
+  raw: { x: number; y: number }
+): { x: number; y: number } {
+  const dx = raw.x - start.x;
+  const dy = raw.y - start.y;
+  const angle = Math.atan2(dy, dx);
+  const step = Math.PI / 4;
+  const snappedAngle = Math.round(angle / step) * step;
+  const distance = Math.hypot(dx, dy);
+  return {
+    x: start.x + distance * Math.cos(snappedAngle),
+    y: start.y + distance * Math.sin(snappedAngle),
+  };
+}
+
 /**
- * Polyline drawing with optional snap to object bounding boxes. SHIFT disables snap.
+ * Polyline drawing with optional snap to object bounding boxes. SHIFT disables snap. CTRL constrains to 45° angles (horizontal, vertical, diagonals).
  * Double-click exits without persisting (like line ruler). Use addCable() to persist the current polyline.
  */
 export function useCableDraw({
@@ -85,7 +102,8 @@ export function useCableDraw({
   const onPointerMove = useCallback(
     (e: React.PointerEvent) => {
       if (!segmentStart) return;
-      const point = resolvePoint(e.clientX, e.clientY, e.shiftKey);
+      const raw = resolvePoint(e.clientX, e.clientY, e.shiftKey);
+      const point = e.ctrlKey ? constrainTo45Degrees(segmentStart, raw) : raw;
       setCurrentEnd(point);
     },
     [resolvePoint, segmentStart]
@@ -96,7 +114,8 @@ export function useCableDraw({
       if (e.button !== 0) return;
       pointerDownRef.current = null;
       if (!segmentStart || !currentEnd) return;
-      const releasePoint = resolvePoint(e.clientX, e.clientY, e.shiftKey);
+      const raw = resolvePoint(e.clientX, e.clientY, e.shiftKey);
+      const releasePoint = e.ctrlKey ? constrainTo45Degrees(segmentStart, raw) : raw;
       const len = Math.hypot(releasePoint.x - segmentStart.x, releasePoint.y - segmentStart.y);
       // Click near last vertex with at least one segment → treat as "finish" (don't add tiny segment)
       if (segments.length >= 1 && len <= FINISH_CLICK_TOLERANCE_MM) {
