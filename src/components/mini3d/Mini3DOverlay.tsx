@@ -36,10 +36,12 @@ const FADE_IN_DURATION = 500;
 const BASE_OVERLAY_OPACITY = 0.85;
 const DOUBLE_TAP_MS = 320;
 const DOUBLE_TAP_DISTANCE = 24;
+const DOUBLE_TAP_DRAG_DISTANCE = 8;
 const DOUBLE_CLICK_DELAY_MS = 320;
 
 type PointerPoint = { x: number; y: number };
 type DragState = { pointerId: number; startX: number; startY: number; startYaw: number; startPitch: number };
+type DoubleTapState = { pointerId: number; startX: number; startY: number; moved: boolean };
 type Mini3DOverlayProps = { onCloseComplete?: () => void };
 
 /**
@@ -84,6 +86,7 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
   const zAnimRef = useRef<Map<string, ZAnimState>>(new Map());
   const autoRotateRef = useRef(autoRotate);
   const prevShowMini3dRef = useRef(showMini3d);
+  const hasMountedRef = useRef(false);
 
   // Opacity & open/close animation tracking.
   const openTimeRef = useRef<number | null>(null);
@@ -95,6 +98,7 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
   // Avoid re-rendering just to schedule a draw.
   const scheduleRenderRef = useRef<() => void>(() => {});
   const lastTapRef = useRef<{ time: number; x: number; y: number } | null>(null);
+  const doubleTapRef = useRef<DoubleTapState | null>(null);
   const suppressClickRef = useRef<number | null>(null);
   const clickTimeoutRef = useRef<number | null>(null);
 
@@ -347,11 +351,13 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
   }, [autoRotate, requestRender, showMini3d]);
 
   useEffect(() => {
+    const firstRun = !hasMountedRef.current;
+    hasMountedRef.current = true;
     const wasShowing = prevShowMini3dRef.current;
     prevShowMini3dRef.current = showMini3d;
 
     if (showMini3d) {
-      if (!wasShowing || closeTimeRef.current != null) {
+      if (firstRun || !wasShowing || closeTimeRef.current != null) {
         // Opening sequence: mount if needed, fade in, converge objects.
         if (!isVisible) {
           setIsVisible(true);
@@ -423,7 +429,12 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
           const dx = e.clientX - last.x;
           const dy = e.clientY - last.y;
           if (Math.hypot(dx, dy) <= DOUBLE_TAP_DISTANCE) {
-            beginRotateDrag(e.pointerId, e.clientX, e.clientY);
+            doubleTapRef.current = {
+              pointerId: e.pointerId,
+              startX: e.clientX,
+              startY: e.clientY,
+              moved: false,
+            };
             lastTapRef.current = null;
             suppressClickRef.current = window.setTimeout(() => {
               suppressClickRef.current = null;
@@ -447,6 +458,16 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
 
   const handleRotatePointerMove = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
+      const doubleTap = doubleTapRef.current;
+      if (doubleTap && doubleTap.pointerId === e.pointerId) {
+        const dx = e.clientX - doubleTap.startX;
+        const dy = e.clientY - doubleTap.startY;
+        if (!doubleTap.moved && Math.hypot(dx, dy) >= DOUBLE_TAP_DRAG_DISTANCE) {
+          doubleTap.moved = true;
+          beginRotateDrag(e.pointerId, doubleTap.startX, doubleTap.startY);
+        }
+      }
+
       const drag = rotateDragRef.current;
       if (!drag) return;
 
@@ -470,27 +491,43 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
       pitchRef.current = clamp(drag.startPitch + dy * ROTATE_PITCH_SENS, PITCH_OFFSET_MIN, PITCH_OFFSET_MAX);
       requestRender();
     },
-    [requestRender]
+    [beginRotateDrag, requestRender]
   );
 
-  const handleRotatePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    activePointersRef.current.delete(e.pointerId);
+  const handleRotatePointerUp = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      activePointersRef.current.delete(e.pointerId);
 
-    const drag = rotateDragRef.current;
-    if (!drag) return;
-
-    const isMiddleMouseDrag = e.button === 1;
-    const isTouchDragEndedByPointerCount = e.pointerType === "touch" && activePointersRef.current.size < 2;
-
-    if (isMiddleMouseDrag || isTouchDragEndedByPointerCount) {
-      rotateDragRef.current = null;
-      try {
-        containerRef.current?.releasePointerCapture(e.pointerId);
-      } catch {
-        /* OK if pointer was already released */
+      const doubleTap = doubleTapRef.current;
+      if (doubleTap && doubleTap.pointerId === e.pointerId) {
+        doubleTapRef.current = null;
+        if (!doubleTap.moved) {
+          if (clickTimeoutRef.current != null) {
+            window.clearTimeout(clickTimeoutRef.current);
+            clickTimeoutRef.current = null;
+          }
+          setIsFullscreen((value) => !value);
+          requestRender();
+        }
       }
-    }
-  }, []);
+
+      const drag = rotateDragRef.current;
+      if (!drag) return;
+
+      const isMiddleMouseDrag = e.button === 1;
+      const isTouchDragEndedByPointerCount = e.pointerType === "touch" && activePointersRef.current.size < 2;
+
+      if (isMiddleMouseDrag || isTouchDragEndedByPointerCount) {
+        rotateDragRef.current = null;
+        try {
+          containerRef.current?.releasePointerCapture(e.pointerId);
+        } catch {
+          /* OK if pointer was already released */
+        }
+      }
+    },
+    [requestRender, setIsFullscreen]
+  );
 
   useEffect(() => {
     if (!showMini3d) return;
@@ -574,7 +611,7 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
       <canvas className="mini3d-canvas" ref={canvasRef} />
       {showMini3d ? (
         <div className="mini3d-instruction">
-          Middle button (or double tap) and drag to rotate. Click for auto-rotation. Double click to toggle fullscreen.
+          Middle button or double-tap drag to rotate. Click/tap for auto-rotation. Double click/tap to toggle fullscreen.
         </div>
       ) : null}
     </div>
