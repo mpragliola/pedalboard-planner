@@ -71,9 +71,11 @@ export function getTextureImage(
   const cachedImage = imageCache.get(src);
   if (cachedImage === "error") return null;
   let img = cachedImage as HTMLImageElement | undefined;
+
   if (!img) {
     img = new Image();
-    img.decoding = "async";
+    // Hint to browser to decode off-main-thread
+    img.decoding = "async"; 
     img.src = src;
     img.onload = () => onLoad();
     img.onerror = () => {
@@ -82,7 +84,9 @@ export function getTextureImage(
     };
     imageCache.set(src, img);
   }
+  // Return null if not yet loaded or errored.
   if (!img.complete || img.naturalWidth === 0) return null;
+  
   return img;
 }
 
@@ -94,7 +98,7 @@ export function getTextureImage(
 export function getFootprintRect(
   obj: CanvasObjectType
 ): { rect: Rect; width: number; depth: number; height: number } | null {
-  const [width, depth, rawHeight] = getObjectDimensions(obj);
+   const [width, depth, rawHeight] = getObjectDimensions(obj);
   if (width <= 0 || depth <= 0) return null;
   const height = Math.max(0, rawHeight);
   const rotation = normalizeRotation(obj.rotation ?? 0);
@@ -111,6 +115,7 @@ export function getFootprintRect(
   };
 }
 
+// Compute Z stacking of objects based on footprint overlaps.
 export function computeStackedObjects(objects: CanvasObjectType[]): StackedObject[] {
   // Build a simple Z stack: later items sit on top of overlaps.
   const stacked: StackedObject[] = [];
@@ -135,6 +140,7 @@ export function computeStackedObjects(objects: CanvasObjectType[]): StackedObjec
   return stacked;
 }
 
+// Compute scene metrics (center, radius) to fit all stacked objects.
 export function getSceneMetrics(stacked: StackedObject[]): { center: Vec3; radius: number; basePitch: number } {
   // Compute a camera target and radius that fit the full stack.
   if (stacked.length === 0) {

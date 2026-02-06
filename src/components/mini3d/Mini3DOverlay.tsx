@@ -1,199 +1,105 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useBoard } from "../../context/BoardContext";
 import { useUi } from "../../context/UiContext";
-import { DEFAULT_OBJECT_COLOR } from "../../constants";
-import { normalizeRotation } from "../../lib/geometry";
-import { clamp, easeOutCubic } from "../../lib/math";
-import { parseColor, shade, rgba } from "../../lib/color";
+import { clamp } from "../../lib/math";
+import { shade, rgba } from "../../lib/color";
 import { drawQuad, drawTexturedQuad } from "../../lib/canvas2d";
-import { getDirectionalOffset } from "../../lib/geometry2d";
-import {
-  vec3Dot,
-  vec3Normalize,
-  createCamera,
-  projectPerspective,
-  faceDepth,
-  depthForPoint,
-  faceNormal,
-  isFaceVisible,
-} from "../../lib/geometry3d";
-import type { Vec3 } from "../../lib/vector";
 import {
   getTextureImage,
-  resolveImageSrc,
   computeStackedObjects,
-  getSceneMetrics,
-  FALLBACK_COLOR,
   DEFAULT_CAMERA_YAW,
-  MIN_PITCH,
-  MAX_PITCH,
   PITCH_OFFSET_MIN,
   PITCH_OFFSET_MAX,
   type ImageCacheEntry,
   type ZAnimState,
-  type Face,
   type StackedObject,
 } from "./mini3dMath";
+import {
+  applyConvergence,
+  buildFaces,
+  computeCanvasTransform,
+  getConvergenceTotal,
+  getFacesBounds,
+  prepareCanvas,
+  sortFacesByDepth,
+  type Size,
+} from "./mini3dRender";
 import "./Mini3DOverlay.scss";
 
-// Mini 3D canvas overlay: projection, draw loop, and pointer-based rotation.
+// Tuning constants for interaction and animation.
 const ROTATE_SPEED_RAD = Math.PI / 5;
 const ROTATE_DRAG_SENS = 0.006;
 const ROTATE_PITCH_SENS = 0.006;
 const Z_ANIM_SPEED = 30;
 const Z_ANIM_EPS = 0.05;
-const CANVAS_PADDING = 12;
-const FACE_SORT_EPS = 1e-4;
-const CONVERGENCE_DURATION = 600;
-const PER_COMPONENT_DELAY = 40;
 const FADE_IN_DURATION = 500;
-const OFFSET_DISTANCE = 80;
 const BASE_OVERLAY_OPACITY = 0.85;
 const DOUBLE_TAP_MS = 320;
 const DOUBLE_TAP_DISTANCE = 24;
 
-type RenderFace = Face & { order: number };
-
-function buildFaces(stacked: StackedObject[], yaw: number, pitchOffset: number): RenderFace[] {
-  // Convert stacked objects into renderable faces for the current camera angle.
-  const metrics = getSceneMetrics(stacked);
-  const pitch = clamp(metrics.basePitch + pitchOffset, MIN_PITCH, MAX_PITCH);
-  const camera = createCamera(metrics.center, metrics.radius, yaw, pitch);
-  const lightDir = vec3Normalize({ x: -0.4, y: -0.6, z: 1 });
-  const faces: RenderFace[] = [];
-  let order = 0;
-
-  for (const data of stacked) {
-    const { obj, width, depth, height, baseZ } = data;
-    const rotation = (normalizeRotation(obj.rotation ?? 0) * Math.PI) / 180;
-    const cos = Math.cos(rotation);
-    const sin = Math.sin(rotation);
-    const cx = obj.x + width / 2;
-    const cy = obj.y + depth / 2;
-    const depthFor = (p: Vec3) => depthForPoint(p, camera);
-    const local = [
-      { x: -width / 2, y: -depth / 2 },
-      { x: width / 2, y: -depth / 2 },
-      { x: width / 2, y: depth / 2 },
-      { x: -width / 2, y: depth / 2 },
-    ];
-    const baseWorld = local.map((p) => ({
-      x: cx + p.x * cos - p.y * sin,
-      y: cy + p.x * sin + p.y * cos,
-      z: baseZ,
-    }));
-    const topWorld = baseWorld.map((p) => ({ x: p.x, y: p.y, z: baseZ + height }));
-    const baseProj = baseWorld.map((p) => projectPerspective(p, camera));
-    const topProj = topWorld.map((p) => projectPerspective(p, camera));
-    const topDepths = topWorld.map(depthFor);
-    const color = parseColor(obj.color ?? DEFAULT_OBJECT_COLOR) ?? FALLBACK_COLOR;
-    const textureSrc = obj.image ? resolveImageSrc(obj.image) : null;
-    const topUv = [
-      { x: 0, y: 0 },
-      { x: 1, y: 0 },
-      { x: 1, y: 1 },
-      { x: 0, y: 1 },
-    ];
-
-    const baseDepths = baseWorld.map(depthFor);
-    const topNormal = faceNormal(topWorld[0], topWorld[1], topWorld[2]);
-    if (isFaceVisible(topWorld, topNormal, camera)) {
-      faces.push({
-        points: topProj,
-        depth: faceDepth(topWorld, camera),
-        depths: topDepths,
-        maxDepth: Math.max(...topDepths),
-        kind: "top",
-        color,
-        shade: 1,
-        textureSrc,
-        uv: topUv,
-        order: order++,
-      });
-    }
-    const bottomNormal = faceNormal(baseWorld[2], baseWorld[1], baseWorld[0]);
-    if (isFaceVisible(baseWorld, bottomNormal, camera)) {
-      faces.push({
-        points: baseProj,
-        depth: faceDepth(baseWorld, camera),
-        depths: baseDepths,
-        maxDepth: Math.max(...baseDepths),
-        kind: "bottom",
-        color,
-        shade: 0.6,
-        order: order++,
-      });
-    }
-
-    for (let i = 0; i < 4; i += 1) {
-      const i2 = (i + 1) % 4;
-      const world = [baseWorld[i], baseWorld[i2], topWorld[i2], topWorld[i]];
-      const proj = [baseProj[i], baseProj[i2], topProj[i2], topProj[i]];
-      const normal = faceNormal(world[0], world[1], world[2]);
-      if (!isFaceVisible(world, normal, camera)) continue;
-      const lit = Math.max(0, vec3Dot(normal, lightDir));
-      const shadeValue = 0.5 + 0.5 * lit;
-      const sideDepths = world.map(depthFor);
-      faces.push({
-        points: proj,
-        depth: faceDepth(world, camera),
-        depths: sideDepths,
-        maxDepth: Math.max(...sideDepths),
-        kind: "side",
-        color,
-        shade: shadeValue,
-        order: order++,
-      });
-    }
-  }
-  return faces;
-}
+type PointerPoint = { x: number; y: number };
+type DragState = { pointerId: number; startX: number; startY: number; startYaw: number; startPitch: number };
 
 /**
- * Mini3DOverlay component renders a 3D projection of the board's objects onto 
- * a canvas overlay.
- * It computes a simple 3D representation of each object as a box, applies a 
- * perspective projection, and draws the visible faces in back-to-front order. 
- * The overlay supports pointer-based rotation and an auto-rotate mode. 
- * It also includes opening and closing animations that converge/diverge
- * the objects toward/from the scene center while fading the overlay in/out. 
+ * Mini3DOverlay renders a lightweight 3D projection of board objects on a canvas.
+ * Rendering is manual (no WebGL): objects are treated as boxes, projected, then
+ * drawn back-to-front.
+ *
+ * Interaction:
+ * - Middle mouse drag or two-finger drag rotates the camera.
+ * - Click toggles auto-rotation (also accessible via keyboard).
+ *
+ * Animations:
+ * - Open/close converges/diverges objects toward scene center.
+ * - Z stacking animates smoothly via exponential smoothing.
  */
 export function Mini3DOverlay() {
   const { objects } = useBoard();
   const { showMini3d } = useUi();
+
+  // DOM refs.
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // React state for UI toggles and mount visibility.
   const [autoRotate, setAutoRotate] = useState(false);
   const [isVisible, setIsVisible] = useState(showMini3d);
+
+  // Mutable refs for animation state and transient values.
   const yawRef = useRef(DEFAULT_CAMERA_YAW);
   const pitchRef = useRef(0);
-  const rotateDragRef = useRef<{
-    pointerId: number;
-    startX: number;
-    startY: number;
-    startYaw: number;
-    startPitch: number;
-  } | null>(null);
-  const activePointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
+  const rotateDragRef = useRef<DragState | null>(null);
+  const activePointersRef = useRef<Map<number, PointerPoint>>(new Map());
   const rafRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number | null>(null);
+
   const objectsRef = useRef(objects);
-  const sizeRef = useRef({ width: 0, height: 0 });
+  const sizeRef = useRef<Size>({ width: 0, height: 0 });
+
   const imageCacheRef = useRef<Map<string, ImageCacheEntry>>(new Map());
   const zAnimRef = useRef<Map<string, ZAnimState>>(new Map());
   const autoRotateRef = useRef(autoRotate);
-  // Track open/close animation timings and current opacity outside React state.
+
+  // Opacity & open/close animation tracking.
   const openTimeRef = useRef<number | null>(null);
   const closeTimeRef = useRef<number | null>(null);
   const overlayOpacityRef = useRef(showMini3d ? BASE_OVERLAY_OPACITY : 0);
   const openOpacityRef = useRef(showMini3d ? BASE_OVERLAY_OPACITY : 0);
   const closeOpacityRef = useRef(showMini3d ? BASE_OVERLAY_OPACITY : 0);
+
+  // Avoid re-rendering just to schedule a draw.
   const scheduleRenderRef = useRef<() => void>(() => {});
   const lastTapRef = useRef<{ time: number; x: number; y: number } | null>(null);
   const suppressClickRef = useRef<number | null>(null);
+
+  const toggleAutoRotate = useCallback(() => {
+    setAutoRotate((value) => !value);
+  }, [setAutoRotate]);
+
   const notifyImageLoaded = useCallback(() => {
     scheduleRenderRef.current();
   }, []);
+
   const setOverlayOpacity = useCallback((value: number) => {
     const next = clamp(value, 0, 1);
     overlayOpacityRef.current = next;
@@ -253,23 +159,16 @@ export function Mini3DOverlay() {
   }, []);
 
   const drawScene = useCallback(
-    (yaw: number, pitchOffset: number, stackedForRender: StackedObject[], currentSize: { width: number; height: number }) => {
+    (yaw: number, pitchOffset: number, stackedForRender: StackedObject[], currentSize: Size) => {
       // Allow draw during closing animation even if the UI flag is off.
       if (!showMini3d && !closeTimeRef.current) return;
       const canvas = canvasRef.current;
       if (!canvas) return;
-      const { width, height } = currentSize;
-      if (width <= 0 || height <= 0) return;
-      const dpr = window.devicePixelRatio || 1;
-      const targetW = Math.max(1, Math.floor(width * dpr));
-      const targetH = Math.max(1, Math.floor(height * dpr));
-      if (canvas.width !== targetW) canvas.width = targetW;
-      if (canvas.height !== targetH) canvas.height = targetH;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (currentSize.width <= 0 || currentSize.height <= 0) return;
 
+      const dpr = window.devicePixelRatio || 1;
+      const ctx = prepareCanvas(canvas, currentSize, dpr);
+      if (!ctx) return;
       if (stackedForRender.length === 0) return;
 
       const stackedAnimated = stackedForRender.map((item) => ({
@@ -278,43 +177,23 @@ export function Mini3DOverlay() {
       }));
       const faces = buildFaces(stackedAnimated, yaw, pitchOffset);
       if (faces.length === 0) return;
-      // Stable depth sort to reduce flicker when faces are nearly co-planar.
-      faces.sort((a, b) => {
-        const byMax = b.maxDepth - a.maxDepth;
-        if (Math.abs(byMax) > FACE_SORT_EPS) return byMax;
-        const byDepth = b.depth - a.depth;
-        if (Math.abs(byDepth) > FACE_SORT_EPS) return byDepth;
-        return a.order - b.order;
-      });
+      sortFacesByDepth(faces);
 
-      let minX = Infinity;
-      let minY = Infinity;
-      let maxX = -Infinity;
-      let maxY = -Infinity;
-      for (const face of faces) {
-        for (const p of face.points) {
-          minX = Math.min(minX, p.x);
-          minY = Math.min(minY, p.y);
-          maxX = Math.max(maxX, p.x);
-          maxY = Math.max(maxY, p.y);
-        }
-      }
-      const contentW = maxX - minX;
-      const contentH = maxY - minY;
-      if (contentW <= 0 || contentH <= 0) return;
-      const scale = Math.min(
-        (width - CANVAS_PADDING * 2) / contentW,
-        (height - CANVAS_PADDING * 2) / contentH
+      const bounds = getFacesBounds(faces);
+      if (!bounds) return;
+      const transform = computeCanvasTransform(bounds, currentSize);
+      if (!transform) return;
+
+      ctx.setTransform(
+        transform.scale * dpr,
+        0,
+        0,
+        transform.scale * dpr,
+        transform.offsetX * dpr,
+        transform.offsetY * dpr
       );
-      if (!Number.isFinite(scale) || scale <= 0) return;
-      const offsetX =
-        CANVAS_PADDING + (width - CANVAS_PADDING * 2 - contentW * scale) / 2 - minX * scale;
-      const offsetY =
-        CANVAS_PADDING + (height - CANVAS_PADDING * 2 - contentH * scale) / 2 - minY * scale;
-
-      ctx.setTransform(scale * dpr, 0, 0, scale * dpr, offsetX * dpr, offsetY * dpr);
       ctx.lineJoin = "round";
-      ctx.lineWidth = 1 / scale;
+      ctx.lineWidth = 1 / transform.scale;
 
       const stroke = "rgba(0, 0, 0, 0.25)";
       for (const face of faces) {
@@ -350,11 +229,13 @@ export function Mini3DOverlay() {
         return;
       }
 
+      // Clamp dt to avoid large jumps when returning from background.
       if (lastTimeRef.current == null) lastTimeRef.current = time;
       const dt = Math.min(0.05, (time - lastTimeRef.current) / 1000);
       lastTimeRef.current = time;
 
       let keepRunning = false;
+
       if (autoRotateRef.current && showMini3d) {
         yawRef.current = (yawRef.current + ROTATE_SPEED_RAD * dt) % (Math.PI * 2);
         keepRunning = true;
@@ -366,8 +247,7 @@ export function Mini3DOverlay() {
       const zActive = updateZAnimation(dt);
       if (zActive) keepRunning = true;
 
-      const totalDelay = Math.max(0, stackedTargets.length - 1) * PER_COMPONENT_DELAY;
-      const convergenceTotal = CONVERGENCE_DURATION + totalDelay;
+      const convergenceTotal = getConvergenceTotal(stackedTargets.length);
       const openStart = openTimeRef.current;
       const closeStart = closeTimeRef.current;
       const opening = openStart != null && time - openStart < convergenceTotal;
@@ -389,27 +269,8 @@ export function Mini3DOverlay() {
 
       let stackedForRender = stackedTargets;
       if (animationActive && stackedTargets.length > 0) {
-        const metrics = getSceneMetrics(stackedTargets);
         const startTime = opening ? openStart ?? 0 : closeStart ?? 0;
-        stackedForRender = stackedTargets.map((item, index) => {
-          const elapsed = time - startTime - index * PER_COMPONENT_DELAY;
-          const t = clamp(elapsed / CONVERGENCE_DURATION, 0, 1);
-          const progress = opening ? 1 - easeOutCubic(t) : easeOutCubic(t);
-          if (progress <= 0) return item;
-          // Move each item toward/away from the scene center for convergence.
-          const centerX = item.obj.x + item.width / 2;
-          const centerY = item.obj.y + item.depth / 2;
-          const { offsetX, offsetY } = getDirectionalOffset(
-            centerX - metrics.center.x,
-            centerY - metrics.center.y,
-            OFFSET_DISTANCE * progress
-          );
-          if (offsetX === 0 && offsetY === 0) return item;
-          return {
-            ...item,
-            obj: { ...item.obj, x: item.obj.x + offsetX, y: item.obj.y + offsetY },
-          };
-        });
+        stackedForRender = applyConvergence(time, stackedTargets, startTime, opening);
       }
 
       drawScene(yawRef.current, pitchRef.current, stackedForRender, sizeRef.current);
@@ -503,6 +364,20 @@ export function Mini3DOverlay() {
     }
   }, [isVisible, requestRender, setOverlayOpacity, showMini3d]);
 
+  const beginRotateDrag = useCallback(
+    (pointerId: number, startX: number, startY: number) => {
+      setAutoRotate(false);
+      rotateDragRef.current = {
+        pointerId,
+        startX,
+        startY,
+        startYaw: yawRef.current,
+        startPitch: pitchRef.current,
+      };
+    },
+    [setAutoRotate]
+  );
+
   const handleRotatePointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       // Track pointers for touch + mouse drag to rotate.
@@ -511,14 +386,7 @@ export function Mini3DOverlay() {
       if (e.button === 1) {
         e.preventDefault();
         e.stopPropagation();
-        setAutoRotate(false);
-        rotateDragRef.current = {
-          pointerId: e.pointerId,
-          startX: e.clientX,
-          startY: e.clientY,
-          startYaw: yawRef.current,
-          startPitch: pitchRef.current,
-        };
+        beginRotateDrag(e.pointerId, e.clientX, e.clientY);
         containerRef.current?.setPointerCapture(e.pointerId);
         return;
       }
@@ -535,14 +403,7 @@ export function Mini3DOverlay() {
           const dx = e.clientX - last.x;
           const dy = e.clientY - last.y;
           if (Math.hypot(dx, dy) <= DOUBLE_TAP_DISTANCE) {
-            setAutoRotate(false);
-            rotateDragRef.current = {
-              pointerId: e.pointerId,
-              startX: e.clientX,
-              startY: e.clientY,
-              startYaw: yawRef.current,
-              startPitch: pitchRef.current,
-            };
+            beginRotateDrag(e.pointerId, e.clientX, e.clientY);
             lastTapRef.current = null;
             suppressClickRef.current = window.setTimeout(() => {
               suppressClickRef.current = null;
@@ -555,20 +416,13 @@ export function Mini3DOverlay() {
 
       if (e.pointerType === "touch" && activePointersRef.current.size === 2) {
         // Two-finger drag rotates around the pinch center.
-        setAutoRotate(false);
         const pointers = Array.from(activePointersRef.current.values());
         const centerX = (pointers[0].x + pointers[1].x) / 2;
         const centerY = (pointers[0].y + pointers[1].y) / 2;
-        rotateDragRef.current = {
-          pointerId: e.pointerId,
-          startX: centerX,
-          startY: centerY,
-          startYaw: yawRef.current,
-          startPitch: pitchRef.current,
-        };
+        beginRotateDrag(e.pointerId, centerX, centerY);
       }
     },
-    [setAutoRotate]
+    [beginRotateDrag]
   );
 
   const handleRotatePointerMove = useCallback(
@@ -662,7 +516,7 @@ export function Mini3DOverlay() {
           suppressClickRef.current = null;
           return;
         }
-        setAutoRotate((v) => !v);
+        toggleAutoRotate();
       }}
       onPointerDown={handleRotatePointerDown}
       onPointerMove={handleRotatePointerMove}
@@ -671,7 +525,7 @@ export function Mini3DOverlay() {
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          setAutoRotate((v) => !v);
+          toggleAutoRotate();
         }
       }}
     >
