@@ -40,6 +40,7 @@ const DOUBLE_CLICK_DELAY_MS = 320;
 
 type PointerPoint = { x: number; y: number };
 type DragState = { pointerId: number; startX: number; startY: number; startYaw: number; startPitch: number };
+type Mini3DOverlayProps = { onCloseComplete?: () => void };
 
 /**
  * Mini3DOverlay renders a lightweight 3D projection of board objects on a canvas.
@@ -55,7 +56,7 @@ type DragState = { pointerId: number; startX: number; startY: number; startYaw: 
  * - Open/close converges/diverges objects toward scene center.
  * - Z stacking animates smoothly via exponential smoothing.
  */
-export function Mini3DOverlay() {
+export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
   const { objects } = useBoard();
   const { showMini3d } = useUi();
 
@@ -285,7 +286,10 @@ export function Mini3DOverlay() {
       if (closeStart != null && time - closeStart >= convergenceTotal) {
         closeTimeRef.current = null;
         setOverlayOpacity(0);
-        if (!showMini3d) setIsVisible(false);
+        if (!showMini3d) {
+          setIsVisible(false);
+          onCloseComplete?.();
+        }
       }
 
       if (animationActive) keepRunning = true;
@@ -297,7 +301,7 @@ export function Mini3DOverlay() {
         lastTimeRef.current = null;
       }
     },
-    [drawScene, setOverlayOpacity, showMini3d, syncZTargets, updateZAnimation]
+    [drawScene, onCloseComplete, setOverlayOpacity, showMini3d, syncZTargets, updateZAnimation]
   );
 
   const requestRender = useCallback(() => {

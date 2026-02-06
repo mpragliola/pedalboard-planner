@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { faChevronDown, faChevronUp, faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Canvas } from "./components/Canvas";
@@ -21,6 +21,7 @@ function AppContent() {
   const { dropdownPanelRef } = useCatalog();
   const { showMini3d, floatingUiVisible, setFloatingUiVisible, panelExpanded, setPanelExpanded } = useUi();
   const { open: settingsOpen, setOpen: setSettingsOpen } = useSettingsModal();
+  const [mini3dMounted, setMini3dMounted] = useState(showMini3d);
 
   useEffect(() => {
     if (showMini3d) {
@@ -28,6 +29,12 @@ function AppContent() {
       setPanelExpanded(false);
     }
   }, [showMini3d, setFloatingUiVisible, setPanelExpanded]);
+
+  useEffect(() => {
+    if (showMini3d) {
+      setMini3dMounted(true);
+    }
+  }, [showMini3d]);
 
   return (
     <div
@@ -37,7 +44,7 @@ function AppContent() {
       aria-label="Pedalboard editor"
     >
       <Canvas />
-      <Mini3DOverlay />
+      {mini3dMounted ? <Mini3DOverlay onCloseComplete={() => setMini3dMounted(false)} /> : null}
       <div className={`catalog-panel${panelExpanded ? " panel-expanded" : ""}`}>
         <div className="catalog-panel-head">
           <button
