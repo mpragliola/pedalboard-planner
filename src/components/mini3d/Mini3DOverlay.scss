@@ -20,11 +20,34 @@
   pointer-events: none;
 }
 
+.mini3d-instruction {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  padding: 6px 8px;
+  font-size: 12px;
+  line-height: 1.3;
+  text-align: center;
+  color: #f5f5f5;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 6px;
+  pointer-events: none;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
 @media (max-width: 768px) {
   .mini3d-overlay {
     bottom: vars.$floating-panel-offset-sm;
     left: vars.$floating-panel-offset-sm;
     width: clamp(vars.$mini3d-width-min-mobile, 35vw, vars.$mini3d-width-max-mobile);
     height: clamp(vars.$mini3d-height-min-mobile, 35vh, vars.$mini3d-height-max-mobile);
+  }
+
+  .mini3d-instruction {
+    left: 6px;
+    right: 6px;
+    bottom: 6px;
+    font-size: 11px;
   }
 }

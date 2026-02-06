@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { faChevronDown, faChevronUp, faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Canvas } from "./components/Canvas";
@@ -17,8 +18,16 @@ import "./App.scss";
 
 function AppContent() {
   const { dropdownPanelRef } = useApp();
-  const { floatingUiVisible, setFloatingUiVisible, panelExpanded, setPanelExpanded } = useUi();
+  const { showMini3d, floatingUiVisible, setFloatingUiVisible, panelExpanded, setPanelExpanded } = useUi();
   const { open: settingsOpen, setOpen: setSettingsOpen } = useSettingsModal();
+
+  useEffect(() => {
+    if (showMini3d) {
+      setFloatingUiVisible(false);
+      setPanelExpanded(false);
+    }
+  }, [showMini3d, setFloatingUiVisible, setPanelExpanded]);
+
   return (
     <div
       className="app-content"

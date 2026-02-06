@@ -8,7 +8,7 @@ import { useCanvasCoords } from "../../hooks/useCanvasCoords";
 import { useCableDraw } from "../../hooks/useCableDraw";
 import { useCablePhysics } from "../../hooks/useCablePhysics";
 import { AddCableModal } from "./AddCableModal";
-import { CABLE_TERMINAL_START_COLOR, CABLE_TERMINAL_END_COLOR } from "../../constants";
+import { CABLE_TERMINAL_START_COLOR, CABLE_TERMINAL_END_COLOR } from "../../constants/cables";
 import type { Cable, CableSegment } from "../../types";
 import "../ruler/RulerOverlay.scss";
 import "./CableLayerOverlay.scss";

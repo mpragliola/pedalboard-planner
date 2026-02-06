@@ -2,8 +2,13 @@ import { useState, useEffect, useRef, useContext } from "react";
 import { createPortal } from "react-dom";
 import { Modal } from "../common/Modal";
 import { ModalContext } from "../../context/ModalContext";
-import { CONNECTOR_ICON_MAP, CONNECTOR_KIND_OPTIONS, CONNECTOR_NAME_OPTIONS, CABLE_COLORS, CABLE_COLOR_OPTIONS } from "../../constants";
-import { CABLE_TERMINAL_START_COLOR, CABLE_TERMINAL_END_COLOR } from "../../constants";
+import { CONNECTOR_ICON_MAP, CONNECTOR_KIND_OPTIONS, CONNECTOR_NAME_OPTIONS } from "../../constants";
+import {
+  CABLE_COLORS,
+  CABLE_COLOR_OPTIONS,
+  CABLE_TERMINAL_START_COLOR,
+  CABLE_TERMINAL_END_COLOR,
+} from "../../constants/cables";
 import type { Cable, CableSegment, ConnectorKind } from "../../types";
 import "./AddCableModal.scss";
 

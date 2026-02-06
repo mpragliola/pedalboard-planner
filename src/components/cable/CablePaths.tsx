@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { CABLE_TERMINAL_START_COLOR, CABLE_TERMINAL_END_COLOR } from "../../constants";
+import { CABLE_TERMINAL_START_COLOR, CABLE_TERMINAL_END_COLOR } from "../../constants/cables";
 import { buildRoundedPathD, DEFAULT_JOIN_RADIUS } from "../../lib/polylinePath";
 import type { Cable } from "../../types";
 import "./CablePaths.scss";
