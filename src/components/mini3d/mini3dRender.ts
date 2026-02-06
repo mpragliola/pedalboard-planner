@@ -7,6 +7,8 @@ import { normalizeRotation } from "../../lib/geometry";
 import { clamp, easeOutCubic } from "../../lib/math";
 import { parseColor } from "../../lib/color";
 import { getDirectionalOffset } from "../../lib/geometry2d";
+import { getBounds2DOfPointSets } from "../../lib/bounds";
+import { resolveImageSrc } from "./mini3dAssets";
 import {
   vec3Dot,
   vec3Normalize,
@@ -22,7 +24,6 @@ import {
   FALLBACK_COLOR,
   MIN_PITCH,
   MAX_PITCH,
-  resolveImageSrc,
   getSceneMetrics,
   type Face,
   type StackedObject,
@@ -51,23 +52,7 @@ export function sortFacesByDepth(faces: RenderFace[]): void {
 }
 
 export function getFacesBounds(faces: RenderFace[]): Bounds | null {
-  if (faces.length === 0) return null;
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-  for (const face of faces) {
-    for (const p of face.points) {
-      minX = Math.min(minX, p.x);
-      minY = Math.min(minY, p.y);
-      maxX = Math.max(maxX, p.x);
-      maxY = Math.max(maxY, p.y);
-    }
-  }
-  if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) {
-    return null;
-  }
-  return { minX, minY, maxX, maxY };
+  return getBounds2DOfPointSets(faces.map((face) => face.points));
 }
 
 export function computeCanvasTransform(bounds: Bounds, size: Size): CanvasTransform | null {

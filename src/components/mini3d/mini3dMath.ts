@@ -6,16 +6,15 @@
 import { getObjectDimensions } from "../../lib/stateManager";
 import { normalizeRotation } from "../../lib/geometry";
 import { rectsOverlap, type Rect } from "../../lib/geometry2d";
+import { getBounds2DCenter, getBounds2DOfRects, getBounds2DSize } from "../../lib/bounds";
 import type { Vec2, Vec3 } from "../../lib/vector";
 import type { Rgb } from "../../lib/color";
-import { BASE_URL } from "../../constants";
 import type { CanvasObjectType } from "../../types";
 
 // ============================================================================
 // Type Definitions
 // ============================================================================
 
-export type ImageCacheEntry = HTMLImageElement | "error";
 export type ZAnimState = { current: number; target: number };
 
 export interface Face {
@@ -49,46 +48,6 @@ export const MIN_PITCH = 0.15;
 export const MAX_PITCH = 1.2;
 export const PITCH_OFFSET_MIN = -1.1;
 export const PITCH_OFFSET_MAX = 1.1;
-
-// ============================================================================
-// Image and Resource Loading
-// ============================================================================
-
-// Resolve optional image paths to absolute URLs.
-export function resolveImageSrc(path: string | null | undefined): string {
-  if (!path) return "";
-  if (path.startsWith("/") || path.startsWith("http") || path.startsWith("data:")) return path;
-  const base = BASE_URL.endsWith("/") ? BASE_URL : `${BASE_URL}/`;
-  return `${base}${path}`;
-}
-
-export function getTextureImage(
-  src: string,
-  imageCache: Map<string, ImageCacheEntry>,
-  onLoad: () => void
-): HTMLImageElement | null {
-  // Cache and reuse image resources for top textures.
-  const cachedImage = imageCache.get(src);
-  if (cachedImage === "error") return null;
-  let img = cachedImage as HTMLImageElement | undefined;
-
-  if (!img) {
-    img = new Image();
-    // Hint to browser to decode off-main-thread
-    img.decoding = "async"; 
-    img.src = src;
-    img.onload = () => onLoad();
-    img.onerror = () => {
-      imageCache.set(src, "error");
-      onLoad();
-    };
-    imageCache.set(src, img);
-  }
-  // Return null if not yet loaded or errored.
-  if (!img.complete || img.naturalWidth === 0) return null;
-  
-  return img;
-}
 
 // ============================================================================
 // 3D Stacking and Spatial Layout
@@ -146,25 +105,21 @@ export function getSceneMetrics(stacked: StackedObject[]): { center: Vec3; radiu
   if (stacked.length === 0) {
     return { center: { x: 0, y: 0, z: 0 }, radius: 1, basePitch: 0.35 };
   }
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
+  const footprintBounds = getBounds2DOfRects(stacked.map((item) => item.rect));
+  if (!footprintBounds) {
+    return { center: { x: 0, y: 0, z: 0 }, radius: 1, basePitch: 0.35 };
+  }
   let maxZ = 0;
   for (const s of stacked) {
-    minX = Math.min(minX, s.rect.minX);
-    minY = Math.min(minY, s.rect.minY);
-    maxX = Math.max(maxX, s.rect.maxX);
-    maxY = Math.max(maxY, s.rect.maxY);
     maxZ = Math.max(maxZ, s.baseZ + s.height);
   }
-  const centerX = (minX + maxX) / 2;
-  const centerY = (minY + maxY) / 2;
+  const center = getBounds2DCenter(footprintBounds);
   const centerZ = maxZ / 2;
-  const w = maxX - minX;
-  const h = maxY - minY;
+  const footprintSize = getBounds2DSize(footprintBounds);
+  const w = footprintSize.width;
+  const h = footprintSize.height;
   const d = maxZ;
   const maxDim = Math.max(w, h, d);
   const radius = maxDim * 1.5;
-  return { center: { x: centerX, y: centerY, z: centerZ }, radius, basePitch: 0.35 };
+  return { center: { x: center.x, y: center.y, z: centerZ }, radius, basePitch: 0.35 };
 }

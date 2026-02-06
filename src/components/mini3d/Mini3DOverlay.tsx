@@ -4,13 +4,12 @@ import { useUi } from "../../context/UiContext";
 import { clamp } from "../../lib/math";
 import { shade, rgba } from "../../lib/color";
 import { drawQuad, drawTexturedQuad } from "../../lib/canvas2d";
+import { getTextureImage, type ImageCacheEntry } from "./mini3dAssets";
 import {
-  getTextureImage,
   computeStackedObjects,
   DEFAULT_CAMERA_YAW,
   PITCH_OFFSET_MIN,
   PITCH_OFFSET_MAX,
-  type ImageCacheEntry,
   type ZAnimState,
   type StackedObject,
 } from "./mini3dMath";
