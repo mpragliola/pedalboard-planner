@@ -1,4 +1,4 @@
-import { WDH_BOARD_457_305_76, WDH_BOARD_610_381_76, WDH_BOARD_813_406_76 } from '../../wdh'
+import { WDH_BOARD_457_305_76 } from '../../wdh'
 import type { BoardTemplate } from '../boards'
 
 export const BLACKBIRD_BOARD_TEMPLATES: BoardTemplate[] = [
