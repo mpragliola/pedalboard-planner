@@ -17,7 +17,7 @@ import {
   faceNormal,
   isFaceVisible,
 } from "../../lib/geometry3d";
-import type { Vec2, Vec3 } from "../../lib/vector";
+import type { Vec3 } from "../../lib/vector";
 import {
   getTextureImage,
   resolveImageSrc,
