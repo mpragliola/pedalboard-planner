@@ -1,5 +1,7 @@
 import { useEffect } from "react";
-import { useApp } from "../../context/AppContext";
+import { useBoard } from "../../context/BoardContext";
+import { useCable } from "../../context/CableContext";
+import { useUi } from "../../context/UiContext";
 import { getObjectDimensions } from "../../lib/stateManager";
 import { formatDimension, formatLengthCm } from "../../lib/rulerFormat";
 import { InfoLine } from "./InfoLine";
@@ -10,7 +12,9 @@ function cableLengthMm(segments: { x1: number; y1: number; x2: number; y2: numbe
 }
 
 export function SelectionInfoPopup() {
-  const { objects, cables, selectedObjectIds, selectedCableId, setSelectedCableId, unit } = useApp();
+  const { objects, selectedObjectIds } = useBoard();
+  const { cables, selectedCableId, setSelectedCableId } = useCable();
+  const { unit } = useUi();
 
   const selectedObject = selectedObjectIds.length === 1 ? objects.find((o) => o.id === selectedObjectIds[0]) : null;
   const selectedCable = selectedCableId ? cables.find((c) => c.id === selectedCableId) : null;

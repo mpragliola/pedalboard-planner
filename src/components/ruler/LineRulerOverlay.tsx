@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react'
-import { useApp } from '../../context/AppContext'
+import { useCanvas } from '../../context/CanvasContext'
 import { useUi } from '../../context/UiContext'
 import { buildRoundedPathD, DEFAULT_JOIN_RADIUS } from '../../lib/polylinePath'
 import { formatLength } from '../../lib/rulerFormat'
@@ -8,8 +8,8 @@ import { usePolylineDraw } from '../../hooks/usePolylineDraw'
 import './RulerOverlay.scss'
 
 export function LineRulerOverlay() {
-  const { canvasRef, zoom, pan, unit } = useApp()
-  const { setLineRuler } = useUi()
+  const { canvasRef, zoom, pan } = useCanvas()
+  const { unit, setLineRuler } = useUi()
   const { clientToCanvas, toScreen } = useCanvasCoords(canvasRef, zoom, pan)
 
   const exitMode = useCallback(() => {

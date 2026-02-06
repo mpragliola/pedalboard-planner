@@ -11,7 +11,8 @@ import {
   type DragEndEvent,
   type Modifier,
 } from "@dnd-kit/core";
-import { useApp } from "../../context/AppContext";
+import { useCanvas } from "../../context/CanvasContext";
+import { useCatalog } from "../../context/CatalogContext";
 import { LONG_PRESS_MS, MOVE_THRESHOLD_PX, MM_TO_PX } from "../../constants";
 import { DEFAULT_OBJECT_COLOR } from "../../constants";
 import "./CatalogDragGhost.scss";
@@ -51,7 +52,8 @@ function CatalogDragOverlayContent({ data, zoom = 1 }: { data: CatalogDragData; 
 }
 
 export function CatalogDndProvider({ children }: { children: React.ReactNode }) {
-  const { placeFromCatalog, zoom } = useApp();
+  const { placeFromCatalog } = useCatalog();
+  const { zoom } = useCanvas();
   const lastPointerRef = useRef({ x: 0, y: 0 });
   const [activeData, setActiveData] = useState<CatalogDragData | null>(null);
   /** Pointer position during drag; we position our own ghost from this so it's always centered. */

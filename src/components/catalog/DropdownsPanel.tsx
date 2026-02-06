@@ -1,7 +1,8 @@
 import { forwardRef, useState } from "react";
 import { DEVICE_TYPE_ORDER, DEVICE_TYPE_LABEL } from "../../constants";
 import type { DeviceType } from "../../data/devices";
-import { useApp } from "../../context/AppContext";
+import { useCatalog } from "../../context/CatalogContext";
+import { useUi } from "../../context/UiContext";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { CatalogModeSwitch } from "./CatalogModeSwitch";
 import { TextFilter } from "./TextFilter";
@@ -13,13 +14,8 @@ import "./DropdownsPanel.scss";
 export type { CatalogMode } from "./CatalogModeSwitch";
 
 export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel(_props, ref) {
-  const {
-    catalogMode,
-    setCatalogMode,
-    unit,
-    filters,
-    onCustomCreate,
-  } = useApp();
+  const { catalogMode, setCatalogMode, filters, onCustomCreate } = useCatalog();
+  const { unit } = useUi();
 
   const {
     boardBrandFilter,

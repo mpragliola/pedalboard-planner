@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { DRAG_THRESHOLD_PX } from "../../constants";
-import { useApp } from "../../context/AppContext";
+import { useCanvas } from "../../context/CanvasContext";
 import { useUi } from "../../context/UiContext";
 import { useCanvasCoords } from "../../hooks/useCanvasCoords";
 import { formatLength } from "../../lib/rulerFormat";
@@ -12,8 +12,8 @@ type DragStart =
   | { clientX: number; clientY: number; x: number; y: number; rect: Rect };
 
 export function RulerOverlay() {
-  const { canvasRef, zoom, pan, unit } = useApp();
-  const { setRuler } = useUi();
+  const { canvasRef, zoom, pan } = useCanvas();
+  const { unit, setRuler } = useUi();
   const { clientToCanvas, toScreen } = useCanvasCoords(canvasRef, zoom, pan);
   const [rect, setRect] = useState<Rect | null>(null);
   const [isDragging, setIsDragging] = useState(false);

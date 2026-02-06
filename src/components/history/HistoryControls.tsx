@@ -1,10 +1,10 @@
 import { faRedo, faUndo } from '@fortawesome/free-solid-svg-icons'
-import { useApp } from '../../context/AppContext'
+import { useHistoryContext } from '../../context/HistoryContext'
 import { HistoryButton } from './HistoryButton'
 import './HistoryControls.scss'
 
 export function HistoryControls() {
-  const { undo, redo, canUndo, canRedo } = useApp()
+  const { undo, redo, canUndo, canRedo } = useHistoryContext()
 
   return (
     <div className="floating-controls history-controls">

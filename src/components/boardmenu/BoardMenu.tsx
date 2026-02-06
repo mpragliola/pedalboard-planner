@@ -1,7 +1,7 @@
 import { faFloppyDisk, faFolderOpen, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useRef } from "react";
-import { useApp } from "../../context/AppContext";
+import { useBoardIo } from "../../context/BoardIoContext";
 import { useConfirmation } from "../../context/ConfirmationContext";
 import { GptButton } from "../gpt/GptButton";
 import { InfoButton } from "../info/InfoButton";
@@ -9,7 +9,7 @@ import { SettingsButton } from "../settings/SettingsButton";
 import "./BoardMenu.scss";
 
 export function BoardMenu() {
-  const { newBoard, loadBoardFromFile, saveBoardToFile } = useApp();
+  const { newBoard, loadBoardFromFile, saveBoardToFile } = useBoardIo();
   const { requestConfirmation } = useConfirmation();
   const fileInputRef = useRef<HTMLInputElement>(null);
 

@@ -1,5 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
-import { useApp } from '../../context/AppContext'
+import { useBoard } from '../../context/BoardContext'
+import { useCable } from '../../context/CableContext'
+import { useUi } from '../../context/UiContext'
 import { LocationLoader } from '../../lib/locationLoader'
 import { PromptBuilder } from '../../lib/promptBuilder'
 import { Modal } from '../common/Modal'
@@ -13,7 +15,9 @@ interface GptModalProps {
 const locationLoader = new LocationLoader()
 
 export function GptModal({ open, onClose }: GptModalProps) {
-  const { objects, cables, unit } = useApp()
+  const { objects } = useBoard()
+  const { cables } = useCable()
+  const { unit } = useUi()
   const getObjectName = useCallback(
     (id: string) => objects.find((o) => o.id === id)?.name ?? id,
     [objects]

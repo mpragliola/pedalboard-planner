@@ -9,7 +9,10 @@ import { CablePaths } from "./cable/CablePaths";
 import { AddCableModal } from "./cable/AddCableModal";
 import { SelectionToolbar } from "./selection/SelectionToolbar";
 import { CableToolbar } from "./selection/CableToolbar";
-import { useApp } from "../context/AppContext";
+import { useBoard } from "../context/BoardContext";
+import { useCable } from "../context/CableContext";
+import { useCanvas } from "../context/CanvasContext";
+import { useCatalog } from "../context/CatalogContext";
 import { useUi } from "../context/UiContext";
 import { CANVAS_DROP_ID } from "./catalog/CatalogDndProvider";
 import "./Canvas.scss";
@@ -29,31 +32,28 @@ export function Canvas() {
     zoom,
     pan,
     tileSize,
-    cables,
-    unit,
     isPanning,
     spaceDown,
     canvasAnimating,
     setCanvasAnimating,
     handleCanvasPointerDown,
-    shouldIgnoreCatalogClick,
+  } = useCanvas();
+  const {
     objects,
     selectedObjectIds,
-    selectedCableId,
     imageFailedIds,
     draggingObjectId,
     onImageError,
     onObjectPointerDown,
-    onCablePointerDown,
     onDragEnd,
     onDeleteObject,
     onRotateObject,
     onSendToBack,
     onBringToFront,
-    setCables,
-    setSelectedCableId,
-  } = useApp();
-  const { showGrid, xray, ruler, lineRuler, cableLayer, cablesVisible, setFloatingUiVisible } = useUi();
+  } = useBoard();
+  const { cables, selectedCableId, onCablePointerDown, setCables, setSelectedCableId } = useCable();
+  const { shouldIgnoreCatalogClick } = useCatalog();
+  const { showGrid, xray, ruler, lineRuler, cableLayer, cablesVisible, setFloatingUiVisible, unit } = useUi();
 
   const [editingCableId, setEditingCableId] = useState<string | null>(null);
   const selectedCable = selectedCableId ? cables.find((c) => c.id === selectedCableId) : null;

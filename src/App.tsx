@@ -9,15 +9,16 @@ import { ZoomControls } from "./components/zoom/ZoomControls";
 import { SelectionInfoPopup } from "./components/selection/SelectionInfoPopup";
 import { HistoryControls } from "./components/history/HistoryControls";
 import { Mini3DOverlay } from "./components/mini3d/Mini3DOverlay";
-import { AppProvider, useApp } from "./context/AppContext";
+import { AppProvider } from "./context/AppContext";
 import { ConfirmationProvider } from "./context/ConfirmationContext";
 import { SettingsModalProvider, useSettingsModal } from "./context/SettingsModalContext";
 import { SettingsModal } from "./components/settings/SettingsModal";
+import { useCatalog } from "./context/CatalogContext";
 import { useUi } from "./context/UiContext";
 import "./App.scss";
 
 function AppContent() {
-  const { dropdownPanelRef } = useApp();
+  const { dropdownPanelRef } = useCatalog();
   const { showMini3d, floatingUiVisible, setFloatingUiVisible, panelExpanded, setPanelExpanded } = useUi();
   const { open: settingsOpen, setOpen: setSettingsOpen } = useSettingsModal();
 

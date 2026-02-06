@@ -19,6 +19,8 @@ export interface UiContextValue {
   setFloatingUiVisible: Dispatch<SetStateAction<boolean>>;
   panelExpanded: boolean;
   setPanelExpanded: Dispatch<SetStateAction<boolean>>;
+  unit: "mm" | "in";
+  setUnit: Dispatch<SetStateAction<"mm" | "in">>;
 }
 
 const UiContext = createContext<UiContextValue | null>(null);

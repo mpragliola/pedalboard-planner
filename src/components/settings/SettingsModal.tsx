@@ -1,4 +1,4 @@
-import { useApp } from "../../context/AppContext";
+import { useUi } from "../../context/UiContext";
 import { Modal } from "../common/Modal";
 import "./SettingsModal.scss";
 
@@ -8,7 +8,7 @@ interface SettingsModalProps {
 }
 
 export function SettingsModal({ open, onClose }: SettingsModalProps) {
-  const { unit, setUnit } = useApp();
+  const { unit, setUnit } = useUi();
 
   return (
     <Modal open={open} onClose={onClose} title="Settings" className="settings-modal">

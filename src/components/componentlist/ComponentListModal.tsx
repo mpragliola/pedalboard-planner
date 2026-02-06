@@ -2,7 +2,8 @@ import { useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFileCsv } from "@fortawesome/free-solid-svg-icons";
-import { useApp } from "../../context/AppContext";
+import { useBoard } from "../../context/BoardContext";
+import { useCable } from "../../context/CableContext";
 import { useConfirmation } from "../../context/ConfirmationContext";
 import { BASE_URL, CONNECTOR_ICON_MAP, DEFAULT_OBJECT_COLOR } from "../../constants";
 import { formatLengthCm } from "../../lib/rulerFormat";
@@ -113,7 +114,8 @@ function downloadCsv(content: string, filename: string) {
 }
 
 export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
-  const { objects, cables, setCables, onDeleteObject, unit, setSelectedObjectIds, setSelectedCableId } = useApp();
+  const { objects, onDeleteObject, setSelectedObjectIds } = useBoard();
+  const { cables, setCables, setSelectedCableId } = useCable();
   const { requestConfirmation } = useConfirmation();
 
   const handleComponentRowDoubleClick = useCallback(

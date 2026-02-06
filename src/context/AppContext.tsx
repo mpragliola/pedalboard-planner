@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useRef, useEffect, useMemo, type ReactNode } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo, type ReactNode } from "react";
 import { BOARD_TEMPLATES } from "../data/boards";
 import { DEVICE_TEMPLATES } from "../data/devices";
 import { initialObjects, MM_TO_PX, HISTORY_DEPTH, DEBOUNCE_SAVE_MS, DEFAULT_PLACEMENT_FALLBACK } from "../constants";
@@ -17,86 +17,15 @@ import { useHistory } from "../hooks/useHistory";
 import { useCatalogDrag } from "../hooks/useCatalogDrag";
 import { normalizeRotation } from "../lib/geometry";
 import type { CanvasObjectType, Cable } from "../types";
+import { BoardIoProvider, type BoardIoContextValue } from "./BoardIoContext";
+import { BoardProvider, type BoardContextValue } from "./BoardContext";
+import { CableProvider, type CableContextValue } from "./CableContext";
+import { CanvasProvider, type CanvasContextValue } from "./CanvasContext";
+import { CatalogProvider, type CatalogContextValue, type CatalogMode } from "./CatalogContext";
+import { HistoryProvider, type HistoryContextValue } from "./HistoryContext";
 import { UiProvider, type UiContextValue } from "./UiContext";
 
 const stateManager = new StateManager("pedal/state");
-
-type CatalogMode = "boards" | "devices";
-
-interface AppContextValue {
-  // Refs
-  canvasRef: React.RefObject<HTMLDivElement>;
-  dropdownPanelRef: React.RefObject<HTMLDivElement>;
-  // Canvas / zoom
-  zoom: number;
-  pan: { x: number; y: number };
-  tileSize: number;
-  unit: "mm" | "in";
-  setUnit: (u: "mm" | "in") => void;
-  isPanning: boolean;
-  spaceDown: boolean;
-  zoomIn: () => void;
-  zoomOut: () => void;
-  centerView: () => void;
-  canvasAnimating: boolean;
-  setCanvasAnimating: (v: boolean) => void;
-  handleCanvasPointerDown: (e: React.PointerEvent) => void;
-  // Objects
-  objects: CanvasObjectType[];
-  setObjects: (
-    action: CanvasObjectType[] | ((prev: CanvasObjectType[]) => CanvasObjectType[]),
-    saveToHistory?: boolean
-  ) => void;
-  selectedObjectIds: string[];
-  setSelectedObjectIds: React.Dispatch<React.SetStateAction<string[]>>;
-  imageFailedIds: Set<string>;
-  draggingObjectId: string | null;
-  onImageError: (id: string) => void;
-  onObjectPointerDown: (id: string, e: React.PointerEvent) => void;
-  onDragEnd: () => void;
-  onDeleteObject: (id: string) => void;
-  onRotateObject: (id: string) => void;
-  onSendToBack: (id: string) => void;
-  onBringToFront: (id: string) => void;
-  // History
-  undo: () => void;
-  redo: () => void;
-  canUndo: boolean;
-  canRedo: boolean;
-  // Catalog
-  catalogMode: CatalogMode;
-  setCatalogMode: (mode: CatalogMode) => void;
-  filters: ReturnType<typeof useBoardDeviceFilters>;
-  onBoardSelect: (templateId: string) => void;
-  onDeviceSelect: (templateId: string) => void;
-  /** Place a catalog item on the canvas (used by @dnd-kit onDragEnd). */
-  placeFromCatalog: (
-    clientX: number,
-    clientY: number,
-    data: { mode: "boards" | "devices"; templateId: string }
-  ) => void;
-  /** Returns true if the last interaction was a catalog drop (so click handlers should not close panel). */
-  shouldIgnoreCatalogClick: () => boolean;
-  onCustomBoardCreate: (params: { widthMm: number; depthMm: number; color: string; name: string }) => void;
-  onCustomDeviceCreate: (params: { widthMm: number; depthMm: number; color: string; name: string }) => void;
-  onCustomCreate: (
-    mode: "boards" | "devices",
-    params: { widthMm: number; depthMm: number; color: string; name: string }
-  ) => void;
-  cables: Cable[];
-  setCables: React.Dispatch<React.SetStateAction<Cable[]>>;
-  /** Add a cable and persist to storage immediately (so cables don't disappear). */
-  addCableAndPersist: (cable: Cable) => void;
-  selectedCableId: string | null;
-  setSelectedCableId: React.Dispatch<React.SetStateAction<string | null>>;
-  onCablePointerDown: (id: string, e: React.PointerEvent) => void;
-  // Pedalboard file: new / load / save
-  newBoard: () => void;
-  loadBoardFromFile: (file: File) => void;
-  saveBoardToFile: () => void;
-}
-
-const AppContext = createContext<AppContextValue | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [savedState] = useState<SavedState | null>(() => {
@@ -565,6 +494,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setFloatingUiVisible,
       panelExpanded,
       setPanelExpanded,
+      unit,
+      setUnit,
     }),
     [
       showGrid,
@@ -585,18 +516,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setFloatingUiVisible,
       panelExpanded,
       setPanelExpanded,
+      unit,
+      setUnit,
     ]
   );
 
-  const value = useMemo<AppContextValue>(
+  const canvasValue = useMemo<CanvasContextValue>(
     () => ({
       canvasRef,
-      dropdownPanelRef,
       zoom,
       pan,
       tileSize,
-      unit,
-      setUnit,
       isPanning,
       spaceDown,
       zoomIn,
@@ -605,6 +535,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
       canvasAnimating,
       setCanvasAnimating,
       handleCanvasPointerDown,
+    }),
+    [
+      canvasRef,
+      zoom,
+      pan,
+      tileSize,
+      isPanning,
+      spaceDown,
+      zoomIn,
+      zoomOut,
+      centerView,
+      canvasAnimating,
+      setCanvasAnimating,
+      handleCanvasPointerDown,
+    ]
+  );
+
+  const boardValue = useMemo<BoardContextValue>(
+    () => ({
       objects,
       setObjects,
       selectedObjectIds,
@@ -618,46 +567,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       onRotateObject: handleRotateObject,
       onSendToBack: handleSendToBack,
       onBringToFront: handleBringToFront,
-      undo,
-      redo,
-      canUndo,
-      canRedo,
-      catalogMode,
-      setCatalogMode,
-      filters,
-      onBoardSelect: handleBoardSelect,
-      onDeviceSelect: handleDeviceSelect,
-      placeFromCatalog,
-      shouldIgnoreCatalogClick,
-      onCustomBoardCreate: (params) => handleCustomCreate("boards", params),
-      onCustomDeviceCreate: (params) => handleCustomCreate("devices", params),
-      onCustomCreate: handleCustomCreate,
-      cables,
-      setCables,
-      addCableAndPersist,
-      selectedCableId,
-      setSelectedCableId,
-      onCablePointerDown: handleCablePointerDown,
-      newBoard,
-      loadBoardFromFile,
-      saveBoardToFile,
     }),
     [
-      canvasRef,
-      dropdownPanelRef,
-      zoom,
-      pan,
-      tileSize,
-      unit,
-      setUnit,
-      isPanning,
-      spaceDown,
-      zoomIn,
-      zoomOut,
-      centerView,
-      canvasAnimating,
-      setCanvasAnimating,
-      handleCanvasPointerDown,
       objects,
       setObjects,
       selectedObjectIds,
@@ -671,10 +582,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
       handleRotateObject,
       handleSendToBack,
       handleBringToFront,
-      undo,
-      redo,
-      canUndo,
-      canRedo,
+    ]
+  );
+
+  const cableValue = useMemo<CableContextValue>(
+    () => ({
+      cables,
+      setCables,
+      addCableAndPersist,
+      selectedCableId,
+      setSelectedCableId,
+      onCablePointerDown: handleCablePointerDown,
+    }),
+    [cables, setCables, addCableAndPersist, selectedCableId, setSelectedCableId, handleCablePointerDown]
+  );
+
+  const catalogValue = useMemo<CatalogContextValue>(
+    () => ({
+      dropdownPanelRef,
+      catalogMode,
+      setCatalogMode,
+      filters,
+      onBoardSelect: handleBoardSelect,
+      onDeviceSelect: handleDeviceSelect,
+      placeFromCatalog,
+      shouldIgnoreCatalogClick,
+      onCustomBoardCreate: (params) => handleCustomCreate("boards", params),
+      onCustomDeviceCreate: (params) => handleCustomCreate("devices", params),
+      onCustomCreate: handleCustomCreate,
+    }),
+    [
+      dropdownPanelRef,
       catalogMode,
       setCatalogMode,
       filters,
@@ -683,27 +621,41 @@ export function AppProvider({ children }: { children: ReactNode }) {
       placeFromCatalog,
       shouldIgnoreCatalogClick,
       handleCustomCreate,
-      cables,
-      setCables,
-      addCableAndPersist,
-      selectedCableId,
-      setSelectedCableId,
-      handleCablePointerDown,
+    ]
+  );
+
+  const historyValue = useMemo<HistoryContextValue>(
+    () => ({
+      undo,
+      redo,
+      canUndo,
+      canRedo,
+    }),
+    [undo, redo, canUndo, canRedo]
+  );
+
+  const boardIoValue = useMemo<BoardIoContextValue>(
+    () => ({
       newBoard,
       loadBoardFromFile,
       saveBoardToFile,
-    ]
+    }),
+    [newBoard, loadBoardFromFile, saveBoardToFile]
   );
 
   return (
     <UiProvider value={uiValue}>
-      <AppContext.Provider value={value}>{children}</AppContext.Provider>
+      <CanvasProvider value={canvasValue}>
+        <BoardProvider value={boardValue}>
+          <CableProvider value={cableValue}>
+            <CatalogProvider value={catalogValue}>
+              <HistoryProvider value={historyValue}>
+                <BoardIoProvider value={boardIoValue}>{children}</BoardIoProvider>
+              </HistoryProvider>
+            </CatalogProvider>
+          </CableProvider>
+        </BoardProvider>
+      </CanvasProvider>
     </UiProvider>
   );
-}
-
-export function useApp(): AppContextValue {
-  const ctx = useContext(AppContext);
-  if (!ctx) throw new Error("useApp must be used within AppProvider");
-  return ctx;
 }

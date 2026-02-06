@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useApp } from "../../context/AppContext";
+import { useBoard } from "../../context/BoardContext";
 import { useUi } from "../../context/UiContext";
 import { DEFAULT_OBJECT_COLOR } from "../../constants";
 import { normalizeRotation } from "../../lib/geometry";
@@ -149,8 +149,17 @@ function buildFaces(stacked: StackedObject[], yaw: number, pitchOffset: number):
   return faces;
 }
 
+/**
+ * Mini3DOverlay component renders a 3D projection of the board's objects onto 
+ * a canvas overlay.
+ * It computes a simple 3D representation of each object as a box, applies a 
+ * perspective projection, and draws the visible faces in back-to-front order. 
+ * The overlay supports pointer-based rotation and an auto-rotate mode. 
+ * It also includes opening and closing animations that converge/diverge
+ * the objects toward/from the scene center while fading the overlay in/out. 
+ */
 export function Mini3DOverlay() {
-  const { objects } = useApp();
+  const { objects } = useBoard();
   const { showMini3d } = useUi();
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
