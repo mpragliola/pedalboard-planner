@@ -83,6 +83,7 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
   const imageCacheRef = useRef<Map<string, ImageCacheEntry>>(new Map());
   const zAnimRef = useRef<Map<string, ZAnimState>>(new Map());
   const autoRotateRef = useRef(autoRotate);
+  const prevShowMini3dRef = useRef(showMini3d);
 
   // Opacity & open/close animation tracking.
   const openTimeRef = useRef<number | null>(null);
@@ -346,24 +347,29 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
   }, [autoRotate, requestRender, showMini3d]);
 
   useEffect(() => {
+    const wasShowing = prevShowMini3dRef.current;
+    prevShowMini3dRef.current = showMini3d;
+
     if (showMini3d) {
-      // Opening sequence: mount if needed, fade in, converge objects.
-      if (!isVisible) {
-        setIsVisible(true);
-        openOpacityRef.current = 0;
-        setOverlayOpacity(0);
-      } else {
-        openOpacityRef.current = overlayOpacityRef.current;
+      if (!wasShowing || closeTimeRef.current != null) {
+        // Opening sequence: mount if needed, fade in, converge objects.
+        if (!isVisible) {
+          setIsVisible(true);
+          openOpacityRef.current = 0;
+          setOverlayOpacity(0);
+        } else {
+          openOpacityRef.current = overlayOpacityRef.current;
+        }
+        openTimeRef.current = performance.now();
+        closeTimeRef.current = null;
+        requestRender();
       }
-      openTimeRef.current = performance.now();
-      closeTimeRef.current = null;
-      requestRender();
       return;
     }
 
     if (isFullscreen) setIsFullscreen(false);
 
-    if (isVisible && closeTimeRef.current == null) {
+    if (wasShowing && isVisible && closeTimeRef.current == null) {
       // Closing sequence: keep mounted until the animation completes.
       closeOpacityRef.current = overlayOpacityRef.current;
       closeTimeRef.current = performance.now();
