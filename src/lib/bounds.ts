@@ -3,66 +3,72 @@ import type { Vec2 } from "./vector";
 
 export type Bounds2D = Rect;
 
-export function getBounds2DOfPoints(points: Iterable<Vec2>): Bounds2D | null {
-  let hasPoints = false;
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-  for (const point of points) {
-    hasPoints = true;
-    minX = Math.min(minX, point.x);
-    minY = Math.min(minY, point.y);
-    maxX = Math.max(maxX, point.x);
-    maxY = Math.max(maxY, point.y);
-  }
-  if (!hasPoints) return null;
-  if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) {
+type BoundsAccumulator = {
+  hasValues: boolean;
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+};
+
+function createBoundsAccumulator(): BoundsAccumulator {
+  return {
+    hasValues: false,
+    minX: Infinity,
+    minY: Infinity,
+    maxX: -Infinity,
+    maxY: -Infinity,
+  };
+}
+
+function includeBoundsPoint(acc: BoundsAccumulator, x: number, y: number): void {
+  acc.hasValues = true;
+  acc.minX = Math.min(acc.minX, x);
+  acc.minY = Math.min(acc.minY, y);
+  acc.maxX = Math.max(acc.maxX, x);
+  acc.maxY = Math.max(acc.maxY, y);
+}
+
+function includeBoundsRect(acc: BoundsAccumulator, rect: Rect): void {
+  acc.hasValues = true;
+  acc.minX = Math.min(acc.minX, rect.minX);
+  acc.minY = Math.min(acc.minY, rect.minY);
+  acc.maxX = Math.max(acc.maxX, rect.maxX);
+  acc.maxY = Math.max(acc.maxY, rect.maxY);
+}
+
+function finalizeBounds(acc: BoundsAccumulator): Bounds2D | null {
+  if (!acc.hasValues) return null;
+  if (!Number.isFinite(acc.minX) || !Number.isFinite(acc.minY) || !Number.isFinite(acc.maxX) || !Number.isFinite(acc.maxY)) {
     return null;
   }
-  return { minX, minY, maxX, maxY };
+  return { minX: acc.minX, minY: acc.minY, maxX: acc.maxX, maxY: acc.maxY };
+}
+
+export function getBounds2DOfPoints(points: Iterable<Vec2>): Bounds2D | null {
+  const acc = createBoundsAccumulator();
+  for (const point of points) {
+    includeBoundsPoint(acc, point.x, point.y);
+  }
+  return finalizeBounds(acc);
 }
 
 export function getBounds2DOfPointSets(pointSets: Iterable<readonly Vec2[]>): Bounds2D | null {
-  let hasPoints = false;
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
+  const acc = createBoundsAccumulator();
   for (const points of pointSets) {
     for (const point of points) {
-      hasPoints = true;
-      minX = Math.min(minX, point.x);
-      minY = Math.min(minY, point.y);
-      maxX = Math.max(maxX, point.x);
-      maxY = Math.max(maxY, point.y);
+      includeBoundsPoint(acc, point.x, point.y);
     }
   }
-  if (!hasPoints) return null;
-  if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) {
-    return null;
-  }
-  return { minX, minY, maxX, maxY };
+  return finalizeBounds(acc);
 }
 
 export function getBounds2DOfRects(rects: Iterable<Rect>): Bounds2D | null {
-  let hasRects = false;
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
+  const acc = createBoundsAccumulator();
   for (const rect of rects) {
-    hasRects = true;
-    minX = Math.min(minX, rect.minX);
-    minY = Math.min(minY, rect.minY);
-    maxX = Math.max(maxX, rect.maxX);
-    maxY = Math.max(maxY, rect.maxY);
+    includeBoundsRect(acc, rect);
   }
-  if (!hasRects) return null;
-  if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) {
-    return null;
-  }
-  return { minX, minY, maxX, maxY };
+  return finalizeBounds(acc);
 }
 
 export function getBounds2DCenter(bounds: Bounds2D): Vec2 {
