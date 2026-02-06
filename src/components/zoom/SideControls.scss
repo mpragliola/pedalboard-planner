@@ -1,11 +1,11 @@
 @use "../../styles/variables" as vars;
 
-.zoom-controls.floating-controls {
+.side-controls.floating-controls {
   position: fixed;
   z-index: vars.$z-zoom-controls;
 }
 
-.zoom-controls {
+.side-controls {
   bottom: vars.$floating-panel-offset;
   right: vars.$floating-panel-offset;
   display: flex;
@@ -56,22 +56,22 @@
     opacity vars.$duration-fast vars.$ease-in;
 }
 
-.zoom-btn.view-group-toggle,
-.zoom-btn.measurement-group-toggle {
+.side-control.view-group-toggle,
+.side-control.measurement-group-toggle {
   transition: color vars.$duration-fast vars.$ease-standard;
 }
 
-.zoom-btn.view-group-toggle.open,
-.zoom-btn.measurement-group-toggle.open {
+.side-control.view-group-toggle.open,
+.side-control.measurement-group-toggle.open {
   color: vars.$color-text-faint;
 }
 
-.zoom-btn.view-group-toggle.open:hover,
-.zoom-btn.measurement-group-toggle.open:hover {
+.side-control.view-group-toggle.open:hover,
+.side-control.measurement-group-toggle.open:hover {
   color: vars.$color-text-dim;
 }
 
-.zoom-btn.view-group-toggle.open.active,
-.zoom-btn.measurement-group-toggle.open.active {
+.side-control.view-group-toggle.open.active,
+.side-control.measurement-group-toggle.open.active {
   color: vars.$color-accent-muted;
 }

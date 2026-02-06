@@ -1,8 +1,8 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
-import './HistoryButton.scss'
+import './BottomControl.scss'
 
-interface HistoryButtonProps {
+interface BottomControlProps {
   icon: IconDefinition
   title: string
   ariaLabel: string
@@ -10,17 +10,17 @@ interface HistoryButtonProps {
   disabled: boolean
 }
 
-export function HistoryButton({
+export function BottomControl({
   icon,
   title,
   ariaLabel,
   onClick,
   disabled,
-}: HistoryButtonProps) {
+}: BottomControlProps) {
   return (
     <button
       type="button"
-      className="history-btn"
+      className="bottom-control"
       onClick={onClick}
       disabled={disabled}
       title={title}

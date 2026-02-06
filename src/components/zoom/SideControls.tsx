@@ -4,8 +4,6 @@ import {
   faEye,
   faLayerGroup,
   faList,
-  faMinus,
-  faPlus,
   faPlug,
   faRuler,
   faSlash,
@@ -16,33 +14,19 @@ import {
 import { useState } from 'react'
 import { useCanvas } from '../../context/CanvasContext'
 import { useUi } from '../../context/UiContext'
-import { ZoomButton } from './ZoomButton'
+import { SideControl } from './SideControl'
 import { ComponentListModal } from '../componentlist/ComponentListModal'
-import './ZoomControls.scss'
+import './SideControls.scss'
 
-export function ZoomControls() {
-  const { zoomIn, zoomOut, centerView } = useCanvas()
+export function SideControls() {
+  const { centerView } = useCanvas()
   const { showGrid, setShowGrid, xray, setXray, showMini3d, setShowMini3d, ruler, setRuler, lineRuler, setLineRuler, cableLayer, setCableLayer, cablesVisible, setCablesVisible } = useUi()
   const [componentListOpen, setComponentListOpen] = useState(false)
   const [measurementExpanded, setMeasurementExpanded] = useState(false)
   const [viewExpanded, setViewExpanded] = useState(false)
   return (
-    <div className="floating-controls zoom-controls">
-      <ZoomButton
-        label="Zoom in"
-        title="Zoom in"
-        icon={faPlus}
-        onClick={zoomIn}
-        className="zoom-in"
-      />
-      <ZoomButton
-        label="Zoom out"
-        title="Zoom out"
-        icon={faMinus}
-        onClick={zoomOut}
-        className="zoom-out"
-      />
-      <ZoomButton
+    <div className="floating-controls side-controls">
+      <SideControl
         label="Cable layer"
         title="Draw cables (click to add points, double-click to finish). SHIFT: disable snap. Ctrl: 45° lines (H/V/diagonals)."
         icon={faPlug}
@@ -55,7 +39,7 @@ export function ZoomControls() {
         className="cable-layer-toggle"
       />
       <div className={`view-tools-group ${viewExpanded ? 'expanded' : ''}`}>
-        <ZoomButton
+        <SideControl
           label="View options"
           title={viewExpanded ? 'Hide view options' : 'View options'}
           icon={faEye}
@@ -64,14 +48,14 @@ export function ZoomControls() {
           className={`view-group-toggle ${viewExpanded ? 'open' : ''}`}
         />
         <div className="view-tools-secondary">
-          <ZoomButton
+          <SideControl
             label="Center view"
             title="Center view on all objects"
             icon={faCrosshairs}
             onClick={centerView}
             className="center-view"
           />
-          <ZoomButton
+          <SideControl
             label="Toggle grid"
             title="Toggle grid"
             icon={faTh}
@@ -79,7 +63,7 @@ export function ZoomControls() {
             active={showGrid}
             className="grid-toggle"
           />
-          <ZoomButton
+          <SideControl
             label="X-ray"
             title="Make all objects 50% transparent"
             icon={faXRay}
@@ -87,7 +71,7 @@ export function ZoomControls() {
             active={xray}
             className="xray-toggle"
           />
-          <ZoomButton
+          <SideControl
             label="Show cables"
             title="Show or hide cables on the canvas"
             icon={faLayerGroup}
@@ -95,7 +79,7 @@ export function ZoomControls() {
             active={cablesVisible}
             className="cables-visible-toggle"
           />
-          <ZoomButton
+          <SideControl
             label="3D view"
             title="Toggle 3D miniature overlay"
             icon={faCube}
@@ -106,7 +90,7 @@ export function ZoomControls() {
         </div>
       </div>
       <div className={`measurement-tools-group ${measurementExpanded ? 'expanded' : ''}`}>
-        <ZoomButton
+        <SideControl
           label="Measurement tools"
           title={measurementExpanded ? 'Hide measurement tools' : 'Measurement tools'}
           icon={faRuler}
@@ -115,7 +99,7 @@ export function ZoomControls() {
           className={`measurement-group-toggle ${measurementExpanded ? 'open' : ''}`}
         />
         <div className="measurement-tools-secondary">
-          <ZoomButton
+          <SideControl
             label="Ruler"
             title="Measure distances (drag rectangle, then click to fix, click again to exit)"
             icon={faSquare}
@@ -127,7 +111,7 @@ export function ZoomControls() {
             active={ruler}
             className="ruler-toggle"
           />
-          <ZoomButton
+          <SideControl
             label="Line ruler"
             title="Measure polyline length (click to add points, double-click or ESC to exit)"
             icon={faSlash}
@@ -141,7 +125,7 @@ export function ZoomControls() {
           />
         </div>
       </div>
-      <ZoomButton
+      <SideControl
         label="Component list"
         title="Components and cables (materials)"
         icon={faList}

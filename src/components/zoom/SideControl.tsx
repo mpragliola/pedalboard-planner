@@ -1,8 +1,8 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
-import './ZoomButton.scss'
+import './SideControl.scss'
 
-interface ZoomButtonProps {
+interface SideControlProps {
   label: string
   title: string
   icon: IconDefinition
@@ -11,18 +11,18 @@ interface ZoomButtonProps {
   className?: string
 }
 
-export function ZoomButton({
+export function SideControl({
   label,
   title,
   icon,
   onClick,
   active = false,
   className = '',
-}: ZoomButtonProps) {
+}: SideControlProps) {
   return (
     <button
       type="button"
-      className={`zoom-btn ${active ? 'active' : ''} ${className}`.trim()}
+      className={`side-control ${active ? 'active' : ''} ${className}`.trim()}
       onClick={onClick}
       aria-label={label}
       title={title}

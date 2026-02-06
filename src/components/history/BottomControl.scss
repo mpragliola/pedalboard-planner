@@ -1,6 +1,6 @@
 @use "../../styles/variables" as vars;
 
-.history-btn {
+.bottom-control {
   width: vars.$history-button-size;
   height: vars.$history-button-size;
   border: none;
@@ -18,15 +18,15 @@
     opacity vars.$duration-fast;
 }
 
-.history-btn:hover:not(:disabled) {
+.bottom-control:hover:not(:disabled) {
   background: vars.$black-06;
 }
 
-.history-btn:active:not(:disabled) {
+.bottom-control:active:not(:disabled) {
   transform: scale(0.92);
 }
 
-.history-btn:disabled {
+.bottom-control:disabled {
   opacity: 0.3;
   cursor: default;
 }

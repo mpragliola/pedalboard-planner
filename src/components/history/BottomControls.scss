@@ -1,11 +1,11 @@
 @use "../../styles/variables" as vars;
 
-.history-controls.floating-controls {
+.bottom-controls.floating-controls {
   position: fixed;
   z-index: vars.$z-history-controls;
 }
 
-.history-controls {
+.bottom-controls {
   bottom: vars.$floating-panel-offset;
   left: 50%;
   transform: translateX(-50%);

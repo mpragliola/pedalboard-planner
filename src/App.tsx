@@ -5,9 +5,9 @@ import { Canvas } from "./components/Canvas";
 import { BoardMenu } from "./components/boardmenu/BoardMenu";
 import { DropdownsPanel } from "./components/catalog/DropdownsPanel";
 import { CatalogDndProvider } from "./components/catalog/CatalogDndProvider";
-import { ZoomControls } from "./components/zoom/ZoomControls";
+import { SideControls } from "./components/zoom/SideControls";
 import { SelectionInfoPopup } from "./components/selection/SelectionInfoPopup";
-import { HistoryControls } from "./components/history/HistoryControls";
+import { BottomControls } from "./components/history/BottomControls";
 import { Mini3DOverlay } from "./components/mini3d/Mini3DOverlay";
 import { AppProvider } from "./context/AppContext";
 import { ConfirmationProvider } from "./context/ConfirmationContext";
@@ -74,8 +74,8 @@ function AppContent() {
           <DropdownsPanel ref={dropdownPanelRef} />
         </div>
       </div>
-      <ZoomControls />
-      <HistoryControls />
+      <SideControls />
+      <BottomControls />
       <SelectionInfoPopup />
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <p className="disclaimer" aria-live="polite">

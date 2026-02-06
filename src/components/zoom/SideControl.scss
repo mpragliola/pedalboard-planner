@@ -1,6 +1,6 @@
 @use "../../styles/variables" as vars;
 
-.zoom-btn {
+.side-control {
   width: vars.$zoom-button-size;
   height: vars.$zoom-button-size;
   min-width: vars.$zoom-button-size;
@@ -25,25 +25,25 @@
   aspect-ratio: 1;
 }
 
-.zoom-btn:hover {
+.side-control:hover {
   transform: scale(1.08);
   box-shadow: vars.$shadow-control-hover;
 }
 
-.zoom-btn:active {
+.side-control:active {
   transform: scale(0.96);
 }
 
-.zoom-btn.active {
+.side-control.active {
   background: vars.$accent-soft-25;
   color: vars.$color-accent-ink;
 }
 
-.zoom-btn.zoom-in {
+.side-control.zoom-in {
   padding-bottom: vars.$space-2;
 }
 
-.zoom-btn.zoom-out {
+.side-control.zoom-out {
   font-size: 2rem;
   padding-bottom: vars.$space-4;
 }
