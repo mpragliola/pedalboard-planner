@@ -14,6 +14,14 @@ export function vec2Scale(v: Vec2, factor: number): Vec2 {
   return { x: v.x * factor, y: v.y * factor };
 }
 
+export function vec2Multiply(a: Vec2, b: Vec2): Vec2 {
+  return { x: a.x * b.x, y: a.y * b.y };
+}
+
+export function vec2Cross(a: Vec2, b: Vec2): number {
+  return a.x * b.y - a.y * b.x;
+}
+
 export function vec2Rotate(v: Vec2, radians: number): Vec2 {
   const cos = Math.cos(radians);
   const sin = Math.sin(radians);

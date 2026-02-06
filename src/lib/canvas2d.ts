@@ -1,4 +1,4 @@
-import type { Vec2 } from "./vector";
+import { vec2Cross, vec2Multiply, vec2Sub, type Vec2 } from "./vector";
 
 // 2D canvas drawing helpers for textured and flat faces.
 export type Mat2D = { a: number; b: number; c: number; d: number; e: number; f: number };
@@ -11,23 +11,21 @@ export function triangleTransform(
   d1: Vec2,
   d2: Vec2
 ): Mat2D {
-  // Solve the affine transform that maps source triangle to destination triangle.
-  const denom = s0.x * (s1.y - s2.y) + s1.x * (s2.y - s0.y) + s2.x * (s0.y - s1.y);
+  // Solve affine transform from edge vectors: A = D * inverse(S), t = d0 - A*s0.
+  const s10 = vec2Sub(s1, s0);
+  const s20 = vec2Sub(s2, s0);
+  const denom = vec2Cross(s10, s20);
   if (Math.abs(denom) < 1e-6) return { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
-  const a = (d0.x * (s1.y - s2.y) + d1.x * (s2.y - s0.y) + d2.x * (s0.y - s1.y)) / denom;
-  const b = (d0.y * (s1.y - s2.y) + d1.y * (s2.y - s0.y) + d2.y * (s0.y - s1.y)) / denom;
-  const c = (d0.x * (s2.x - s1.x) + d1.x * (s0.x - s2.x) + d2.x * (s1.x - s0.x)) / denom;
-  const d = (d0.y * (s2.x - s1.x) + d1.y * (s0.x - s2.x) + d2.y * (s1.x - s0.x)) / denom;
-  const e =
-    (d0.x * (s1.x * s2.y - s2.x * s1.y) +
-      d1.x * (s2.x * s0.y - s0.x * s2.y) +
-      d2.x * (s0.x * s1.y - s1.x * s0.y)) /
-    denom;
-  const f =
-    (d0.y * (s1.x * s2.y - s2.x * s1.y) +
-      d1.y * (s2.x * s0.y - s0.x * s2.y) +
-      d2.y * (s0.x * s1.y - s1.x * s0.y)) /
-    denom;
+  const d10 = vec2Sub(d1, d0);
+  const d20 = vec2Sub(d2, d0);
+  const invDenom = 1 / denom;
+
+  const a = (d10.x * s20.y - d20.x * s10.y) * invDenom;
+  const b = (d10.y * s20.y - d20.y * s10.y) * invDenom;
+  const c = (d20.x * s10.x - d10.x * s20.x) * invDenom;
+  const d = (d20.y * s10.x - d10.y * s20.x) * invDenom;
+  const e = d0.x - a * s0.x - c * s0.y;
+  const f = d0.y - b * s0.x - d * s0.y;
   return { a, b, c, d, e, f };
 }
 
@@ -71,9 +69,10 @@ export function drawTexturedTriangleUv(
   // Convert UVs to pixel coordinates before drawing.
   const w = img.naturalWidth || img.width;
   const h = img.naturalHeight || img.height;
-  const s0 = { x: uv0.x * w, y: uv0.y * h };
-  const s1 = { x: uv1.x * w, y: uv1.y * h };
-  const s2 = { x: uv2.x * w, y: uv2.y * h };
+  const imageSize = { x: w, y: h };
+  const s0 = vec2Multiply(uv0, imageSize);
+  const s1 = vec2Multiply(uv1, imageSize);
+  const s2 = vec2Multiply(uv2, imageSize);
   drawTexturedTriangle(ctx, img, s0, s1, s2, d0, d1, d2, alpha);
 }
 

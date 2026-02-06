@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   vec2Add,
+  vec2Cross,
+  vec2Multiply,
   vec2Rotate,
   vec2Scale,
   vec2Sub,
@@ -18,6 +20,8 @@ describe("vector helpers", () => {
     expect(vec2Add({ x: 1, y: 2 }, { x: 3, y: -4 })).toEqual({ x: 4, y: -2 });
     expect(vec2Sub({ x: 10, y: 5 }, { x: 3, y: 8 })).toEqual({ x: 7, y: -3 });
     expect(vec2Scale({ x: -2, y: 6 }, 0.5)).toEqual({ x: -1, y: 3 });
+    expect(vec2Multiply({ x: 2, y: -3 }, { x: 4, y: 0.5 })).toEqual({ x: 8, y: -1.5 });
+    expect(vec2Cross({ x: 3, y: 0 }, { x: 0, y: 2 })).toBe(6);
   });
 
   it("rotates vec2 coordinates", () => {
