@@ -14,6 +14,8 @@ interface ConfirmationContextValue {
   requestConfirmation: (options: ConfirmationOptions) => Promise<boolean>
 }
 
+type ConfirmationRequest = ConfirmationOptions & { resolve: (value: boolean) => void }
+
 const ConfirmationContext = createContext<ConfirmationContextValue | null>(null)
 
 export function useConfirmation() {
@@ -23,23 +25,31 @@ export function useConfirmation() {
 }
 
 export function ConfirmationProvider({ children }: { children: ReactNode }) {
-  const [pending, setPending] = useState<(ConfirmationOptions & { resolve: (value: boolean) => void }) | null>(null)
+  const [queue, setQueue] = useState<ConfirmationRequest[]>([])
+  const pending = queue[0] ?? null
 
   const requestConfirmation = useCallback((options: ConfirmationOptions) => {
     return new Promise<boolean>((resolve) => {
-      setPending({ ...options, resolve })
+      setQueue((prev) => [...prev, { ...options, resolve }])
+    })
+  }, [])
+
+  const resolveNext = useCallback((value: boolean) => {
+    setQueue((prev) => {
+      if (prev.length === 0) return prev
+      const [current, ...rest] = prev
+      current.resolve(value)
+      return rest
     })
   }, [])
 
   const handleConfirm = useCallback(() => {
-    pending?.resolve(true)
-    setPending(null)
-  }, [pending])
+    resolveNext(true)
+  }, [resolveNext])
 
   const handleCancel = useCallback(() => {
-    pending?.resolve(false)
-    setPending(null)
-  }, [pending])
+    resolveNext(false)
+  }, [resolveNext])
 
   const value = useMemo(() => ({ requestConfirmation }), [requestConfirmation])
 
