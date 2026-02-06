@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useBoard } from "../../context/BoardContext";
 import { useUi } from "../../context/UiContext";
 import { clamp } from "../../lib/math";
+import { vec2Add, vec2Scale } from "../../lib/vector";
 import { shade, rgba } from "../../lib/color";
 import { drawQuad, drawTexturedQuad } from "../../lib/canvas2d";
 import { getTextureImage, type ImageCacheEntry } from "./mini3dAssets";
@@ -42,6 +43,10 @@ type PointerPoint = { x: number; y: number };
 type DragState = { pointerId: number; startX: number; startY: number; startYaw: number; startPitch: number };
 type DoubleTapState = { pointerId: number; startX: number; startY: number; moved: boolean };
 type Mini3DOverlayProps = { onCloseComplete?: () => void };
+
+function getPointersCenter(points: readonly [PointerPoint, PointerPoint]): PointerPoint {
+  return vec2Scale(vec2Add(points[0], points[1]), 0.5);
+}
 
 /**
  * Mini3DOverlay renders a lightweight 3D projection of board objects on a canvas.
@@ -446,10 +451,9 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
 
       if (e.pointerType === "touch" && activePointersRef.current.size === 2) {
         // Two-finger drag rotates around the pinch center.
-        const pointers = Array.from(activePointersRef.current.values());
-        const centerX = (pointers[0].x + pointers[1].x) / 2;
-        const centerY = (pointers[0].y + pointers[1].y) / 2;
-        beginRotateDrag(e.pointerId, centerX, centerY);
+        const pointers = Array.from(activePointersRef.current.values()) as [PointerPoint, PointerPoint];
+        const center = getPointersCenter(pointers);
+        beginRotateDrag(e.pointerId, center.x, center.y);
       }
     },
     [beginRotateDrag]
@@ -478,9 +482,10 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
       if (activePointersRef.current.size === 2) {
         e.preventDefault();
         e.stopPropagation();
-        const pointers = Array.from(activePointersRef.current.values());
-        currentX = (pointers[0].x + pointers[1].x) / 2;
-        currentY = (pointers[0].y + pointers[1].y) / 2;
+        const pointers = Array.from(activePointersRef.current.values()) as [PointerPoint, PointerPoint];
+        const center = getPointersCenter(pointers);
+        currentX = center.x;
+        currentY = center.y;
       }
 
       // Apply yaw/pitch changes based on pointer deltas.

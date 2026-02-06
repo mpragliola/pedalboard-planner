@@ -9,9 +9,8 @@ import { parseColor } from "../../lib/color";
 import { getDirectionalOffset } from "../../lib/geometry2d";
 import { getBounds2DOfPointSets } from "../../lib/bounds";
 import { resolveImageSrc } from "./mini3dAssets";
+import { vec2Add, vec2Rotate, vec2Sub, vec3Add, vec3Dot, vec3Normalize, type Vec2, type Vec3 } from "../../lib/vector";
 import {
-  vec3Dot,
-  vec3Normalize,
   createCamera,
   projectPerspective,
   faceDepth,
@@ -19,7 +18,6 @@ import {
   faceNormal,
   isFaceVisible,
 } from "../../lib/geometry3d";
-import type { Vec3 } from "../../lib/vector";
 import {
   FALLBACK_COLOR,
   MIN_PITCH,
@@ -99,6 +97,7 @@ export function applyConvergence(
 ): StackedObject[] {
   if (stackedTargets.length === 0) return stackedTargets;
   const metrics = getSceneMetrics(stackedTargets);
+  const sceneCenter = { x: metrics.center.x, y: metrics.center.y };
   return stackedTargets.map((item, index) => {
     const elapsed = time - startTime - index * PER_COMPONENT_DELAY;
     const t = clamp(elapsed / CONVERGENCE_DURATION, 0, 1);
@@ -106,17 +105,20 @@ export function applyConvergence(
     if (progress <= 0) return item;
 
     // Move each item toward/away from the scene center for convergence.
-    const centerX = item.obj.x + item.width / 2;
-    const centerY = item.obj.y + item.depth / 2;
+    const objectOrigin = { x: item.obj.x, y: item.obj.y };
+    const objectCenter = vec2Add(objectOrigin, { x: item.width / 2, y: item.depth / 2 });
+    const centerDelta = vec2Sub(objectCenter, sceneCenter);
     const { offsetX, offsetY } = getDirectionalOffset(
-      centerX - metrics.center.x,
-      centerY - metrics.center.y,
+      centerDelta.x,
+      centerDelta.y,
       OFFSET_DISTANCE * progress
     );
     if (offsetX === 0 && offsetY === 0) return item;
+    const offset = { x: offsetX, y: offsetY };
+    const nextOrigin = vec2Add(objectOrigin, offset);
     return {
       ...item,
-      obj: { ...item.obj, x: item.obj.x + offsetX, y: item.obj.y + offsetY },
+      obj: { ...item.obj, x: nextOrigin.x, y: nextOrigin.y },
     };
   });
 }
@@ -133,25 +135,21 @@ export function buildFaces(stacked: StackedObject[], yaw: number, pitchOffset: n
   for (const data of stacked) {
     const { obj, width, depth, height, baseZ } = data;
     const rotation = (normalizeRotation(obj.rotation ?? 0) * Math.PI) / 180;
-    const cos = Math.cos(rotation);
-    const sin = Math.sin(rotation);
-    const cx = obj.x + width / 2;
-    const cy = obj.y + depth / 2;
+    const objectCenter = vec2Add({ x: obj.x, y: obj.y }, { x: width / 2, y: depth / 2 });
     const depthFor = (p: Vec3) => depthForPoint(p, camera);
 
     // Build world-space corners for the object's base and top.
-    const local = [
+    const local: Vec2[] = [
       { x: -width / 2, y: -depth / 2 },
       { x: width / 2, y: -depth / 2 },
       { x: width / 2, y: depth / 2 },
       { x: -width / 2, y: depth / 2 },
     ];
     const baseWorld = local.map((p) => ({
-      x: cx + p.x * cos - p.y * sin,
-      y: cy + p.x * sin + p.y * cos,
+      ...vec2Add(objectCenter, vec2Rotate(p, rotation)),
       z: baseZ,
     }));
-    const topWorld = baseWorld.map((p) => ({ x: p.x, y: p.y, z: baseZ + height }));
+    const topWorld = baseWorld.map((p) => vec3Add(p, { x: 0, y: 0, z: height }));
 
     // Project world-space corners into camera space.
     const baseProj = baseWorld.map((p) => projectPerspective(p, camera));
