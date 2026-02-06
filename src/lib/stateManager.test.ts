@@ -22,15 +22,15 @@ const validObject = {
 // Real template IDs that exist in the codebase
 const aclamBoardObject = {
   id: "2",
-  templateId: "board-aclam-xs1",
+  templateId: "board-aclam-xs2",
   subtype: "board",
   type: "classic",
   brand: "Aclam",
-  model: "Smart Track XS1",
+  model: "Smart Track XS2",
   x: 10,
   y: 20,
   width: 420,
-  depth: 125,
+  depth: 250,
   height: 25,
 };
 
@@ -136,7 +136,7 @@ describe("StateManager.parseState", () => {
     it("restores image for known board template", () => {
       const raw = JSON.stringify({ objects: [aclamBoardObject] });
       const out = StateManager.parseState(raw) as SavedState;
-      expect(out.objects[0].image).toBe("images/boards/aclam/aclam-smart-track-xs1.png");
+      expect(out.objects[0].image).toBe("images/boards/aclam/aclam-smart-track-xs2.png");
     });
 
     it("restores image for known device template", () => {
@@ -178,7 +178,7 @@ describe("StateManager.parseState", () => {
         future: [[aclamBoardObject]],
       });
       const out = StateManager.parseState(raw) as SavedState;
-      expect(out.future![0][0].image).toBe("images/boards/aclam/aclam-smart-track-xs1.png");
+      expect(out.future![0][0].image).toBe("images/boards/aclam/aclam-smart-track-xs2.png");
     });
   });
 
@@ -495,7 +495,7 @@ describe("round-trip serialization", () => {
     expect(parsed.objects[0].x).toBe(123.46); // rounded
     expect(parsed.objects[0].y).toBe(789.12); // rounded
     expect(parsed.objects[0].image).toBe("images/devices/boss/boss-ds1.png"); // restored from template
-    expect(parsed.objects[1].image).toBe("images/boards/aclam/aclam-smart-track-xs1.png"); // restored from template
+    expect(parsed.objects[1].image).toBe("images/boards/aclam/aclam-smart-track-xs2.png"); // restored from template
     expect(parsed.zoom).toBe(1.5);
     expect(parsed.pan).toEqual({ x: 101, y: 200.11 }); // rounded
     expect(parsed.unit).toBe("mm");
