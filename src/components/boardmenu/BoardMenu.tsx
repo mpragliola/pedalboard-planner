@@ -1,6 +1,6 @@
 import { faFloppyDisk, faFolderOpen, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useBoardIo } from "../../context/BoardIoContext";
 import { useConfirmation } from "../../context/ConfirmationContext";
 import { GptButton } from "../gpt/GptButton";
@@ -12,6 +12,8 @@ export function BoardMenu() {
   const { newBoard, loadBoardFromFile, saveBoardToFile } = useBoardIo();
   const { requestConfirmation } = useConfirmation();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isLoadingFile, setIsLoadingFile] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const handleNewBoard = async () => {
     const confirmed = await requestConfirmation({
@@ -25,14 +27,24 @@ export function BoardMenu() {
   };
 
   const handleLoadClick = () => {
+    if (isLoadingFile) return;
+    setLoadError(null);
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      loadBoardFromFile(file);
+    if (!file) return;
+
+    setIsLoadingFile(true);
+    setLoadError(null);
+    try {
+      await loadBoardFromFile(file);
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Could not load pedalboard file.");
+    } finally {
       e.target.value = "";
+      setIsLoadingFile(false);
     }
   };
 
@@ -51,8 +63,9 @@ export function BoardMenu() {
         type="button"
         className="board-menu-btn"
         onClick={handleLoadClick}
-        title="Load pedalboard from JSON file"
+        title={isLoadingFile ? "Loading pedalboard..." : "Load pedalboard from JSON file"}
         aria-label="Load pedalboard"
+        disabled={isLoadingFile}
       >
         <FontAwesomeIcon icon={faFolderOpen} />
       </button>
@@ -77,6 +90,11 @@ export function BoardMenu() {
       <GptButton />
       <InfoButton />
       <SettingsButton />
+      {loadError ? (
+        <p className="board-menu-error" role="alert">
+          {loadError}
+        </p>
+      ) : null}
     </div>
   );
 }

@@ -369,14 +369,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [replaceHistoryRaw, setZoom, setPan]);
 
   const loadBoardFromFile = useCallback(
-    (file: File) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const text = typeof reader.result === "string" ? reader.result : "";
-        const state = StateManager.parseState(text);
-        if (state) loadBoardState(state);
-      };
-      reader.readAsText(file, "utf-8");
+    async (file: File): Promise<void> => {
+      let text = "";
+      try {
+        text = await file.text();
+      } catch {
+        throw new Error("Could not read the selected file.");
+      }
+      const state = StateManager.parseState(text);
+      if (!state) {
+        throw new Error("The selected file is not a valid pedalboard JSON file.");
+      }
+      loadBoardState(state);
     },
     [loadBoardState]
   );

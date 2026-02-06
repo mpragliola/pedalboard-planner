@@ -2,7 +2,7 @@ import { createContext, useContext, type ReactNode } from "react";
 
 export interface BoardIoContextValue {
   newBoard: () => void;
-  loadBoardFromFile: (file: File) => void;
+  loadBoardFromFile: (file: File) => Promise<void>;
   saveBoardToFile: () => void;
 }
 
