@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useMemo, useRef, useEffect, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { ConfirmationDialog } from '../components/confirmation/ConfirmationDialog'
 
@@ -26,7 +26,19 @@ export function useConfirmation() {
 
 export function ConfirmationProvider({ children }: { children: ReactNode }) {
   const [queue, setQueue] = useState<ConfirmationRequest[]>([])
+  const queueRef = useRef<ConfirmationRequest[]>([])
   const pending = queue[0] ?? null
+
+  useEffect(() => {
+    queueRef.current = queue
+  }, [queue])
+
+  useEffect(() => {
+    return () => {
+      for (const req of queueRef.current) req.resolve(false)
+      queueRef.current = []
+    }
+  }, [])
 
   const requestConfirmation = useCallback((options: ConfirmationOptions) => {
     return new Promise<boolean>((resolve) => {
