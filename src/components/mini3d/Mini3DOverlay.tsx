@@ -36,6 +36,7 @@ const FADE_IN_DURATION = 500;
 const BASE_OVERLAY_OPACITY = 0.85;
 const DOUBLE_TAP_MS = 320;
 const DOUBLE_TAP_DISTANCE = 24;
+const DOUBLE_CLICK_DELAY_MS = 320;
 
 type PointerPoint = { x: number; y: number };
 type DragState = { pointerId: number; startX: number; startY: number; startYaw: number; startPitch: number };
@@ -48,6 +49,7 @@ type DragState = { pointerId: number; startX: number; startY: number; startYaw: 
  * Interaction:
  * - Middle mouse drag or two-finger drag rotates the camera.
  * - Click toggles auto-rotation (also accessible via keyboard).
+ * - Double click toggles fullscreen view.
  *
  * Animations:
  * - Open/close converges/diverges objects toward scene center.
@@ -64,6 +66,7 @@ export function Mini3DOverlay() {
   // React state for UI toggles and mount visibility.
   const [autoRotate, setAutoRotate] = useState(false);
   const [isVisible, setIsVisible] = useState(showMini3d);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Mutable refs for animation state and transient values.
   const yawRef = useRef(DEFAULT_CAMERA_YAW);
@@ -91,6 +94,7 @@ export function Mini3DOverlay() {
   const scheduleRenderRef = useRef<() => void>(() => {});
   const lastTapRef = useRef<{ time: number; x: number; y: number } | null>(null);
   const suppressClickRef = useRef<number | null>(null);
+  const clickTimeoutRef = useRef<number | null>(null);
 
   const toggleAutoRotate = useCallback(() => {
     setAutoRotate((value) => !value);
@@ -353,6 +357,8 @@ export function Mini3DOverlay() {
       return;
     }
 
+    if (isFullscreen) setIsFullscreen(false);
+
     if (isVisible && closeTimeRef.current == null) {
       // Closing sequence: keep mounted until the animation completes.
       closeOpacityRef.current = overlayOpacityRef.current;
@@ -362,7 +368,11 @@ export function Mini3DOverlay() {
       activePointersRef.current.clear();
       requestRender();
     }
-  }, [isVisible, requestRender, setOverlayOpacity, showMini3d]);
+  }, [isFullscreen, isVisible, requestRender, setOverlayOpacity, showMini3d]);
+
+  useEffect(() => {
+    if (isVisible) requestRender();
+  }, [isFullscreen, isVisible, requestRender]);
 
   const beginRotateDrag = useCallback(
     (pointerId: number, startX: number, startY: number) => {
@@ -495,6 +505,14 @@ export function Mini3DOverlay() {
       lastTimeRef.current = null;
       rotateDragRef.current = null;
       activePointersRef.current.clear();
+      if (suppressClickRef.current != null) {
+        window.clearTimeout(suppressClickRef.current);
+        suppressClickRef.current = null;
+      }
+      if (clickTimeoutRef.current != null) {
+        window.clearTimeout(clickTimeoutRef.current);
+        clickTimeoutRef.current = null;
+      }
     };
   }, []);
 
@@ -502,7 +520,7 @@ export function Mini3DOverlay() {
 
   return (
     <div
-      className="mini3d-overlay"
+      className={`mini3d-overlay${isFullscreen ? " mini3d-overlay--fullscreen" : ""}`}
       ref={containerRef}
       style={{ opacity: overlayOpacityRef.current, pointerEvents: showMini3d ? "auto" : "none" }}
       role="button"
@@ -516,7 +534,21 @@ export function Mini3DOverlay() {
           suppressClickRef.current = null;
           return;
         }
-        toggleAutoRotate();
+        if (clickTimeoutRef.current != null) {
+          window.clearTimeout(clickTimeoutRef.current);
+        }
+        clickTimeoutRef.current = window.setTimeout(() => {
+          clickTimeoutRef.current = null;
+          toggleAutoRotate();
+        }, DOUBLE_CLICK_DELAY_MS);
+      }}
+      onDoubleClick={() => {
+        if (clickTimeoutRef.current != null) {
+          window.clearTimeout(clickTimeoutRef.current);
+          clickTimeoutRef.current = null;
+        }
+        setIsFullscreen((value) => !value);
+        requestRender();
       }}
       onPointerDown={handleRotatePointerDown}
       onPointerMove={handleRotatePointerMove}
@@ -532,7 +564,7 @@ export function Mini3DOverlay() {
       <canvas className="mini3d-canvas" ref={canvasRef} />
       {showMini3d ? (
         <div className="mini3d-instruction">
-          Middle button (or double tap) and drag to rotate. Click for auto-rotation.
+          Middle button (or double tap) and drag to rotate. Click for auto-rotation. Double click to toggle fullscreen.
         </div>
       ) : null}
     </div>
