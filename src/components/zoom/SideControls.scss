@@ -38,7 +38,7 @@
 
 .view-tools-group.expanded .view-tools-secondary {
   max-width: vars.$zoom-secondary-max-width;
-  /* 44*5 + 8*4 for 5 buttons */
+  /* 44*6 + 8*5 for 6 buttons */
   overflow: visible;
   opacity: 1;
   transition:

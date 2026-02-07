@@ -1,7 +1,9 @@
 import {
+  faCompress,
   faCrosshairs,
   faCube,
   faEye,
+  faExpand,
   faLayerGroup,
   faList,
   faPlug,
@@ -11,12 +13,48 @@ import {
   faTh,
   faXRay,
 } from '@fortawesome/free-solid-svg-icons'
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useCanvas } from '../../context/CanvasContext'
 import { useUi } from '../../context/UiContext'
 import { SideControl } from './SideControl'
 import { ComponentListModal } from '../componentlist/ComponentListModal'
 import './SideControls.scss'
+
+type FullscreenDocument = Document & {
+  webkitFullscreenElement?: Element | null
+  webkitExitFullscreen?: () => Promise<void> | void
+}
+
+type FullscreenElement = HTMLElement & {
+  webkitRequestFullscreen?: () => Promise<void> | void
+}
+
+function getFullscreenElement() {
+  const fullscreenDoc = document as FullscreenDocument
+  return document.fullscreenElement ?? fullscreenDoc.webkitFullscreenElement ?? null
+}
+
+async function requestElementFullscreen(el: HTMLElement) {
+  const fullscreenEl = el as FullscreenElement
+  if (fullscreenEl.requestFullscreen) {
+    await fullscreenEl.requestFullscreen()
+    return
+  }
+  if (fullscreenEl.webkitRequestFullscreen) {
+    await fullscreenEl.webkitRequestFullscreen()
+  }
+}
+
+async function exitDocumentFullscreen() {
+  const fullscreenDoc = document as FullscreenDocument
+  if (document.exitFullscreen) {
+    await document.exitFullscreen()
+    return
+  }
+  if (fullscreenDoc.webkitExitFullscreen) {
+    await fullscreenDoc.webkitExitFullscreen()
+  }
+}
 
 export function SideControls() {
   const { centerView } = useCanvas()
@@ -24,6 +62,32 @@ export function SideControls() {
   const [componentListOpen, setComponentListOpen] = useState(false)
   const [measurementExpanded, setMeasurementExpanded] = useState(false)
   const [viewExpanded, setViewExpanded] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+
+  useEffect(() => {
+    const syncFullscreen = () => setIsFullscreen(Boolean(getFullscreenElement()))
+    syncFullscreen()
+    document.addEventListener('fullscreenchange', syncFullscreen)
+    document.addEventListener('webkitfullscreenchange', syncFullscreen as EventListener)
+    return () => {
+      document.removeEventListener('fullscreenchange', syncFullscreen)
+      document.removeEventListener('webkitfullscreenchange', syncFullscreen as EventListener)
+    }
+  }, [])
+
+  const toggleFullscreen = useCallback(async () => {
+    try {
+      if (getFullscreenElement()) {
+        await exitDocumentFullscreen()
+        return
+      }
+      const target = document.querySelector<HTMLElement>('.app-content') ?? document.documentElement
+      await requestElementFullscreen(target)
+    } catch {
+      // Fullscreen requests can fail when blocked by the browser.
+    }
+  }, [])
+
   return (
     <div className="floating-controls side-controls">
       <SideControl
@@ -44,7 +108,7 @@ export function SideControls() {
           title={viewExpanded ? 'Hide view options' : 'View options'}
           icon={faEye}
           onClick={() => setViewExpanded((v) => !v)}
-          active={showGrid || xray || !cablesVisible || showMini3d}
+          active={showGrid || xray || !cablesVisible || showMini3d || isFullscreen}
           className={`view-group-toggle ${viewExpanded ? 'open' : ''}`}
         />
         <div className="view-tools-secondary">
@@ -86,6 +150,14 @@ export function SideControls() {
             onClick={() => setShowMini3d((v) => !v)}
             active={showMini3d}
             className="mini3d-toggle"
+          />
+          <SideControl
+            label="Fullscreen"
+            title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+            icon={isFullscreen ? faCompress : faExpand}
+            onClick={toggleFullscreen}
+            active={isFullscreen}
+            className="fullscreen-toggle"
           />
         </div>
       </div>
