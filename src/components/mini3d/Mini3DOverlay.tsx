@@ -312,7 +312,6 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
 
     if (!showMini3d && wasShowing && isVisible) {
       setIsFullscreen(false);
-      setAutoRotate(false);
       stopRotateDrag();
       setPhase("closing");
 
@@ -584,8 +583,6 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
     </>
   );
 }
-
-
 
 
 
