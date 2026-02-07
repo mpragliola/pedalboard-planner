@@ -65,6 +65,19 @@ export function SideControls() {
   const [isFullscreen, setIsFullscreen] = useState(false)
 
   useEffect(() => {
+    const collapseOnOutsideClick = (event: MouseEvent) => {
+      const target = event.target as Element | null
+      if (!target) return
+      if (target.closest('.side-controls')) return
+      setViewExpanded(false)
+      setMeasurementExpanded(false)
+    }
+
+    document.addEventListener('click', collapseOnOutsideClick)
+    return () => document.removeEventListener('click', collapseOnOutsideClick)
+  }, [])
+
+  useEffect(() => {
     const syncFullscreen = () => setIsFullscreen(Boolean(getFullscreenElement()))
     syncFullscreen()
     document.addEventListener('fullscreenchange', syncFullscreen)
@@ -97,10 +110,26 @@ export function SideControls() {
         onClick={() => {
           setRuler(() => false)
           setLineRuler(() => false)
-          setCableLayer((v) => !v)
+          setCableLayer(() => true)
         }}
         active={cableLayer}
         className="cable-layer-toggle"
+      />
+      <SideControl
+        label="Show cables"
+        title="Show or hide cables on the canvas"
+        icon={faLayerGroup}
+        onClick={() => setCablesVisible((v) => !v)}
+        active={cablesVisible}
+        className="cables-visible-toggle"
+      />
+      <SideControl
+        label="3D view"
+        title="Toggle 3D miniature overlay"
+        icon={faCube}
+        onClick={() => setShowMini3d((v) => !v)}
+        active={showMini3d}
+        className="mini3d-toggle"
       />
       <div className={`view-tools-group ${viewExpanded ? 'expanded' : ''}`}>
         <SideControl
@@ -108,7 +137,7 @@ export function SideControls() {
           title={viewExpanded ? 'Hide view options' : 'View options'}
           icon={faEye}
           onClick={() => setViewExpanded((v) => !v)}
-          active={showGrid || xray || !cablesVisible || showMini3d || isFullscreen}
+          active={showGrid || xray || isFullscreen}
           className={`view-group-toggle ${viewExpanded ? 'open' : ''}`}
         />
         <div className="view-tools-secondary">
@@ -134,22 +163,6 @@ export function SideControls() {
             onClick={() => setXray((v) => !v)}
             active={xray}
             className="xray-toggle"
-          />
-          <SideControl
-            label="Show cables"
-            title="Show or hide cables on the canvas"
-            icon={faLayerGroup}
-            onClick={() => setCablesVisible((v) => !v)}
-            active={cablesVisible}
-            className="cables-visible-toggle"
-          />
-          <SideControl
-            label="3D view"
-            title="Toggle 3D miniature overlay"
-            icon={faCube}
-            onClick={() => setShowMini3d((v) => !v)}
-            active={showMini3d}
-            className="mini3d-toggle"
           />
           <SideControl
             label="Fullscreen"
