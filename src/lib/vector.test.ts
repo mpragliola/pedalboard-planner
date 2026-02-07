@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   vec2Add,
   vec2Cross,
+  vec2Length,
   vec2Multiply,
+  vec2Normalize,
   vec2Rotate,
   vec2Scale,
   vec2Sub,
@@ -28,6 +30,14 @@ describe("vector helpers", () => {
     const rotated = vec2Rotate({ x: 1, y: 0 }, Math.PI / 2);
     expect(rotated.x).toBeCloseTo(0, 8);
     expect(rotated.y).toBeCloseTo(1, 8);
+  });
+
+  it("computes vec2 length and normalize", () => {
+    expect(vec2Length({ x: 3, y: 4 })).toBe(5);
+    expect(vec2Normalize({ x: 0, y: 0 })).toEqual({ x: 0, y: 0 });
+    const normalized = vec2Normalize({ x: 3, y: 4 });
+    expect(normalized.x).toBeCloseTo(0.6, 8);
+    expect(normalized.y).toBeCloseTo(0.8, 8);
   });
 
   it("supports basic vec3 operations", () => {

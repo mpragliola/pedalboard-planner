@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { CABLE_TERMINAL_START_COLOR, CABLE_TERMINAL_END_COLOR } from "../../constants/cables";
 import { buildRoundedPathD, DEFAULT_JOIN_RADIUS } from "../../lib/polylinePath";
+import { vec2Add, vec2Length, vec2Normalize, vec2Scale, vec2Sub, type Offset, type Point } from "../../lib/vector";
 import type { Cable } from "../../types";
 import "./CablePaths.scss";
 
@@ -19,16 +20,9 @@ const HIT_STROKE_MM = 16;
 /** Distance from anchor to connector label (mm). */
 const LABEL_OFFSET_MM = 10;
 
-function normalize(x: number, y: number): { x: number; y: number } | null {
-  const len = Math.hypot(x, y);
-  if (len < 1e-6) return null;
-  return { x: x / len, y: y / len };
-}
-
 /** Connector label position and text for one cable endpoint. */
 interface ConnectorLabel {
-  x: number;
-  y: number;
+  position: Point;
   text: string;
 }
 
@@ -38,25 +32,36 @@ function connectorLabelsForCable(cable: Cable): { a: ConnectorLabel; b: Connecto
   if (segs.length === 0) return null;
   const first = segs[0];
   const last = segs[segs.length - 1];
-  const firstPt = { x: first.x1, y: first.y1 };
-  const lastPt = { x: last.x2, y: last.y2 };
-  const firstDir = normalize(first.x2 - first.x1, first.y2 - first.y1);
-  const lastDir = normalize(last.x2 - last.x1, last.y2 - last.y1);
-  if (!firstDir || !lastDir) return null;
+  const firstStart: Point = { x: first.x1, y: first.y1 };
+  const firstEnd: Point = { x: first.x2, y: first.y2 };
+  const lastStart: Point = { x: last.x1, y: last.y1 };
+  const lastEnd: Point = { x: last.x2, y: last.y2 };
+  const firstVector = vec2Sub(firstEnd, firstStart);
+  const lastVector = vec2Sub(lastEnd, lastStart);
+  if (vec2Length(firstVector) < 1e-6 || vec2Length(lastVector) < 1e-6) return null;
+  const firstDir = vec2Normalize(firstVector);
+  const lastDir = vec2Normalize(lastVector);
+  const aOffset: Offset = vec2Scale(firstDir, -LABEL_OFFSET_MM);
+  const bOffset: Offset = vec2Scale(lastDir, LABEL_OFFSET_MM);
+  const aPos = vec2Add(firstStart, aOffset);
+  const bPos = vec2Add(lastEnd, bOffset);
   const textA = (cable.connectorAName ?? "").trim();
   const textB = (cable.connectorBName ?? "").trim();
   return {
     a: {
-      x: firstPt.x - firstDir.x * LABEL_OFFSET_MM,
-      y: firstPt.y - firstDir.y * LABEL_OFFSET_MM,
+      position: aPos,
       text: textA,
     },
     b: {
-      x: lastPt.x + lastDir.x * LABEL_OFFSET_MM,
-      y: lastPt.y + lastDir.y * LABEL_OFFSET_MM,
+      position: bPos,
       text: textB,
     },
   };
+}
+
+interface EndpointDot {
+  point: Point;
+  type: "start" | "end";
 }
 
 interface CablePathsProps {
@@ -74,14 +79,14 @@ export function CablePaths({ cables, visible, selectedCableId, onCablePointerDow
   const { paths, endpointDots, connectorLabels } = useMemo(() => {
     const joinRadius = DEFAULT_JOIN_RADIUS;
     const paths: { id: string; d: string; color: string }[] = [];
-    const endpointDots: { x: number; y: number; type: "start" | "end" }[] = [];
+    const endpointDots: EndpointDot[] = [];
     const connectorLabels: { id: string; a: ConnectorLabel; b: ConnectorLabel }[] = [];
 
     for (const cable of cables) {
       if (cable.segments.length === 0) continue;
-      const points = [
+      const points: Point[] = [
         { x: cable.segments[0].x1, y: cable.segments[0].y1 },
-        ...cable.segments.map((s) => ({ x: s.x2, y: s.y2 })),
+        ...cable.segments.map((segment) => ({ x: segment.x2, y: segment.y2 })),
       ];
       const d = buildRoundedPathD(points, joinRadius);
       paths.push({ id: cable.id, d, color: cable.color });
@@ -89,8 +94,8 @@ export function CablePaths({ cables, visible, selectedCableId, onCablePointerDow
       if (labels) connectorLabels.push({ id: cable.id, ...labels });
       const first = points[0];
       const last = points[points.length - 1];
-      endpointDots.push({ x: first.x, y: first.y, type: "start" });
-      endpointDots.push({ x: last.x, y: last.y, type: "end" });
+      endpointDots.push({ point: first, type: "start" });
+      endpointDots.push({ point: last, type: "end" });
     }
 
     return { paths, endpointDots, connectorLabels };
@@ -153,8 +158,8 @@ export function CablePaths({ cables, visible, selectedCableId, onCablePointerDow
       {endpointDots.map((dot, i) => (
         <circle
           key={i}
-          cx={dot.x}
-          cy={dot.y}
+          cx={dot.point.x}
+          cy={dot.point.y}
           r={ENDPOINT_DOT_RADIUS}
           className="cable-endpoint-dot"
           fill={dot.type === "start" ? CABLE_TERMINAL_START_COLOR : CABLE_TERMINAL_END_COLOR}
@@ -166,8 +171,8 @@ export function CablePaths({ cables, visible, selectedCableId, onCablePointerDow
         <g key={`labels-${id}`} className="cable-connector-labels" style={{ pointerEvents: "none" }}>
           {a.text ? (
             <text
-              x={a.x}
-              y={a.y}
+              x={a.position.x}
+              y={a.position.y}
               textAnchor="middle"
               dominantBaseline="middle"
               className="cable-connector-label"
@@ -177,8 +182,8 @@ export function CablePaths({ cables, visible, selectedCableId, onCablePointerDow
           ) : null}
           {b.text ? (
             <text
-              x={b.x}
-              y={b.y}
+              x={b.position.x}
+              y={b.position.y}
               textAnchor="middle"
               dominantBaseline="middle"
               className="cable-connector-label"

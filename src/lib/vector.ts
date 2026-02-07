@@ -1,5 +1,10 @@
 // Shared vector types for geometry utilities.
-export type Vec2 = { x: number; y: number };
+export type Vector = { x: number; y: number };
+export type Vec2d = Vector;
+export type Vec2 = Vec2d;
+export type Point = Vec2d;
+export type Size = Vector;
+export type Offset = Vector;
 export type Vec3 = { x: number; y: number; z: number };
 
 /** Component-wise addition for 2D vectors. */
@@ -15,6 +20,18 @@ export function vec2Sub(a: Vec2, b: Vec2): Vec2 {
 /** Multiply a 2D vector by a scalar. */
 export function vec2Scale(v: Vec2, factor: number): Vec2 {
   return { x: v.x * factor, y: v.y * factor };
+}
+
+/** Euclidean length of a 2D vector. */
+export function vec2Length(v: Vec2): number {
+  return Math.hypot(v.x, v.y);
+}
+
+/** Unit-length direction for a 2D vector (or zero vector for zero input). */
+export function vec2Normalize(v: Vec2): Vec2 {
+  const len = vec2Length(v);
+  if (len === 0) return { x: 0, y: 0 };
+  return { x: v.x / len, y: v.y / len };
 }
 
 /** Component-wise multiply for 2D vectors. */
