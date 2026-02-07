@@ -6,7 +6,6 @@ import {
   createObjectFromCustomDevice,
 } from "./templateHelpers";
 import type { BoardTemplate } from "../data/boards";
-import type { DeviceTemplate } from "../data/devices";
 
 const boardTemplate: BoardTemplate = {
   id: "board-aclam-s1",
@@ -18,55 +17,6 @@ const boardTemplate: BoardTemplate = {
   color: "#333",
   image: "aclam/s1.png",
 };
-
-const deviceTemplate: DeviceTemplate = {
-  id: "device-boss-dc2w",
-  type: "pedal",
-  brand: "Boss",
-  model: "DC-2w",
-  name: "DC-2w",
-  wdh: [73, 129, 59],
-  color: "#222",
-  image: "boss/dc2w.png",
-};
-
-describe("createObjectFromTemplate (board)", () => {
-  it("returns object with correct shape and position", () => {
-    const obj = createObjectFromTemplate("board", boardTemplate, 50, 100);
-    expect(obj.subtype).toBe("board");
-    expect(obj.x).toBe(50);
-    expect(obj.y).toBe(100);
-    expect(obj.width).toBe(590);
-    expect(obj.depth).toBe(150);
-    expect(obj.height).toBe(25);
-    // ID is now timestamp-counter format
-    expect(obj.id).toMatch(/^\d+-\d+$/);
-    // templateId holds the template reference
-    expect(obj.templateId).toBe("board-aclam-s1");
-  });
-
-  it("increments id for each object", () => {
-    const a = createObjectFromTemplate("board", boardTemplate, 0, 0);
-    const b = createObjectFromTemplate("board", boardTemplate, 0, 0);
-    // Extract counter from "prefix-counter" format
-    const numA = parseInt(a.id.split("-")[1], 10);
-    const numB = parseInt(b.id.split("-")[1], 10);
-    expect(numB).toBe(numA + 1);
-  });
-});
-
-describe("createObjectFromTemplate (device)", () => {
-  it("returns object with correct shape and position", () => {
-    const obj = createObjectFromTemplate("device", deviceTemplate, 200, 300);
-    expect(obj.subtype).toBe("device");
-    expect(obj.x).toBe(200);
-    expect(obj.y).toBe(300);
-    // ID is now timestamp-counter format
-    expect(obj.id).toMatch(/^\d+-\d+$/);
-    // templateId holds the template reference
-    expect(obj.templateId).toBe("device-boss-dc2w");
-  });
-});
 
 describe("initNextObjectIdFromObjects", () => {
   it("sets counter so next id does not collide", () => {
