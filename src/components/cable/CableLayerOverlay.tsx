@@ -19,7 +19,7 @@ import "./CableLayerOverlay.scss";
 const CURRENT_CABLE_STROKE = "#000";
 const CURRENT_CABLE_OPACITY = 0.5;
 /** Dash/gap scale relative to stroke width so dashes stay visible at any zoom. */
-const CURRENT_CABLE_DASH_SCALE = 3;
+const CURRENT_CABLE_DASH_SCALE = 1 ;
 const CURRENT_CABLE_GAP_SCALE = 2;
 const CABLE_STROKE_WIDTH_MM = 5;
 const ENDPOINT_DOT_RADIUS_PX = 5;

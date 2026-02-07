@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useContext } from "react";
 import { createPortal } from "react-dom";
 import { Modal } from "../common/Modal";
 import { ModalContext } from "../../context/ModalContext";
-import { CONNECTOR_ICON_MAP, CONNECTOR_KIND_OPTIONS, CONNECTOR_NAME_OPTIONS } from "../../constants";
+import { CONNECTOR_KIND_OPTIONS, CONNECTOR_NAME_OPTIONS } from "../../constants";
 import {
   CABLE_COLORS,
   CABLE_COLOR_OPTIONS,
@@ -10,6 +10,7 @@ import {
   CABLE_TERMINAL_END_COLOR,
 } from "../../constants/cables";
 import type { Cable, CableSegment, ConnectorKind } from "../../types";
+import { ConnectorIcon } from "../common/ConnectorIcon";
 import "./AddCableModal.scss";
 
 const DEFAULT_COLOR = CABLE_COLORS[0].hex;
@@ -32,7 +33,6 @@ function ConnectorPicker({
 }) {
   const modalDialogRef = useContext(ModalContext);
   const [overlayOpen, setOverlayOpen] = useState(false);
-  const iconSrc = value ? CONNECTOR_ICON_MAP[value] : null;
   const currentOption = CONNECTOR_KIND_OPTIONS.find((o) => o.value === value);
   const portalTarget = (modalDialogRef?.current ?? null) || document.body;
 
@@ -73,15 +73,7 @@ function ConnectorPicker({
                     setOverlayOpen(false);
                   }}
                 >
-                  {CONNECTOR_ICON_MAP[opt.value] && (
-                    <img
-                      src={CONNECTOR_ICON_MAP[opt.value]}
-                      alt=""
-                      width={24}
-                      height={24}
-                      style={{ flexShrink: 0 }}
-                    />
-                  )}
+                  <ConnectorIcon kind={opt.value} width={24} height={24} style={{ flexShrink: 0 }} />
                   <span>{opt.label}</span>
                 </button>
               </li>
@@ -111,15 +103,7 @@ function ConnectorPicker({
         onClick={() => setOverlayOpen(true)}
       >
         <span className="add-cable-connector-trigger-content">
-          {iconSrc && (
-            <img
-              src={iconSrc}
-              alt=""
-              className="add-cable-connector-trigger-icon"
-              width={24}
-              height={24}
-            />
-          )}
+          <ConnectorIcon kind={value} className="add-cable-connector-trigger-icon" width={24} height={24} />
           <span className="add-cable-connector-trigger-label">{currentOption?.label ?? value}</span>
         </span>
         <span className="add-cable-connector-chevron" aria-hidden>▾</span>

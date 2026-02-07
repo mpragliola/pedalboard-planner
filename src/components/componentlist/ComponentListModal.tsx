@@ -5,9 +5,10 @@ import { faFileCsv } from "@fortawesome/free-solid-svg-icons";
 import { useBoard } from "../../context/BoardContext";
 import { useCable } from "../../context/CableContext";
 import { useConfirmation } from "../../context/ConfirmationContext";
-import { BASE_URL, CONNECTOR_ICON_MAP, DEFAULT_OBJECT_COLOR } from "../../constants";
+import { BASE_URL, DEFAULT_OBJECT_COLOR } from "../../constants";
 import { formatLengthCm } from "../../lib/rulerFormat";
-import type { Cable, CanvasObjectType, ConnectorKind } from "../../types";
+import type { Cable, CanvasObjectType } from "../../types";
+import { ConnectorIcon } from "../common/ConnectorIcon";
 import "./ComponentListModal.scss";
 
 function imageSrc(path: string | null | undefined): string {
@@ -35,21 +36,6 @@ function ComponentThumbnail({ obj }: { obj: CanvasObjectType }) {
 
 function cableLengthMm(segments: Cable["segments"]): number {
   return segments.reduce((sum, s) => sum + Math.hypot(s.x2 - s.x1, s.y2 - s.y1), 0);
-}
-
-function ConnectorIcon({ kind, title }: { kind: ConnectorKind; title: string }) {
-  const src = CONNECTOR_ICON_MAP[kind];
-  if (!src) return <span title={title}>{title}</span>;
-  return (
-    <img
-      src={src}
-      alt=""
-      className="connector-icon"
-      title={title}
-      width={24}
-      height={24}
-    />
-  );
 }
 
 interface ComponentListModalProps {
@@ -285,7 +271,14 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
                       </td>
                       <td className="connectors-icons-cell">
                         <span className="connectors-icons connectors-icons-with-name">
-                          <ConnectorIcon kind={cable.connectorA} title={cable.connectorA} />
+                          <ConnectorIcon
+                            kind={cable.connectorA}
+                            title={cable.connectorA}
+                            className="connector-icon"
+                            width={24}
+                            height={24}
+                            fallbackLabel={cable.connectorA}
+                          />
                           {cable.connectorAName ? (
                             <span className="connector-name" title={cable.connectorAName}>
                               {cable.connectorAName}
@@ -295,7 +288,14 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
                       </td>
                       <td className="connectors-icons-cell">
                         <span className="connectors-icons connectors-icons-with-name">
-                          <ConnectorIcon kind={cable.connectorB} title={cable.connectorB} />
+                          <ConnectorIcon
+                            kind={cable.connectorB}
+                            title={cable.connectorB}
+                            className="connector-icon"
+                            width={24}
+                            height={24}
+                            fallbackLabel={cable.connectorB}
+                          />
                           {cable.connectorBName ? (
                             <span className="connector-name" title={cable.connectorBName}>
                               {cable.connectorBName}
