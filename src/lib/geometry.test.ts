@@ -21,8 +21,8 @@ describe("geometry helpers", () => {
   it("builds bounding box from segment endpoints", () => {
     expect(
       getBoundingBoxOfSegments([
-        { x1: 0, y1: 1, x2: 5, y2: -2 },
-        { x1: -3, y1: 4, x2: 1, y2: 2 },
+        { start: { x: 0, y: 1 }, end: { x: 5, y: -2 } },
+        { start: { x: -3, y: 4 }, end: { x: 1, y: 2 } },
       ])
     ).toEqual({ minX: -3, minY: -2, maxX: 5, maxY: 4 });
   });
@@ -31,6 +31,6 @@ describe("geometry helpers", () => {
     expect(getBoundingBoxOfPoints([])).toBeNull();
     expect(getBoundingBoxOfSegments([])).toBeNull();
     expect(getBoundingBoxOfPoints([{ x: Number.NaN, y: 1 }])).toBeNull();
-    expect(getBoundingBoxOfSegments([{ x1: 0, y1: 0, x2: Number.POSITIVE_INFINITY, y2: 1 }])).toBeNull();
+    expect(getBoundingBoxOfSegments([{ start: { x: 0, y: 0 }, end: { x: Number.POSITIVE_INFINITY, y: 1 } }])).toBeNull();
   });
 });

@@ -1,6 +1,6 @@
 /** Generic 2D geometry helpers shared by UI and snapping code. */
 import { getBounds2DOfPoints, type Bounds2D } from "./bounds";
-import type { Vec2 } from "./vector";
+import type { Point } from "./vector";
 
 /** Normalize rotation to 0-359 range. */
 export function normalizeRotation(r: number): number {
@@ -10,18 +10,18 @@ export function normalizeRotation(r: number): number {
 /** Axis-aligned bounding box alias used by legacy geometry APIs. */
 export type BoundingBox = Bounds2D;
 
-/** One 2D line segment by endpoint coordinates. */
-export type Segment2D = { x1: number; y1: number; x2: number; y2: number };
+/** One 2D line segment by endpoint points. */
+export type Segment2D = { start: Point; end: Point };
 
-function* segmentEndpoints(segments: Iterable<Segment2D>): Iterable<Vec2> {
+function* segmentEndpoints(segments: Iterable<Segment2D>): Iterable<Point> {
   for (const segment of segments) {
-    yield { x: segment.x1, y: segment.y1 };
-    yield { x: segment.x2, y: segment.y2 };
+    yield segment.start;
+    yield segment.end;
   }
 }
 
 /** Axis-aligned bounding box of a set of points. Returns null if empty or invalid. */
-export function getBoundingBoxOfPoints(points: Iterable<Vec2>): BoundingBox | null {
+export function getBoundingBoxOfPoints(points: Iterable<Point>): BoundingBox | null {
   return getBounds2DOfPoints(points);
 }
 

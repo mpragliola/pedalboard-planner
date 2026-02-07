@@ -1,9 +1,10 @@
 import { useCallback, useRef } from "react";
+import { clientToCanvasPoint, type Pan2D } from "../lib/canvasCoords";
 
 export interface UseCatalogDragOptions {
   canvasRef: React.RefObject<HTMLDivElement | null>;
   zoomRef: React.RefObject<number>;
-  panRef: React.RefObject<{ x: number; y: number }>;
+  panRef: React.RefObject<Pan2D>;
   onDropOnCanvas: (mode: "boards" | "devices", templateId: string, x: number, y: number) => void;
 }
 
@@ -26,9 +27,8 @@ export function useCatalogDrag({ canvasRef, zoomRef, panRef, onDropOnCanvas }: U
       const isWithinCanvas = clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom;
 
       if (isWithinCanvas) {
-        const x = (clientX - r.left - pan.x) / zoom;
-        const y = (clientY - r.top - pan.y) / zoom;
-        onDropOnCanvas(data.mode, data.templateId, x, y);
+        const point = clientToCanvasPoint(clientX, clientY, r, zoom, pan);
+        onDropOnCanvas(data.mode, data.templateId, point.x, point.y);
       }
 
       ignoreNextClickRef.current = true;
