@@ -1,398 +1,154 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useBoard } from "../../context/BoardContext";
 import { useUi } from "../../context/UiContext";
+import { DEFAULT_OBJECT_COLOR } from "../../constants";
 import { clamp } from "../../lib/math";
-import { vec2Add, vec2Scale } from "../../lib/vector";
-import { shade, rgba } from "../../lib/color";
-import { drawQuad, drawTexturedQuad } from "../../lib/canvas2d";
-import { getTextureImage, type ImageCacheEntry } from "./mini3dAssets";
+import { parseColor, rgba, shade } from "../../lib/color";
+import { normalizeRotation } from "../../lib/geometry";
+import { getDirectionalOffset } from "../../lib/geometry2d";
+import { resolveImageSrc } from "./mini3dAssets";
 import {
   computeStackedObjects,
   DEFAULT_CAMERA_YAW,
+  MIN_PITCH,
+  MAX_PITCH,
   PITCH_OFFSET_MIN,
   PITCH_OFFSET_MAX,
-  type ZAnimState,
-  type StackedObject,
-} from "./mini3dMath";
-import {
-  applyConvergence,
-  buildFaces,
-  computeCanvasTransform,
+  getSceneMetrics,
   getConvergenceTotal,
-  getFacesBounds,
-  prepareCanvas,
-  sortFacesByDepth,
-  type Size,
-} from "./mini3dRender";
+  FALLBACK_COLOR,
+  PER_COMPONENT_DELAY,
+  CONVERGENCE_OFFSET_DISTANCE,
+} from "./mini3dMath";
 import "./Mini3DOverlay.scss";
 
-// Tuning constants for interaction and animation.
 const ROTATE_SPEED_RAD = Math.PI / 5;
 const ROTATE_DRAG_SENS = 0.006;
 const ROTATE_PITCH_SENS = 0.006;
-const Z_ANIM_SPEED = 30;
-const Z_ANIM_EPS = 0.05;
-const FADE_IN_DURATION = 500;
 const BASE_OVERLAY_OPACITY = 0.85;
 const DOUBLE_TAP_MS = 320;
 const DOUBLE_TAP_DISTANCE = 24;
 const DOUBLE_TAP_DRAG_DISTANCE = 8;
 const DOUBLE_CLICK_DELAY_MS = 320;
+const OPEN_FADE_MS = 500;
+const VIEW_PADDING_PX = 12;
 
 type PointerPoint = { x: number; y: number };
 type DragState = { pointerId: number; startX: number; startY: number; startYaw: number; startPitch: number };
 type DoubleTapState = { pointerId: number; startX: number; startY: number; moved: boolean };
+type OverlayPhase = "opening" | "open" | "closing";
 type Mini3DOverlayProps = { onCloseComplete?: () => void };
 
+type CssVars = CSSProperties & Record<`--${string}`, string>;
+
 function getPointersCenter(points: readonly [PointerPoint, PointerPoint]): PointerPoint {
-  return vec2Scale(vec2Add(points[0], points[1]), 0.5);
+  return {
+    x: (points[0].x + points[1].x) * 0.5,
+    y: (points[0].y + points[1].y) * 0.5,
+  };
 }
 
-/**
- * Mini3DOverlay renders a lightweight 3D projection of board objects on a canvas.
- * Rendering is manual (no WebGL): objects are treated as boxes, projected, then
- * drawn back-to-front.
- *
- * Interaction:
- * - Middle mouse drag or two-finger drag rotates the camera.
- * - Click toggles auto-rotation (also accessible via keyboard).
- * - Double click toggles fullscreen view.
- *
- * Animations:
- * - Open/close converges/diverges objects toward scene center.
- * - Z stacking animates smoothly via exponential smoothing.
- */
 export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
   const { objects } = useBoard();
   const { showMini3d } = useUi();
 
-  // DOM refs.
   const containerRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const worldRef = useRef<HTMLDivElement>(null);
 
-  // React state for UI toggles and mount visibility.
   const [autoRotate, setAutoRotate] = useState(false);
   const [isVisible, setIsVisible] = useState(showMini3d);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [phase, setPhase] = useState<OverlayPhase>(showMini3d ? "opening" : "closing");
+  const [size, setSize] = useState({ width: 0, height: 0 });
 
-  // Mutable refs for animation state and transient values.
   const yawRef = useRef(DEFAULT_CAMERA_YAW);
   const pitchRef = useRef(0);
   const rotateDragRef = useRef<DragState | null>(null);
   const activePointersRef = useRef<Map<number, PointerPoint>>(new Map());
-  const rafRef = useRef<number | null>(null);
-  const lastTimeRef = useRef<number | null>(null);
 
-  const objectsRef = useRef(objects);
-  const sizeRef = useRef<Size>({ width: 0, height: 0 });
+  const autoRotateRafRef = useRef<number | null>(null);
+  const autoRotateLastTimeRef = useRef<number | null>(null);
 
-  const imageCacheRef = useRef<Map<string, ImageCacheEntry>>(new Map());
-  const zAnimRef = useRef<Map<string, ZAnimState>>(new Map());
-  const autoRotateRef = useRef(autoRotate);
-  const prevShowMini3dRef = useRef(showMini3d);
-  const hasMountedRef = useRef(false);
+  const prevShowMini3dRef = useRef(false);
+  const openTimerRef = useRef<number | null>(null);
+  const closeTimerRef = useRef<number | null>(null);
 
-  // Opacity & open/close animation tracking.
-  const openTimeRef = useRef<number | null>(null);
-  const closeTimeRef = useRef<number | null>(null);
-  const overlayOpacityRef = useRef(showMini3d ? BASE_OVERLAY_OPACITY : 0);
-  const openOpacityRef = useRef(showMini3d ? BASE_OVERLAY_OPACITY : 0);
-  const closeOpacityRef = useRef(showMini3d ? BASE_OVERLAY_OPACITY : 0);
-
-  // Avoid re-rendering just to schedule a draw.
-  const scheduleRenderRef = useRef<() => void>(() => {});
   const lastTapRef = useRef<{ time: number; x: number; y: number } | null>(null);
   const doubleTapRef = useRef<DoubleTapState | null>(null);
   const suppressClickRef = useRef<number | null>(null);
   const clickTimeoutRef = useRef<number | null>(null);
 
-  const toggleAutoRotate = useCallback(() => {
-    setAutoRotate((value) => !value);
-  }, [setAutoRotate]);
+  const stacked = useMemo(() => computeStackedObjects(objects), [objects]);
+  const scene = useMemo(() => getSceneMetrics(stacked), [stacked]);
+  const convergenceTotal = useMemo(() => getConvergenceTotal(stacked.length), [stacked.length]);
 
-  const notifyImageLoaded = useCallback(() => {
-    scheduleRenderRef.current();
-  }, []);
+  const perspective = useMemo(() => clamp(scene.maxDim * 3.2, 260, 1200), [scene.maxDim]);
+  const cameraDistance = useMemo(() => -clamp(scene.maxDim * 0.95, 170, 1100), [scene.maxDim]);
 
-  const setOverlayOpacity = useCallback((value: number) => {
-    const next = clamp(value, 0, 1);
-    overlayOpacityRef.current = next;
-    // Mutate the DOM style directly so opacity updates don't re-render React.
-    const el = containerRef.current;
-    if (el) {
-      el.style.opacity = `${next}`;
-    }
-  }, []);
+  const computeFitScale = useCallback(
+    (yaw: number, pitchOffset: number) => {
+      const pitch = clamp(0.35 + pitchOffset, MIN_PITCH, MAX_PITCH);
+      const absCosYaw = Math.abs(Math.cos(yaw));
+      const absSinYaw = Math.abs(Math.sin(yaw));
 
-  const syncZTargets = useCallback((stacked: StackedObject[]): boolean => {
-    const map = zAnimRef.current;
-    const seen = new Set<string>();
-    let active = false;
-    // Keep per-object Z animation state in sync with latest stacked targets.
-    for (const item of stacked) {
-      const id = item.obj.id;
-      seen.add(id);
-      const target = item.baseZ;
-      const entry = map.get(id);
-      if (!entry) {
-        map.set(id, { current: target, target });
-        continue;
-      }
-      if (Math.abs(entry.target - target) > Z_ANIM_EPS) {
-        entry.target = target;
-      }
-      if (Math.abs(entry.current - entry.target) > Z_ANIM_EPS) active = true;
-    }
-    for (const [id] of map) {
-      if (!seen.has(id)) map.delete(id);
-    }
-    return active;
-  }, []);
+      const projectedWidth = Math.max(1, scene.width * absCosYaw + scene.depth * absSinYaw);
+      const footprintDepth = scene.width * absSinYaw + scene.depth * absCosYaw;
+      const projectedHeight = Math.max(1, footprintDepth * Math.sin(pitch) + scene.maxZ * Math.cos(pitch));
 
-  const updateZAnimation = useCallback((dt: number): boolean => {
-    const map = zAnimRef.current;
-    if (map.size === 0) return false;
-    // Exponential smoothing to converge current Z toward target Z.
-    const alpha = 1 - Math.exp(-Z_ANIM_SPEED * dt);
-    let active = false;
-    for (const entry of map.values()) {
-      const diff = entry.target - entry.current;
-      if (Math.abs(diff) <= Z_ANIM_EPS) {
-        entry.current = entry.target;
-        continue;
-      }
-      entry.current += diff * alpha;
-      if (Math.abs(entry.target - entry.current) > Z_ANIM_EPS) active = true;
-    }
-    return active;
-  }, []);
+      const availableWidth = Math.max(1, size.width - VIEW_PADDING_PX * 2);
+      const availableHeight = Math.max(1, size.height - VIEW_PADDING_PX * 2);
+      const fitWithoutPerspective = Math.min(availableWidth / projectedWidth, availableHeight / projectedHeight);
 
-  const getAnimatedBaseZ = useCallback((id: string, fallback: number): number => {
-    const entry = zAnimRef.current.get(id);
-    return entry ? entry.current : fallback;
-  }, []);
+      // CSS perspective shrinks content when the scene is translated away from the camera.
+      const perspectiveFactor = perspective / (perspective - cameraDistance);
+      const compensated = fitWithoutPerspective / Math.max(0.0001, perspectiveFactor);
 
-  const drawScene = useCallback(
-    (yaw: number, pitchOffset: number, stackedForRender: StackedObject[], currentSize: Size) => {
-      // Allow draw during closing animation even if the UI flag is off.
-      if (!showMini3d && !closeTimeRef.current) return;
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      if (currentSize.width <= 0 || currentSize.height <= 0) return;
-
-      const dpr = window.devicePixelRatio || 1;
-      const ctx = prepareCanvas(canvas, currentSize, dpr);
-      if (!ctx) return;
-      if (stackedForRender.length === 0) return;
-
-      const stackedAnimated = stackedForRender.map((item) => ({
-        ...item,
-        baseZ: getAnimatedBaseZ(item.obj.id, item.baseZ),
-      }));
-      const faces = buildFaces(stackedAnimated, yaw, pitchOffset);
-      if (faces.length === 0) return;
-      sortFacesByDepth(faces);
-
-      const bounds = getFacesBounds(faces);
-      if (!bounds) return;
-      const transform = computeCanvasTransform(bounds, currentSize);
-      if (!transform) return;
-
-      ctx.setTransform(
-        transform.scale * dpr,
-        0,
-        0,
-        transform.scale * dpr,
-        transform.offsetX * dpr,
-        transform.offsetY * dpr
-      );
-      ctx.lineJoin = "round";
-      ctx.lineWidth = 1 / transform.scale;
-
-      const stroke = "rgba(0, 0, 0, 0.25)";
-      for (const face of faces) {
-        let fill: string | CanvasPattern = rgba(shade(face.color, face.shade), 0.9);
-        if (face.kind === "top") {
-          // Top faces can be textured; fall back to shaded color if not ready.
-          if (face.textureSrc) {
-            const image = getTextureImage(face.textureSrc, imageCacheRef.current, notifyImageLoaded);
-            if (image) {
-              drawTexturedQuad(ctx, image, face.points, face.uv, stroke, 0.92);
-              continue;
-            } else {
-              fill = rgba(shade(face.color, 1.02), 0.92);
-            }
-          } else {
-            fill = rgba(shade(face.color, 1.02), 0.92);
-          }
-        } else if (face.kind === "bottom") {
-          fill = rgba(shade(face.color, 0.55), 0.9);
-        }
-        drawQuad(ctx, face.points, fill, stroke);
-      }
+      return clamp(compensated * 0.98, 0.08, 4);
     },
-    [getAnimatedBaseZ, notifyImageLoaded, showMini3d]
+    [cameraDistance, perspective, scene.depth, scene.maxZ, scene.width, size.height, size.width]
   );
 
-  const step = useCallback(
-    (time: number) => {
-      const isClosing = closeTimeRef.current != null;
-      if (!showMini3d && !isClosing) {
-        rafRef.current = null;
-        lastTimeRef.current = null;
-        return;
-      }
+  const sceneScale = useMemo(() => computeFitScale(yawRef.current, pitchRef.current), [computeFitScale]);
 
-      // Clamp dt to avoid large jumps when returning from background.
-      if (lastTimeRef.current == null) lastTimeRef.current = time;
-      const dt = Math.min(0.05, (time - lastTimeRef.current) / 1000);
-      lastTimeRef.current = time;
+  const syncCameraVars = useCallback(() => {
+    const world = worldRef.current;
+    if (!world) return;
+    const pitch = clamp(0.35 + pitchRef.current, MIN_PITCH, MAX_PITCH);
+    const scale = computeFitScale(yawRef.current, pitchRef.current);
+    world.style.setProperty("--mini3d-scale", `${scale}`);
+    world.style.setProperty("--mini3d-yaw", `${-yawRef.current}rad`);
+    world.style.setProperty("--mini3d-pitch", `${-pitch}rad`);
+  }, [computeFitScale]);
 
-      let keepRunning = false;
-
-      if (autoRotateRef.current && showMini3d) {
-        yawRef.current = (yawRef.current + ROTATE_SPEED_RAD * dt) % (Math.PI * 2);
-        keepRunning = true;
-      }
-
-      // Update stacked Z positions even when only animating opacity/convergence.
-      const stackedTargets = computeStackedObjects(objectsRef.current);
-      syncZTargets(stackedTargets);
-      const zActive = updateZAnimation(dt);
-      if (zActive) keepRunning = true;
-
-      const convergenceTotal = getConvergenceTotal(stackedTargets.length);
-      const openStart = openTimeRef.current;
-      const closeStart = closeTimeRef.current;
-      const opening = openStart != null && time - openStart < convergenceTotal;
-      const closing = closeStart != null && time - closeStart < convergenceTotal;
-      const animationActive = opening || closing;
-
-      // Drive overlay opacity separately from React render cycle.
-      if (opening && openStart != null) {
-        const t = clamp((time - openStart) / FADE_IN_DURATION, 0, 1);
-        const startOpacity = openOpacityRef.current;
-        setOverlayOpacity(startOpacity + (BASE_OVERLAY_OPACITY - startOpacity) * t);
-      } else if (closing && closeStart != null) {
-        const t = clamp((time - closeStart) / convergenceTotal, 0, 1);
-        const startOpacity = closeOpacityRef.current;
-        setOverlayOpacity(startOpacity * (1 - t));
-      } else if (showMini3d) {
-        setOverlayOpacity(BASE_OVERLAY_OPACITY);
-      }
-
-      let stackedForRender = stackedTargets;
-      if (animationActive && stackedTargets.length > 0) {
-        const startTime = opening ? openStart ?? 0 : closeStart ?? 0;
-        stackedForRender = applyConvergence(time, stackedTargets, startTime, opening);
-      }
-
-      drawScene(yawRef.current, pitchRef.current, stackedForRender, sizeRef.current);
-
-      if (openStart != null && time - openStart >= convergenceTotal) {
-        openTimeRef.current = null;
-      }
-      if (closeStart != null && time - closeStart >= convergenceTotal) {
-        closeTimeRef.current = null;
-        setOverlayOpacity(0);
-        if (!showMini3d) {
-          setIsVisible(false);
-          onCloseComplete?.();
-        }
-      }
-
-      if (animationActive) keepRunning = true;
-
-      if (keepRunning) {
-        rafRef.current = requestAnimationFrame(step);
-      } else {
-        rafRef.current = null;
-        lastTimeRef.current = null;
-      }
-    },
-    [drawScene, onCloseComplete, setOverlayOpacity, showMini3d, syncZTargets, updateZAnimation]
-  );
-
-  const requestRender = useCallback(() => {
-    // Allow render scheduling during close animation.
-    if (!showMini3d && !closeTimeRef.current) return;
-    if (rafRef.current != null) return;
-    lastTimeRef.current = null;
-    rafRef.current = requestAnimationFrame(step);
-  }, [showMini3d, step]);
-
-  scheduleRenderRef.current = requestRender;
-
-  useEffect(() => {
-    if (!isVisible) return;
-    const el = containerRef.current;
-    if (!el) return;
-    const updateSize = () => {
-      const rect = el.getBoundingClientRect();
-      const next = { width: rect.width, height: rect.height };
-      const prev = sizeRef.current;
-      if (next.width !== prev.width || next.height !== prev.height) {
-        sizeRef.current = next;
-        requestRender();
-      }
-    };
-    // Resize observer keeps the canvas in sync with layout changes.
-    updateSize();
-    const observer = new ResizeObserver(updateSize);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [isVisible, requestRender]);
-
-  useEffect(() => {
-    objectsRef.current = objects;
-    // Trigger a render any time object data changes.
-    requestRender();
-  }, [objects, requestRender]);
-
-  useEffect(() => {
-    autoRotateRef.current = autoRotate;
-    if (showMini3d && autoRotate) requestRender();
-  }, [autoRotate, requestRender, showMini3d]);
-
-  useEffect(() => {
-    const firstRun = !hasMountedRef.current;
-    hasMountedRef.current = true;
-    const wasShowing = prevShowMini3dRef.current;
-    prevShowMini3dRef.current = showMini3d;
-
-    if (showMini3d) {
-      if (firstRun || !wasShowing || closeTimeRef.current != null) {
-        // Opening sequence: mount if needed, fade in, converge objects.
-        if (!isVisible) {
-          setIsVisible(true);
-          openOpacityRef.current = 0;
-          setOverlayOpacity(0);
-        } else {
-          openOpacityRef.current = overlayOpacityRef.current;
-        }
-        openTimeRef.current = performance.now();
-        closeTimeRef.current = null;
-        requestRender();
-      }
-      return;
+  const clearOpenTimer = useCallback(() => {
+    if (openTimerRef.current != null) {
+      window.clearTimeout(openTimerRef.current);
+      openTimerRef.current = null;
     }
+  }, []);
 
-    if (isFullscreen) setIsFullscreen(false);
-
-    if (wasShowing && isVisible && closeTimeRef.current == null) {
-      // Closing sequence: keep mounted until the animation completes.
-      closeOpacityRef.current = overlayOpacityRef.current;
-      closeTimeRef.current = performance.now();
-      openTimeRef.current = null;
-      rotateDragRef.current = null;
-      activePointersRef.current.clear();
-      requestRender();
+  const clearCloseTimer = useCallback(() => {
+    if (closeTimerRef.current != null) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
     }
-  }, [isFullscreen, isVisible, requestRender, setOverlayOpacity, showMini3d]);
+  }, []);
 
-  useEffect(() => {
-    if (isVisible) requestRender();
-  }, [isFullscreen, isVisible, requestRender]);
+  const stopPendingClickTimers = useCallback(() => {
+    if (suppressClickRef.current != null) {
+      window.clearTimeout(suppressClickRef.current);
+      suppressClickRef.current = null;
+    }
+    if (clickTimeoutRef.current != null) {
+      window.clearTimeout(clickTimeoutRef.current);
+      clickTimeoutRef.current = null;
+    }
+  }, []);
+
+  const stopRotateDrag = useCallback(() => {
+    rotateDragRef.current = null;
+    activePointersRef.current.clear();
+  }, []);
 
   const beginRotateDrag = useCallback(
     (pointerId: number, startX: number, startY: number) => {
@@ -408,9 +164,128 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
     [setAutoRotate]
   );
 
+  useEffect(() => {
+    if (!isVisible) return;
+    const el = containerRef.current;
+    if (!el) return;
+
+    const updateSize = () => {
+      const rect = el.getBoundingClientRect();
+      setSize((prev) => {
+        const next = { width: rect.width, height: rect.height };
+        if (next.width === prev.width && next.height === prev.height) return prev;
+        return next;
+      });
+    };
+
+    updateSize();
+    const observer = new ResizeObserver(updateSize);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [isVisible]);
+
+  useEffect(() => {
+    syncCameraVars();
+  }, [isVisible, syncCameraVars]);
+
+  useEffect(() => {
+    const wasShowing = prevShowMini3dRef.current;
+    prevShowMini3dRef.current = showMini3d;
+
+    if (showMini3d && !wasShowing) {
+      clearCloseTimer();
+      if (!isVisible) setIsVisible(true);
+      setPhase("opening");
+
+      clearOpenTimer();
+      openTimerRef.current = window.setTimeout(() => {
+        openTimerRef.current = null;
+        setPhase("open");
+      }, convergenceTotal);
+      return;
+    }
+
+    if (!showMini3d && wasShowing && isVisible) {
+      setIsFullscreen(false);
+      setAutoRotate(false);
+      stopRotateDrag();
+      stopPendingClickTimers();
+      setPhase("closing");
+
+      clearOpenTimer();
+      clearCloseTimer();
+      closeTimerRef.current = window.setTimeout(() => {
+        closeTimerRef.current = null;
+        setIsVisible(false);
+        onCloseComplete?.();
+      }, convergenceTotal);
+    }
+  }, [
+    clearCloseTimer,
+    clearOpenTimer,
+    convergenceTotal,
+    isVisible,
+    onCloseComplete,
+    showMini3d,
+    stopPendingClickTimers,
+    stopRotateDrag,
+  ]);
+
+  useEffect(() => {
+    if (!autoRotate || !showMini3d) {
+      if (autoRotateRafRef.current != null) cancelAnimationFrame(autoRotateRafRef.current);
+      autoRotateRafRef.current = null;
+      autoRotateLastTimeRef.current = null;
+      return;
+    }
+
+    const step = (time: number) => {
+      if (autoRotateLastTimeRef.current == null) autoRotateLastTimeRef.current = time;
+      const dt = Math.min(0.05, (time - autoRotateLastTimeRef.current) / 1000);
+      autoRotateLastTimeRef.current = time;
+      yawRef.current = (yawRef.current + ROTATE_SPEED_RAD * dt) % (Math.PI * 2);
+      syncCameraVars();
+      autoRotateRafRef.current = requestAnimationFrame(step);
+    };
+
+    autoRotateRafRef.current = requestAnimationFrame(step);
+
+    return () => {
+      if (autoRotateRafRef.current != null) cancelAnimationFrame(autoRotateRafRef.current);
+      autoRotateRafRef.current = null;
+      autoRotateLastTimeRef.current = null;
+    };
+  }, [autoRotate, showMini3d, syncCameraVars]);
+
+  useEffect(() => {
+    if (!showMini3d) return;
+    const el = containerRef.current;
+    if (!el) return;
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length >= 2 && rotateDragRef.current) {
+        e.preventDefault();
+      }
+    };
+
+    el.addEventListener("touchmove", handleTouchMove, { passive: false });
+    return () => el.removeEventListener("touchmove", handleTouchMove);
+  }, [showMini3d]);
+
+  useEffect(() => {
+    return () => {
+      if (autoRotateRafRef.current != null) cancelAnimationFrame(autoRotateRafRef.current);
+      autoRotateRafRef.current = null;
+      autoRotateLastTimeRef.current = null;
+      stopRotateDrag();
+      stopPendingClickTimers();
+      clearOpenTimer();
+      clearCloseTimer();
+    };
+  }, [clearCloseTimer, clearOpenTimer, stopPendingClickTimers, stopRotateDrag]);
+
   const handleRotatePointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      // Track pointers for touch + mouse drag to rotate.
       activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
       if (e.button === 1) {
@@ -450,7 +325,6 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
       }
 
       if (e.pointerType === "touch" && activePointersRef.current.size === 2) {
-        // Two-finger drag rotates around the pinch center.
         const pointers = Array.from(activePointersRef.current.values()) as [PointerPoint, PointerPoint];
         const center = getPointersCenter(pointers);
         beginRotateDrag(e.pointerId, center.x, center.y);
@@ -488,14 +362,13 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
         currentY = center.y;
       }
 
-      // Apply yaw/pitch changes based on pointer deltas.
       const dx = currentX - drag.startX;
       const dy = currentY - drag.startY;
-      yawRef.current = drag.startYaw + dx * ROTATE_DRAG_SENS;
+      yawRef.current = drag.startYaw - dx * ROTATE_DRAG_SENS;
       pitchRef.current = clamp(drag.startPitch + dy * ROTATE_PITCH_SENS, PITCH_OFFSET_MIN, PITCH_OFFSET_MAX);
-      requestRender();
+      syncCameraVars();
     },
-    [beginRotateDrag, requestRender]
+    [beginRotateDrag, syncCameraVars]
   );
 
   const handleRotatePointerUp = useCallback(
@@ -511,7 +384,6 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
             clickTimeoutRef.current = null;
           }
           setIsFullscreen((value) => !value);
-          requestRender();
         }
       }
 
@@ -530,50 +402,44 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
         }
       }
     },
-    [requestRender, setIsFullscreen]
+    [setIsFullscreen]
   );
-
-  useEffect(() => {
-    if (!showMini3d) return;
-    const el = containerRef.current;
-    if (!el) return;
-
-    const handleTouchMove = (e: TouchEvent) => {
-      // Prevent page scroll while rotating with two fingers.
-      if (e.touches.length >= 2 && rotateDragRef.current) {
-        e.preventDefault();
-      }
-    };
-
-    el.addEventListener("touchmove", handleTouchMove, { passive: false });
-    return () => el.removeEventListener("touchmove", handleTouchMove);
-  }, [showMini3d]);
-
-  useEffect(() => {
-    return () => {
-      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
-      rafRef.current = null;
-      lastTimeRef.current = null;
-      rotateDragRef.current = null;
-      activePointersRef.current.clear();
-      if (suppressClickRef.current != null) {
-        window.clearTimeout(suppressClickRef.current);
-        suppressClickRef.current = null;
-      }
-      if (clickTimeoutRef.current != null) {
-        window.clearTimeout(clickTimeoutRef.current);
-        clickTimeoutRef.current = null;
-      }
-    };
-  }, []);
 
   if (!isVisible) return null;
 
+  const overlayClass = [
+    "mini3d-overlay",
+    isFullscreen ? "mini3d-overlay--fullscreen" : "",
+    phase === "opening" ? "mini3d-overlay--opening" : "",
+    phase === "open" ? "mini3d-overlay--open" : "",
+    phase === "closing" ? "mini3d-overlay--closing" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const overlayStyle: CssVars = {
+    "--mini3d-overlay-opacity": `${BASE_OVERLAY_OPACITY}`,
+    "--mini3d-open-fade-ms": `${OPEN_FADE_MS}ms`,
+    "--mini3d-close-fade-ms": `${convergenceTotal}ms`,
+    pointerEvents: showMini3d ? "auto" : "none",
+  };
+
+  const stageStyle: CssVars = {
+    "--mini3d-perspective": `${perspective}px`,
+  };
+
+  const worldStyle: CssVars = {
+    "--mini3d-scale": `${sceneScale}`,
+    "--mini3d-camera-z": `${cameraDistance}px`,
+    "--mini3d-yaw": `${-yawRef.current}rad`,
+    "--mini3d-pitch": `${-clamp(0.35 + pitchRef.current, MIN_PITCH, MAX_PITCH)}rad`,
+  };
+
   return (
     <div
-      className={`mini3d-overlay${isFullscreen ? " mini3d-overlay--fullscreen" : ""}`}
+      className={overlayClass}
       ref={containerRef}
-      style={{ opacity: overlayOpacityRef.current, pointerEvents: showMini3d ? "auto" : "none" }}
+      style={overlayStyle}
       role="button"
       tabIndex={0}
       aria-pressed={autoRotate}
@@ -590,7 +456,7 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
         }
         clickTimeoutRef.current = window.setTimeout(() => {
           clickTimeoutRef.current = null;
-          toggleAutoRotate();
+          setAutoRotate((value) => !value);
         }, DOUBLE_CLICK_DELAY_MS);
       }}
       onDoubleClick={() => {
@@ -599,7 +465,6 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
           clickTimeoutRef.current = null;
         }
         setIsFullscreen((value) => !value);
-        requestRender();
       }}
       onPointerDown={handleRotatePointerDown}
       onPointerMove={handleRotatePointerMove}
@@ -608,16 +473,88 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          toggleAutoRotate();
+          setAutoRotate((value) => !value);
         }
       }}
     >
-      <canvas className="mini3d-canvas" ref={canvasRef} />
+      <div className="mini3d-stage" style={stageStyle}>
+        <div className="mini3d-world" ref={worldRef} style={worldStyle}>
+          {stacked.map((item, index) => {
+            const color = parseColor(item.obj.color ?? DEFAULT_OBJECT_COLOR) ?? FALLBACK_COLOR;
+            const topColor = rgba(shade(color, 1.05), 0.96);
+            const sideFront = rgba(shade(color, 0.84), 0.94);
+            const sideBack = rgba(shade(color, 0.58), 0.92);
+            const sideRight = rgba(shade(color, 0.72), 0.93);
+            const sideLeft = rgba(shade(color, 0.64), 0.93);
+            const bottomColor = rgba(shade(color, 0.42), 0.88);
+
+            const centerX = item.obj.pos.x + item.width / 2 - scene.center.x;
+            const centerZ = item.obj.pos.y + item.depth / 2 - scene.center.y;
+            const renderHeight = Math.max(1, item.height);
+            const centerY = -(item.baseZ + renderHeight / 2);
+            const rotation = normalizeRotation(item.obj.rotation ?? 0);
+
+            const deltaX = item.obj.pos.x + item.width / 2 - scene.center.x;
+            const deltaY = item.obj.pos.y + item.depth / 2 - scene.center.y;
+            const offset = getDirectionalOffset(deltaX, deltaY, CONVERGENCE_OFFSET_DISTANCE);
+
+            const shiftClass =
+              phase === "opening"
+                ? "mini3d-item-shift mini3d-item-shift--opening"
+                : phase === "closing"
+                  ? "mini3d-item-shift mini3d-item-shift--closing"
+                  : "mini3d-item-shift";
+
+            const shiftStyle: CssVars = {
+              "--mini3d-delay-ms": `${index * PER_COMPONENT_DELAY}ms`,
+              "--mini3d-conv-x": `${offset.offsetX}`,
+              "--mini3d-conv-z": `${offset.offsetY}`,
+            };
+
+            const boxStyle: CssVars = {
+              "--mini3d-width": `${item.width}px`,
+              "--mini3d-depth": `${item.depth}px`,
+              "--mini3d-height": `${renderHeight}px`,
+              "--mini3d-top-color": topColor,
+              "--mini3d-front-color": sideFront,
+              "--mini3d-back-color": sideBack,
+              "--mini3d-right-color": sideRight,
+              "--mini3d-left-color": sideLeft,
+              "--mini3d-bottom-color": bottomColor,
+              "--mini3d-top-image": item.obj.image ? `url("${resolveImageSrc(item.obj.image)}")` : "none",
+              transform: `translate3d(${centerX}px, ${centerY}px, ${centerZ}px) rotateY(${rotation}deg)`,
+            };
+
+            return (
+              <div key={item.obj.id} className={shiftClass} style={shiftStyle}>
+                <div className="mini3d-box" style={boxStyle}>
+                  <div className="mini3d-face mini3d-face--front" />
+                  <div className="mini3d-face mini3d-face--back" />
+                  <div className="mini3d-face mini3d-face--right" />
+                  <div className="mini3d-face mini3d-face--left" />
+                  <div className="mini3d-face mini3d-face--top" />
+                  <div className="mini3d-face mini3d-face--bottom" />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {showMini3d ? (
         <div className="mini3d-instruction">
-          Middle button or double-tap drag to rotate. Click/tap for auto-rotation. Double click/tap to toggle fullscreen.
+          Middle button or double-tap drag to rotate. Click/tap for auto-rotation. Double click/tap to toggle
+          fullscreen.
         </div>
       ) : null}
     </div>
   );
 }
+
+
+
+
+
+
+
+
