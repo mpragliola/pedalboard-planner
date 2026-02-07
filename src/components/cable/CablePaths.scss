@@ -22,10 +22,32 @@
   }
 
   .cable-handle-dot {
-    fill: vars.$white-90;
     stroke: rgba(0, 0, 0, 0.45);
     stroke-width: 1;
     cursor: grab;
     pointer-events: all;
+  }
+
+  .cable-handle-dot--pressing {
+    stroke: rgba(10, 132, 255, 0.95);
+    stroke-width: 2.5;
+  }
+
+  .cable-insert-flash {
+    fill: rgba(255, 255, 255, 0.5);
+    stroke: rgba(10, 132, 255, 0.9);
+    stroke-width: 1.5;
+    animation: cable-insert-flash 0.3s ease-out;
+  }
+}
+
+@keyframes cable-insert-flash {
+  0% {
+    r: 4;
+    opacity: 0.9;
+  }
+  100% {
+    r: 10;
+    opacity: 0;
   }
 }

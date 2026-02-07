@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CABLE_TERMINAL_START_COLOR, CABLE_TERMINAL_END_COLOR } from "../../constants/cables";
 import { buildRoundedPathD, buildSmoothPathD, DEFAULT_JOIN_RADIUS } from "../../lib/polylinePath";
 import { vec2Add, vec2Length, vec2Normalize, vec2Scale, vec2Sub, type Offset, type Point } from "../../lib/vector";
@@ -30,6 +30,16 @@ type DragState = {
   pointerId: number;
   points: Point[];
   handleIndex: number;
+};
+
+type PressState = {
+  cableId: string;
+  handleIndex: number;
+};
+
+type FlashPoint = {
+  cableId: string;
+  point: Point;
 };
 
 type HandleType = "start" | "mid" | "end";
@@ -100,6 +110,15 @@ export function CablePaths({ cables, visible, selectedCableId, onCablePointerDow
 
   const dragRef = useRef<DragState | null>(null);
   const pressTimerRef = useRef<number | null>(null);
+  const [pressingHandle, setPressingHandle] = useState<PressState | null>(null);
+  const [flashPoint, setFlashPoint] = useState<FlashPoint | null>(null);
+  const flashTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (flashTimerRef.current) window.clearTimeout(flashTimerRef.current);
+    };
+  }, []);
 
   const dragState = dragRef.current;
   const dragCableId = dragState?.cableId ?? null;
@@ -229,6 +248,9 @@ export function CablePaths({ cables, visible, selectedCableId, onCablePointerDow
       e.shiftKey || e.metaKey
         ? canvasPoint
         : snapToObjects(canvasPoint.x, canvasPoint.y, objects as CanvasObjectType[], getObjectDimensions);
+    setFlashPoint({ cableId, point: snapped });
+    if (flashTimerRef.current) window.clearTimeout(flashTimerRef.current);
+    flashTimerRef.current = window.setTimeout(() => setFlashPoint(null), 300);
     const nextPoints = [...points.slice(0, segIndex + 1), snapped, ...points.slice(segIndex + 1)];
     setCables(
       (prev) => prev.map((c) => (c.id === cableId ? { ...c, segments: rebuildSegments(nextPoints) } : c)),
@@ -258,10 +280,12 @@ export function CablePaths({ cables, visible, selectedCableId, onCablePointerDow
       pressTimerRef.current = null;
     }
     if (!isExtremity) {
+      setPressingHandle({ cableId, handleIndex });
       pressTimerRef.current = window.setTimeout(() => {
         const nextPoints = points.filter((_, idx) => idx !== handleIndex);
         if (nextPoints.length < 2) return;
         dragRef.current = null;
+        setPressingHandle(null);
         setCables(
           (prev) =>
             prev.map((c) => (c.id === cableId ? { ...c, segments: rebuildSegments(nextPoints) } : c)),
@@ -286,6 +310,7 @@ export function CablePaths({ cables, visible, selectedCableId, onCablePointerDow
         window.clearTimeout(pressTimerRef.current);
         pressTimerRef.current = null;
       }
+      if (pressingHandle) setPressingHandle(null);
       pausePanZoom?.(true);
       const canvasPoint = clientToCanvas(ev.clientX, ev.clientY);
       const snapped =
@@ -309,6 +334,7 @@ export function CablePaths({ cables, visible, selectedCableId, onCablePointerDow
         window.clearTimeout(pressTimerRef.current);
         pressTimerRef.current = null;
       }
+      if (pressingHandle) setPressingHandle(null);
       pausePanZoom?.(false);
       const finalPoints = drag.points;
       dragRef.current = null;
@@ -359,6 +385,15 @@ export function CablePaths({ cables, visible, selectedCableId, onCablePointerDow
       }}
       onDoubleClickCapture={handleSvgDoubleClick}
     >
+      {flashPoint && (
+        <circle
+          cx={flashPoint.point.x}
+          cy={flashPoint.point.y}
+          r={6}
+          className="cable-insert-flash"
+          pointerEvents="none"
+        />
+      )}
       {paths.map((p) => (
         <g key={p.id}>
           {/* Invisible wide stroke for hit area */}
@@ -424,26 +459,42 @@ export function CablePaths({ cables, visible, selectedCableId, onCablePointerDow
           strokeWidth="1"
         />
       ))}
-      {handles.map(({ point, idx, type }) => (
-        <g key={`handle-${idx}`}>
-          <circle
-            cx={point.x}
-            cy={point.y}
-            r={7}
-            className="cable-handle-halo"
-            onPointerDown={(e) => handleHandlePointerDown(selectedCableId!, idx, e)}
-            fill={type === "start" ? CABLE_TERMINAL_START_COLOR : type === "end" ? CABLE_TERMINAL_END_COLOR : undefined}
-          />
-          <circle
-            cx={point.x}
-            cy={point.y}
-            r={4}
-            className="cable-handle-dot"
-            onPointerDown={(e) => handleHandlePointerDown(selectedCableId!, idx, e)}
-            fill={type === "start" ? CABLE_TERMINAL_START_COLOR : type === "end" ? CABLE_TERMINAL_END_COLOR : undefined}
-          />
-        </g>
-      ))}
+      {handles.map(({ point, idx, type }) => {
+        const handleFill =
+          type === "start"
+            ? CABLE_TERMINAL_START_COLOR
+            : type === "end"
+              ? CABLE_TERMINAL_END_COLOR
+              : "rgba(255, 255, 255, 0.9)";
+        return (
+          <g key={`handle-${idx}`}>
+            <circle
+              cx={point.x}
+              cy={point.y}
+              r={7}
+              className="cable-handle-halo"
+              onPointerDown={(e) => handleHandlePointerDown(selectedCableId!, idx, e)}
+              fill={handleFill}
+            />
+            <circle
+              cx={point.x}
+              cy={point.y}
+              r={4}
+              className={[
+                "cable-handle-dot",
+                `cable-handle-dot--${type}`,
+                pressingHandle && pressingHandle.cableId === selectedCableId && pressingHandle.handleIndex === idx
+                  ? "cable-handle-dot--pressing"
+                  : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              onPointerDown={(e) => handleHandlePointerDown(selectedCableId!, idx, e)}
+              fill={handleFill}
+            />
+          </g>
+        );
+      })}
       {connectorLabels.map(({ id, a, b }) => (
         <g key={`labels-${id}`} className="cable-connector-labels" style={{ pointerEvents: "none" }}>
           {a.text ? (
