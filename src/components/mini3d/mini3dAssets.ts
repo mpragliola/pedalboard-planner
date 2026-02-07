@@ -10,6 +10,8 @@ export function resolveImageSrc(path: string | null | undefined): string {
   return `${base}${path}`;
 }
 
+// Load and cache images for top textures. Returns null if not yet loaded
+// or errored.
 export function getTextureImage(
   src: string,
   imageCache: Map<string, ImageCacheEntry>,

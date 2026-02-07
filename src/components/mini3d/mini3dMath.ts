@@ -15,8 +15,10 @@ import type { CanvasObjectType } from "../../types";
 // Type Definitions
 // ============================================================================
 
+// State for animating camera zoom level.
 export type ZAnimState = { current: number; target: number };
 
+// A face to be rendered in the 3D scene.
 export interface Face {
   points: Vec2[];
   depth: number;
@@ -29,6 +31,8 @@ export interface Face {
   uv?: Vec2[];
 }
 
+// An object stacked in the 3D scene, with precomputed footprint 
+// and dimensions for layout.
 export interface StackedObject {
   obj: CanvasObjectType;
   width: number;
@@ -121,5 +125,6 @@ export function getSceneMetrics(stacked: StackedObject[]): { center: Vec3; radiu
   const d = maxZ;
   const maxDim = Math.max(w, h, d);
   const radius = maxDim * 1.5;
+  
   return { center: { x: center.x, y: center.y, z: centerZ }, radius, basePitch: 0.35 };
 }
