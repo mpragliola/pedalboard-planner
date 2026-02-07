@@ -1,19 +1,32 @@
-import { faFloppyDisk, faFolderOpen, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faCircleInfo, faFloppyDisk, faFolderOpen, faGear, faPlus, faWandMagicSparkles } from "@fortawesome/free-solid-svg-icons";
+import type { IconDefinition } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useRef, useState } from "react";
 import { useBoardIo } from "../../context/BoardIoContext";
 import { useConfirmation } from "../../context/ConfirmationContext";
-import { GptButton } from "../gpt/GptButton";
-import { InfoButton } from "../info/InfoButton";
-import { SettingsButton } from "../settings/SettingsButton";
+import { useSettingsModal } from "../../context/SettingsModalContext";
+import { GptModal } from "../gpt/GptModal";
+import { InfoModal } from "../info/InfoModal";
 import "./BoardMenu.scss";
+
+interface BoardMenuAction {
+  key: string;
+  title: string;
+  ariaLabel: string;
+  icon: IconDefinition;
+  onClick: () => void | Promise<void>;
+  disabled?: boolean;
+}
 
 export function BoardMenu() {
   const { newBoard, loadBoardFromFile, saveBoardToFile } = useBoardIo();
   const { requestConfirmation } = useConfirmation();
+  const { setOpen: setSettingsOpen } = useSettingsModal();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLoadingFile, setIsLoadingFile] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [isGptOpen, setIsGptOpen] = useState(false);
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
 
   const handleNewBoard = async () => {
     const confirmed = await requestConfirmation({
@@ -48,27 +61,67 @@ export function BoardMenu() {
     }
   };
 
+  const actions: BoardMenuAction[] = [
+    {
+      key: "new",
+      title: "New pedalboard (clear current)",
+      ariaLabel: "New pedalboard",
+      icon: faPlus,
+      onClick: handleNewBoard,
+    },
+    {
+      key: "load",
+      title: isLoadingFile ? "Loading pedalboard..." : "Load pedalboard from JSON file",
+      ariaLabel: "Load pedalboard",
+      icon: faFolderOpen,
+      onClick: handleLoadClick,
+      disabled: isLoadingFile,
+    },
+    {
+      key: "save",
+      title: "Save pedalboard to JSON file",
+      ariaLabel: "Save pedalboard",
+      icon: faFloppyDisk,
+      onClick: saveBoardToFile,
+    },
+    {
+      key: "gpt",
+      title: "Build price estimate prompt for LLM",
+      ariaLabel: "Build price estimate prompt for LLM",
+      icon: faWandMagicSparkles,
+      onClick: () => setIsGptOpen(true),
+    },
+    {
+      key: "info",
+      title: "About PedalboardFactory",
+      ariaLabel: "About PedalboardFactory",
+      icon: faCircleInfo,
+      onClick: () => setIsInfoOpen(true),
+    },
+    {
+      key: "settings",
+      title: "Settings",
+      ariaLabel: "Settings",
+      icon: faGear,
+      onClick: () => setSettingsOpen(true),
+    },
+  ];
+
   return (
     <div className="board-menu">
-      <button
-        type="button"
-        className="board-menu-btn"
-        onClick={handleNewBoard}
-        title="New pedalboard (clear current)"
-        aria-label="New pedalboard"
-      >
-        <FontAwesomeIcon icon={faPlus} />
-      </button>
-      <button
-        type="button"
-        className="board-menu-btn"
-        onClick={handleLoadClick}
-        title={isLoadingFile ? "Loading pedalboard..." : "Load pedalboard from JSON file"}
-        aria-label="Load pedalboard"
-        disabled={isLoadingFile}
-      >
-        <FontAwesomeIcon icon={faFolderOpen} />
-      </button>
+      {actions.map((action) => (
+        <button
+          key={action.key}
+          type="button"
+          className="board-menu-btn"
+          onClick={() => void action.onClick()}
+          title={action.title}
+          aria-label={action.ariaLabel}
+          disabled={action.disabled}
+        >
+          <FontAwesomeIcon icon={action.icon} />
+        </button>
+      ))}
       <input
         ref={fileInputRef}
         type="file"
@@ -78,18 +131,8 @@ export function BoardMenu() {
         tabIndex={-1}
         onChange={handleFileChange}
       />
-      <button
-        type="button"
-        className="board-menu-btn"
-        onClick={saveBoardToFile}
-        title="Save pedalboard to JSON file"
-        aria-label="Save pedalboard"
-      >
-        <FontAwesomeIcon icon={faFloppyDisk} />
-      </button>
-      <GptButton />
-      <InfoButton />
-      <SettingsButton />
+      <GptModal open={isGptOpen} onClose={() => setIsGptOpen(false)} />
+      <InfoModal open={isInfoOpen} onClose={() => setIsInfoOpen(false)} />
       {loadError ? (
         <p className="board-menu-error" role="alert">
           {loadError}
