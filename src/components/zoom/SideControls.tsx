@@ -108,9 +108,11 @@ export function SideControls() {
         title="Draw cables (click to add points, double-click to finish). SHIFT: disable snap. Ctrl: 45° lines (H/V/diagonals)."
         icon={faPlug}
         onClick={() => {
-          setRuler(() => false)
-          setLineRuler(() => false)
-          setCableLayer(() => true)
+          if (!cableLayer) {
+            setRuler(() => false)
+            setLineRuler(() => false)
+          }
+          setCableLayer((v) => !v)
         }}
         active={cableLayer}
         className="cable-layer-toggle"
