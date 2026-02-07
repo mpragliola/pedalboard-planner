@@ -1,5 +1,23 @@
 @use "../../styles/variables" as vars;
 
+@mixin dropdown-compact-uppercase {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+@mixin custom-input-border {
+  border: 1px solid vars.$color-border;
+  border-radius: 4px;
+}
+
+@mixin text-filter-input {
+  padding: 4px 20px 4px 6px;
+  background-image: none;
+  cursor: text;
+}
+
 .floating-dropdowns.floating-controls {
   position: fixed;
   z-index: vars.$z-dropdown-panel;
@@ -47,11 +65,8 @@
 }
 
 .dropdown-group .dropdown-label {
-  font-size: 0.65rem;
-  font-weight: 600;
+  @include dropdown-compact-uppercase;
   color: vars.$color-text-muted;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 
 .dropdown-group .dropdown {
@@ -74,9 +89,7 @@
 }
 
 .dropdown-group .dropdown.text-filter {
-  padding: 4px 6px;
-  background-image: none;
-  cursor: text;
+  @include text-filter-input;
 }
 
 .dropdown-group .dropdown:hover {
@@ -125,16 +138,13 @@
 }
 
 .filter-reset {
+  @include dropdown-compact-uppercase;
   margin-top: 2px;
   padding: 2px 0;
-  font-size: 0.65rem;
-  font-weight: 600;
   color: vars.$color-text-subtle;
   background: none;
   border: none;
   cursor: pointer;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 
 .filter-reset:hover:not(:disabled) {
@@ -148,19 +158,16 @@
 }
 
 .collapsible-toggle {
+  @include dropdown-compact-uppercase;
   display: flex;
   align-items: center;
   gap: 6px;
   margin-top: 8px;
   padding: 4px 0;
-  font-size: 0.65rem;
-  font-weight: 600;
   color: vars.$color-text-muted;
   background: none;
   border: none;
   cursor: pointer;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
   transition: opacity 0.15s ease;
 }
 
@@ -232,8 +239,7 @@
 .custom-input {
   font-size: 0.65rem;
   padding: 4px 6px;
-  border: 1px solid vars.$color-border;
-  border-radius: 4px;
+  @include custom-input-border;
   width: 72px;
   box-sizing: border-box;
 }
@@ -248,8 +254,7 @@
   width: 32px;
   height: 22px;
   padding: 0;
-  border: 1px solid vars.$color-border;
-  border-radius: 4px;
+  @include custom-input-border;
   cursor: pointer;
   background: transparent;
 }
@@ -284,3 +289,4 @@
     font-size: 0.845rem;
   }
 }
+

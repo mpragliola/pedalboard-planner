@@ -1,5 +1,85 @@
 @use "../../styles/variables" as vars;
 
+@mixin row-item-base {
+  width: 100%;
+  padding: 4px 8px;
+  text-align: left;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  font: inherit;
+  color: vars.$color-text;
+  cursor: pointer;
+  user-select: none;
+}
+
+@mixin single-line-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@mixin thumb-frame-base {
+  overflow: hidden;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .catalog-list-item-placeholder {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 3px;
+  }
+}
+
+@mixin card-container($gap, $padding) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $gap;
+  padding: $padding;
+  align-content: flex-start;
+}
+
+@mixin card-item($width, $padding, $radius, $gap) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $gap;
+  width: $width;
+  padding: $padding;
+  border: 1px solid vars.$black-08;
+  border-radius: $radius;
+  background: vars.$color-surface;
+  font: inherit;
+  color: vars.$color-text;
+  cursor: pointer;
+  user-select: none;
+  text-align: center;
+  touch-action: pan-y;
+  transition: border-color 0.15s, background 0.15s;
+
+  &:hover {
+    border-color: vars.$black-20;
+    background: vars.$color-surface-highlight;
+  }
+}
+
+@mixin card-thumb($size, $radius) {
+  @include thumb-frame-base;
+  width: $size;
+  height: $size;
+  border-radius: $radius;
+  flex-shrink: 0;
+}
+
 /* Header with label and view toggle */
 .catalog-list-header {
   display: flex;
@@ -7,11 +87,11 @@
   justify-content: space-between;
   gap: 8px;
   margin-bottom: 4px;
-}
 
-.catalog-list-header .dropdown-label {
-  margin: 0;
-  flex: 1;
+  .dropdown-label {
+    margin: 0;
+    flex: 1;
+  }
 }
 
 /* View mode toggle buttons */
@@ -35,17 +115,17 @@
   align-items: center;
   justify-content: center;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
-}
 
-.catalog-view-btn:hover {
-  background: vars.$color-surface-muted;
-  border-color: vars.$color-border-strong;
-}
+  &:hover {
+    background: vars.$color-surface-muted;
+    border-color: vars.$color-border-strong;
+  }
 
-.catalog-view-btn.active {
-  background: vars.$color-surface-strong;
-  border-color: vars.$color-text-disabled;
-  color: vars.$color-text;
+  &.active {
+    background: vars.$color-surface-strong;
+    border-color: vars.$color-text-disabled;
+    color: vars.$color-text;
+  }
 }
 
 /* Base list container */
@@ -76,253 +156,122 @@
 }
 
 /* ========== TEXT MODE (default) ========== */
-.catalog-list--text .catalog-list-item {
-  display: block;
-  width: 100%;
-  padding: 4px 8px;
-  text-align: left;
-  border: none;
-  border-radius: 0;
-  background: transparent;
-  font: inherit;
-  color: vars.$color-text;
-  cursor: pointer;
-  user-select: none;
-}
+.catalog-list--text {
+  .catalog-list-item {
+    @include row-item-base;
+    display: block;
 
-.catalog-list--text .catalog-list-item-text {
-  display: block;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+    &:hover {
+      background: vars.$black-06;
+    }
+  }
 
-.catalog-list--text .catalog-list-item:hover {
-  background: vars.$black-06;
-}
-
-/* Two columns only when catalog panel is expanded */
-.catalog-panel.panel-expanded .catalog-list--text {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0 8px;
+  .catalog-list-item-text {
+    @include single-line-text;
+    display: block;
+  }
 }
 
 /* ========== LIST MODE (thumbnail + text) ========== */
-.catalog-list--list .catalog-list-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 4px 8px;
-  text-align: left;
-  border: none;
-  border-radius: 0;
-  background: transparent;
-  font: inherit;
-  color: vars.$color-text;
-  cursor: pointer;
-  user-select: none;
-}
+.catalog-list--list {
+  .catalog-list-item {
+    @include row-item-base;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 
-.catalog-list--list .catalog-list-item-thumb {
-  flex: 0 0 36px;
-  width: 36px;
-  height: 36px;
-  border-radius: 4px;
-  overflow: hidden;
-  background: transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+    &:hover {
+      background: vars.$black-06;
+    }
+  }
 
-.catalog-list--list .catalog-list-item-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
+  .catalog-list-item-thumb {
+    @include thumb-frame-base;
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    border-radius: 4px;
+  }
 
-.catalog-list--list .catalog-list-item-placeholder {
-  display: block;
-  max-width: 100%;
-  max-height: 100%;
-  border-radius: 3px;
-}
-
-.catalog-list--list .catalog-list-item-text {
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.catalog-list--list .catalog-list-item:hover {
-  background: vars.$black-06;
+  .catalog-list-item-text {
+    @include single-line-text;
+    flex: 1;
+  }
 }
 
 /* Two columns only when catalog panel is expanded */
-.catalog-panel.panel-expanded .catalog-list--list {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0 8px;
+.catalog-panel.panel-expanded {
+  .catalog-list--text,
+  .catalog-list--list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 8px;
+  }
 }
 
 /* ========== GRID MODE (thumbnails with name below) ========== */
 .catalog-list--grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 6px;
-  align-content: flex-start;
-}
+  @include card-container(6px, 6px);
 
-.catalog-list--grid .catalog-list-group {
-  width: 100%;
-}
+  .catalog-list-group {
+    width: 100%;
+  }
 
-.catalog-list--grid .catalog-list-group-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
+  .catalog-list-group-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
 
-.catalog-list--grid .catalog-list-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  width: 64px;
-  padding: 4px;
-  border: 1px solid vars.$black-08;
-  border-radius: 6px;
-  background: vars.$color-surface;
-  font: inherit;
-  color: vars.$color-text;
-  cursor: pointer;
-  user-select: none;
-  text-align: center;
-  touch-action: pan-y;
-  transition: border-color 0.15s, background 0.15s;
-}
+  .catalog-list-item {
+    @include card-item(64px, 4px, 6px, 4px);
+  }
 
-.catalog-list--grid .catalog-list-item:hover {
-  border-color: vars.$black-20;
-  background: vars.$color-surface-highlight;
-}
+  .catalog-list-item-thumb {
+    @include card-thumb(48px, 4px);
+  }
 
-.catalog-list--grid .catalog-list-item-thumb {
-  width: 48px;
-  height: 48px;
-  border-radius: 4px;
-  overflow: hidden;
-  background: transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.catalog-list--grid .catalog-list-item-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.catalog-list--grid .catalog-list-item-placeholder {
-  display: block;
-  max-width: 100%;
-  max-height: 100%;
-  border-radius: 3px;
-}
-
-.catalog-list--grid .catalog-list-item-text {
-  font-size: 0.6rem;
-  line-height: 1.2;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  .catalog-list-item-text {
+    @include single-line-text;
+    font-size: 0.6rem;
+    line-height: 1.2;
+    max-width: 100%;
+  }
 }
 
 /* ========== LARGE MODE (bigger thumbnails with readable names) ========== */
 .catalog-list--large {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 8px;
-  align-content: flex-start;
-}
+  @include card-container(8px, 8px);
 
-.catalog-list--large .catalog-list-group {
-  width: 100%;
-}
+  .catalog-list-group {
+    width: 100%;
+  }
 
-.catalog-list--large .catalog-list-group-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
+  .catalog-list-group-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
 
-.catalog-list--large .catalog-list-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  width: 96px;
-  padding: 6px;
-  border: 1px solid vars.$black-08;
-  border-radius: 8px;
-  background: vars.$color-surface;
-  font: inherit;
-  color: vars.$color-text;
-  cursor: pointer;
-  user-select: none;
-  text-align: center;
-  touch-action: pan-y;
-  transition: border-color 0.15s, background 0.15s;
-}
+  .catalog-list-item {
+    @include card-item(96px, 6px, 8px, 6px);
+  }
 
-.catalog-list--large .catalog-list-item:hover {
-  border-color: vars.$black-20;
-  background: vars.$color-surface-highlight;
-}
+  .catalog-list-item-thumb {
+    @include card-thumb(72px, 6px);
+  }
 
-.catalog-list--large .catalog-list-item-thumb {
-  width: 72px;
-  height: 72px;
-  border-radius: 6px;
-  overflow: hidden;
-  background: transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.catalog-list--large .catalog-list-item-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.catalog-list--large .catalog-list-item-placeholder {
-  display: block;
-  max-width: 100%;
-  max-height: 100%;
-  border-radius: 3px;
-}
-
-.catalog-list--large .catalog-list-item-text {
-  font-size: 0.7rem;
-  line-height: 1.3;
-  max-width: 100%;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  word-break: break-word;
+  .catalog-list-item-text {
+    font-size: 0.7rem;
+    line-height: 1.3;
+    max-width: 100%;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    word-break: break-word;
+  }
 }
 
 /* ========== GROUP STYLES ========== */
@@ -347,14 +296,14 @@
   cursor: pointer;
   text-align: left;
   transition: background 0.15s ease;
-}
 
-.catalog-list-group-label:hover {
-  background: vars.$black-08;
-}
+  &:hover {
+    background: vars.$black-08;
+  }
 
-.catalog-list-group-label:active {
-  background: vars.$black-10;
+  &:active {
+    background: vars.$black-10;
+  }
 }
 
 .catalog-list-group-label-text {
@@ -388,10 +337,10 @@
   grid-template-rows: 1fr;
   transition: grid-template-rows 0.25s ease-out;
   min-height: 0;
-}
 
-.catalog-list-group-inner.collapsed {
-  grid-template-rows: 0fr;
+  &.collapsed {
+    grid-template-rows: 0fr;
+  }
 }
 
 .catalog-list-group-content {
@@ -404,19 +353,23 @@
 .catalog-list-item {
   touch-action: pan-y;
   -webkit-touch-callout: none;
-}
 
-.catalog-list-item:focus-visible {
-  outline: 2px solid vars.$color-primary;
-  outline-offset: -2px;
-}
+  &:focus-visible {
+    outline: 2px solid vars.$color-primary;
+    outline-offset: -2px;
+  }
 
-/* ========== LONG-PRESS FEEDBACK ========== */
-/* While pressing/holding - subtle scale and highlight; keep pan-y so list can still scroll until long-press fires */
-.catalog-list-item.catalog-item-pressing {
-  transform: scale(0.97);
-  background: vars.$primary-08;
-  transition: transform 0.15s ease-out, background 0.15s ease-out;
+  /* While pressing/holding - subtle scale and highlight; keep pan-y so list can still scroll until long-press fires */
+  &.catalog-item-pressing {
+    transform: scale(0.97);
+    background: vars.$primary-08;
+    transition: transform 0.15s ease-out, background 0.15s ease-out;
+  }
+
+  /* When long-press activates drag - brief pulse */
+  &.catalog-item-activated {
+    animation: catalog-item-pulse 0.2s ease-out;
+  }
 }
 
 /* Grid/large mode: also add border highlight */
@@ -424,11 +377,6 @@
 .catalog-list--large .catalog-list-item.catalog-item-pressing {
   border-color: rgba(10, 132, 255, 0.4);
   box-shadow: 0 0 0 2px vars.$primary-15;
-}
-
-/* When long-press activates drag - brief pulse */
-.catalog-list-item.catalog-item-activated {
-  animation: catalog-item-pulse 0.2s ease-out;
 }
 
 @keyframes catalog-item-pulse {

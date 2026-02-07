@@ -1,15 +1,75 @@
 @use "../../styles/variables" as vars;
 
 .info-modal-backdrop {
-  position: fixed;
-  inset: 0;
   z-index: vars.$z-info-modal;
   background: vars.$black-35;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: vars.$modal-padding;
   animation: info-modal-fade-in vars.$duration-backdrop vars.$ease-out;
+}
+
+.info-modal {
+  font-size: 0.72rem;
+  min-width: 320px;
+  max-width: vars.$modal-max-width-md;
+  width: 100%;
+  max-height: vars.$modal-max-height;
+  box-shadow: vars.$modal-shadow;
+  animation: info-modal-scale-in vars.$duration-modal vars.$ease-out;
+
+  .info-modal-intro {
+    margin: 0 0 14px;
+    color: vars.$color-text-soft;
+    line-height: 1.45;
+    font-size: 1em;
+  }
+
+  .info-modal-heading {
+    font-size: 0.85em;
+    font-weight: 700;
+    color: vars.$color-text;
+    margin: 14px 0 6px;
+  }
+
+  .info-modal-list {
+    margin: 0 0 4px;
+    padding-left: 1.25em;
+    line-height: 1.5;
+    color: vars.$color-text-soft;
+
+    li {
+      margin-bottom: 4px;
+    }
+  }
+
+  .info-modal-author {
+    margin: 4px 0 0;
+    color: vars.$color-text-soft;
+
+    a {
+      color: vars.$color-primary;
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  .info-modal-disclaimers {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid vars.$black-08;
+  }
+
+  .info-modal-disclaimer {
+    margin: 0 0 10px;
+    font-size: 0.9em;
+    color: vars.$color-text-subtle;
+    line-height: 1.4;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
 }
 
 @keyframes info-modal-fade-in {
@@ -22,21 +82,6 @@
   }
 }
 
-.info-modal {
-  font-size: 0.72rem;
-  background: vars.$color-surface;
-  border-radius: vars.$modal-radius;
-  box-shadow: vars.$modal-shadow;
-  display: flex;
-  flex-direction: column;
-  min-width: 320px;
-  max-width: vars.$modal-max-width-md;
-  width: 100%;
-  max-height: vars.$modal-max-height;
-  overflow: hidden;
-  animation: info-modal-scale-in vars.$duration-modal vars.$ease-out;
-}
-
 @keyframes info-modal-scale-in {
   from {
     opacity: 0;
@@ -47,104 +92,4 @@
     opacity: 1;
     transform: scale(1);
   }
-}
-
-.info-modal-header {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: vars.$modal-header-padding;
-  border-bottom: 1px solid vars.$black-08;
-}
-
-.info-modal-title {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: vars.$color-text-strong;
-  margin: 0;
-}
-
-.info-modal-close {
-  width: vars.$modal-close-size-compact;
-  height: vars.$modal-close-size-compact;
-  border: none;
-  border-radius: vars.$radius-md;
-  background: transparent;
-  font-size: 1.15rem;
-  line-height: 1;
-  color: vars.$color-text-muted;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background vars.$duration-fast, color vars.$duration-fast;
-}
-
-.info-modal-close:hover {
-  background: vars.$black-06;
-  color: vars.$color-text-strong;
-}
-
-.info-modal-body {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  padding: vars.$modal-body-padding;
-}
-
-.info-modal-intro {
-  margin: 0 0 14px;
-  color: vars.$color-text-soft;
-  line-height: 1.45;
-  font-size: 1em;
-}
-
-.info-modal-heading {
-  font-size: 0.85em;
-  font-weight: 700;
-  color: vars.$color-text;
-  margin: 14px 0 6px;
-}
-
-.info-modal-list {
-  margin: 0 0 4px;
-  padding-left: 1.25em;
-  line-height: 1.5;
-  color: vars.$color-text-soft;
-}
-
-.info-modal-list li {
-  margin-bottom: 4px;
-}
-
-.info-modal-author {
-  margin: 4px 0 0;
-  color: vars.$color-text-soft;
-}
-
-.info-modal-author a {
-  color: vars.$color-primary;
-  text-decoration: none;
-}
-
-.info-modal-author a:hover {
-  text-decoration: underline;
-}
-
-.info-modal-disclaimers {
-  margin-top: 18px;
-  padding-top: 14px;
-  border-top: 1px solid vars.$black-08;
-}
-
-.info-modal-disclaimer {
-  margin: 0 0 10px;
-  font-size: 0.9em;
-  color: vars.$color-text-subtle;
-  line-height: 1.4;
-}
-
-.info-modal-disclaimer:last-child {
-  margin-bottom: 0;
 }

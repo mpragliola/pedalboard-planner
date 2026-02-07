@@ -1,5 +1,15 @@
 @use "../../styles/variables" as vars;
 
+/* Shared overlay class for non-<dialog> modals (portal-based components). */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: vars.$modal-padding;
+}
+
 /* Native dialog: fill viewport so backdrop clicks hit the dialog; center content with flex */
 .modal-dialog {
   position: fixed;
@@ -79,6 +89,19 @@
 .modal-close:hover {
   background: vars.$black-06;
   color: vars.$color-text-strong;
+}
+
+.modal-close--compact {
+  width: vars.$modal-close-size-compact;
+  height: vars.$modal-close-size-compact;
+  font-size: 1.15rem;
+}
+
+/* Dialog modifier for smaller close button variants. */
+.modal-dialog.modal-dialog--compact-close .modal-close {
+  width: vars.$modal-close-size-compact;
+  height: vars.$modal-close-size-compact;
+  font-size: 1.15rem;
 }
 
 /* Body */

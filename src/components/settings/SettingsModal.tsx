@@ -11,7 +11,7 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
   const { unit, setUnit } = useUi();
 
   return (
-    <Modal open={open} onClose={onClose} title="Settings" className="settings-modal">
+    <Modal open={open} onClose={onClose} title="Settings" className="settings-modal modal-dialog--compact-close">
       <div className="settings-param">
         <label htmlFor="settings-unit" className="settings-param-label">
           Units

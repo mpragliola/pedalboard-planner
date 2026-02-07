@@ -162,19 +162,19 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
 
   const modal = (
     <div
-      className="component-list-modal-backdrop"
+      className="component-list-modal-backdrop modal-overlay"
       aria-hidden
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
-        className="component-list-modal"
+        className="component-list-modal modal-content"
         role="dialog"
         aria-modal="true"
         aria-label="Component list"
         onClick={(e) => e.stopPropagation()}
       >
-        <header className="component-list-modal-header">
-          <h2 className="component-list-modal-title">Component list</h2>
+        <header className="component-list-modal-header modal-header">
+          <h2 className="component-list-modal-title modal-title">Component list</h2>
           <div className="component-list-modal-header-actions">
             <button
               type="button"
@@ -186,12 +186,12 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
               <FontAwesomeIcon icon={faFileCsv} className="component-list-modal-export-btn-icon" />
               Export to CSV
             </button>
-            <button type="button" className="component-list-modal-close" onClick={onClose} aria-label="Close">
+            <button type="button" className="component-list-modal-close modal-close modal-close--compact" onClick={onClose} aria-label="Close">
               ×
             </button>
           </div>
         </header>
-        <div className="component-list-modal-body">
+        <div className="component-list-modal-body modal-body">
           {objects.length === 0 ? (
             <p className="component-list-modal-empty">No components on the canvas.</p>
           ) : (
@@ -327,3 +327,4 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
   );
   return createPortal(modal, document.body);
 }
+

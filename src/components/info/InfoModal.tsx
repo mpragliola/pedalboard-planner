@@ -13,21 +13,21 @@ export function InfoModal({ open, onClose }: InfoModalProps) {
   if (!open) return null;
 
   const modal = (
-    <div className="info-modal-backdrop" aria-hidden onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="info-modal-backdrop modal-overlay" aria-hidden onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div
-        className="info-modal"
+        className="info-modal modal-content"
         role="dialog"
         aria-modal="true"
         aria-label="About PedalboardFactory"
         onClick={(e) => e.stopPropagation()}
       >
-        <header className="info-modal-header">
-          <h2 className="info-modal-title">About PedalboardFactory</h2>
-          <button type="button" className="info-modal-close" onClick={onClose} aria-label="Close">
+        <header className="info-modal-header modal-header">
+          <h2 className="info-modal-title modal-title">About PedalboardFactory</h2>
+          <button type="button" className="info-modal-close modal-close modal-close--compact" onClick={onClose} aria-label="Close">
             ×
           </button>
         </header>
-        <div className="info-modal-body">
+        <div className="info-modal-body modal-body">
           <p className="info-modal-intro">
             PedalboardFactory helps you plan pedalboard layouts by placing boards and pedals on a canvas. You can
             arrange gear, compare sizes, and export a price-estimate prompt for an LLM.
@@ -67,3 +67,4 @@ export function InfoModal({ open, onClose }: InfoModalProps) {
   );
   return createPortal(modal, document.body);
 }
+

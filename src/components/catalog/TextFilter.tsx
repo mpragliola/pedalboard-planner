@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import './TextFilter.scss'
 
 interface TextFilterProps {
@@ -15,19 +16,41 @@ export function TextFilter({
   value,
   onChange,
 }: TextFilterProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const clearFilter = () => {
+    onChange("");
+    inputRef.current?.focus();
+  };
+
   return (
     <>
       <label htmlFor={id} className="dropdown-label">
         {label}
       </label>
-      <input
-        id={id}
-        type="text"
-        className="dropdown text-filter"
-        placeholder={placeholder}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      />
+      <div className="text-filter-wrapper">
+        <input
+          ref={inputRef}
+          id={id}
+          type="text"
+          className="dropdown text-filter"
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        />
+        {value ? (
+          <button
+            type="button"
+            className="text-filter-clear"
+            aria-label="Clear text filter"
+            title="Clear"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={clearFilter}
+          >
+            ×
+          </button>
+        ) : null}
+      </div>
     </>
   )
 }

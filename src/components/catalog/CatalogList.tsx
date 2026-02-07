@@ -52,7 +52,7 @@ function buildPlaceholderStyle(
   };
 }
 
-export type CatalogViewMode = "text" | "list" | "grid" | "large";
+export type CatalogViewMode = "text" | "list" | "grid" | "large" | "xlarge";
 
 const VIEW_MODE_OPTIONS: ReadonlyArray<{
   mode: CatalogViewMode;
@@ -63,6 +63,7 @@ const VIEW_MODE_OPTIONS: ReadonlyArray<{
   { mode: "list", title: "Thumbnail list", symbol: "\u2637" },
   { mode: "grid", title: "Small grid", symbol: "\u25A6" },
   { mode: "large", title: "Large grid", symbol: "\u229E" },
+  { mode: "xlarge", title: "Text list", symbol: "\u2656" },
 ];
 
 export interface CatalogListOption {
@@ -240,7 +241,7 @@ export function CatalogListGrouped({
   });
 
   const listClassName = `catalog-list catalog-list--${viewMode}`;
-  const minHeight = viewMode === "grid" || viewMode === "large" ? 120 : size * 28;
+  const minHeight = [ "grid", "large", "xlarge" ].includes(viewMode) ? 120 : size * 28;
 
   return (
     <>

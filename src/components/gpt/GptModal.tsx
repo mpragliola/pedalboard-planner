@@ -92,7 +92,7 @@ export function GptModal({ open, onClose }: GptModalProps) {
       open={open}
       onClose={onClose}
       title="Price estimate prompt"
-      className="gpt-modal"
+      className="gpt-modal modal-dialog--compact-close"
       ariaLabel="Price estimate prompt"
     >
       <p className="gpt-modal-intro">

@@ -1,28 +1,67 @@
 @use "../../styles/variables" as vars;
 
-/* Dialog (modal-dialog.settings-modal): full viewport, flex center so content is centered */
 .modal-dialog.settings-modal {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   padding: vars.$modal-padding;
   box-sizing: border-box;
-}
 
-/* White content box - applied to .modal-content inside the settings dialog */
-.modal-dialog.settings-modal .modal-content {
-  font-size: 0.72rem;
-  background: vars.$color-surface;
-  border-radius: vars.$modal-radius;
-  box-shadow: vars.$modal-shadow;
-  display: flex;
-  flex-direction: column;
-  min-width: 320px;
-  max-width: vars.$modal-max-width-sm;
-  width: 100%;
-  max-height: vars.$modal-max-height;
-  overflow: hidden;
-  animation: settings-modal-scale-in vars.$duration-modal vars.$ease-out;
+  .modal-content {
+    font-size: 0.72rem;
+    min-width: 320px;
+    max-width: vars.$modal-max-width-sm;
+    width: 100%;
+    max-height: vars.$modal-max-height;
+    box-shadow: vars.$modal-shadow;
+    animation: settings-modal-scale-in vars.$duration-modal vars.$ease-out;
+  }
+
+  .settings-param {
+    margin-bottom: 16px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .settings-param-label {
+    display: block;
+    font-size: 0.85em;
+    font-weight: 600;
+    color: vars.$color-text;
+    margin-bottom: 6px;
+  }
+
+  .settings-param-select {
+    display: block;
+    width: 100%;
+    max-width: 220px;
+    padding: 8px 10px;
+    font-size: 0.95em;
+    font-family: inherit;
+    color: vars.$color-text;
+    background: vars.$color-surface;
+    border: 1px solid vars.$black-20;
+    border-radius: 6px;
+    cursor: pointer;
+    appearance: auto;
+    transition: border-color 0.15s, box-shadow 0.15s;
+
+    &:hover {
+      border-color: vars.$black-35;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: vars.$color-primary;
+      box-shadow: 0 0 0 2px vars.$primary-25;
+    }
+  }
+
+  .settings-param-desc {
+    margin: 6px 0 0;
+    font-size: 0.9em;
+    color: vars.$color-text-subtle;
+    line-height: 1.4;
+  }
 }
 
 @keyframes settings-modal-scale-in {
@@ -30,101 +69,9 @@
     opacity: 0;
     transform: scale(0.98);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
   }
-}
-
-.modal-dialog.settings-modal .modal-header {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: vars.$modal-header-padding;
-  border-bottom: 1px solid vars.$black-08;
-}
-
-.modal-dialog.settings-modal .modal-title {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: vars.$color-text-strong;
-  margin: 0;
-}
-
-.modal-dialog.settings-modal .modal-close {
-  width: vars.$modal-close-size-compact;
-  height: vars.$modal-close-size-compact;
-  border: none;
-  border-radius: vars.$radius-md;
-  background: transparent;
-  font-size: 1.15rem;
-  line-height: 1;
-  color: vars.$color-text-muted;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background vars.$duration-fast, color vars.$duration-fast;
-}
-
-.modal-dialog.settings-modal .modal-close:hover {
-  background: vars.$black-06;
-  color: vars.$color-text-strong;
-}
-
-.modal-dialog.settings-modal .modal-body {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  padding: vars.$modal-body-padding;
-}
-
-.settings-param {
-  margin-bottom: 16px;
-}
-
-.settings-param:last-child {
-  margin-bottom: 0;
-}
-
-.settings-param-label {
-  display: block;
-  font-size: 0.85em;
-  font-weight: 600;
-  color: vars.$color-text;
-  margin-bottom: 6px;
-}
-
-.settings-param-select {
-  display: block;
-  width: 100%;
-  max-width: 220px;
-  padding: 8px 10px;
-  font-size: 0.95em;
-  font-family: inherit;
-  color: vars.$color-text;
-  background: vars.$color-surface;
-  border: 1px solid vars.$black-20;
-  border-radius: 6px;
-  cursor: pointer;
-  appearance: auto;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-
-.settings-param-select:hover {
-  border-color: vars.$black-35;
-}
-
-.settings-param-select:focus {
-  outline: none;
-  border-color: vars.$color-primary;
-  box-shadow: 0 0 0 2px vars.$primary-25;
-}
-
-.settings-param-desc {
-  margin: 6px 0 0;
-  font-size: 0.9em;
-  color: vars.$color-text-subtle;
-  line-height: 1.4;
 }
