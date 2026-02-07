@@ -88,8 +88,9 @@ export function CableLayerOverlay() {
       addCableAndPersist(cable);
       clearDrawing();
       setPendingSegments(null);
+      exitMode();
     },
-    [addCableAndPersist, clearDrawing]
+    [addCableAndPersist, clearDrawing, exitMode]
   );
 
   const handleAddCableCancel = useCallback(() => {
@@ -405,13 +406,13 @@ export function CableLayerOverlay() {
               type="button"
               className="cable-layer-add-btn"
               onClick={openAddCableModal}
-              title="Add cable (Enter). Stay in cable mode to draw more; double-tap to exit."
+              title="Add cable (Enter). Finish drawing and exit Add cable mode."
             >
               Add cable
             </button>
           </div>
           <p className="cable-layer-hint" aria-hidden>
-            Draw another or double-tap to exit
+            Finish or press Esc to cancel
           </p>
         </div>
       )}

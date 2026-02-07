@@ -474,7 +474,6 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
     "--mini3d-overlay-opacity": `${BASE_OVERLAY_OPACITY}`,
     "--mini3d-open-fade-ms": `${OPEN_FADE_MS}ms`,
     "--mini3d-close-fade-ms": `${convergenceTotal}ms`,
-    pointerEvents: showMini3d ? "auto" : "none",
   };
 
   const zoomScale = getZoomScale();
@@ -495,11 +494,11 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
 
   return (
     <>
-      <div className={backdropClass} style={overlayStyle} />
+      <div className={backdropClass} style={{ ...overlayStyle, pointerEvents: "none" }} />
       <div
         className={overlayClass}
         ref={containerRef}
-        style={overlayStyle}
+        style={{ ...overlayStyle, pointerEvents: showMini3d ? "auto" : "none" }}
         aria-label="3D overlay"
         title="3D overlay"
         onDoubleClick={() => {
@@ -583,7 +582,6 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
     </>
   );
 }
-
 
 
 

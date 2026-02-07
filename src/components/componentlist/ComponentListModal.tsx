@@ -106,21 +106,19 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
   const handleComponentRowDoubleClick = useCallback(
     (obj: { id: string }) => (e: React.MouseEvent) => {
       if ((e.target as HTMLElement).closest("button")) return;
-      setSelectedCableId(null);
       setSelectedObjectIds([obj.id]);
       onClose();
     },
-    [setSelectedObjectIds, setSelectedCableId, onClose]
+    [setSelectedObjectIds, onClose]
   );
 
   const handleCableRowDoubleClick = useCallback(
     (cableId: string) => (e: React.MouseEvent) => {
       if ((e.target as HTMLElement).closest("button")) return;
-      setSelectedObjectIds([]);
       setSelectedCableId(cableId);
       onClose();
     },
-    [setSelectedObjectIds, setSelectedCableId, onClose]
+    [setSelectedCableId, onClose]
   );
 
   const cableLengthsMm = useMemo(
@@ -240,7 +238,7 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
           <section className="connectors-section cables-section">
             <h3 className="connectors-section-title">Cables</h3>
             {cables.length === 0 ? (
-              <p className="connectors-empty">No cables. Use Cable layer to draw cables on the canvas.</p>
+              <p className="connectors-empty">No cables. Use Add cable to draw cables on the canvas.</p>
             ) : (
               <table className="connectors-table cables-table">
                 <thead>

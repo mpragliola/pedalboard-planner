@@ -46,7 +46,7 @@ export class PromptBuilder {
     return `at least ${mm.toFixed(0)} mm`;
   }
 
-  /** Cable layer list formatted for the prompt (connectors, optional names, length). */
+  /** Cable list formatted for the prompt (connectors, optional names, length). */
   getCableList(): string {
     if (this.options.cables.length === 0) return "";
     return this.options.cables
@@ -74,7 +74,7 @@ export class PromptBuilder {
       parts.push("Include cables, velcro and similar materials in the estimate.");
       const cableList = this.getCableList();
       if (cableList) {
-        parts.push("", "Cables (drawn on cable layer):", cableList);
+      parts.push("", "Cables (drawn on canvas):", cableList);
       }
     } else {
       parts.push("Exclude from the estimate: cables, velcro, and similar materials.");

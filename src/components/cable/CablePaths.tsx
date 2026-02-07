@@ -114,7 +114,7 @@ export function CablePaths({ cables, visible, selectedCableId, onCablePointerDow
         top: -CANVAS_HALF,
         width: CANVAS_SIZE,
         height: CANVAS_SIZE,
-        pointerEvents: visible ? "stroke" : "none",
+        pointerEvents: "none",
         zIndex: 1000,
         colorScheme: "normal",
       }}
@@ -129,7 +129,8 @@ export function CablePaths({ cables, visible, selectedCableId, onCablePointerDow
             strokeWidth={HIT_STROKE_MM}
             strokeLinejoin="round"
             strokeLinecap="round"
-            style={{ cursor: "pointer" }}
+            className="cable-hit-area"
+            style={{ cursor: "pointer", pointerEvents: "stroke" }}
             onPointerDown={(e) => onCablePointerDown(p.id, e)}
           />
           {/* Thicker stroke behind cable when selected – always visible, no filter */}

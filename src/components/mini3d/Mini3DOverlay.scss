@@ -20,9 +20,7 @@
     width 360ms ease,
     height 360ms ease,
     left 360ms ease,
-    right 360ms ease,
-    top 360ms ease,
-    bottom 360ms ease;
+    top 360ms ease;
   will-change: opacity;
 }
 
@@ -237,8 +235,6 @@
 .mini3d-overlay.mini3d-overlay--fullscreen {
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
   width: 100vw;
   height: 100vh;
   background: rgba(0, 0, 0, 0);

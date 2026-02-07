@@ -124,7 +124,7 @@ describe("PromptBuilder", () => {
       expect(out).toContain("cables, velcro");
     });
 
-    it("includes cable layer list when includeMaterials is true and cables exist", () => {
+    it("includes cable list when includeMaterials is true and cables exist", () => {
       const pb = new PromptBuilder([], {
         ...defaultOptions,
         includeMaterials: true,
@@ -140,7 +140,7 @@ describe("PromptBuilder", () => {
         getObjectName: (id) => id,
       });
       const out = pb.build();
-      expect(out).toContain("Cables (drawn on cable layer):");
+      expect(out).toContain("Cables (drawn on canvas):");
       expect(out).toContain("at least 200 mm");
       expect(out).not.toContain("#333");
     });

@@ -1,20 +1,13 @@
-import {
-  createContext,
-  useContext,
-  type Dispatch,
-  type PointerEvent as ReactPointerEvent,
-  type ReactNode,
-  type SetStateAction,
-} from "react";
+import { createContext, useContext, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import type { Cable } from "../types";
 
 export interface CableContextValue {
   cables: Cable[];
-  setCables: Dispatch<SetStateAction<Cable[]>>;
+  setCables: (action: Cable[] | ((prev: Cable[]) => Cable[]), saveToHistory?: boolean) => void;
   /** Add a cable and persist to storage immediately (so cables don't disappear). */
   addCableAndPersist: (cable: Cable) => void;
   selectedCableId: string | null;
-  setSelectedCableId: Dispatch<SetStateAction<string | null>>;
+  setSelectedCableId: (action: string | null | ((prev: string | null) => string | null)) => void;
   onCablePointerDown: (id: string, e: ReactPointerEvent) => void;
 }
 

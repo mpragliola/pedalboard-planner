@@ -11,6 +11,7 @@ import {
 import { StateManager, getObjectDimensions, type SavedState } from "../lib/stateManager";
 import { visibleViewportPlacement } from "../lib/placementStrategy";
 import { useCanvasZoomPan } from "../hooks/useCanvasZoomPan";
+import { useCableDrag } from "../hooks/useCableDrag";
 import { useObjectDrag } from "../hooks/useObjectDrag";
 import { useBoardDeviceFilters } from "../hooks/useBoardDeviceFilters";
 import { useHistory } from "../hooks/useHistory";
@@ -79,11 +80,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
 
   const setCables = useCallback(
-    (action: Cable[] | ((prev: Cable[]) => Cable[])) => {
+    (action: Cable[] | ((prev: Cable[]) => Cable[]), saveToHistory = true) => {
       setBoardState((prev) => {
         const newCables = typeof action === "function" ? action(prev.cables) : action;
         return newCables === prev.cables ? prev : { ...prev, cables: newCables };
-      }, true);
+      }, saveToHistory);
     },
     [setBoardState]
   );
@@ -140,26 +141,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
     onPinchStart: () => clearDragStateRef.current(),
   });
 
-  const { draggingObjectId, handleObjectDragStart, clearDragState } = useObjectDrag(
+  const { draggingObjectId, handleObjectDragStart, clearDragState: clearObjectDragState } = useObjectDrag(
     objects,
     setObjects,
     zoom,
     spaceDown
   );
+  const { handleCableDragStart, clearDragState: clearCableDragState } = useCableDrag(
+    cables,
+    setCables,
+    zoom,
+    spaceDown
+  );
 
   useEffect(() => {
-    clearDragStateRef.current = clearDragState;
+    clearDragStateRef.current = () => {
+      clearObjectDragState();
+      clearCableDragState();
+    };
     return () => {
       clearDragStateRef.current = () => {};
     };
-  }, [clearDragState]);
+  }, [clearObjectDragState, clearCableDragState]);
 
   const filters = useBoardDeviceFilters();
   const { setSelectedBoard, setSelectedDevice } = filters;
 
   const handleObjectPointerDown = useCallback(
     (id: string, e: React.PointerEvent) => {
-      setSelectedCableId(null);
       setSelectedObjectIds([id]);
       handleObjectDragStart(id, e);
     },
@@ -168,20 +177,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const handleCanvasPointerDown = useCallback(
     (e: React.PointerEvent) => {
-      if (e.button === 0 && !spaceDown && !(e.target as Element).closest(".canvas-object-wrapper")) {
-        setSelectedObjectIds([]);
-        setSelectedCableId(null);
+      if (e.button === 0 && !spaceDown) {
+        const target = e.target as Element | null;
+        const hitSelectable =
+          target?.closest(
+            ".canvas-object-wrapper, .cable-hit-area, .cable-endpoint-dot, .cable-connector-label"
+          ) ?? false;
+        if (!hitSelectable) {
+          setSelectedObjectIds([]);
+          setSelectedCableId(null);
+        }
       }
       canvasPanPointerDown(e);
     },
     [spaceDown, canvasPanPointerDown]
   );
 
-  const handleCablePointerDown = useCallback((id: string, e: React.PointerEvent) => {
-    e.stopPropagation();
-    setSelectedObjectIds([]);
-    setSelectedCableId(id);
-  }, []);
+  const handleCablePointerDown = useCallback(
+    (id: string, e: React.PointerEvent) => {
+      e.stopPropagation();
+      setSelectedCableId(id);
+      handleCableDragStart(id, e);
+    },
+    [handleCableDragStart]
+  );
 
   const handleImageError = useCallback((id: string) => {
     setImageFailedIds((prev) => new Set(prev).add(id));
@@ -560,7 +579,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       draggingObjectId,
       onImageError: handleImageError,
       onObjectPointerDown: handleObjectPointerDown,
-      onDragEnd: clearDragState,
+      onDragEnd: clearObjectDragState,
       onDeleteObject: handleDeleteObject,
       onRotateObject: handleRotateObject,
       onSendToBack: handleSendToBack,
@@ -575,7 +594,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       draggingObjectId,
       handleImageError,
       handleObjectPointerDown,
-      clearDragState,
+      clearObjectDragState,
       handleDeleteObject,
       handleRotateObject,
       handleSendToBack,

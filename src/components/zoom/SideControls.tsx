@@ -104,8 +104,8 @@ export function SideControls() {
   return (
     <div className="floating-controls side-controls">
       <SideControl
-        label="Cable layer"
-        title="Draw cables (click to add points, double-click to finish). SHIFT: disable snap. Ctrl: 45° lines (H/V/diagonals)."
+        label="Add cable"
+        title="Draw a cable (click to add points, double-click to finish). SHIFT: disable snap. Ctrl: 45° lines (H/V/diagonals)."
         icon={faPlug}
         onClick={() => {
           if (!cableLayer) {
