@@ -58,16 +58,6 @@ export function createObjectFromTemplate(
   };
 }
 
-/** @deprecated Use createObjectFromTemplate("board", template, x, y) instead. */
-export function createObjectFromBoardTemplate(template: BoardTemplate, x: number, y: number): CanvasObjectType {
-  return createObjectFromTemplate("board", template, x, y);
-}
-
-/** @deprecated Use createObjectFromTemplate("device", template, x, y) instead. */
-export function createObjectFromDeviceTemplate(template: DeviceTemplate, x: number, y: number): CanvasObjectType {
-  return createObjectFromTemplate("device", template, x, y);
-}
-
 const CUSTOM_BOARD_ID = "board-custom";
 const CUSTOM_DEVICE_ID = "device-custom";
 const CUSTOM_BOARD_HEIGHT_MM = 20;
@@ -79,11 +69,6 @@ export interface CustomItemParams {
   color: string;
   name: string;
 }
-
-/** @deprecated Use CustomItemParams instead. */
-export type CustomBoardParams = CustomItemParams;
-/** @deprecated Use CustomItemParams instead. */
-export type CustomDeviceParams = CustomItemParams;
 
 export function createObjectFromCustomBoard(params: CustomItemParams, x: number, y: number): CanvasObjectType {
   const template: BoardTemplate = {

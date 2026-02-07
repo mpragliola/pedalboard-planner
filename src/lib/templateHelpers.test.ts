@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
-  createObjectFromBoardTemplate,
-  createObjectFromDeviceTemplate,
+  createObjectFromTemplate,
   initNextObjectIdFromObjects,
   createObjectFromCustomBoard,
   createObjectFromCustomDevice,
@@ -31,9 +30,9 @@ const deviceTemplate: DeviceTemplate = {
   image: "boss/dc2w.png",
 };
 
-describe("createObjectFromBoardTemplate", () => {
+describe("createObjectFromTemplate (board)", () => {
   it("returns object with correct shape and position", () => {
-    const obj = createObjectFromBoardTemplate(boardTemplate, 50, 100);
+    const obj = createObjectFromTemplate("board", boardTemplate, 50, 100);
     expect(obj.subtype).toBe("board");
     expect(obj.x).toBe(50);
     expect(obj.y).toBe(100);
@@ -47,8 +46,8 @@ describe("createObjectFromBoardTemplate", () => {
   });
 
   it("increments id for each object", () => {
-    const a = createObjectFromBoardTemplate(boardTemplate, 0, 0);
-    const b = createObjectFromBoardTemplate(boardTemplate, 0, 0);
+    const a = createObjectFromTemplate("board", boardTemplate, 0, 0);
+    const b = createObjectFromTemplate("board", boardTemplate, 0, 0);
     // Extract counter from "prefix-counter" format
     const numA = parseInt(a.id.split("-")[1], 10);
     const numB = parseInt(b.id.split("-")[1], 10);
@@ -56,9 +55,9 @@ describe("createObjectFromBoardTemplate", () => {
   });
 });
 
-describe("createObjectFromDeviceTemplate", () => {
+describe("createObjectFromTemplate (device)", () => {
   it("returns object with correct shape and position", () => {
-    const obj = createObjectFromDeviceTemplate(deviceTemplate, 200, 300);
+    const obj = createObjectFromTemplate("device", deviceTemplate, 200, 300);
     expect(obj.subtype).toBe("device");
     expect(obj.x).toBe(200);
     expect(obj.y).toBe(300);
@@ -89,7 +88,7 @@ describe("initNextObjectIdFromObjects", () => {
         name: "",
       },
     ] as never);
-    const obj = createObjectFromBoardTemplate(boardTemplate, 0, 0);
+    const obj = createObjectFromTemplate("board", boardTemplate, 0, 0);
     // Counter portion of ID should be 11
     const counter = parseInt(obj.id.split("-")[1], 10);
     expect(counter).toBe(11);
@@ -113,7 +112,7 @@ describe("initNextObjectIdFromObjects", () => {
         name: "",
       },
     ] as never);
-    const obj = createObjectFromBoardTemplate(boardTemplate, 0, 0);
+    const obj = createObjectFromTemplate("board", boardTemplate, 0, 0);
     // Counter portion should be 26
     const counter = parseInt(obj.id.split("-")[1], 10);
     expect(counter).toBe(26);
