@@ -10,7 +10,9 @@ React component tree for the pedalboard editor app. Components are under `src/co
 App
 ├── ConfirmationProvider (context)
 │   └── AppProvider (context)
-│       └── AppContent
+│       └── SettingsModalProvider (context)
+│           └── CatalogDndProvider
+│               └── AppContent
 ```
 
 ---
@@ -19,8 +21,8 @@ App
 
 ```
 AppContent
-├── CatalogDragGhost                    (conditional: only when catalogDrag is set)
 ├── Canvas
+├── Mini3DOverlay                        (conditional: when showMini3d or during close)
 ├── catalog-panel (div)
 │   ├── catalog-panel-head
 │   │   ├── catalog-panel-toggle (button)   → setFloatingUiVisible
@@ -28,9 +30,10 @@ AppContent
 │   │   └── panel-expand-btn (button)       → setPanelExpanded
 │   └── catalog-panel-body
 │       └── DropdownsPanel
-├── ZoomControls
-├── HistoryControls
+├── SideControls
+├── BottomControls
 ├── SelectionInfoPopup
+├── SettingsModal
 ├── disclaimer (p)
 └── footer.copyright
 ```
@@ -96,49 +99,57 @@ Canvas
 │   └── canvas-viewport-zoom
 │       ├── Grid                    (optional, when showGrid)
 │       ├── SelectionToolbar        (when exactly one object selected)
+│       ├── CableToolbar            (when a cable is selected)
 │       └── CanvasObject[]          (one per object)
+│   └── CablePaths                  (cable SVG overlay)
+├── AddCableModal                   (when editing cable)
 └── RulerOverlay                    (when ruler)
     or LineRulerOverlay             (when lineRuler)
+    or CableLayerOverlay            (when cableLayer)
 ```
 
 - **Canvas** root: `onPointerDown` → handleCanvasPointerDown (selection clear + pan start); `onClick` →
   setFloatingUiVisible(false) unless shouldIgnoreCatalogClick.
-- **SelectionToolbar**: positioned above selected object; **SelectionToolbarButton** × 3 (Rotate, Send to back, Delete);
+- **SelectionToolbar**: positioned above selected object; **SelectionToolbarButton** × 4 (Rotate, Send to back, Bring to front, Delete);
   pointer/mouse down stopPropagation.
 - **CanvasObject**: wrapper div; `onPointerDown` → setPointerCapture + onObjectPointerDown (selection + object drag
   start); `onPointerUp` → onDragEnd when dragging.
 
 ---
 
-## ZoomControls
+## SideControls
 
 ```
-ZoomControls
-├── ZoomButton (zoom in)
-├── ZoomButton (zoom out)
+SideControls
+├── SideControl (Add cable)          → toggle cable layer (and disable rulers)
+├── SideControl (Show cables)        → toggle cable visibility
+├── SideControl (3D view)            → toggle Mini3DOverlay
 ├── view-tools-group (expandable)
-│   ├── view-tools-secondary
-│   │   ├── ZoomButton (center view)
-│   │   ├── ZoomButton (grid toggle)
-│   │   └── ZoomButton (x-ray toggle)
-│   └── ZoomButton (view options toggle)
+│   ├── SideControl (view options toggle)
+│   └── view-tools-secondary
+│       ├── SideControl (center view)
+│       ├── SideControl (grid toggle)
+│       ├── SideControl (x-ray toggle)
+│       └── SideControl (fullscreen toggle)
 ├── measurement-tools-group (expandable)
-│   ├── measurement-tools-secondary
-│   │   ├── ZoomButton (ruler toggle)
-│   │   └── ZoomButton (line ruler toggle)
-│   └── ZoomButton (measurement tools toggle)
-├── ZoomButton (component list)      → opens ComponentListModal
+│   ├── SideControl (measurement tools toggle)
+│   └── measurement-tools-secondary
+│       ├── SideControl (ruler toggle)
+│       └── SideControl (line ruler toggle)
+├── SideControl (component list)     → opens ComponentListModal
 └── ComponentListModal
 ```
 
 ---
 
-## HistoryControls
+## BottomControls
 
 ```
-HistoryControls
+BottomControls
 ├── HistoryButton (undo)
-└── HistoryButton (redo)
+├── HistoryButton (redo)
+├── ZoomButton (zoom in)
+└── ZoomButton (zoom out)
 ```
 
 ---
@@ -159,6 +170,7 @@ Shown when exactly one object is selected. Renders selected object name and dime
 | **InfoModal**          | InfoButton                    | Click InfoButton                                                                          |
 | **SettingsModal**      | SettingsButton                | Click SettingsButton                                                                      |
 | **ComponentListModal** | ZoomControls                  | Click “Component list” in ZoomControls                                                    |
+| **AddCableModal**       | Canvas                        | Edit selected cable                                                                        |
 
 **SettingsModal** uses **Modal** (common). **ComponentListModal** and **InfoModal** use their own layout; **GptModal**
 and **ConfirmationDialog** are standalone.

@@ -8,6 +8,8 @@ Web app for planning guitar pedalboard layouts. Place boards and pedals on a can
 - Drag, rotate, arrange; pinch-to-zoom on touch (separate from drag)
 - Zoom and pan; optional grid in mm or inches
 - Ruler tools: rectangle for distance, polyline for cable length
+- Cable drawing layer with selectable/editable cable paths
+- Mini 3D overlay for a quick layout preview (toggle in side controls)
 - Export to JSON, load from file (saves current layout only)
 - Confirmation before clearing or deleting
 - Image assets for common brands (Boss, MXR, Dunlop, Pedaltrain, etc.)
