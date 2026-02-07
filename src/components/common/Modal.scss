@@ -24,12 +24,87 @@
   align-items: center;
   justify-content: center;
   z-index: vars.$z-modal;
-}
 
-/* Native backdrop styling */
-.modal-dialog::backdrop {
-  background: vars.$black-50;
-  animation: modal-backdrop-fade-in vars.$duration-backdrop vars.$ease-out;
+  /* Native backdrop styling */
+  &::backdrop {
+    background: vars.$black-50;
+    animation: modal-backdrop-fade-in vars.$duration-backdrop vars.$ease-out;
+  }
+
+  /* Content wrapper: the visible box, centered by the dialog flex */
+  .modal-content {
+    display: flex;
+    flex-direction: column;
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow: hidden;
+    background: vars.$color-surface;
+    border-radius: vars.$modal-radius;
+    box-shadow: vars.$modal-shadow-soft;
+  }
+
+  /* Header */
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: vars.$modal-header-padding;
+    border-bottom: 1px solid vars.$black-08;
+    flex-shrink: 0;
+  }
+
+  .modal-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: vars.$color-text-strong;
+    margin: 0;
+  }
+
+  .modal-close {
+    width: vars.$modal-close-size;
+    height: vars.$modal-close-size;
+    border: none;
+    border-radius: vars.$radius-md;
+    background: transparent;
+    font-size: 1.25rem;
+    line-height: 1;
+    color: vars.$color-text-muted;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background vars.$duration-fast, color vars.$duration-fast;
+
+    &:hover {
+      background: vars.$black-06;
+      color: vars.$color-text-strong;
+    }
+
+    &.modal-close--compact {
+      width: vars.$modal-close-size-compact;
+      height: vars.$modal-close-size-compact;
+      font-size: 1.15rem;
+    }
+  }
+
+  /* Dialog modifier for smaller close button variants. */
+  &.modal-dialog--compact-close .modal-close {
+    width: vars.$modal-close-size-compact;
+    height: vars.$modal-close-size-compact;
+    font-size: 1.15rem;
+  }
+
+  /* Body */
+  .modal-body {
+    padding: vars.$modal-body-padding;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  /* Animation: apply to the content box so it appears centered from the start */
+  &[open] .modal-content {
+    animation: modal-slide-in vars.$duration-modal vars.$ease-out;
+  }
 }
 
 @keyframes modal-backdrop-fade-in {
@@ -39,81 +114,6 @@
   to {
     opacity: 1;
   }
-}
-
-/* Content wrapper: the visible box, centered by the dialog flex */
-.modal-content {
-  display: flex;
-  flex-direction: column;
-  max-width: 90vw;
-  max-height: 90vh;
-  overflow: hidden;
-  background: vars.$color-surface;
-  border-radius: vars.$modal-radius;
-  box-shadow: vars.$modal-shadow-soft;
-}
-
-/* Header */
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: vars.$modal-header-padding;
-  border-bottom: 1px solid vars.$black-08;
-  flex-shrink: 0;
-}
-
-.modal-title {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: vars.$color-text-strong;
-  margin: 0;
-}
-
-.modal-close {
-  width: vars.$modal-close-size;
-  height: vars.$modal-close-size;
-  border: none;
-  border-radius: vars.$radius-md;
-  background: transparent;
-  font-size: 1.25rem;
-  line-height: 1;
-  color: vars.$color-text-muted;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background vars.$duration-fast, color vars.$duration-fast;
-}
-
-.modal-close:hover {
-  background: vars.$black-06;
-  color: vars.$color-text-strong;
-}
-
-.modal-close--compact {
-  width: vars.$modal-close-size-compact;
-  height: vars.$modal-close-size-compact;
-  font-size: 1.15rem;
-}
-
-/* Dialog modifier for smaller close button variants. */
-.modal-dialog.modal-dialog--compact-close .modal-close {
-  width: vars.$modal-close-size-compact;
-  height: vars.$modal-close-size-compact;
-  font-size: 1.15rem;
-}
-
-/* Body */
-.modal-body {
-  padding: vars.$modal-body-padding;
-  overflow-y: auto;
-  flex: 1;
-}
-
-/* Animation: apply to the content box so it appears centered from the start */
-.modal-dialog[open] .modal-content {
-  animation: modal-slide-in vars.$duration-modal vars.$ease-out;
 }
 
 @keyframes modal-slide-in {
