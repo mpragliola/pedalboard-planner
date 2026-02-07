@@ -6,6 +6,7 @@ import { useUi } from "../../context/UiContext";
 import { getObjectDimensions } from "../../lib/stateManager";
 import { buildRoundedPathD, buildSmoothPathD, DEFAULT_JOIN_RADIUS } from "../../lib/polylinePath";
 import { formatLength } from "../../lib/rulerFormat";
+import { vec2Add, vec2Scale, vec2Sub, type Vec2 } from "../../lib/vector";
 import { useCanvasCoords } from "../../hooks/useCanvasCoords";
 import { useCableDraw } from "../../hooks/useCableDraw";
 import { useCablePhysics } from "../../hooks/useCablePhysics";
@@ -23,6 +24,18 @@ const CURRENT_CABLE_DASH_SCALE = 1 ;
 const CURRENT_CABLE_GAP_SCALE = 2;
 const CABLE_STROKE_WIDTH_MM = 5;
 const ENDPOINT_DOT_RADIUS_PX = 5;
+
+function segmentStartPoint(segment: CableSegment): Vec2 {
+  return { x: segment.x1, y: segment.y1 };
+}
+
+function segmentEndPoint(segment: CableSegment): Vec2 {
+  return { x: segment.x2, y: segment.y2 };
+}
+
+function vec2Length(point: Vec2): number {
+  return Math.hypot(point.x, point.y);
+}
 
 export function CableLayerOverlay() {
   const { canvasRef, zoom, pan, spaceDown } = useCanvas();
@@ -235,60 +248,57 @@ export function CableLayerOverlay() {
   const dashLengthPx = strokeWidthPx * CURRENT_CABLE_DASH_SCALE;
   const gapLengthPx = strokeWidthPx * CURRENT_CABLE_GAP_SCALE;
   const currentCableStrokeDasharray = `${dashLengthPx} ${gapLengthPx}`;
+  const toScreenPoint = (point: Vec2): Vec2 => toScreen(point.x, point.y);
 
-  const points = (() => {
+  const committedScreenPoints: Vec2[] =
+    segments.length > 0
+      ? [toScreenPoint(segmentStartPoint(segments[0])), ...segments.map((segment) => toScreenPoint(segmentEndPoint(segment)))]
+      : [];
+
+  const points: Vec2[] = (() => {
     if (segments.length === 0 && segmentStart) {
-      return [toScreen(segmentStart.x, segmentStart.y)];
+      return [toScreenPoint(segmentStart)];
     }
     if (segments.length === 0) return [];
-    const pts = [toScreen(segments[0].x1, segments[0].y1), ...segments.map((s) => toScreen(s.x2, s.y2))];
+    const pts = [...committedScreenPoints];
     if (hasPreview && currentEnd) {
-      pts.push(toScreen(currentEnd.x, currentEnd.y));
+      pts.push(toScreenPoint(currentEnd));
     }
     return pts;
   })();
 
   const committedPathD =
-    segments.length > 0
-      ? buildRoundedPathD(
-          [toScreen(segments[0].x1, segments[0].y1), ...segments.map((s) => toScreen(s.x2, s.y2))],
-          joinRadiusPx
-        )
+    committedScreenPoints.length > 0
+      ? buildRoundedPathD(committedScreenPoints, joinRadiusPx)
       : "";
 
-  const physicsScreenPoints = physicsPoints.map((p) => toScreen(p.x, p.y));
+  const physicsScreenPoints = physicsPoints.map((point) => toScreenPoint(point));
   const previewPathD =
     physicsScreenPoints.length >= 2
       ? buildSmoothPathD(physicsScreenPoints)
       : segmentStart && currentEnd && hasPreview
-        ? `M ${toScreen(segmentStart.x, segmentStart.y).x} ${toScreen(segmentStart.x, segmentStart.y).y} L ${toScreen(currentEnd.x, currentEnd.y).x} ${toScreen(currentEnd.x, currentEnd.y).y}`
+        ? `M ${toScreenPoint(segmentStart).x} ${toScreenPoint(segmentStart).y} L ${toScreenPoint(currentEnd).x} ${toScreenPoint(currentEnd).y}`
         : "";
 
   const firstPoint = points[0];
   const lastPoint = points.length > 1 ? points[points.length - 1] : null;
 
   const committedLength = useMemo(
-    () => segments.reduce((sum, s) => sum + Math.hypot(s.x2 - s.x1, s.y2 - s.y1), 0),
+    () => segments.reduce((sum, segment) => sum + vec2Length(vec2Sub(segmentEndPoint(segment), segmentStartPoint(segment))), 0),
     [segments]
   );
   const currentLength =
-    segmentStart && currentEnd ? Math.hypot(currentEnd.x - segmentStart.x, currentEnd.y - segmentStart.y) : 0;
+    segmentStart && currentEnd ? vec2Length(vec2Sub(currentEnd, segmentStart)) : 0;
   const totalLength = committedLength + currentLength;
 
-  const popupCenter =
+  const popupCenter: Vec2 | null =
     hasSegments || hasPreview
       ? hasPreview && segmentStart && currentEnd
-        ? {
-            x: pan.x + ((segmentStart.x + currentEnd.x) / 2) * zoom,
-            y: pan.y + ((segmentStart.y + currentEnd.y) / 2) * zoom,
-          }
+        ? toScreenPoint(vec2Scale(vec2Add(segmentStart, currentEnd), 0.5))
         : segments.length > 0
-        ? {
-            x: pan.x + segments[segments.length - 1].x2 * zoom,
-            y: pan.y + segments[segments.length - 1].y2 * zoom,
-          }
+        ? toScreenPoint(segmentEndPoint(segments[segments.length - 1]))
         : segmentStart
-        ? { x: pan.x + segmentStart.x * zoom, y: pan.y + segmentStart.y * zoom }
+        ? toScreenPoint(segmentStart)
         : null
       : null;
 
