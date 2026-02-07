@@ -13,6 +13,15 @@
   backdrop-filter: vars.$selection-popup-blur;
   border: 1px solid vars.$black-05;
   animation: info-popup-in vars.$duration-modal vars.$ease-out;
+
+  .info-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: vars.$color-text;
+    margin-bottom: vars.$space-8;
+    border-bottom: 1px solid vars.$black-10;
+    padding-bottom: vars.$space-4;
+  }
 }
 
 @keyframes info-popup-in {
@@ -25,13 +34,4 @@
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.selection-info-popup .info-title {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: vars.$color-text;
-  margin-bottom: vars.$space-8;
-  border-bottom: 1px solid vars.$black-10;
-  padding-bottom: vars.$space-4;
 }
