@@ -33,9 +33,9 @@ export const MIN_PITCH = 0.15;
 export const MAX_PITCH = 1.2;
 export const PITCH_OFFSET_MIN = -1.1;
 export const PITCH_OFFSET_MAX = 1.1;
-const CONVERGENCE_DURATION = 600;
+const CONVERGENCE_DURATION = 800;
 export const PER_COMPONENT_DELAY = 40;
-export const CONVERGENCE_OFFSET_DISTANCE = 80;
+export const CONVERGENCE_OFFSET_DISTANCE = 180;
 
 export function getConvergenceTotal(count: number): number {
   return CONVERGENCE_DURATION + Math.max(0, count - 1) * PER_COMPONENT_DELAY;

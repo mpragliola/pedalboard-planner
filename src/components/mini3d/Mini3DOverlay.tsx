@@ -6,6 +6,7 @@ import { clamp } from "../../lib/math";
 import { parseColor, rgba, shade } from "../../lib/color";
 import { normalizeRotation } from "../../lib/geometry";
 import { getDirectionalOffset } from "../../lib/geometry2d";
+import type { Point } from "../../lib/vector";
 import { resolveImageSrc } from "./mini3dAssets";
 import {
   computeStackedObjects,
@@ -31,19 +32,19 @@ const DOUBLE_TAP_DISTANCE = 24;
 const DOUBLE_TAP_DRAG_DISTANCE = 8;
 const DOUBLE_CLICK_DELAY_MS = 320;
 const OPEN_FADE_MS = 500;
-const VIEW_PADDING_PX = 12;
+const VIEW_PADDING_PX = 6;
+const INITIAL_PITCH_OFFSET = 0.18; // Slightly above view by default.
 
 /**
  * Single knob for mini-3D perspective intensity.
  * 0.0 = flatter (less foreshortening), 1.0 = strong perspective, 1.25+ = very dramatic.
  * Recommended range: 0.0..1.5.
  */
-const MINI3D_PERSPECTIVE_DRAMA = 1.25;
+const MINI3D_PERSPECTIVE_DRAMA = 1;
 const MINI3D_PERSPECTIVE_DRAMA_SAFE = clamp(MINI3D_PERSPECTIVE_DRAMA, 0, 1.5);
 const MINI3D_PERSPECTIVE_SCENE_FACTOR = Math.max(0.22, 1.9 - MINI3D_PERSPECTIVE_DRAMA_SAFE * 1.35);
 const MINI3D_CAMERA_DISTANCE_SCENE_FACTOR = Math.max(0.3, 1.15 - MINI3D_PERSPECTIVE_DRAMA_SAFE * 0.57);
 
-type PointerPoint = { x: number; y: number };
 type DragState = { pointerId: number; startX: number; startY: number; startYaw: number; startPitch: number };
 type DoubleTapState = { pointerId: number; startX: number; startY: number; moved: boolean };
 type OverlayPhase = "opening" | "open" | "closing";
@@ -52,7 +53,7 @@ type Mini3DOverlayProps = { onCloseComplete?: () => void };
 type CssVars = CSSProperties & Record<`--${string}`, string>;
 type FitTransform = { scale: number; offsetX: number; offsetY: number };
 
-function getPointersCenter(points: readonly [PointerPoint, PointerPoint]): PointerPoint {
+function getPointersCenter(points: readonly [Point, Point]): Point {
   return {
     x: (points[0].x + points[1].x) * 0.5,
     y: (points[0].y + points[1].y) * 0.5,
@@ -73,9 +74,11 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
   const [size, setSize] = useState({ width: 0, height: 0 });
 
   const yawRef = useRef(DEFAULT_CAMERA_YAW);
-  const pitchRef = useRef(0);
+  const pitchRef = useRef(INITIAL_PITCH_OFFSET);
   const rotateDragRef = useRef<DragState | null>(null);
-  const activePointersRef = useRef<Map<number, PointerPoint>>(new Map());
+  const activePointersRef = useRef<Map<number, Point>>(new Map());
+  const baseFitRef = useRef<FitTransform | null>(null);
+  const baseSizeRef = useRef<{ width: number; height: number } | null>(null);
 
   const autoRotateRafRef = useRef<number | null>(null);
   const autoRotateLastTimeRef = useRef<number | null>(null);
@@ -97,9 +100,10 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
   const cameraDistance = useMemo(() => -clamp(scene.maxDim * MINI3D_CAMERA_DISTANCE_SCENE_FACTOR, 60, 500), [scene.maxDim]);
 
   const computeFitTransform = useCallback(
-    (yaw: number, pitchOffset: number): FitTransform => {
-      const availableWidth = Math.max(1, size.width - VIEW_PADDING_PX * 2);
-      const availableHeight = Math.max(1, size.height - VIEW_PADDING_PX * 2);
+    (yaw: number, pitchOffset: number, sizeOverride?: { width: number; height: number }): FitTransform => {
+      const targetSize = sizeOverride ?? size;
+      const availableWidth = Math.max(1, targetSize.width - VIEW_PADDING_PX * 2);
+      const availableHeight = Math.max(1, targetSize.height - VIEW_PADDING_PX * 2);
       const pitch = clamp(0.35 + pitchOffset, MIN_PITCH, MAX_PITCH);
 
       const halfWidth = scene.width * 0.5;
@@ -201,17 +205,41 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
 
   const sceneFit = useMemo(() => computeFitTransform(yawRef.current, pitchRef.current), [computeFitTransform]);
 
+  useEffect(() => {
+    if (isFullscreen) return;
+    if (size.width <= 0 || size.height <= 0) return;
+    baseFitRef.current = sceneFit;
+    baseSizeRef.current = { width: size.width, height: size.height };
+  }, [isFullscreen, sceneFit, size.height, size.width]);
+
+  const getZoomScale = useCallback(() => {
+    if (!isFullscreen) return 1;
+    const baseSize = baseSizeRef.current;
+    if (!baseSize || baseSize.width <= 0 || baseSize.height <= 0) return 1;
+    return Math.min(size.width / baseSize.width, size.height / baseSize.height);
+  }, [isFullscreen, size.height, size.width]);
+
   const syncCameraVars = useCallback(() => {
     const world = worldRef.current;
     if (!world) return;
     const pitch = clamp(0.35 + pitchRef.current, MIN_PITCH, MAX_PITCH);
-    const fit = computeFitTransform(yawRef.current, pitchRef.current);
-    world.style.setProperty("--mini3d-scale", `${fit.scale}`);
-    world.style.setProperty("--mini3d-offset-x", `${fit.offsetX}px`);
-    world.style.setProperty("--mini3d-offset-y", `${fit.offsetY}px`);
+    const baseSize = isFullscreen ? baseSizeRef.current ?? undefined : undefined;
+    const fit = computeFitTransform(yawRef.current, pitchRef.current, baseSize);
+    const zoomScale = getZoomScale();
+    world.style.setProperty("--mini3d-scale", `${fit.scale * zoomScale}`);
+    world.style.setProperty("--mini3d-offset-x", `${fit.offsetX * zoomScale}px`);
+    world.style.setProperty("--mini3d-offset-y", `${fit.offsetY * zoomScale}px`);
     world.style.setProperty("--mini3d-yaw", `${-yawRef.current}rad`);
     world.style.setProperty("--mini3d-pitch", `${-pitch}rad`);
-  }, [computeFitTransform]);
+  }, [computeFitTransform, getZoomScale, isFullscreen]);
+
+  const toggleFullscreen = useCallback(() => {
+    if (!isFullscreen && size.width > 0 && size.height > 0) {
+      baseFitRef.current = computeFitTransform(yawRef.current, pitchRef.current);
+      baseSizeRef.current = { width: size.width, height: size.height };
+    }
+    setIsFullscreen((value) => !value);
+  }, [computeFitTransform, isFullscreen, size.height, size.width]);
 
 
   const clearOpenTimer = useCallback(() => {
@@ -421,7 +449,7 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
       }
 
       if (e.pointerType === "touch" && activePointersRef.current.size === 2) {
-        const pointers = Array.from(activePointersRef.current.values()) as [PointerPoint, PointerPoint];
+        const pointers = Array.from(activePointersRef.current.values()) as [Point, Point];
         const center = getPointersCenter(pointers);
         beginRotateDrag(e.pointerId, center.x, center.y);
       }
@@ -452,7 +480,7 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
       if (activePointersRef.current.size === 2) {
         e.preventDefault();
         e.stopPropagation();
-        const pointers = Array.from(activePointersRef.current.values()) as [PointerPoint, PointerPoint];
+        const pointers = Array.from(activePointersRef.current.values()) as [Point, Point];
         const center = getPointersCenter(pointers);
         currentX = center.x;
         currentY = center.y;
@@ -479,7 +507,7 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
             window.clearTimeout(clickTimeoutRef.current);
             clickTimeoutRef.current = null;
           }
-          setIsFullscreen((value) => !value);
+          toggleFullscreen();
         }
       }
 
@@ -498,7 +526,7 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
         }
       }
     },
-    [setIsFullscreen]
+    [toggleFullscreen]
   );
 
   if (!isVisible) return null;
@@ -513,6 +541,16 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
     .filter(Boolean)
     .join(" ");
 
+  const backdropClass = [
+    "mini3d-backdrop",
+    isFullscreen ? "mini3d-backdrop--fullscreen" : "",
+    phase === "opening" ? "mini3d-backdrop--opening" : "",
+    phase === "open" ? "mini3d-backdrop--open" : "",
+    phase === "closing" ? "mini3d-backdrop--closing" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   const overlayStyle: CssVars = {
     "--mini3d-overlay-opacity": `${BASE_OVERLAY_OPACITY}`,
     "--mini3d-open-fade-ms": `${OPEN_FADE_MS}ms`,
@@ -520,143 +558,152 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
     pointerEvents: showMini3d ? "auto" : "none",
   };
 
+  const zoomScale = getZoomScale();
+  const displayFit = isFullscreen && baseFitRef.current ? baseFitRef.current : sceneFit;
+
   const stageStyle: CssVars = {
     "--mini3d-perspective": `${perspective}px`,
   };
 
   const worldStyle: CssVars = {
-    "--mini3d-scale": `${sceneFit.scale}`,
-    "--mini3d-offset-x": `${sceneFit.offsetX}px`,
-    "--mini3d-offset-y": `${sceneFit.offsetY}px`,
+    "--mini3d-scale": `${displayFit.scale * zoomScale}`,
+    "--mini3d-offset-x": `${displayFit.offsetX * zoomScale}px`,
+    "--mini3d-offset-y": `${displayFit.offsetY * zoomScale}px`,
     "--mini3d-camera-z": `${cameraDistance}px`,
     "--mini3d-yaw": `${-yawRef.current}rad`,
     "--mini3d-pitch": `${-clamp(0.35 + pitchRef.current, MIN_PITCH, MAX_PITCH)}rad`,
   };
 
   return (
-    <div
-      className={overlayClass}
-      ref={containerRef}
-      style={overlayStyle}
-      role={FEATURE_MINI3D_AUTOROTATE ? "button" : undefined}
-      tabIndex={FEATURE_MINI3D_AUTOROTATE ? 0 : undefined}
-      aria-pressed={FEATURE_MINI3D_AUTOROTATE ? autoRotate : undefined}
-      aria-label={FEATURE_MINI3D_AUTOROTATE ? "Toggle 3D rotation" : "3D overlay"}
-      title={FEATURE_MINI3D_AUTOROTATE ? (autoRotate ? "Stop rotation" : "Start rotation") : "3D overlay"}
-      onClick={
-        FEATURE_MINI3D_AUTOROTATE
-          ? () => {
-              if (suppressClickRef.current != null) {
-                window.clearTimeout(suppressClickRef.current);
-                suppressClickRef.current = null;
-                return;
+    <>
+      <div className={backdropClass} style={overlayStyle} />
+      <div
+        className={overlayClass}
+        ref={containerRef}
+        style={overlayStyle}
+        role={FEATURE_MINI3D_AUTOROTATE ? "button" : undefined}
+        tabIndex={FEATURE_MINI3D_AUTOROTATE ? 0 : undefined}
+        aria-pressed={FEATURE_MINI3D_AUTOROTATE ? autoRotate : undefined}
+        aria-label={FEATURE_MINI3D_AUTOROTATE ? "Toggle 3D rotation" : "3D overlay"}
+        title={FEATURE_MINI3D_AUTOROTATE ? (autoRotate ? "Stop rotation" : "Start rotation") : "3D overlay"}
+        onClick={
+          FEATURE_MINI3D_AUTOROTATE
+            ? () => {
+                if (suppressClickRef.current != null) {
+                  window.clearTimeout(suppressClickRef.current);
+                  suppressClickRef.current = null;
+                  return;
+                }
+                if (clickTimeoutRef.current != null) {
+                  window.clearTimeout(clickTimeoutRef.current);
+                }
+                clickTimeoutRef.current = window.setTimeout(() => {
+                  clickTimeoutRef.current = null;
+                  setAutoRotate((value) => !value);
+                }, DOUBLE_CLICK_DELAY_MS);
               }
-              if (clickTimeoutRef.current != null) {
-                window.clearTimeout(clickTimeoutRef.current);
-              }
-              clickTimeoutRef.current = window.setTimeout(() => {
-                clickTimeoutRef.current = null;
-                setAutoRotate((value) => !value);
-              }, DOUBLE_CLICK_DELAY_MS);
-            }
-          : undefined
-      }
-      onDoubleClick={() => {
-        if (clickTimeoutRef.current != null) {
-          window.clearTimeout(clickTimeoutRef.current);
-          clickTimeoutRef.current = null;
+            : undefined
         }
-        setIsFullscreen((value) => !value);
-      }}
-      onPointerDown={handleRotatePointerDown}
-      onPointerMove={handleRotatePointerMove}
-      onPointerUp={handleRotatePointerUp}
-      onPointerCancel={handleRotatePointerUp}
-      onKeyDown={
-        FEATURE_MINI3D_AUTOROTATE
-          ? (e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                setAutoRotate((value) => !value);
+        onDoubleClick={() => {
+          if (clickTimeoutRef.current != null) {
+            window.clearTimeout(clickTimeoutRef.current);
+            clickTimeoutRef.current = null;
+          }
+          toggleFullscreen();
+        }}
+        onPointerDown={handleRotatePointerDown}
+        onPointerMove={handleRotatePointerMove}
+        onPointerUp={handleRotatePointerUp}
+        onPointerCancel={handleRotatePointerUp}
+        onKeyDown={
+          FEATURE_MINI3D_AUTOROTATE
+            ? (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setAutoRotate((value) => !value);
+                }
               }
-            }
-          : undefined
-      }
-    >
-      <div className="mini3d-stage" style={stageStyle}>
-        <div className="mini3d-world" ref={worldRef} style={worldStyle}>
-          {stacked.map((item, index) => {
-            const color = parseColor(item.obj.color ?? DEFAULT_OBJECT_COLOR) ?? FALLBACK_COLOR;
-            const topColor = rgba(shade(color, 1.05), 0.96);
-            const sideFront = rgba(shade(color, 0.84), 0.94);
-            const sideBack = rgba(shade(color, 0.58), 0.92);
-            const sideRight = rgba(shade(color, 0.72), 0.93);
-            const sideLeft = rgba(shade(color, 0.64), 0.93);
-            const bottomColor = rgba(shade(color, 0.42), 0.88);
+            : undefined
+        }
+      >
+        <div className="mini3d-stage" style={stageStyle}>
+          <div className="mini3d-world" ref={worldRef} style={worldStyle}>
+            {stacked.map((item, index) => {
+              const color = parseColor(item.obj.color ?? DEFAULT_OBJECT_COLOR) ?? FALLBACK_COLOR;
+              const topColor = rgba(shade(color, 1.05), 0.96);
+              const sideFront = rgba(shade(color, 0.84), 0.94);
+              const sideBack = rgba(shade(color, 0.58), 0.92);
+              const sideRight = rgba(shade(color, 0.72), 0.93);
+              const sideLeft = rgba(shade(color, 0.64), 0.93);
+              const bottomColor = rgba(shade(color, 0.42), 0.88);
 
-            const centerX = item.obj.pos.x + item.width / 2 - scene.center.x;
-            const centerZ = item.obj.pos.y + item.depth / 2 - scene.center.y;
-            const renderHeight = Math.max(1, item.height);
-            const centerY = -(item.baseZ + renderHeight / 2);
-            const rotation = normalizeRotation(item.obj.rotation ?? 0);
+              const centerX = item.obj.pos.x + item.width / 2 - scene.center.x;
+              const centerZ = item.obj.pos.y + item.depth / 2 - scene.center.y;
+              const renderHeight = Math.max(1, item.height);
+              const centerY = -(item.baseZ + renderHeight / 2);
+              const rotation = normalizeRotation(item.obj.rotation ?? 0);
 
-            const deltaX = item.obj.pos.x + item.width / 2 - scene.center.x;
-            const deltaY = item.obj.pos.y + item.depth / 2 - scene.center.y;
-            const offset = getDirectionalOffset(deltaX, deltaY, CONVERGENCE_OFFSET_DISTANCE);
+              const deltaX = item.obj.pos.x + item.width / 2 - scene.center.x;
+              const deltaY = item.obj.pos.y + item.depth / 2 - scene.center.y;
+              const offset = getDirectionalOffset(deltaX, deltaY, CONVERGENCE_OFFSET_DISTANCE);
 
-            const shiftClass =
-              phase === "opening"
-                ? "mini3d-item-shift mini3d-item-shift--opening"
-                : phase === "closing"
-                  ? "mini3d-item-shift mini3d-item-shift--closing"
-                  : "mini3d-item-shift";
+              const shiftClass =
+                phase === "opening"
+                  ? "mini3d-item-shift mini3d-item-shift--opening"
+                  : phase === "closing"
+                    ? "mini3d-item-shift mini3d-item-shift--closing"
+                    : "mini3d-item-shift";
 
-            const shiftStyle: CssVars = {
-              "--mini3d-delay-ms": `${index * PER_COMPONENT_DELAY}ms`,
-              "--mini3d-conv-x": `${offset.offsetX}`,
-              "--mini3d-conv-z": `${offset.offsetY}`,
-            };
+              const shiftStyle: CssVars = {
+                "--mini3d-delay-ms": `${index * PER_COMPONENT_DELAY}ms`,
+                "--mini3d-conv-x": `${offset.offsetX}`,
+                "--mini3d-conv-z": `${offset.offsetY}`,
+              };
 
-            const boxStyle: CssVars = {
-              "--mini3d-width": `${item.width}px`,
-              "--mini3d-depth": `${item.depth}px`,
-              "--mini3d-height": `${renderHeight}px`,
-              "--mini3d-top-color": topColor,
-              "--mini3d-front-color": sideFront,
-              "--mini3d-back-color": sideBack,
-              "--mini3d-right-color": sideRight,
-              "--mini3d-left-color": sideLeft,
-              "--mini3d-bottom-color": bottomColor,
-              "--mini3d-top-image": item.obj.image ? `url("${resolveImageSrc(item.obj.image)}")` : "none",
-              transform: `translate3d(${centerX}px, ${centerY}px, ${centerZ}px) rotateY(${rotation}deg)`,
-            };
+              const boxStyle: CssVars = {
+                "--mini3d-width": `${item.width}px`,
+                "--mini3d-depth": `${item.depth}px`,
+                "--mini3d-height": `${renderHeight}px`,
+                "--mini3d-top-color": topColor,
+                "--mini3d-front-color": sideFront,
+                "--mini3d-back-color": sideBack,
+                "--mini3d-right-color": sideRight,
+                "--mini3d-left-color": sideLeft,
+                "--mini3d-bottom-color": bottomColor,
+                "--mini3d-top-image": item.obj.image ? `url("${resolveImageSrc(item.obj.image)}")` : "none",
+                transform: `translate3d(${centerX}px, ${centerY}px, ${centerZ}px) rotateY(${rotation}deg)`,
+              };
 
-            return (
-              <div key={item.obj.id} className={shiftClass} style={shiftStyle}>
-                <div className="mini3d-box" style={boxStyle}>
-                  <div className="mini3d-face mini3d-face--front" />
-                  <div className="mini3d-face mini3d-face--back" />
-                  <div className="mini3d-face mini3d-face--right" />
-                  <div className="mini3d-face mini3d-face--left" />
-                  <div className="mini3d-face mini3d-face--top" />
-                  <div className="mini3d-face mini3d-face--bottom" />
+              return (
+                <div key={item.obj.id} className={shiftClass} style={shiftStyle}>
+                  <div className="mini3d-box" style={boxStyle}>
+                    <div className="mini3d-face mini3d-face--front" />
+                    <div className="mini3d-face mini3d-face--back" />
+                    <div className="mini3d-face mini3d-face--right" />
+                    <div className="mini3d-face mini3d-face--left" />
+                    <div className="mini3d-face mini3d-face--top" />
+                    <div className="mini3d-face mini3d-face--bottom" />
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
 
-      {showMini3d ? (
-        <div className="mini3d-instruction">
-          {FEATURE_MINI3D_AUTOROTATE
-            ? "Middle button or double-tap drag to rotate. Click/tap for auto-rotation. Double click/tap to toggle fullscreen."
-            : "Middle button or double-tap drag to rotate. Double click/tap to toggle fullscreen."}
-        </div>
-      ) : null}
-    </div>
+        {showMini3d ? (
+          <div className="mini3d-instruction">
+            {FEATURE_MINI3D_AUTOROTATE
+              ? "Middle button or double-tap drag to rotate. Click/tap for auto-rotation. Double click/tap to toggle fullscreen."
+              : "Middle button or double-tap drag to rotate. Double click/tap to toggle fullscreen."}
+          </div>
+        ) : null}
+      </div>
+    </>
   );
 }
+
+
+
 
 
 

@@ -2,16 +2,40 @@
 
 .mini3d-overlay {
   position: fixed;
-  bottom: vars.$floating-panel-offset;
+  top: auto;
+  right: auto;
   left: vars.$floating-panel-offset;
   width: clamp(vars.$mini3d-width-min, 50vw, vars.$mini3d-width-max);
   height: clamp(vars.$mini3d-height-min, 50vh, vars.$mini3d-height-max);
+  top: calc(100vh - vars.$floating-panel-offset - clamp(vars.$mini3d-height-min, 50vh, vars.$mini3d-height-max));
   z-index: vars.$z-mini3d;
   cursor: pointer;
   touch-action: none;
   opacity: 0;
-  transition: opacity var(--mini3d-open-fade-ms, 500ms) ease;
+  background: rgba(0, 0, 0, 0);
+  transform-origin: left bottom;
+  transition:
+    opacity var(--mini3d-open-fade-ms, 500ms) ease,
+    background 360ms ease,
+    width 360ms ease,
+    height 360ms ease,
+    left 360ms ease,
+    right 360ms ease,
+    top 360ms ease,
+    bottom 360ms ease;
   will-change: opacity;
+}
+
+.mini3d-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: calc(vars.$z-mini3d - 1);
+  background: rgba(0, 0, 0, 0.69);
+  opacity: 0;
+  transition:
+    opacity var(--mini3d-open-fade-ms, 500ms) ease,
+    background 360ms ease;
+  pointer-events: none;
 }
 
 .mini3d-overlay.mini3d-overlay--opening,
@@ -19,7 +43,18 @@
   opacity: var(--mini3d-overlay-opacity, 0.85);
 }
 
+.mini3d-backdrop.mini3d-backdrop--fullscreen.mini3d-backdrop--opening,
+.mini3d-backdrop.mini3d-backdrop--fullscreen.mini3d-backdrop--open {
+  opacity: 1;
+}
+
 .mini3d-overlay.mini3d-overlay--closing {
+  opacity: 0;
+  transition-duration: var(--mini3d-close-fade-ms, 600ms);
+  transition-timing-function: linear;
+}
+
+.mini3d-backdrop.mini3d-backdrop--fullscreen.mini3d-backdrop--closing {
   opacity: 0;
   transition-duration: var(--mini3d-close-fade-ms, 600ms);
   transition-timing-function: linear;
@@ -183,10 +218,12 @@
 
 @media (max-width: 768px) {
   .mini3d-overlay {
-    bottom: vars.$floating-panel-offset-sm;
     left: vars.$floating-panel-offset-sm;
     width: clamp(vars.$mini3d-width-min-mobile, 35vw, vars.$mini3d-width-max-mobile);
     height: clamp(vars.$mini3d-height-min-mobile, 35vh, vars.$mini3d-height-max-mobile);
+    top: calc(
+      100vh - vars.$floating-panel-offset-sm - clamp(vars.$mini3d-height-min-mobile, 35vh, vars.$mini3d-height-max-mobile)
+    );
   }
 
   .mini3d-instruction {
@@ -204,7 +241,7 @@
   bottom: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0);
   cursor: zoom-out;
 }
 
