@@ -54,6 +54,17 @@ function buildPlaceholderStyle(
 
 export type CatalogViewMode = "text" | "list" | "grid" | "large";
 
+const VIEW_MODE_OPTIONS: ReadonlyArray<{
+  mode: CatalogViewMode;
+  title: string;
+  symbol: string;
+}> = [
+  { mode: "text", title: "Text list", symbol: "\u2630" },
+  { mode: "list", title: "Thumbnail list", symbol: "\u2637" },
+  { mode: "grid", title: "Small grid", symbol: "\u25A6" },
+  { mode: "large", title: "Large grid", symbol: "\u229E" },
+];
+
 export interface CatalogListOption {
   id: string;
   name: string;
@@ -69,7 +80,7 @@ interface CatalogListProps {
   label: string;
   size: number;
   options: CatalogListOption[];
-  /** 'boards' | 'devices' – used for drag-from-catalog drop on canvas */
+  /** 'boards' | 'devices' - used for drag-from-catalog drop on canvas */
   catalogMode: "boards" | "devices";
   /** Controlled view mode */
   viewMode: CatalogViewMode;
@@ -77,49 +88,30 @@ interface CatalogListProps {
   onViewModeChange: (mode: CatalogViewMode) => void;
 }
 
-function ViewModeToggle({ mode, onChange }: { mode: CatalogViewMode; onChange: (m: CatalogViewMode) => void }) {
+function ViewModeToggle({
+  mode: currentMode,
+  onChange,
+}: {
+  mode: CatalogViewMode;
+  onChange: (m: CatalogViewMode) => void;
+}) {
   return (
     <div className="catalog-view-toggle" role="group" aria-label="View mode">
-      <button
-        type="button"
-        className={`catalog-view-btn${mode === "text" ? " active" : ""}`}
-        onClick={() => onChange("text")}
-        title="Text list"
-        aria-pressed={mode === "text"}
-      >
-        ☰
-      </button>
-      <button
-        type="button"
-        className={`catalog-view-btn${mode === "list" ? " active" : ""}`}
-        onClick={() => onChange("list")}
-        title="Thumbnail list"
-        aria-pressed={mode === "list"}
-      >
-        ☷
-      </button>
-      <button
-        type="button"
-        className={`catalog-view-btn${mode === "grid" ? " active" : ""}`}
-        onClick={() => onChange("grid")}
-        title="Small grid"
-        aria-pressed={mode === "grid"}
-      >
-        ▦
-      </button>
-      <button
-        type="button"
-        className={`catalog-view-btn${mode === "large" ? " active" : ""}`}
-        onClick={() => onChange("large")}
-        title="Large grid"
-        aria-pressed={mode === "large"}
-      >
-        ⊞
-      </button>
+      {VIEW_MODE_OPTIONS.map(({ mode, title, symbol }) => (
+        <button
+          key={mode}
+          type="button"
+          className={`catalog-view-btn${currentMode === mode ? " active" : ""}`}
+          onClick={() => onChange(mode)}
+          title={title}
+          aria-pressed={currentMode === mode}
+        >
+          {symbol}
+        </button>
+      ))}
     </div>
   );
 }
-
 export function CatalogList({ id, label, size, options, catalogMode, viewMode, onViewModeChange }: CatalogListProps) {
   const listRef = useRef<HTMLDivElement>(null);
   const scrollRestoreRef = useRef<number | null>(null);
