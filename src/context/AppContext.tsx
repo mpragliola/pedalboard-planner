@@ -135,6 +135,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     zoomOut,
     handleCanvasPointerDown: canvasPanPointerDown,
     tileSize,
+    pausePanZoom,
   } = useCanvasZoomPan({
     initialZoom: savedState?.zoom,
     initialPan: savedState?.pan,
@@ -552,6 +553,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       canvasAnimating,
       setCanvasAnimating,
       handleCanvasPointerDown,
+      pausePanZoom,
     }),
     [
       canvasRef,
@@ -566,6 +568,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       canvasAnimating,
       setCanvasAnimating,
       handleCanvasPointerDown,
+      pausePanZoom,
     ]
   );
 

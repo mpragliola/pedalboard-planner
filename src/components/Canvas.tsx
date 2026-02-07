@@ -118,6 +118,24 @@ export function Canvas() {
                 setCables((prev) => prev.filter((c) => c.id !== id));
                 setSelectedCableId(null);
               }}
+              onSendToBack={(id) =>
+                setCables((prev) => {
+                  const idx = prev.findIndex((c) => c.id === id);
+                  if (idx <= 0) return prev;
+                  const cable = prev[idx];
+                  const rest = prev.slice(0, idx).concat(prev.slice(idx + 1));
+                  return [cable, ...rest];
+                })
+              }
+              onBringToFront={(id) =>
+                setCables((prev) => {
+                  const idx = prev.findIndex((c) => c.id === id);
+                  if (idx === -1 || idx === prev.length - 1) return prev;
+                  const cable = prev[idx];
+                  const rest = prev.slice(0, idx).concat(prev.slice(idx + 1));
+                  return [...rest, cable];
+                })
+              }
             />
           )}
           {objects.map((obj, index) => (

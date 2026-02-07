@@ -20,6 +20,7 @@ export interface CanvasContextValue {
   canvasAnimating: boolean;
   setCanvasAnimating: (v: boolean) => void;
   handleCanvasPointerDown: (e: ReactPointerEvent) => void;
+  pausePanZoom?: (v: boolean) => void;
 }
 
 const CanvasContext = createContext<CanvasContextValue | null>(null);

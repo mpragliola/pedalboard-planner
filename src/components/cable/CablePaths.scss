@@ -12,4 +12,20 @@
     stroke: vars.$white-90;
     stroke-width: 0.9;
   }
+
+  .cable-handle-halo {
+    fill: rgba(255, 255, 255, 0.08);
+    stroke: rgba(10, 132, 255, 0.7);
+    stroke-width: 1.5;
+    cursor: grab;
+    pointer-events: all;
+  }
+
+  .cable-handle-dot {
+    fill: vars.$white-90;
+    stroke: rgba(0, 0, 0, 0.45);
+    stroke-width: 1;
+    cursor: grab;
+    pointer-events: all;
+  }
 }

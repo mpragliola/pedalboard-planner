@@ -31,6 +31,7 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
   const [zoom, setZoom] = useState<number>(options?.initialZoom ?? 1);
   const [pan, setPan] = useState<{ x: number; y: number }>(options?.initialPan ?? { x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
+  const pauseRef = useRef(false);
   const [spaceDown, setSpaceDown] = useState(false);
   const panStartRef = useRef<{ mouseX: number; mouseY: number; panX: number; panY: number; pointerId: number } | null>(
     null
@@ -70,6 +71,7 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
   }, [pan]);
 
   const zoomToward = useCallback((newZoom: number, pivotX: number, pivotY: number) => {
+    if (pauseRef.current) return;
     const z = zoomRef.current;
     const p = panRef.current;
     const clampedZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, newZoom));
@@ -292,6 +294,7 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
   const handleCanvasPointerDown = useCallback(
     (e: React.PointerEvent) => {
       const onObject = (e.target as Element).closest(".canvas-object-wrapper");
+      if (pauseRef.current) return;
       const startPan =
         e.button === 1 || // middle button always pans (even over objects)
         (e.button === 0 && spaceDown) || // space + left drag pans everywhere
@@ -331,5 +334,14 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
     zoomToward,
     handleCanvasPointerDown,
     tileSize,
+    pausePanZoom: (v: boolean) => {
+      pauseRef.current = v;
+      if (v) {
+        setAnimating(false);
+        setIsPanning(false);
+        panStartRef.current = null;
+        pinchRef.current = null;
+      }
+    },
   };
 }

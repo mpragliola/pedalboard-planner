@@ -49,7 +49,7 @@ export function SizeFilters({
           </span>
         </div>
         <div className="size-slider-row">
-          <Slider
+           <Slider
             className="size-slider"
             min={widthRange[0]}
             max={widthRange[1]}

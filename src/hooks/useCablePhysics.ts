@@ -14,7 +14,11 @@ interface Particle {
 
 /** Number of point-masses in the rope chain. */
 const NUM_PARTICLES = 20;
-/** Downward acceleration in mm per frame² (canvas coords, y-down). */
+/** 
+ * Downward acceleration in mm per frame² (canvas coords, y-down). 
+ * NOTE: this is thought for a side view, while the application has a top
+ * view. The slack should remain therefore minimal.
+ * */
 const GRAVITY = 0.4;
 /** Velocity retention per frame (1 = no damping). */
 const DAMPING = 0.2;
