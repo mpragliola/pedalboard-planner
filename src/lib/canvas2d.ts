@@ -1,8 +1,10 @@
+/** Canvas 2D drawing primitives for flat and texture-mapped faces. */
 import { vec2Cross, vec2Multiply, vec2Sub, type Vec2 } from "./vector";
 
 // 2D canvas drawing helpers for textured and flat faces.
 export type Mat2D = { a: number; b: number; c: number; d: number; e: number; f: number };
 
+/** Affine matrix mapping source triangle coordinates into destination triangle coordinates. */
 export function triangleTransform(
   s0: Vec2,
   s1: Vec2,
@@ -29,6 +31,7 @@ export function triangleTransform(
   return { a, b, c, d, e, f };
 }
 
+/** Draw one texture-mapped triangle by clipping and applying an affine transform. */
 export function drawTexturedTriangle(
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement,
@@ -55,6 +58,7 @@ export function drawTexturedTriangle(
   ctx.restore();
 }
 
+/** Draw one texture-mapped triangle using normalized UVs in [0,1]. */
 export function drawTexturedTriangleUv(
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement,
@@ -76,6 +80,7 @@ export function drawTexturedTriangleUv(
   drawTexturedTriangle(ctx, img, s0, s1, s2, d0, d1, d2, alpha);
 }
 
+/** Draw a solid/stroked quad for flat faces. */
 export function drawQuad(
   ctx: CanvasRenderingContext2D,
   points: Vec2[],
@@ -101,6 +106,7 @@ export function drawQuad(
   ctx.restore();
 }
 
+/** Draw a textured quad by splitting into two textured triangles and stroking outline. */
 export function drawTexturedQuad(
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement,

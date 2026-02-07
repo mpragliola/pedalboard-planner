@@ -1,3 +1,4 @@
+/** Strategies for choosing initial placement positions on the canvas. */
 /** Context passed to a placement strategy for computing where to place new objects. */
 export interface PlacementContext {
   canvasRect: DOMRect;

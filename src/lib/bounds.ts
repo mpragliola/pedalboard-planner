@@ -1,6 +1,8 @@
+/** Shared helpers for computing 2D axis-aligned bounds from points and rects. */
 import type { Rect } from "./geometry2d";
 import type { Vec2 } from "./vector";
 
+/** Axis-aligned bounds in 2D space. */
 export type Bounds2D = Rect;
 
 type BoundsAccumulator = {
@@ -21,6 +23,7 @@ function createBoundsAccumulator(): BoundsAccumulator {
   };
 }
 
+/** Extend accumulator with explicit extents. */
 function includeBoundsExtents(
   acc: BoundsAccumulator,
   minX: number,
@@ -49,12 +52,14 @@ function finalizeBounds(acc: BoundsAccumulator): Bounds2D | null {
   return { minX: acc.minX, minY: acc.minY, maxX: acc.maxX, maxY: acc.maxY };
 }
 
+/** Bounds of a flat set of points. Returns null for empty or non-finite input. */
 export function getBounds2DOfPoints(points: Iterable<Vec2>): Bounds2D | null {
   const acc = createBoundsAccumulator();
   includeBoundsFromPoints(acc, points);
   return finalizeBounds(acc);
 }
 
+/** Bounds of nested point lists. Returns null for empty or non-finite input. */
 export function getBounds2DOfPointSets(pointSets: Iterable<readonly Vec2[]>): Bounds2D | null {
   const acc = createBoundsAccumulator();
   for (const points of pointSets) {
@@ -63,6 +68,7 @@ export function getBounds2DOfPointSets(pointSets: Iterable<readonly Vec2[]>): Bo
   return finalizeBounds(acc);
 }
 
+/** Bounds of existing rects. Returns null for empty or non-finite input. */
 export function getBounds2DOfRects(rects: Iterable<Rect>): Bounds2D | null {
   const acc = createBoundsAccumulator();
   for (const rect of rects) {
@@ -71,6 +77,7 @@ export function getBounds2DOfRects(rects: Iterable<Rect>): Bounds2D | null {
   return finalizeBounds(acc);
 }
 
+/** Center point of bounds. */
 export function getBounds2DCenter(bounds: Bounds2D): Vec2 {
   return {
     x: (bounds.minX + bounds.maxX) / 2,
@@ -78,6 +85,7 @@ export function getBounds2DCenter(bounds: Bounds2D): Vec2 {
   };
 }
 
+/** Width/height span of bounds. */
 export function getBounds2DSize(bounds: Bounds2D): { width: number; height: number } {
   return {
     width: bounds.maxX - bounds.minX,

@@ -1,3 +1,4 @@
+/** Persistence and migration helpers for canvas/editor state. */
 import type { CanvasObjectType, Cable } from "../types";
 import { DEVICE_TEMPLATES } from "../data/devices";
 import { BOARD_TEMPLATES } from "../data/boards";

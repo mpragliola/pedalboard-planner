@@ -2,26 +2,32 @@
 export type Vec2 = { x: number; y: number };
 export type Vec3 = { x: number; y: number; z: number };
 
+/** Component-wise addition for 2D vectors. */
 export function vec2Add(a: Vec2, b: Vec2): Vec2 {
   return { x: a.x + b.x, y: a.y + b.y };
 }
 
+/** Component-wise subtraction for 2D vectors. */
 export function vec2Sub(a: Vec2, b: Vec2): Vec2 {
   return { x: a.x - b.x, y: a.y - b.y };
 }
 
+/** Multiply a 2D vector by a scalar. */
 export function vec2Scale(v: Vec2, factor: number): Vec2 {
   return { x: v.x * factor, y: v.y * factor };
 }
 
+/** Component-wise multiply for 2D vectors. */
 export function vec2Multiply(a: Vec2, b: Vec2): Vec2 {
   return { x: a.x * b.x, y: a.y * b.y };
 }
 
+/** 2D cross product magnitude (signed area). */
 export function vec2Cross(a: Vec2, b: Vec2): number {
   return a.x * b.y - a.y * b.x;
 }
 
+/** Rotate a 2D vector around origin by radians. */
 export function vec2Rotate(v: Vec2, radians: number): Vec2 {
   const cos = Math.cos(radians);
   const sin = Math.sin(radians);
@@ -31,18 +37,22 @@ export function vec2Rotate(v: Vec2, radians: number): Vec2 {
   };
 }
 
+/** Component-wise addition for 3D vectors. */
 export function vec3Add(a: Vec3, b: Vec3): Vec3 {
   return { x: a.x + b.x, y: a.y + b.y, z: a.z + b.z };
 }
 
+/** Component-wise subtraction for 3D vectors. */
 export function vec3Sub(a: Vec3, b: Vec3): Vec3 {
   return { x: a.x - b.x, y: a.y - b.y, z: a.z - b.z };
 }
 
+/** Dot product for 3D vectors. */
 export function vec3Dot(a: Vec3, b: Vec3): number {
   return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
+/** Cross product for 3D vectors. */
 export function vec3Cross(a: Vec3, b: Vec3): Vec3 {
   return {
     x: a.y * b.z - a.z * b.y,
@@ -51,16 +61,19 @@ export function vec3Cross(a: Vec3, b: Vec3): Vec3 {
   };
 }
 
+/** Euclidean length of a 3D vector. */
 export function vec3Length(v: Vec3): number {
   return Math.hypot(v.x, v.y, v.z);
 }
 
+/** Unit-length direction for a 3D vector (or zero vector for zero input). */
 export function vec3Normalize(v: Vec3): Vec3 {
   const len = vec3Length(v);
   if (len === 0) return { x: 0, y: 0, z: 0 };
   return { x: v.x / len, y: v.y / len, z: v.z / len };
 }
 
+/** Arithmetic mean of 3D points (or zero vector for empty input). */
 export function vec3Average(points: readonly Vec3[]): Vec3 {
   if (points.length === 0) return { x: 0, y: 0, z: 0 };
   let sumX = 0;

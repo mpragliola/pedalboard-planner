@@ -1,6 +1,8 @@
+/** Object snapping helpers based on axis-aligned bounding boxes. */
 import { normalizeRotation } from "./geometry";
 import type { CanvasObjectType } from "../types";
 
+/** Axis-aligned rectangle in canvas coordinates. */
 export interface Aabb {
   left: number;
   top: number;

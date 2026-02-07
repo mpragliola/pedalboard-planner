@@ -1,3 +1,4 @@
+/** Object creation helpers for catalog templates and custom items. */
 import { MM_TO_PX, DEFAULT_OBJECT_COLOR } from "../constants";
 import type { CanvasObjectType, ObjectSubtype } from "../types";
 import type { BoardTemplate } from "../data/boards";

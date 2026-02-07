@@ -1,5 +1,7 @@
+/** Formatting helpers for ruler lengths and object dimensions. */
 const MM_TO_IN = 1 / 25.4
 
+/** Format a length in selected unit with compact precision rules. */
 export function formatLength(mm: number, unit: 'mm' | 'in'): string {
   if (unit === 'in') {
     const inches = mm * MM_TO_IN
