@@ -5,11 +5,12 @@ import {
   type ReactNode,
   type RefObject,
 } from "react";
+import { Offset } from "../lib/vector";
 
 export interface CanvasContextValue {
   canvasRef: RefObject<HTMLDivElement>;
   zoom: number;
-  pan: { x: number; y: number };
+  pan: Offset;
   tileSize: number;
   isPanning: boolean;
   spaceDown: boolean;
