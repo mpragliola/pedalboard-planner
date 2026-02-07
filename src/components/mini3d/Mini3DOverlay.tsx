@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useBoard } from "../../context/BoardContext";
 import { useUi } from "../../context/UiContext";
-import { DEFAULT_OBJECT_COLOR, FEATURE_MINI3D_AUTOROTATE } from "../../constants";
+import { DEFAULT_OBJECT_COLOR } from "../../constants";
 import { clamp } from "../../lib/math";
 import { parseColor, rgba, shade } from "../../lib/color";
 import { normalizeRotation } from "../../lib/geometry";
@@ -23,14 +23,11 @@ import {
 } from "./mini3dMath";
 import "./Mini3DOverlay.scss";
 
-const ROTATE_SPEED_RAD = Math.PI / 5;
 const ROTATE_DRAG_SENS = 0.006;
 const ROTATE_PITCH_SENS = 0.006;
 const BASE_OVERLAY_OPACITY = 0.85;
 const DOUBLE_TAP_MS = 320;
 const DOUBLE_TAP_DISTANCE = 24;
-const DOUBLE_TAP_DRAG_DISTANCE = 8;
-const DOUBLE_CLICK_DELAY_MS = 320;
 const OPEN_FADE_MS = 500;
 const VIEW_PADDING_PX = 6;
 const INITIAL_PITCH_OFFSET = 0.18; // Slightly above view by default.
@@ -45,8 +42,7 @@ const MINI3D_PERSPECTIVE_DRAMA_SAFE = clamp(MINI3D_PERSPECTIVE_DRAMA, 0, 1.5);
 const MINI3D_PERSPECTIVE_SCENE_FACTOR = Math.max(0.22, 1.9 - MINI3D_PERSPECTIVE_DRAMA_SAFE * 1.35);
 const MINI3D_CAMERA_DISTANCE_SCENE_FACTOR = Math.max(0.3, 1.15 - MINI3D_PERSPECTIVE_DRAMA_SAFE * 0.57);
 
-type DragState = { pointerId: number; startX: number; startY: number; startYaw: number; startPitch: number };
-type DoubleTapState = { pointerId: number; startX: number; startY: number; moved: boolean };
+type DragState = { pointerId: number; startX: number; startY: number; startYaw: number; startPitch: number; moved: boolean };
 type OverlayPhase = "opening" | "open" | "closing";
 type Mini3DOverlayProps = { onCloseComplete?: () => void };
 
@@ -67,12 +63,12 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<HTMLDivElement>(null);
 
-  const [autoRotate, setAutoRotate] = useState(false);
   const [isVisible, setIsVisible] = useState(showMini3d);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [phase, setPhase] = useState<OverlayPhase>(showMini3d ? "opening" : "closing");
   const [size, setSize] = useState({ width: 0, height: 0 });
 
+  const showMini3dRef = useRef(showMini3d);
   const yawRef = useRef(DEFAULT_CAMERA_YAW);
   const pitchRef = useRef(INITIAL_PITCH_OFFSET);
   const rotateDragRef = useRef<DragState | null>(null);
@@ -80,17 +76,11 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
   const baseFitRef = useRef<FitTransform | null>(null);
   const baseSizeRef = useRef<{ width: number; height: number } | null>(null);
 
-  const autoRotateRafRef = useRef<number | null>(null);
-  const autoRotateLastTimeRef = useRef<number | null>(null);
-
   const prevShowMini3dRef = useRef(false);
   const openTimerRef = useRef<number | null>(null);
   const closeTimerRef = useRef<number | null>(null);
 
   const lastTapRef = useRef<{ time: number; x: number; y: number } | null>(null);
-  const doubleTapRef = useRef<DoubleTapState | null>(null);
-  const suppressClickRef = useRef<number | null>(null);
-  const clickTimeoutRef = useRef<number | null>(null);
 
   const stacked = useMemo(() => computeStackedObjects(objects), [objects]);
   const scene = useMemo(() => getSceneMetrics(stacked), [stacked]);
@@ -256,17 +246,6 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
     }
   }, []);
 
-  const stopPendingClickTimers = useCallback(() => {
-    if (suppressClickRef.current != null) {
-      window.clearTimeout(suppressClickRef.current);
-      suppressClickRef.current = null;
-    }
-    if (clickTimeoutRef.current != null) {
-      window.clearTimeout(clickTimeoutRef.current);
-      clickTimeoutRef.current = null;
-    }
-  }, []);
-
   const stopRotateDrag = useCallback(() => {
     rotateDragRef.current = null;
     activePointersRef.current.clear();
@@ -274,16 +253,16 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
 
   const beginRotateDrag = useCallback(
     (pointerId: number, startX: number, startY: number) => {
-      setAutoRotate(false);
       rotateDragRef.current = {
         pointerId,
         startX,
         startY,
         startYaw: yawRef.current,
         startPitch: pitchRef.current,
+        moved: false,
       };
     },
-    [setAutoRotate]
+    []
   );
 
   useEffect(() => {
@@ -311,11 +290,18 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
   }, [isVisible, syncCameraVars]);
 
   useEffect(() => {
+    showMini3dRef.current = showMini3d;
+  }, [showMini3d]);
+
+  useEffect(() => {
     const wasShowing = prevShowMini3dRef.current;
     prevShowMini3dRef.current = showMini3d;
 
-    if (showMini3d && !wasShowing) {
+    if (showMini3d) {
       clearCloseTimer();
+    }
+
+    if (showMini3d && !wasShowing) {
       if (!isVisible) setIsVisible(true);
       setPhase("opening");
 
@@ -331,12 +317,15 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
       setIsFullscreen(false);
       setAutoRotate(false);
       stopRotateDrag();
-      stopPendingClickTimers();
       setPhase("closing");
 
       clearOpenTimer();
       clearCloseTimer();
       closeTimerRef.current = window.setTimeout(() => {
+        if (showMini3dRef.current) {
+          closeTimerRef.current = null;
+          return;
+        }
         closeTimerRef.current = null;
         setIsVisible(false);
         onCloseComplete?.();
@@ -349,35 +338,8 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
     isVisible,
     onCloseComplete,
     showMini3d,
-    stopPendingClickTimers,
     stopRotateDrag,
   ]);
-
-  useEffect(() => {
-    if (!FEATURE_MINI3D_AUTOROTATE || !autoRotate || !showMini3d) {
-      if (autoRotateRafRef.current != null) cancelAnimationFrame(autoRotateRafRef.current);
-      autoRotateRafRef.current = null;
-      autoRotateLastTimeRef.current = null;
-      return;
-    }
-
-    const step = (time: number) => {
-      if (autoRotateLastTimeRef.current == null) autoRotateLastTimeRef.current = time;
-      const dt = Math.min(0.05, (time - autoRotateLastTimeRef.current) / 1000);
-      autoRotateLastTimeRef.current = time;
-      yawRef.current = (yawRef.current + ROTATE_SPEED_RAD * dt) % (Math.PI * 2);
-      syncCameraVars();
-      autoRotateRafRef.current = requestAnimationFrame(step);
-    };
-
-    autoRotateRafRef.current = requestAnimationFrame(step);
-
-    return () => {
-      if (autoRotateRafRef.current != null) cancelAnimationFrame(autoRotateRafRef.current);
-      autoRotateRafRef.current = null;
-      autoRotateLastTimeRef.current = null;
-    };
-  }, [autoRotate, showMini3d, syncCameraVars]);
 
   useEffect(() => {
     if (!showMini3d) return;
@@ -396,32 +358,17 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
 
   useEffect(() => {
     return () => {
-      if (autoRotateRafRef.current != null) cancelAnimationFrame(autoRotateRafRef.current);
-      autoRotateRafRef.current = null;
-      autoRotateLastTimeRef.current = null;
       stopRotateDrag();
-      stopPendingClickTimers();
       clearOpenTimer();
       clearCloseTimer();
     };
-  }, [clearCloseTimer, clearOpenTimer, stopPendingClickTimers, stopRotateDrag]);
+  }, [clearCloseTimer, clearOpenTimer, stopRotateDrag]);
 
   const handleRotatePointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
-      if (e.button === 1) {
-        e.preventDefault();
-        e.stopPropagation();
-        beginRotateDrag(e.pointerId, e.clientX, e.clientY);
-        containerRef.current?.setPointerCapture(e.pointerId);
-        return;
-      }
-
-      if (e.pointerType === "touch") {
-        e.preventDefault();
-        e.stopPropagation();
-      }
+      if (e.button === 2) return;
 
       if (e.pointerType === "touch" && activePointersRef.current.size === 1) {
         const now = performance.now();
@@ -430,45 +377,34 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
           const dx = e.clientX - last.x;
           const dy = e.clientY - last.y;
           if (Math.hypot(dx, dy) <= DOUBLE_TAP_DISTANCE) {
-            doubleTapRef.current = {
-              pointerId: e.pointerId,
-              startX: e.clientX,
-              startY: e.clientY,
-              moved: false,
-            };
             lastTapRef.current = null;
-            if (FEATURE_MINI3D_AUTOROTATE) {
-              suppressClickRef.current = window.setTimeout(() => {
-                suppressClickRef.current = null;
-              }, DOUBLE_TAP_MS);
-            }
+            toggleFullscreen();
             return;
           }
         }
         lastTapRef.current = { time: now, x: e.clientX, y: e.clientY };
       }
 
-      if (e.pointerType === "touch" && activePointersRef.current.size === 2) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      let startX = e.clientX;
+      let startY = e.clientY;
+      if (activePointersRef.current.size === 2) {
         const pointers = Array.from(activePointersRef.current.values()) as [Point, Point];
         const center = getPointersCenter(pointers);
-        beginRotateDrag(e.pointerId, center.x, center.y);
+        startX = center.x;
+        startY = center.y;
       }
+
+      beginRotateDrag(e.pointerId, startX, startY);
+      containerRef.current?.setPointerCapture(e.pointerId);
     },
-    [beginRotateDrag]
+    [beginRotateDrag, toggleFullscreen]
   );
 
   const handleRotatePointerMove = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      const doubleTap = doubleTapRef.current;
-      if (doubleTap && doubleTap.pointerId === e.pointerId) {
-        const dx = e.clientX - doubleTap.startX;
-        const dy = e.clientY - doubleTap.startY;
-        if (!doubleTap.moved && Math.hypot(dx, dy) >= DOUBLE_TAP_DRAG_DISTANCE) {
-          doubleTap.moved = true;
-          beginRotateDrag(e.pointerId, doubleTap.startX, doubleTap.startY);
-        }
-      }
-
       const drag = rotateDragRef.current;
       if (!drag) return;
 
@@ -488,45 +424,32 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
 
       const dx = currentX - drag.startX;
       const dy = currentY - drag.startY;
+      if (!drag.moved && Math.hypot(dx, dy) >= 3) {
+        drag.moved = true;
+      }
       yawRef.current = drag.startYaw - dx * ROTATE_DRAG_SENS;
       pitchRef.current = clamp(drag.startPitch + dy * ROTATE_PITCH_SENS, PITCH_OFFSET_MIN, PITCH_OFFSET_MAX);
       syncCameraVars();
     },
-    [beginRotateDrag, syncCameraVars]
+    [syncCameraVars]
   );
 
   const handleRotatePointerUp = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       activePointersRef.current.delete(e.pointerId);
 
-      const doubleTap = doubleTapRef.current;
-      if (doubleTap && doubleTap.pointerId === e.pointerId) {
-        doubleTapRef.current = null;
-        if (!doubleTap.moved) {
-          if (clickTimeoutRef.current != null) {
-            window.clearTimeout(clickTimeoutRef.current);
-            clickTimeoutRef.current = null;
-          }
-          toggleFullscreen();
-        }
-      }
-
       const drag = rotateDragRef.current;
       if (!drag) return;
+      if (drag.pointerId !== e.pointerId) return;
 
-      const isMiddleMouseDrag = e.button === 1;
-      const isTouchDragEndedByPointerCount = e.pointerType === "touch" && activePointersRef.current.size < 2;
-
-      if (isMiddleMouseDrag || isTouchDragEndedByPointerCount) {
-        rotateDragRef.current = null;
-        try {
-          containerRef.current?.releasePointerCapture(e.pointerId);
-        } catch {
-          /* OK if pointer was already released */
-        }
+      rotateDragRef.current = null;
+      try {
+        containerRef.current?.releasePointerCapture(e.pointerId);
+      } catch {
+        /* OK if pointer was already released */
       }
     },
-    [toggleFullscreen]
+    []
   );
 
   if (!isVisible) return null;
@@ -581,50 +504,15 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
         className={overlayClass}
         ref={containerRef}
         style={overlayStyle}
-        role={FEATURE_MINI3D_AUTOROTATE ? "button" : undefined}
-        tabIndex={FEATURE_MINI3D_AUTOROTATE ? 0 : undefined}
-        aria-pressed={FEATURE_MINI3D_AUTOROTATE ? autoRotate : undefined}
-        aria-label={FEATURE_MINI3D_AUTOROTATE ? "Toggle 3D rotation" : "3D overlay"}
-        title={FEATURE_MINI3D_AUTOROTATE ? (autoRotate ? "Stop rotation" : "Start rotation") : "3D overlay"}
-        onClick={
-          FEATURE_MINI3D_AUTOROTATE
-            ? () => {
-                if (suppressClickRef.current != null) {
-                  window.clearTimeout(suppressClickRef.current);
-                  suppressClickRef.current = null;
-                  return;
-                }
-                if (clickTimeoutRef.current != null) {
-                  window.clearTimeout(clickTimeoutRef.current);
-                }
-                clickTimeoutRef.current = window.setTimeout(() => {
-                  clickTimeoutRef.current = null;
-                  setAutoRotate((value) => !value);
-                }, DOUBLE_CLICK_DELAY_MS);
-              }
-            : undefined
-        }
+        aria-label="3D overlay"
+        title="3D overlay"
         onDoubleClick={() => {
-          if (clickTimeoutRef.current != null) {
-            window.clearTimeout(clickTimeoutRef.current);
-            clickTimeoutRef.current = null;
-          }
           toggleFullscreen();
         }}
         onPointerDown={handleRotatePointerDown}
         onPointerMove={handleRotatePointerMove}
         onPointerUp={handleRotatePointerUp}
         onPointerCancel={handleRotatePointerUp}
-        onKeyDown={
-          FEATURE_MINI3D_AUTOROTATE
-            ? (e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  setAutoRotate((value) => !value);
-                }
-              }
-            : undefined
-        }
       >
         <div className="mini3d-stage" style={stageStyle}>
           <div className="mini3d-world" ref={worldRef} style={worldStyle}>
@@ -690,13 +578,11 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
           </div>
         </div>
 
-        {showMini3d ? (
-          <div className="mini3d-instruction">
-            {FEATURE_MINI3D_AUTOROTATE
-              ? "Middle button or double-tap drag to rotate. Click/tap for auto-rotation. Double click/tap to toggle fullscreen."
-              : "Middle button or double-tap drag to rotate. Double click/tap to toggle fullscreen."}
-          </div>
-        ) : null}
+      {showMini3d ? (
+        <div className="mini3d-instruction">
+          {"Click/tap and drag to rotate. Double click/tap to toggle fullscreen."}
+        </div>
+      ) : null}
       </div>
     </>
   );
