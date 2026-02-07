@@ -1,5 +1,6 @@
 export type { BoardType } from './data/boards'
 export type { DeviceType } from './data/devices'
+import type { Point } from './lib/vector'
 
 export type ObjectSubtype = 'board' | 'device'
 
@@ -13,8 +14,7 @@ export interface CanvasObjectType {
   type: string
   brand: string
   model: string
-  x: number
-  y: number
+  pos: Point
   width: number
   depth: number
   height: number
@@ -41,10 +41,8 @@ export type ConnectorKind =
 
 /** One segment of a cable or polyline (canvas coordinates). */
 export interface CableSegment {
-  x1: number
-  y1: number
-  x2: number
-  y2: number
+  start: Point
+  end: Point
 }
 
 export interface Cable {

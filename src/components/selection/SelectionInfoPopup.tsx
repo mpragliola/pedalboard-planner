@@ -4,11 +4,15 @@ import { useCable } from "../../context/CableContext";
 import { useUi } from "../../context/UiContext";
 import { getObjectDimensions } from "../../lib/stateManager";
 import { formatDimension, formatLengthCm } from "../../lib/rulerFormat";
+import type { CableSegment } from "../../types";
 import { InfoLine } from "./InfoLine";
 import "./SelectionInfoPopup.scss";
 
-function cableLengthMm(segments: { x1: number; y1: number; x2: number; y2: number }[]): number {
-  return segments.reduce((sum, s) => sum + Math.hypot(s.x2 - s.x1, s.y2 - s.y1), 0);
+function cableLengthMm(segments: CableSegment[]): number {
+  return segments.reduce(
+    (sum, segment) => sum + Math.hypot(segment.end.x - segment.start.x, segment.end.y - segment.start.y),
+    0
+  );
 }
 
 export function SelectionInfoPopup() {

@@ -66,7 +66,7 @@ function isCustomObject(o: CanvasObjectType): boolean {
 /** Strip image from all objects; keep name only for custom elements. Omit width /depth/height when template has known dimensions (restored from template on load). Round coordinates to 2 decimals. */
 function serializeObjects(objects: CanvasObjectType[]): Record<string, unknown>[] {
   return objects.map((o) => {
-    const { image, name, width, depth, height, ...rest } = o as CanvasObjectType & {
+    const { image, name, width, depth, height, pos, ...rest } = o as CanvasObjectType & {
       image?: string | null;
       name?: string;
       width?: number;
@@ -75,8 +75,7 @@ function serializeObjects(objects: CanvasObjectType[]): Record<string, unknown>[
     };
     const out: Record<string, unknown> = {
       ...rest,
-      x: round2(o.x),
-      y: round2(o.y),
+      pos: { x: round2(pos.x), y: round2(pos.y) },
       name: o.name,
     };
     const hasKnownTemplateDims = o.templateId ? templateWdhMap.has(o.templateId) : false;
@@ -99,6 +98,12 @@ function serializeObjects(objects: CanvasObjectType[]): Record<string, unknown>[
 /** Restore image and dimensions from template when loading. Name derived from brand+model if missing. */
 function normalizeLoadedObjects(objects: Record<string, unknown>[]): CanvasObjectType[] {
   return objects.map((o) => {
+    const { x: _legacyX, y: _legacyY, pos: _rawPos, ...rest } = o;
+    const rawPos = o.pos as Record<string, unknown> | undefined;
+    const pos =
+      typeof rawPos === "object" && rawPos !== null && typeof rawPos.x === "number" && typeof rawPos.y === "number"
+        ? { x: rawPos.x, y: rawPos.y }
+        : { x: num(o, "x"), y: num(o, "y") };
     const templateId = str(o, "templateId") || undefined;
     const brand = str(o, "brand");
     const model = str(o, "model");
@@ -110,7 +115,7 @@ function normalizeLoadedObjects(objects: Record<string, unknown>[]): CanvasObjec
     const width = wdh ? wdh[0] : num(o, "width");
     const depth = wdh ? wdh[1] : num(o, "depth");
     const height = wdh ? wdh[2] : num(o, "height");
-    return { ...o, templateId, type, brand, model, image, name, width, depth, height } as CanvasObjectType;
+    return { ...rest, templateId, type, brand, model, image, name, width, depth, height, pos } as CanvasObjectType;
   });
 }
 
@@ -158,6 +163,7 @@ export class StateManager {
         typeof pan.x === "number" && typeof pan.y === "number"
           ? { x: pan.x, y: pan.y }
           : undefined;
+      const cables = StateManager.normalizeCableArray(d.cables);
 
       return {
         objects,
@@ -167,7 +173,7 @@ export class StateManager {
         pan: validPan,
         showGrid: typeof d.showGrid === "boolean" ? d.showGrid : undefined,
         unit: d.unit === "mm" || d.unit === "in" ? (d.unit as "mm" | "in") : undefined,
-        cables: StateManager.isValidCableArray(d.cables) ? (d.cables as Cable[]) : undefined,
+        cables: cables ?? undefined,
       };
     } catch {
       return null;
@@ -208,28 +214,47 @@ export class StateManager {
     const templateId = typeof t.templateId === "string" ? t.templateId : undefined;
     const hasKnownTemplate = templateId ? templateWdhMap.has(templateId) : false;
     const dimsRequired = !hasKnownTemplate;
+    const hasPos = StateManager.isValidPointLike(t.pos);
+    const hasLegacyPos = typeof t.x === "number" && typeof t.y === "number";
     return (
       typeof t.id === "string" &&
       typeof t.subtype === "string" &&
-      typeof t.x === "number" &&
-      typeof t.y === "number" &&
+      (hasPos || hasLegacyPos) &&
       (!dimsRequired || (typeof t.width === "number" && typeof t.depth === "number" && typeof t.height === "number"))
     );
   }
 
-  private static isValidCableSegment(seg: unknown): seg is Cable["segments"][0] {
-    if (typeof seg !== "object" || seg === null) return false;
+  private static isValidPointLike(value: unknown): value is { x: number; y: number } {
+    if (typeof value !== "object" || value === null) return false;
+    const v = value as Record<string, unknown>;
+    return typeof v.x === "number" && typeof v.y === "number";
+  }
+
+  private static normalizeCableSegment(seg: unknown): Cable["segments"][0] | null {
+    if (typeof seg !== "object" || seg === null) return null;
     const s = seg as Record<string, unknown>;
-    return (
+    if (StateManager.isValidPointLike(s.start) && StateManager.isValidPointLike(s.end)) {
+      return {
+        start: { x: s.start.x, y: s.start.y },
+        end: { x: s.end.x, y: s.end.y },
+      };
+    }
+    if (
       typeof s.x1 === "number" &&
       typeof s.y1 === "number" &&
       typeof s.x2 === "number" &&
       typeof s.y2 === "number"
-    );
+    ) {
+      return {
+        start: { x: s.x1, y: s.y1 },
+        end: { x: s.x2, y: s.y2 },
+      };
+    }
+    return null;
   }
 
-  private static isValidCable(o: unknown): o is Cable {
-    if (typeof o !== "object" || o === null) return false;
+  private static normalizeCable(o: unknown): Cable | null {
+    if (typeof o !== "object" || o === null) return null;
     const c = o as Record<string, unknown>;
     if (
       typeof c.id !== "string" ||
@@ -237,14 +262,35 @@ export class StateManager {
       typeof c.connectorA !== "string" ||
       typeof c.connectorB !== "string"
     )
-      return false;
-    if (c.connectorAName !== undefined && typeof c.connectorAName !== "string") return false;
-    if (c.connectorBName !== undefined && typeof c.connectorBName !== "string") return false;
-    if (!Array.isArray(c.segments) || !c.segments.every(StateManager.isValidCableSegment)) return false;
-    return true;
+      return null;
+    if (c.connectorAName !== undefined && typeof c.connectorAName !== "string") return null;
+    if (c.connectorBName !== undefined && typeof c.connectorBName !== "string") return null;
+    if (!Array.isArray(c.segments)) return null;
+    const segments: Cable["segments"] = [];
+    for (const segment of c.segments) {
+      const normalized = StateManager.normalizeCableSegment(segment);
+      if (!normalized) return null;
+      segments.push(normalized);
+    }
+    return {
+      id: c.id,
+      color: c.color,
+      connectorA: c.connectorA as Cable["connectorA"],
+      connectorB: c.connectorB as Cable["connectorB"],
+      segments,
+      ...(typeof c.connectorAName === "string" ? { connectorAName: c.connectorAName } : {}),
+      ...(typeof c.connectorBName === "string" ? { connectorBName: c.connectorBName } : {}),
+    };
   }
 
-  private static isValidCableArray(arr: unknown): arr is Cable[] {
-    return Array.isArray(arr) && arr.every(StateManager.isValidCable);
+  private static normalizeCableArray(arr: unknown): Cable[] | null {
+    if (!Array.isArray(arr)) return null;
+    const cables: Cable[] = [];
+    for (const cable of arr) {
+      const normalized = StateManager.normalizeCable(cable);
+      if (!normalized) return null;
+      cables.push(normalized);
+    }
+    return cables;
   }
 }

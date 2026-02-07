@@ -10,8 +10,7 @@ const validObject = {
   type: "classic",
   brand: "TestBrand",
   model: "TestModel",
-  x: 0,
-  y: 0,
+  pos: { x: 0, y: 0 },
   width: 100,
   depth: 200,
   height: 25,
@@ -27,8 +26,7 @@ const aclamBoardObject = {
   type: "classic",
   brand: "Aclam",
   model: "Smart Track XS2",
-  x: 10,
-  y: 20,
+  pos: { x: 10, y: 20 },
   width: 420,
   depth: 250,
   height: 25,
@@ -41,8 +39,7 @@ const bossDeviceObject = {
   type: "pedal",
   brand: "Boss",
   model: "DS-1",
-  x: 50,
-  y: 60,
+  pos: { x: 50, y: 60 },
   width: 73,
   depth: 129,
   height: 58,
@@ -55,8 +52,7 @@ const customBoardObject = {
   type: "classic",
   brand: "Custom",
   model: "My Board",
-  x: 0,
-  y: 0,
+  pos: { x: 0, y: 0 },
   width: 500,
   depth: 300,
   height: 30,
@@ -70,8 +66,7 @@ const customDeviceObject = {
   type: "pedal",
   brand: "Custom",
   model: "My Pedal",
-  x: 100,
-  y: 100,
+  pos: { x: 100, y: 100 },
   width: 80,
   depth: 120,
   height: 50,
@@ -114,15 +109,24 @@ describe("StateManager.parseState", () => {
       delete (missingSubtype as Record<string, unknown>).subtype;
       expect(StateManager.parseState(JSON.stringify({ objects: [missingSubtype] }))).toBe(null);
 
-      const missingX = { ...validObject };
-      delete (missingX as Record<string, unknown>).x;
-      expect(StateManager.parseState(JSON.stringify({ objects: [missingX] }))).toBe(null);
+      const missingPos = { ...validObject };
+      delete (missingPos as Record<string, unknown>).pos;
+      expect(StateManager.parseState(JSON.stringify({ objects: [missingPos] }))).toBe(null);
     });
 
     it("returns null when object has wrong field types", () => {
       expect(StateManager.parseState(JSON.stringify({ objects: [{ ...validObject, id: 123 }] }))).toBe(null);
-      expect(StateManager.parseState(JSON.stringify({ objects: [{ ...validObject, x: "string" }] }))).toBe(null);
+      expect(
+        StateManager.parseState(JSON.stringify({ objects: [{ ...validObject, pos: { x: "string", y: 0 } }] }))
+      ).toBe(null);
       expect(StateManager.parseState(JSON.stringify({ objects: [{ ...validObject, width: null }] }))).toBe(null);
+    });
+
+    it("accepts legacy object records with x/y coordinates", () => {
+      const legacy = { ...validObject, x: 12, y: 34 };
+      delete (legacy as Record<string, unknown>).pos;
+      const out = StateManager.parseState(JSON.stringify({ objects: [legacy] })) as SavedState;
+      expect(out.objects[0].pos).toEqual({ x: 12, y: 34 });
     });
 
     it("accepts empty objects array", () => {
@@ -332,18 +336,69 @@ describe("StateManager.parseState", () => {
     });
   });
 
+  describe("cable parsing", () => {
+    it("parses cables with point-based segments", () => {
+      const raw = JSON.stringify({
+        objects: [validObject],
+        cables: [
+          {
+            id: "c1",
+            color: "#111111",
+            connectorA: "mono jack (TS)",
+            connectorB: "mono jack (TS)",
+            segments: [{ start: { x: 0, y: 0 }, end: { x: 100, y: 0 } }],
+          },
+        ],
+      });
+      const out = StateManager.parseState(raw) as SavedState;
+      expect(out.cables).toEqual([
+        {
+          id: "c1",
+          color: "#111111",
+          connectorA: "mono jack (TS)",
+          connectorB: "mono jack (TS)",
+          segments: [{ start: { x: 0, y: 0 }, end: { x: 100, y: 0 } }],
+        },
+      ]);
+    });
+
+    it("normalizes legacy cables with x1/y1/x2/y2 segments", () => {
+      const raw = JSON.stringify({
+        objects: [validObject],
+        cables: [
+          {
+            id: "c-legacy",
+            color: "#222222",
+            connectorA: "mono jack (TS)",
+            connectorB: "mono jack (TS)",
+            segments: [{ x1: 10, y1: 20, x2: 30, y2: 40 }],
+          },
+        ],
+      });
+      const out = StateManager.parseState(raw) as SavedState;
+      expect(out.cables).toEqual([
+        {
+          id: "c-legacy",
+          color: "#222222",
+          connectorA: "mono jack (TS)",
+          connectorB: "mono jack (TS)",
+          segments: [{ start: { x: 10, y: 20 }, end: { x: 30, y: 40 } }],
+        },
+      ]);
+    });
+  });
+
 });
 
 describe("StateManager.serializeState", () => {
   describe("coordinate rounding", () => {
     it("rounds object coordinates to 2 decimal places", () => {
       const state: SavedState = {
-        objects: [{ ...validObject, x: 1.234567, y: 5.6789 } as SavedState["objects"][0]],
+        objects: [{ ...validObject, pos: { x: 1.234567, y: 5.6789 } } as SavedState["objects"][0]],
       };
       const ser = StateManager.serializeState(state);
       const obj = (ser.objects as Record<string, unknown>[])[0];
-      expect(obj.x).toBe(1.23);
-      expect(obj.y).toBe(5.68);
+      expect(obj.pos).toEqual({ x: 1.23, y: 5.68 });
     });
 
     it("rounds pan coordinates to 2 decimal places", () => {
@@ -357,12 +412,11 @@ describe("StateManager.serializeState", () => {
 
     it("handles zero and negative coordinates", () => {
       const state: SavedState = {
-        objects: [{ ...validObject, x: 0, y: -10.556 } as SavedState["objects"][0]],
+        objects: [{ ...validObject, pos: { x: 0, y: -10.556 } } as SavedState["objects"][0]],
       };
       const ser = StateManager.serializeState(state);
       const obj = (ser.objects as Record<string, unknown>[])[0];
-      expect(obj.x).toBe(0);
-      expect(obj.y).toBe(-10.56);
+      expect(obj.pos).toEqual({ x: 0, y: -10.56 });
     });
   });
 
@@ -478,8 +532,8 @@ describe("round-trip serialization", () => {
   it("preserves object data through serialize -> parse cycle", () => {
     const original: SavedState = {
       objects: [
-        { ...bossDeviceObject, x: 123.456, y: 789.123 } as SavedState["objects"][0],
-        { ...aclamBoardObject, x: 0, y: 0 } as SavedState["objects"][0],
+        { ...bossDeviceObject, pos: { x: 123.456, y: 789.123 } } as SavedState["objects"][0],
+        { ...aclamBoardObject, pos: { x: 0, y: 0 } } as SavedState["objects"][0],
       ],
       zoom: 1.5,
       pan: { x: 100.999, y: 200.111 },
@@ -492,8 +546,7 @@ describe("round-trip serialization", () => {
     const parsed = StateManager.parseState(json) as SavedState;
 
     expect(parsed.objects).toHaveLength(2);
-    expect(parsed.objects[0].x).toBe(123.46); // rounded
-    expect(parsed.objects[0].y).toBe(789.12); // rounded
+    expect(parsed.objects[0].pos).toEqual({ x: 123.46, y: 789.12 }); // rounded
     expect(parsed.objects[0].image).toBe("images/devices/boss/boss-ds1.png"); // restored from template
     expect(parsed.objects[1].image).toBe("images/boards/aclam/aclam-smart-track-xs2.png"); // restored from template
     expect(parsed.zoom).toBe(1.5);

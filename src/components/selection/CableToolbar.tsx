@@ -1,5 +1,6 @@
 import { faPen, faTrash } from "@fortawesome/free-solid-svg-icons";
 import type { Cable } from "../../types";
+import type { Point } from "../../lib/vector";
 import { useConfirmation } from "../../context/ConfirmationContext";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { SelectionToolbarButton } from "./SelectionToolbarButton";
@@ -8,18 +9,18 @@ import "./SelectionToolbar.scss";
 const TOOLBAR_GAP = 8;
 const TOOLBAR_HEIGHT = 36;
 
-function cableCenter(cable: Cable): { x: number; y: number } {
+function cableCenter(cable: Cable): Point {
   if (cable.segments.length === 0) return { x: 0, y: 0 };
   let sumX = 0;
   let sumY = 0;
   let count = 0;
   const first = cable.segments[0];
-  sumX += first.x1;
-  sumY += first.y1;
+  sumX += first.start.x;
+  sumY += first.start.y;
   count += 1;
   for (const s of cable.segments) {
-    sumX += s.x2;
-    sumY += s.y2;
+    sumX += s.end.x;
+    sumY += s.end.y;
     count += 1;
   }
   return { x: sumX / count, y: sumY / count };

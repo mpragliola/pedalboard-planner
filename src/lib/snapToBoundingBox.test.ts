@@ -14,8 +14,7 @@ function createObject(overrides: Partial<CanvasObjectType> = {}): CanvasObjectTy
     type: "effect",
     brand: "Brand",
     model: "Model",
-    x: 0,
-    y: 0,
+    pos: { x: 0, y: 0 },
     width: 40,
     depth: 20,
     height: 10,
@@ -32,7 +31,7 @@ function getObjectDimensions(obj: CanvasObjectType): [number, number, number] {
 
 describe("snapToBoundingBox helpers", () => {
   it("computes object AABB for unrotated and rotated objects", () => {
-    const base = createObject({ x: 100, y: 200, width: 60, depth: 20, rotation: 0 });
+    const base = createObject({ pos: { x: 100, y: 200 }, width: 60, depth: 20, rotation: 0 });
     expect(getObjectAabb(base, getObjectDimensions)).toEqual({
       left: 100,
       top: 200,
@@ -40,7 +39,7 @@ describe("snapToBoundingBox helpers", () => {
       height: 20,
     });
 
-    const rotated = createObject({ x: 100, y: 200, width: 60, depth: 20, rotation: -90 });
+    const rotated = createObject({ pos: { x: 100, y: 200 }, width: 60, depth: 20, rotation: -90 });
     expect(getObjectAabb(rotated, getObjectDimensions)).toEqual({
       left: 120,
       top: 180,
@@ -67,21 +66,21 @@ describe("snapToBoundingBox helpers", () => {
   });
 
   it("snaps to nearest perimeter point within tolerance", () => {
-    const objects = [createObject({ x: 0, y: 0, width: 40, depth: 20 })];
+    const objects = [createObject({ pos: { x: 0, y: 0 }, width: 40, depth: 20 })];
     expect(snapToObjects(45, 10, objects, getObjectDimensions, 10)).toEqual({ x: 40, y: 10 });
     expect(snapToObjects(50, 10, objects, getObjectDimensions, SNAP_TOLERANCE_MM)).toEqual({ x: 40, y: 10 });
   });
 
   it("selects the closest candidate across multiple objects", () => {
     const objects = [
-      createObject({ id: "1", x: 0, y: 0, width: 40, depth: 20 }),
-      createObject({ id: "2", x: 80, y: 0, width: 20, depth: 20 }),
+      createObject({ id: "1", pos: { x: 0, y: 0 }, width: 40, depth: 20 }),
+      createObject({ id: "2", pos: { x: 80, y: 0 }, width: 20, depth: 20 }),
     ];
     expect(snapToObjects(70, 10, objects, getObjectDimensions, 20)).toEqual({ x: 80, y: 10 });
   });
 
   it("accounts for rotation when snapping to object AABB", () => {
-    const rotated = createObject({ x: 100, y: 200, width: 60, depth: 20, rotation: 90 });
+    const rotated = createObject({ pos: { x: 100, y: 200 }, width: 60, depth: 20, rotation: 90 });
     expect(snapToObjects(125, 175, [rotated], getObjectDimensions, 6)).toEqual({ x: 125, y: 180 });
   });
 });

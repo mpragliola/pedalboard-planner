@@ -111,7 +111,7 @@ export function drawTexturedQuad(
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement,
   points: Vec2[],
-  uv: Vec2[] | undefined,
+  uv: readonly Vec2[] | undefined,
   stroke: string,
   alpha = 1
 ) {

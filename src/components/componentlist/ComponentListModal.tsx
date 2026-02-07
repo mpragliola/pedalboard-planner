@@ -7,6 +7,7 @@ import { useCable } from "../../context/CableContext";
 import { useConfirmation } from "../../context/ConfirmationContext";
 import { BASE_URL, DEFAULT_OBJECT_COLOR } from "../../constants";
 import { formatLengthCm } from "../../lib/rulerFormat";
+import { vec2Length, vec2Sub } from "../../lib/vector";
 import type { Cable, CanvasObjectType } from "../../types";
 import { ConnectorIcon } from "../common/ConnectorIcon";
 import "./ComponentListModal.scss";
@@ -35,7 +36,7 @@ function ComponentThumbnail({ obj }: { obj: CanvasObjectType }) {
 }
 
 function cableLengthMm(segments: Cable["segments"]): number {
-  return segments.reduce((sum, s) => sum + Math.hypot(s.x2 - s.x1, s.y2 - s.y1), 0);
+  return segments.reduce((sum, segment) => sum + vec2Length(vec2Sub(segment.end, segment.start)), 0);
 }
 
 interface ComponentListModalProps {
@@ -64,8 +65,6 @@ function buildComponentListCsv(
   }
   rows.push("");
   rows.push("Cables");
-  const cableLengthMmForCsv = (c: Cable) =>
-    c.segments.reduce((sum, s) => sum + Math.hypot(s.x2 - s.x1, s.y2 - s.y1), 0);
   rows.push(
     ["ID", "Connector A", "Connector A name", "Connector B", "Connector B name", "Length (mm)", "Segments"]
       .map(escapeCsvField)
@@ -79,7 +78,7 @@ function buildComponentListCsv(
         cable.connectorAName ?? "",
         cable.connectorB,
         cable.connectorBName ?? "",
-        String(cableLengthMmForCsv(cable).toFixed(1)),
+        String(cableLengthMm(cable.segments).toFixed(1)),
         String(cable.segments.length),
       ]
         .map(escapeCsvField)

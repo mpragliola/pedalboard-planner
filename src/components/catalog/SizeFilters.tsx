@@ -1,4 +1,5 @@
 import './SizeFilters.scss'
+import { Slider } from '../common/Slider'
 
 interface SizeFiltersProps {
   unitLabel: string
@@ -48,24 +49,22 @@ export function SizeFilters({
           </span>
         </div>
         <div className="size-slider-row">
-          <input
-            type="range"
+          <Slider
             className="size-slider"
             min={widthRange[0]}
             max={widthRange[1]}
             step={5}
             value={widthMinVal}
-            onChange={(e) => onWidthMinChange(e.target.value)}
+            onValueChange={onWidthMinChange}
             aria-label={`Min width (${unitLabel})`}
           />
-          <input
-            type="range"
+          <Slider
             className="size-slider"
             min={widthRange[0]}
             max={widthRange[1]}
             step={5}
             value={widthMaxVal}
-            onChange={(e) => onWidthMaxChange(e.target.value)}
+            onValueChange={onWidthMaxChange}
             aria-label={`Max width (${unitLabel})`}
           />
         </div>
@@ -78,24 +77,22 @@ export function SizeFilters({
           </span>
         </div>
         <div className="size-slider-row">
-          <input
-            type="range"
+          <Slider
             className="size-slider"
             min={depthRange[0]}
             max={depthRange[1]}
             step={5}
             value={depthMinVal}
-            onChange={(e) => onDepthMinChange(e.target.value)}
+            onValueChange={onDepthMinChange}
             aria-label={`Min depth (${unitLabel})`}
           />
-          <input
-            type="range"
+          <Slider
             className="size-slider"
             min={depthRange[0]}
             max={depthRange[1]}
             step={5}
             value={depthMaxVal}
-            onChange={(e) => onDepthMaxChange(e.target.value)}
+            onValueChange={onDepthMaxChange}
             aria-label={`Max depth (${unitLabel})`}
           />
         </div>

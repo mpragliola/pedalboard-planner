@@ -8,8 +8,7 @@ const baseObject = (overrides: Partial<CanvasObjectType> & { id: string; name: s
     type: "pedal",
     brand: "",
     model: "",
-    x: 0,
-    y: 0,
+    pos: { x: 0, y: 0 },
     width: 70,
     depth: 120,
     height: 50,
@@ -69,8 +68,8 @@ describe("PromptBuilder", () => {
           {
             id: "cab1",
             segments: [
-              { x1: 0, y1: 0, x2: 100, y2: 0 },
-              { x1: 100, y1: 0, x2: 100, y2: 50 },
+              { start: { x: 0, y: 0 }, end: { x: 100, y: 0 } },
+              { start: { x: 100, y: 0 }, end: { x: 100, y: 50 } },
             ],
             color: "#333",
             connectorA: "mono jack (TS)",
@@ -93,7 +92,7 @@ describe("PromptBuilder", () => {
         cables: [
           {
             id: "cab1",
-            segments: [{ x1: 0, y1: 0, x2: 254, y2: 0 }],
+            segments: [{ start: { x: 0, y: 0 }, end: { x: 254, y: 0 } }],
             color: "#000",
             connectorA: "stereo jack (TRS)",
             connectorB: "stereo jack (TRS)",
@@ -132,7 +131,7 @@ describe("PromptBuilder", () => {
         cables: [
           {
             id: "cab1",
-            segments: [{ x1: 0, y1: 0, x2: 200, y2: 0 }],
+            segments: [{ start: { x: 0, y: 0 }, end: { x: 200, y: 0 } }],
             color: "#333",
             connectorA: "mono jack (TS)",
             connectorB: "mono jack (TS)",

@@ -29,8 +29,8 @@ export function SelectionToolbar({ obj, onDelete, onRotate, onSendToBack, onBrin
   const scaleUp = useMediaQuery("(max-width: 768px)");
 
   const [width, depth] = getObjectDimensions(obj);
-  const centerX = obj.x + width / 2;
-  const centerY = obj.y + depth / 2;
+  const centerX = obj.pos.x + width / 2;
+  const centerY = obj.pos.y + depth / 2;
   const left = centerX;
   const top = centerY - TOOLBAR_GAP - TOOLBAR_HEIGHT;
 

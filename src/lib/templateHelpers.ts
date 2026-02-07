@@ -3,6 +3,7 @@ import { MM_TO_PX, DEFAULT_OBJECT_COLOR } from "../constants";
 import type { CanvasObjectType, ObjectSubtype } from "../types";
 import type { BoardTemplate } from "../data/boards";
 import type { DeviceTemplate } from "../data/devices";
+import type { Point } from "./vector";
 
 /** Global counter for unique object IDs. Uses timestamp prefix to survive HMR. */
 let nextObjectId = 1;
@@ -36,8 +37,7 @@ const IMAGE_PREFIX: Record<ObjectSubtype, string> = {
 export function createObjectFromTemplate(
   subtype: ObjectSubtype,
   template: BoardTemplate | DeviceTemplate,
-  x: number,
-  y: number
+  pos: Point
 ): CanvasObjectType {
   return {
     id: generateId(),
@@ -47,8 +47,7 @@ export function createObjectFromTemplate(
     brand: template.brand,
     model: template.model,
     name: template.name,
-    x,
-    y,
+    pos,
     width: template.wdh[0] * MM_TO_PX,
     depth: template.wdh[1] * MM_TO_PX,
     height: template.wdh[2] * MM_TO_PX,
@@ -70,7 +69,7 @@ export interface CustomItemParams {
   name: string;
 }
 
-export function createObjectFromCustomBoard(params: CustomItemParams, x: number, y: number): CanvasObjectType {
+export function createObjectFromCustomBoard(params: CustomItemParams, pos: Point): CanvasObjectType {
   const template: BoardTemplate = {
     id: CUSTOM_BOARD_ID,
     type: "classic",
@@ -81,10 +80,10 @@ export function createObjectFromCustomBoard(params: CustomItemParams, x: number,
     color: params.color,
     image: null,
   };
-  return createObjectFromTemplate("board", template, x, y);
+  return createObjectFromTemplate("board", template, pos);
 }
 
-export function createObjectFromCustomDevice(params: CustomItemParams, x: number, y: number): CanvasObjectType {
+export function createObjectFromCustomDevice(params: CustomItemParams, pos: Point): CanvasObjectType {
   const template: DeviceTemplate = {
     id: CUSTOM_DEVICE_ID,
     type: "pedal",
@@ -95,5 +94,5 @@ export function createObjectFromCustomDevice(params: CustomItemParams, x: number
     color: params.color,
     image: null,
   };
-  return createObjectFromTemplate("device", template, x, y);
+  return createObjectFromTemplate("device", template, pos);
 }

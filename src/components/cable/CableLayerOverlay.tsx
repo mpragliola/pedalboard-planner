@@ -26,11 +26,11 @@ const CABLE_STROKE_WIDTH_MM = 5;
 const ENDPOINT_DOT_RADIUS_PX = 5;
 
 function segmentStartPoint(segment: CableSegment): Vec2 {
-  return { x: segment.x1, y: segment.y1 };
+  return segment.start;
 }
 
 function segmentEndPoint(segment: CableSegment): Vec2 {
-  return { x: segment.x2, y: segment.y2 };
+  return segment.end;
 }
 
 function vec2Length(point: Vec2): number {

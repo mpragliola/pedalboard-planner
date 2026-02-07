@@ -55,8 +55,8 @@ export function CanvasObject({
   const is90or270 = rotation === 90 || rotation === 270;
   const bboxW = is90or270 ? depth : width;
   const bboxH = is90or270 ? width : depth;
-  const wrapperLeft = obj.x + (width - bboxW) / 2;
-  const wrapperTop = obj.y + (depth - bboxH) / 2;
+  const wrapperLeft = obj.pos.x + (width - bboxW) / 2;
+  const wrapperTop = obj.pos.y + (depth - bboxH) / 2;
   const boxLeft = (bboxW - width) / 2;
   const boxTop = (bboxH - depth) / 2;
   /* Stacking by array order only; drag boost so dragged item stays on top. */

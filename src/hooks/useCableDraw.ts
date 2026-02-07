@@ -2,9 +2,10 @@ import { useState, useCallback, useRef, type MutableRefObject } from "react";
 import { snapToObjects } from "../lib/snapToBoundingBox";
 import type { CanvasObjectType } from "../types";
 import type { CableSegment } from "../types";
+import type { Point } from "../lib/vector";
 
 export interface UseCableDrawOptions {
-  clientToCanvas: (clientX: number, clientY: number) => { x: number; y: number };
+  clientToCanvas: (clientX: number, clientY: number) => Point;
   objects: CanvasObjectType[];
   getObjectDimensions: (o: CanvasObjectType) => [number, number, number];
   onDoubleClickExit?: () => void;
@@ -18,8 +19,8 @@ const FINISH_CLICK_TOLERANCE_MM = 15;
 
 export interface UseCableDrawResult {
   segments: CableSegment[];
-  segmentStart: { x: number; y: number } | null;
-  currentEnd: { x: number; y: number } | null;
+  segmentStart: Point | null;
+  currentEnd: Point | null;
   onPointerDown: (e: React.PointerEvent) => void;
   onPointerMove: (e: React.PointerEvent) => void;
   onPointerUp: (e: React.PointerEvent) => void;
@@ -34,9 +35,9 @@ export interface UseCableDrawResult {
 
 /** Constrain direction to nearest 45° from start (0°, 45°, 90°, …), keeping distance. */
 function constrainTo45Degrees(
-  start: { x: number; y: number },
-  raw: { x: number; y: number }
-): { x: number; y: number } {
+  start: Point,
+  raw: Point
+): Point {
   const dx = raw.x - start.x;
   const dy = raw.y - start.y;
   const angle = Math.atan2(dy, dx);
@@ -61,9 +62,9 @@ export function useCableDraw({
   onFinishClickRef,
 }: UseCableDrawOptions): UseCableDrawResult {
   const [segments, setSegments] = useState<CableSegment[]>([]);
-  const [segmentStart, setSegmentStart] = useState<{ x: number; y: number } | null>(null);
-  const [currentEnd, setCurrentEnd] = useState<{ x: number; y: number } | null>(null);
-  const pointerDownRef = useRef<{ x: number; y: number } | null>(null);
+  const [segmentStart, setSegmentStart] = useState<Point | null>(null);
+  const [currentEnd, setCurrentEnd] = useState<Point | null>(null);
+  const pointerDownRef = useRef<Point | null>(null);
 
   const resolvePoint = useCallback(
     (clientX: number, clientY: number, shiftKey: boolean) => {
@@ -126,10 +127,8 @@ export function useCableDraw({
         setSegments((prev) => [
           ...prev,
           {
-            x1: segmentStart.x,
-            y1: segmentStart.y,
-            x2: releasePoint.x,
-            y2: releasePoint.y,
+            start: segmentStart,
+            end: releasePoint,
           },
         ]);
       }
@@ -162,10 +161,8 @@ export function useCableDraw({
       ? [
           ...segments,
           {
-            x1: segmentStart!.x,
-            y1: segmentStart!.y,
-            x2: currentEnd!.x,
-            y2: currentEnd!.y,
+            start: segmentStart!,
+            end: currentEnd!,
           },
         ]
       : segments;

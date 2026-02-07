@@ -9,7 +9,18 @@ import { parseColor } from "../../lib/color";
 import { getDirectionalOffset } from "../../lib/geometry2d";
 import { getBounds2DOfPointSets } from "../../lib/bounds";
 import { resolveImageSrc } from "./mini3dAssets";
-import { vec2Add, vec2Rotate, vec2Sub, vec3Add, vec3Dot, vec3Normalize, type Vec2, type Vec3 } from "../../lib/vector";
+import {
+  UNIT_SQUARE_UV,
+  vec2Add,
+  vec2Rotate,
+  vec2Sub,
+  vec3Add,
+  vec3Dot,
+  vec3Normalize,
+  type Point,
+  type Vec2,
+  type Vec3,
+} from "../../lib/vector";
 import {
   createCamera,
   projectPerspective,
@@ -105,7 +116,7 @@ export function applyConvergence(
     if (progress <= 0) return item;
 
     // Move each item toward/away from the scene center for convergence.
-    const objectOrigin = { x: item.obj.x, y: item.obj.y };
+    const objectOrigin = item.obj.pos;
     const objectCenter = vec2Add(objectOrigin, { x: item.width / 2, y: item.depth / 2 });
     const centerDelta = vec2Sub(objectCenter, sceneCenter);
     const { offsetX, offsetY } = getDirectionalOffset(
@@ -118,7 +129,7 @@ export function applyConvergence(
     const nextOrigin = vec2Add(objectOrigin, offset);
     return {
       ...item,
-      obj: { ...item.obj, x: nextOrigin.x, y: nextOrigin.y },
+      obj: { ...item.obj, pos: nextOrigin },
     };
   });
 }
@@ -135,11 +146,11 @@ export function buildFaces(stacked: StackedObject[], yaw: number, pitchOffset: n
   for (const data of stacked) {
     const { obj, width, depth, height, baseZ } = data;
     const rotation = (normalizeRotation(obj.rotation ?? 0) * Math.PI) / 180;
-    const objectCenter = vec2Add({ x: obj.x, y: obj.y }, { x: width / 2, y: depth / 2 });
+    const objectCenter = vec2Add(obj.pos, { x: width / 2, y: depth / 2 });
     const depthFor = (p: Vec3) => depthForPoint(p, camera);
 
     // Build world-space corners for the object's base and top.
-    const local: Vec2[] = [
+    const local: Point[] = [
       { x: -width / 2, y: -depth / 2 },
       { x: width / 2, y: -depth / 2 },
       { x: width / 2, y: depth / 2 },
@@ -159,13 +170,6 @@ export function buildFaces(stacked: StackedObject[], yaw: number, pitchOffset: n
     const baseDepths = baseWorld.map(depthFor);
     const color = parseColor(obj.color ?? DEFAULT_OBJECT_COLOR) ?? FALLBACK_COLOR;
     const textureSrc = obj.image ? resolveImageSrc(obj.image) : null;
-    const topUv = [
-      { x: 0, y: 0 },
-      { x: 1, y: 0 },
-      { x: 1, y: 1 },
-      { x: 0, y: 1 },
-    ];
-
     // Top face (optionally textured).
     const topNormal = faceNormal(topWorld[0], topWorld[1], topWorld[2]);
     if (isFaceVisible(topWorld, topNormal, camera)) {
@@ -178,7 +182,7 @@ export function buildFaces(stacked: StackedObject[], yaw: number, pitchOffset: n
         color,
         shade: 1,
         textureSrc,
-        uv: topUv,
+        uv: UNIT_SQUARE_UV,
         order: order++,
       });
     }

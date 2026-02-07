@@ -15,7 +15,7 @@ import { useObjectDrag } from "../hooks/useObjectDrag";
 import { useBoardDeviceFilters } from "../hooks/useBoardDeviceFilters";
 import { useHistory } from "../hooks/useHistory";
 import { useCatalogDrag } from "../hooks/useCatalogDrag";
-import { normalizeRotation } from "../lib/geometry";
+import { getObjectAabb } from "../lib/snapToBoundingBox";
 import type { CanvasObjectType, Cable } from "../types";
 import { BoardIoProvider, type BoardIoContextValue } from "./BoardIoContext";
 import { BoardProvider, type BoardContextValue } from "./BoardContext";
@@ -208,17 +208,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     let maxX = -Infinity;
     let maxY = -Infinity;
     for (const obj of objects) {
-      const [width, depth] = getObjectDimensions(obj);
-      const rotation = normalizeRotation(obj.rotation ?? 0);
-      const is90or270 = rotation === 90 || rotation === 270;
-      const bboxW = is90or270 ? depth : width;
-      const bboxH = is90or270 ? width : depth;
-      const wrapperLeft = obj.x + (width - bboxW) / 2;
-      const wrapperTop = obj.y + (depth - bboxH) / 2;
-      minX = Math.min(minX, wrapperLeft);
-      minY = Math.min(minY, wrapperTop);
-      maxX = Math.max(maxX, wrapperLeft + bboxW);
-      maxY = Math.max(maxY, wrapperTop + bboxH);
+      const aabb = getObjectAabb(obj, getObjectDimensions);
+      minX = Math.min(minX, aabb.left);
+      minY = Math.min(minY, aabb.top);
+      maxX = Math.max(maxX, aabb.left + aabb.width);
+      maxY = Math.max(maxY, aabb.top + aabb.height);
     }
     const cx = (minX + maxX) / 2;
     const cy = (minY + maxY) / 2;
@@ -247,7 +241,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const subtype = mode === "boards" ? "board" : ("device" as const);
       const w = template.wdh[0] * MM_TO_PX;
       const d = template.wdh[1] * MM_TO_PX;
-      const newObj = createObjectFromTemplate(subtype, template, canvasX - w / 2, canvasY - d / 2);
+      const newObj = createObjectFromTemplate(subtype, template, { x: canvasX - w / 2, y: canvasY - d / 2 });
 
       setObjects((prev) => [...prev, newObj]);
       (mode === "boards" ? setSelectedBoard : setSelectedDevice)("");
@@ -286,7 +280,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const w = params.widthMm * MM_TO_PX;
       const d = params.depthMm * MM_TO_PX;
       const createFn = mode === "boards" ? createObjectFromCustomBoard : createObjectFromCustomDevice;
-      const newObj = createFn(params, cx - w / 2, cy - d / 2);
+      const newObj = createFn(params, { x: cx - w / 2, y: cy - d / 2 });
       setObjects((prev) => [...prev, newObj]);
       (mode === "boards" ? setSelectedBoard : setSelectedDevice)("");
       setSelectedObjectIds([]);

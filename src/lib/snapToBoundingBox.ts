@@ -20,8 +20,8 @@ export function getObjectAabb(
   const is90or270 = rotation === 90 || rotation === 270;
   const bboxW = is90or270 ? depth : width;
   const bboxH = is90or270 ? width : depth;
-  const left = obj.x + (width - bboxW) / 2;
-  const top = obj.y + (depth - bboxH) / 2;
+  const left = obj.pos.x + (width - bboxW) / 2;
+  const top = obj.pos.y + (depth - bboxH) / 2;
   return { left, top, width: bboxW, height: bboxH };
 }
 

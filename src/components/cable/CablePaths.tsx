@@ -32,10 +32,10 @@ function connectorLabelsForCable(cable: Cable): { a: ConnectorLabel; b: Connecto
   if (segs.length === 0) return null;
   const first = segs[0];
   const last = segs[segs.length - 1];
-  const firstStart: Point = { x: first.x1, y: first.y1 };
-  const firstEnd: Point = { x: first.x2, y: first.y2 };
-  const lastStart: Point = { x: last.x1, y: last.y1 };
-  const lastEnd: Point = { x: last.x2, y: last.y2 };
+  const firstStart = first.start;
+  const firstEnd = first.end;
+  const lastStart = last.start;
+  const lastEnd = last.end;
   const firstVector = vec2Sub(firstEnd, firstStart);
   const lastVector = vec2Sub(lastEnd, lastStart);
   if (vec2Length(firstVector) < 1e-6 || vec2Length(lastVector) < 1e-6) return null;
@@ -85,8 +85,8 @@ export function CablePaths({ cables, visible, selectedCableId, onCablePointerDow
     for (const cable of cables) {
       if (cable.segments.length === 0) continue;
       const points: Point[] = [
-        { x: cable.segments[0].x1, y: cable.segments[0].y1 },
-        ...cable.segments.map((segment) => ({ x: segment.x2, y: segment.y2 })),
+        cable.segments[0].start,
+        ...cable.segments.map((segment) => segment.end),
       ];
       const d = buildRoundedPathD(points, joinRadius);
       paths.push({ id: cable.id, d, color: cable.color });

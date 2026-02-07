@@ -28,7 +28,7 @@ export interface Face {
   color: Rgb;
   shade: number;
   textureSrc?: string | null;
-  uv?: Vec2[];
+  uv?: readonly Vec2[];
 }
 
 // An object stacked in the 3D scene, with precomputed footprint 
@@ -68,8 +68,8 @@ export function getFootprintRect(
   const is90or270 = rotation === 90 || rotation === 270;
   const bboxW = is90or270 ? depth : width;
   const bboxH = is90or270 ? width : depth;
-  const left = obj.x + (width - bboxW) / 2;
-  const top = obj.y + (depth - bboxH) / 2;
+  const left = obj.pos.x + (width - bboxW) / 2;
+  const top = obj.pos.y + (depth - bboxH) / 2;
   return {
     rect: { minX: left, minY: top, maxX: left + bboxW, maxY: top + bboxH },
     width,

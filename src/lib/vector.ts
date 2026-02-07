@@ -7,6 +7,14 @@ export type Size = Vector;
 export type Offset = Vector;
 export type Vec3 = { x: number; y: number; z: number };
 
+/** Canonical UVs for a unit square, clockwise from top-left. */
+export const UNIT_SQUARE_UV: readonly Vec2[] = [
+  { x: 0, y: 0 },
+  { x: 1, y: 0 },
+  { x: 1, y: 1 },
+  { x: 0, y: 1 },
+] as const;
+
 /** Component-wise addition for 2D vectors. */
 export function vec2Add(a: Vec2, b: Vec2): Vec2 {
   return { x: a.x + b.x, y: a.y + b.y };
