@@ -21,20 +21,24 @@ function createBoundsAccumulator(): BoundsAccumulator {
   };
 }
 
-function includeBoundsPoint(acc: BoundsAccumulator, x: number, y: number): void {
+function includeBoundsExtents(
+  acc: BoundsAccumulator,
+  minX: number,
+  minY: number,
+  maxX: number,
+  maxY: number
+): void {
   acc.hasValues = true;
-  acc.minX = Math.min(acc.minX, x);
-  acc.minY = Math.min(acc.minY, y);
-  acc.maxX = Math.max(acc.maxX, x);
-  acc.maxY = Math.max(acc.maxY, y);
+  acc.minX = Math.min(acc.minX, minX);
+  acc.minY = Math.min(acc.minY, minY);
+  acc.maxX = Math.max(acc.maxX, maxX);
+  acc.maxY = Math.max(acc.maxY, maxY);
 }
 
-function includeBoundsRect(acc: BoundsAccumulator, rect: Rect): void {
-  acc.hasValues = true;
-  acc.minX = Math.min(acc.minX, rect.minX);
-  acc.minY = Math.min(acc.minY, rect.minY);
-  acc.maxX = Math.max(acc.maxX, rect.maxX);
-  acc.maxY = Math.max(acc.maxY, rect.maxY);
+function includeBoundsFromPoints(acc: BoundsAccumulator, points: Iterable<Vec2>): void {
+  for (const point of points) {
+    includeBoundsExtents(acc, point.x, point.y, point.x, point.y);
+  }
 }
 
 function finalizeBounds(acc: BoundsAccumulator): Bounds2D | null {
@@ -47,18 +51,14 @@ function finalizeBounds(acc: BoundsAccumulator): Bounds2D | null {
 
 export function getBounds2DOfPoints(points: Iterable<Vec2>): Bounds2D | null {
   const acc = createBoundsAccumulator();
-  for (const point of points) {
-    includeBoundsPoint(acc, point.x, point.y);
-  }
+  includeBoundsFromPoints(acc, points);
   return finalizeBounds(acc);
 }
 
 export function getBounds2DOfPointSets(pointSets: Iterable<readonly Vec2[]>): Bounds2D | null {
   const acc = createBoundsAccumulator();
   for (const points of pointSets) {
-    for (const point of points) {
-      includeBoundsPoint(acc, point.x, point.y);
-    }
+    includeBoundsFromPoints(acc, points);
   }
   return finalizeBounds(acc);
 }
@@ -66,7 +66,7 @@ export function getBounds2DOfPointSets(pointSets: Iterable<readonly Vec2[]>): Bo
 export function getBounds2DOfRects(rects: Iterable<Rect>): Bounds2D | null {
   const acc = createBoundsAccumulator();
   for (const rect of rects) {
-    includeBoundsRect(acc, rect);
+    includeBoundsExtents(acc, rect.minX, rect.minY, rect.maxX, rect.maxY);
   }
   return finalizeBounds(acc);
 }
