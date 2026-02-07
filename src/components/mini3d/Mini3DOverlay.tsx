@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useBoard } from "../../context/BoardContext";
 import { useUi } from "../../context/UiContext";
-import { DEFAULT_OBJECT_COLOR } from "../../constants";
+import { DEFAULT_OBJECT_COLOR, FEATURE_MINI3D_AUTOROTATE } from "../../constants";
 import { clamp } from "../../lib/math";
 import { parseColor, rgba, shade } from "../../lib/color";
 import { normalizeRotation } from "../../lib/geometry";
@@ -33,6 +33,16 @@ const DOUBLE_CLICK_DELAY_MS = 320;
 const OPEN_FADE_MS = 500;
 const VIEW_PADDING_PX = 12;
 
+/**
+ * Single knob for mini-3D perspective intensity.
+ * 0.0 = flatter (less foreshortening), 1.0 = strong perspective, 1.25+ = very dramatic.
+ * Recommended range: 0.0..1.5.
+ */
+const MINI3D_PERSPECTIVE_DRAMA = 1.25;
+const MINI3D_PERSPECTIVE_DRAMA_SAFE = clamp(MINI3D_PERSPECTIVE_DRAMA, 0, 1.5);
+const MINI3D_PERSPECTIVE_SCENE_FACTOR = Math.max(0.22, 1.9 - MINI3D_PERSPECTIVE_DRAMA_SAFE * 1.35);
+const MINI3D_CAMERA_DISTANCE_SCENE_FACTOR = Math.max(0.3, 1.15 - MINI3D_PERSPECTIVE_DRAMA_SAFE * 0.57);
+
 type PointerPoint = { x: number; y: number };
 type DragState = { pointerId: number; startX: number; startY: number; startYaw: number; startPitch: number };
 type DoubleTapState = { pointerId: number; startX: number; startY: number; moved: boolean };
@@ -40,6 +50,7 @@ type OverlayPhase = "opening" | "open" | "closing";
 type Mini3DOverlayProps = { onCloseComplete?: () => void };
 
 type CssVars = CSSProperties & Record<`--${string}`, string>;
+type FitTransform = { scale: number; offsetX: number; offsetY: number };
 
 function getPointersCenter(points: readonly [PointerPoint, PointerPoint]): PointerPoint {
   return {
@@ -82,43 +93,126 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
   const scene = useMemo(() => getSceneMetrics(stacked), [stacked]);
   const convergenceTotal = useMemo(() => getConvergenceTotal(stacked.length), [stacked.length]);
 
-  const perspective = useMemo(() => clamp(scene.maxDim * 3.2, 260, 1200), [scene.maxDim]);
-  const cameraDistance = useMemo(() => -clamp(scene.maxDim * 0.95, 170, 1100), [scene.maxDim]);
+  const perspective = useMemo(() => clamp(scene.maxDim * MINI3D_PERSPECTIVE_SCENE_FACTOR, 60, 900), [scene.maxDim]);
+  const cameraDistance = useMemo(() => -clamp(scene.maxDim * MINI3D_CAMERA_DISTANCE_SCENE_FACTOR, 60, 500), [scene.maxDim]);
 
-  const computeFitScale = useCallback(
-    (yaw: number, pitchOffset: number) => {
-      const pitch = clamp(0.35 + pitchOffset, MIN_PITCH, MAX_PITCH);
-      const absCosYaw = Math.abs(Math.cos(yaw));
-      const absSinYaw = Math.abs(Math.sin(yaw));
-
-      const projectedWidth = Math.max(1, scene.width * absCosYaw + scene.depth * absSinYaw);
-      const footprintDepth = scene.width * absSinYaw + scene.depth * absCosYaw;
-      const projectedHeight = Math.max(1, footprintDepth * Math.sin(pitch) + scene.maxZ * Math.cos(pitch));
-
+  const computeFitTransform = useCallback(
+    (yaw: number, pitchOffset: number): FitTransform => {
       const availableWidth = Math.max(1, size.width - VIEW_PADDING_PX * 2);
       const availableHeight = Math.max(1, size.height - VIEW_PADDING_PX * 2);
-      const fitWithoutPerspective = Math.min(availableWidth / projectedWidth, availableHeight / projectedHeight);
+      const pitch = clamp(0.35 + pitchOffset, MIN_PITCH, MAX_PITCH);
 
-      // CSS perspective shrinks content when the scene is translated away from the camera.
-      const perspectiveFactor = perspective / (perspective - cameraDistance);
-      const compensated = fitWithoutPerspective / Math.max(0.0001, perspectiveFactor);
+      const halfWidth = scene.width * 0.5;
+      const halfDepth = scene.depth * 0.5;
+      const minY = -scene.maxZ;
+      const maxY = 0;
 
-      return clamp(compensated * 0.98, 0.08, 4);
+      const convergencePad = phase === "open" ? 0 : CONVERGENCE_OFFSET_DISTANCE;
+      const xValues = [-halfWidth - convergencePad, halfWidth + convergencePad];
+      const yValues = [minY, maxY];
+      const zValues = [-halfDepth - convergencePad, halfDepth + convergencePad];
+
+      const yawCss = -yaw;
+      const pitchCss = -pitch;
+      const cosY = Math.cos(yawCss);
+      const sinY = Math.sin(yawCss);
+      const cosX = Math.cos(pitchCss);
+      const sinX = Math.sin(pitchCss);
+
+      const projectBounds = (scale: number) => {
+        let minX = Infinity;
+        let maxX = -Infinity;
+        let minProjectedY = Infinity;
+        let maxProjectedY = -Infinity;
+
+        for (const x of xValues) {
+          for (const y of yValues) {
+            for (const z of zValues) {
+              const xr = x * cosY + z * sinY;
+              const zr = -x * sinY + z * cosY;
+              const yr = y;
+
+              const x2 = xr;
+              const y2 = yr * cosX - zr * sinX;
+              const z2 = yr * sinX + zr * cosX;
+
+              const x3 = x2 * scale;
+              const y3 = y2 * scale;
+              const z3 = z2 * scale + cameraDistance;
+
+              const denom = perspective - z3;
+              if (!Number.isFinite(denom) || denom <= 1) return null;
+
+              const factor = perspective / denom;
+              const sx = x3 * factor;
+              const sy = y3 * factor;
+
+              if (sx < minX) minX = sx;
+              if (sx > maxX) maxX = sx;
+              if (sy < minProjectedY) minProjectedY = sy;
+              if (sy > maxProjectedY) maxProjectedY = sy;
+            }
+          }
+        }
+
+        if (!Number.isFinite(minX) || !Number.isFinite(maxX) || !Number.isFinite(minProjectedY) || !Number.isFinite(maxProjectedY)) {
+          return null;
+        }
+
+        return { minX, maxX, minY: minProjectedY, maxY: maxProjectedY };
+      };
+
+      const fits = (scale: number) => {
+        const bounds = projectBounds(scale);
+        if (!bounds) return false;
+        const width = bounds.maxX - bounds.minX;
+        const height = bounds.maxY - bounds.minY;
+        return width <= availableWidth && height <= availableHeight;
+      };
+
+      let low = 0.01;
+      let high = 0.12;
+      while (fits(high) && high < 8) {
+        low = high;
+        high *= 1.45;
+      }
+
+      for (let i = 0; i < 24; i += 1) {
+        const mid = (low + high) * 0.5;
+        if (fits(mid)) {
+          low = mid;
+        } else {
+          high = mid;
+        }
+      }
+
+      const scale = clamp(low * 0.985, 0.01, 8);
+      const finalBounds = projectBounds(scale);
+      if (!finalBounds) return { scale, offsetX: 0, offsetY: 0 };
+
+      return {
+        scale,
+        offsetX: -(finalBounds.minX + finalBounds.maxX) * 0.5,
+        offsetY: -(finalBounds.minY + finalBounds.maxY) * 0.5,
+      };
     },
-    [cameraDistance, perspective, scene.depth, scene.maxZ, scene.width, size.height, size.width]
+    [cameraDistance, perspective, phase, scene.depth, scene.maxZ, scene.width, size.height, size.width]
   );
 
-  const sceneScale = useMemo(() => computeFitScale(yawRef.current, pitchRef.current), [computeFitScale]);
+  const sceneFit = useMemo(() => computeFitTransform(yawRef.current, pitchRef.current), [computeFitTransform]);
 
   const syncCameraVars = useCallback(() => {
     const world = worldRef.current;
     if (!world) return;
     const pitch = clamp(0.35 + pitchRef.current, MIN_PITCH, MAX_PITCH);
-    const scale = computeFitScale(yawRef.current, pitchRef.current);
-    world.style.setProperty("--mini3d-scale", `${scale}`);
+    const fit = computeFitTransform(yawRef.current, pitchRef.current);
+    world.style.setProperty("--mini3d-scale", `${fit.scale}`);
+    world.style.setProperty("--mini3d-offset-x", `${fit.offsetX}px`);
+    world.style.setProperty("--mini3d-offset-y", `${fit.offsetY}px`);
     world.style.setProperty("--mini3d-yaw", `${-yawRef.current}rad`);
     world.style.setProperty("--mini3d-pitch", `${-pitch}rad`);
-  }, [computeFitScale]);
+  }, [computeFitTransform]);
+
 
   const clearOpenTimer = useCallback(() => {
     if (openTimerRef.current != null) {
@@ -232,7 +326,7 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
   ]);
 
   useEffect(() => {
-    if (!autoRotate || !showMini3d) {
+    if (!FEATURE_MINI3D_AUTOROTATE || !autoRotate || !showMini3d) {
       if (autoRotateRafRef.current != null) cancelAnimationFrame(autoRotateRafRef.current);
       autoRotateRafRef.current = null;
       autoRotateLastTimeRef.current = null;
@@ -315,9 +409,11 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
               moved: false,
             };
             lastTapRef.current = null;
-            suppressClickRef.current = window.setTimeout(() => {
-              suppressClickRef.current = null;
-            }, DOUBLE_TAP_MS);
+            if (FEATURE_MINI3D_AUTOROTATE) {
+              suppressClickRef.current = window.setTimeout(() => {
+                suppressClickRef.current = null;
+              }, DOUBLE_TAP_MS);
+            }
             return;
           }
         }
@@ -429,7 +525,9 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
   };
 
   const worldStyle: CssVars = {
-    "--mini3d-scale": `${sceneScale}`,
+    "--mini3d-scale": `${sceneFit.scale}`,
+    "--mini3d-offset-x": `${sceneFit.offsetX}px`,
+    "--mini3d-offset-y": `${sceneFit.offsetY}px`,
     "--mini3d-camera-z": `${cameraDistance}px`,
     "--mini3d-yaw": `${-yawRef.current}rad`,
     "--mini3d-pitch": `${-clamp(0.35 + pitchRef.current, MIN_PITCH, MAX_PITCH)}rad`,
@@ -440,25 +538,29 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
       className={overlayClass}
       ref={containerRef}
       style={overlayStyle}
-      role="button"
-      tabIndex={0}
-      aria-pressed={autoRotate}
-      aria-label="Toggle 3D rotation"
-      title={autoRotate ? "Stop rotation" : "Start rotation"}
-      onClick={() => {
-        if (suppressClickRef.current != null) {
-          window.clearTimeout(suppressClickRef.current);
-          suppressClickRef.current = null;
-          return;
-        }
-        if (clickTimeoutRef.current != null) {
-          window.clearTimeout(clickTimeoutRef.current);
-        }
-        clickTimeoutRef.current = window.setTimeout(() => {
-          clickTimeoutRef.current = null;
-          setAutoRotate((value) => !value);
-        }, DOUBLE_CLICK_DELAY_MS);
-      }}
+      role={FEATURE_MINI3D_AUTOROTATE ? "button" : undefined}
+      tabIndex={FEATURE_MINI3D_AUTOROTATE ? 0 : undefined}
+      aria-pressed={FEATURE_MINI3D_AUTOROTATE ? autoRotate : undefined}
+      aria-label={FEATURE_MINI3D_AUTOROTATE ? "Toggle 3D rotation" : "3D overlay"}
+      title={FEATURE_MINI3D_AUTOROTATE ? (autoRotate ? "Stop rotation" : "Start rotation") : "3D overlay"}
+      onClick={
+        FEATURE_MINI3D_AUTOROTATE
+          ? () => {
+              if (suppressClickRef.current != null) {
+                window.clearTimeout(suppressClickRef.current);
+                suppressClickRef.current = null;
+                return;
+              }
+              if (clickTimeoutRef.current != null) {
+                window.clearTimeout(clickTimeoutRef.current);
+              }
+              clickTimeoutRef.current = window.setTimeout(() => {
+                clickTimeoutRef.current = null;
+                setAutoRotate((value) => !value);
+              }, DOUBLE_CLICK_DELAY_MS);
+            }
+          : undefined
+      }
       onDoubleClick={() => {
         if (clickTimeoutRef.current != null) {
           window.clearTimeout(clickTimeoutRef.current);
@@ -470,12 +572,16 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
       onPointerMove={handleRotatePointerMove}
       onPointerUp={handleRotatePointerUp}
       onPointerCancel={handleRotatePointerUp}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          setAutoRotate((value) => !value);
-        }
-      }}
+      onKeyDown={
+        FEATURE_MINI3D_AUTOROTATE
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setAutoRotate((value) => !value);
+              }
+            }
+          : undefined
+      }
     >
       <div className="mini3d-stage" style={stageStyle}>
         <div className="mini3d-world" ref={worldRef} style={worldStyle}>
@@ -543,13 +649,15 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
 
       {showMini3d ? (
         <div className="mini3d-instruction">
-          Middle button or double-tap drag to rotate. Click/tap for auto-rotation. Double click/tap to toggle
-          fullscreen.
+          {FEATURE_MINI3D_AUTOROTATE
+            ? "Middle button or double-tap drag to rotate. Click/tap for auto-rotation. Double click/tap to toggle fullscreen."
+            : "Middle button or double-tap drag to rotate. Double click/tap to toggle fullscreen."}
         </div>
       ) : null}
     </div>
   );
 }
+
 
 
 

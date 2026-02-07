@@ -6,6 +6,16 @@ import type { DeviceType } from "./data/devices";
 export const BASE_URL =
   typeof import.meta !== "undefined" && import.meta.env?.BASE_URL != null ? import.meta.env.BASE_URL : "/";
 
+function getBooleanEnv(name: string, fallback = false): boolean {
+  const value = import.meta.env?.[name];
+  if (typeof value !== "string") return fallback;
+  const normalized = value.trim().toLowerCase();
+  return normalized === "1" || normalized === "true" || normalized === "yes" || normalized === "on";
+}
+
+/** Feature flag for click-to-toggle mini3d auto-rotation. */
+export const FEATURE_MINI3D_AUTOROTATE = getBooleanEnv("VITE_FEATURE_MINI3D_AUTOROTATE", false);
+
 /** Connector kind to SVG image path. */
 export const CONNECTOR_ICON_MAP: Record<ConnectorKind, string> = {
   "mono jack (TS)": `${BASE_URL}images/connectors/ts.svg`,

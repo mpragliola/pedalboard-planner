@@ -42,7 +42,7 @@
   height: 0;
   transform-style: preserve-3d;
   transform:
-    translate3d(-50%, -50%, 0)
+    translate3d(var(--mini3d-offset-x, 0px), var(--mini3d-offset-y, 0px), 0)
     translateZ(var(--mini3d-camera-z, -600px))
     scale(var(--mini3d-scale, 1))
     rotateX(var(--mini3d-pitch, 0.35rad))
@@ -207,3 +207,4 @@
   background: rgba(0, 0, 0, 0.6);
   cursor: zoom-out;
 }
+
