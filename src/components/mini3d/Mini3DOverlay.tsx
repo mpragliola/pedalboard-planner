@@ -6,7 +6,7 @@ import { clamp } from "../../lib/math";
 import { parseColor, rgba, shade } from "../../lib/color";
 import { normalizeRotation } from "../../lib/geometry";
 import { getDirectionalOffset } from "../../lib/geometry2d";
-import type { Point } from "../../lib/vector";
+import { vec2Add, vec2Scale, type Point } from "../../lib/vector";
 import { resolveImageSrc } from "./mini3dAssets";
 import {
   computeStackedObjects,
@@ -50,10 +50,7 @@ type CssVars = CSSProperties & Record<`--${string}`, string>;
 type FitTransform = { scale: number; offsetX: number; offsetY: number };
 
 function getPointersCenter(points: readonly [Point, Point]): Point {
-  return {
-    x: (points[0].x + points[1].x) * 0.5,
-    y: (points[0].y + points[1].y) * 0.5,
-  };
+  return vec2Scale(vec2Add(points[0], points[1]), 0.5);
 }
 
 export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
