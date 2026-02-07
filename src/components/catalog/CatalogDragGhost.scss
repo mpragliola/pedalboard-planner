@@ -1,19 +1,19 @@
 @use "../../styles/variables" as vars;
 
 /* Catalog drag and canvas drag/selection are mutually exclusive */
-body.catalog-dragging .canvas {
-  pointer-events: none;
-}
-
 body.catalog-dragging {
   cursor: grabbing !important;
   user-select: none;
   touch-action: none;
   overscroll-behavior: none;
-}
 
-body.catalog-dragging * {
-  cursor: grabbing !important;
+  .canvas {
+    pointer-events: none;
+  }
+
+  * {
+    cursor: grabbing !important;
+  }
 }
 
 .catalog-drag-ghost {
@@ -29,9 +29,11 @@ body.catalog-dragging * {
 }
 
 /* When inside our custom wrapper, stay in flow so wrapper gets correct size; wrapper's translate(-50%,-50%) then centers the ghost on cursor */
-.catalog-drag-ghost-wrapper .catalog-drag-ghost {
-  position: relative;
-  z-index: 0;
+.catalog-drag-ghost-wrapper {
+  .catalog-drag-ghost {
+    position: relative;
+    z-index: 0;
+  }
 }
 
 .catalog-drag-ghost-image {

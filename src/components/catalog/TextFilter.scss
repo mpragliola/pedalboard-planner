@@ -8,38 +8,38 @@
 
 .text-filter-wrapper {
   position: relative;
-}
 
-/* Override for text input (no dropdown arrow). Parent or shared CSS should provide .dropdown base. */
-.dropdown.text-filter {
-  @include text-filter-input;
-}
+  /* Override for text input (no dropdown arrow). Parent or shared CSS should provide .dropdown base. */
+  .dropdown.text-filter {
+    @include text-filter-input;
+  }
 
-.text-filter-clear {
-  position: absolute;
-  top: 50%;
-  right: 6px;
-  transform: translateY(-50%);
-  width: 12px;
-  height: 12px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  font-size: 0.6rem;
-  font-weight: 600;
-  color: vars.$color-text-muted;
-  background: none;
-  border: none;
-  cursor: pointer;
-}
+  .text-filter-clear {
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    transform: translateY(-50%);
+    width: 12px;
+    height: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: vars.$color-text-muted;
+    background: none;
+    border: none;
+    cursor: pointer;
 
-.text-filter-clear:hover {
-  color: vars.$color-text;
-}
+    &:hover {
+      color: vars.$color-text;
+    }
 
-.text-filter-clear:focus-visible {
-  outline: 1px solid vars.$color-text-subtle;
-  border-radius: 2px;
+    &:focus-visible {
+      outline: 1px solid vars.$color-text-subtle;
+      border-radius: 2px;
+    }
+  }
 }
 
