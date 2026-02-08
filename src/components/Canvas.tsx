@@ -53,7 +53,7 @@ export function Canvas() {
   } = useBoard();
   const { cables, selectedCableId, onCablePointerDown, setCables, setSelectedCableId } = useCable();
   const { shouldIgnoreCatalogClick } = useCatalog();
-  const { showGrid, xray, ruler, lineRuler, cableLayer, cablesVisible, setFloatingUiVisible, unit } = useUi();
+  const { showGrid, xray, ruler, lineRuler, cableLayer, cablesVisibility, setFloatingUiVisible, unit } = useUi();
 
   const [editingCableId, setEditingCableId] = useState<string | null>(null);
   const selectedCable = selectedCableId ? cables.find((c) => c.id === selectedCableId) : null;
@@ -156,7 +156,8 @@ export function Canvas() {
         </div>
         <CablePaths
           cables={cables}
-          visible={cablesVisible}
+          visible={cablesVisibility !== "hidden"}
+          opacity={cablesVisibility === "dim" ? 0.5 : 1}
           selectedCableId={selectedCableId}
           onCablePointerDown={onCablePointerDown}
         />

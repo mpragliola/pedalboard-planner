@@ -58,7 +58,7 @@ async function exitDocumentFullscreen() {
 
 export function SideControls() {
   const { centerView } = useCanvas()
-  const { showGrid, setShowGrid, xray, setXray, showMini3d, setShowMini3d, ruler, setRuler, lineRuler, setLineRuler, cableLayer, setCableLayer, cablesVisible, setCablesVisible } = useUi()
+  const { showGrid, setShowGrid, xray, setXray, showMini3d, setShowMini3d, ruler, setRuler, lineRuler, setLineRuler, cableLayer, setCableLayer, cablesVisibility, setCablesVisibility } = useUi()
   const [componentListOpen, setComponentListOpen] = useState(false)
   const [measurementExpanded, setMeasurementExpanded] = useState(false)
   const [viewExpanded, setViewExpanded] = useState(false)
@@ -118,12 +118,16 @@ export function SideControls() {
         className="cable-layer-toggle"
       />
       <SideControl
-        label="Show cables"
-        title="Show or hide cables on the canvas"
+        label={`Cables: ${cablesVisibility === "shown" ? "On" : cablesVisibility === "dim" ? "Dim" : "Off"}`}
+        title="Cycle cable visibility (on / dim / off)"
         icon={faLayerGroup}
-        onClick={() => setCablesVisible((v) => !v)}
-        active={cablesVisible}
-        className="cables-visible-toggle"
+        onClick={() =>
+          setCablesVisibility((v) => (v === "shown" ? "dim" : v === "dim" ? "hidden" : "shown"))
+        }
+        active={cablesVisibility !== "hidden"}
+        className={`cables-visible-toggle${
+          cablesVisibility === "dim" ? " cables-visible-toggle--dim" : ""
+        }`}
       />
       <SideControl
         label="3D view"

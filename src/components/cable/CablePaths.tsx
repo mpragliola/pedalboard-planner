@@ -94,6 +94,7 @@ interface EndpointDot {
 interface CablePathsProps {
   cables: Cable[];
   visible: boolean;
+  opacity?: number;
   selectedCableId: string | null;
   onCablePointerDown: (id: string, e: React.PointerEvent) => void;
 }
@@ -102,7 +103,7 @@ interface CablePathsProps {
  * Renders cables in canvas (world) coordinates inside the viewport so they
  * pan and zoom smoothly with the same CSS transform as the rest of the canvas.
  */
-export function CablePaths({ cables, visible, selectedCableId, onCablePointerDown }: CablePathsProps) {
+export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCablePointerDown }: CablePathsProps) {
   const { objects } = useBoard();
   const { setCables, setSelectedCableId } = useCable();
   const { canvasRef, zoom, pan, pausePanZoom } = useCanvas();
@@ -382,6 +383,7 @@ export function CablePaths({ cables, visible, selectedCableId, onCablePointerDow
         pointerEvents: "auto",
         zIndex: 1000,
         colorScheme: "normal",
+        opacity,
       }}
       onDoubleClickCapture={handleSvgDoubleClick}
     >

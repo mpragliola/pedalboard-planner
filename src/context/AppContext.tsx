@@ -96,7 +96,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [ruler, setRuler] = useState(false);
   const [lineRuler, setLineRuler] = useState(false);
   const [cableLayer, setCableLayer] = useState(false);
-  const [cablesVisible, setCablesVisible] = useState(true);
+  const [cablesVisibility, setCablesVisibility] = useState<"shown" | "dim" | "hidden">("shown");
   const [unit, setUnit] = useState<"mm" | "in">(savedState?.unit ?? "mm");
   const [catalogMode, setCatalogMode] = useState<CatalogMode>("boards");
   const [selectedObjectIds, setSelectedObjectIds] = useState<string[]>([]);
@@ -506,8 +506,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setLineRuler,
       cableLayer,
       setCableLayer,
-      cablesVisible,
-      setCablesVisible,
+      cablesVisibility,
+      setCablesVisibility,
       floatingUiVisible,
       setFloatingUiVisible,
       panelExpanded,
@@ -528,8 +528,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setLineRuler,
       cableLayer,
       setCableLayer,
-      cablesVisible,
-      setCablesVisible,
+      cablesVisibility,
+      setCablesVisibility,
       floatingUiVisible,
       setFloatingUiVisible,
       panelExpanded,

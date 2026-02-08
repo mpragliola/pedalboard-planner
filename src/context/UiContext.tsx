@@ -13,8 +13,8 @@ export interface UiContextValue {
   setLineRuler: Dispatch<SetStateAction<boolean>>;
   cableLayer: boolean;
   setCableLayer: Dispatch<SetStateAction<boolean>>;
-  cablesVisible: boolean;
-  setCablesVisible: Dispatch<SetStateAction<boolean>>;
+  cablesVisibility: "shown" | "dim" | "hidden";
+  setCablesVisibility: Dispatch<SetStateAction<"shown" | "dim" | "hidden">>;
   floatingUiVisible: boolean;
   setFloatingUiVisible: Dispatch<SetStateAction<boolean>>;
   panelExpanded: boolean;
