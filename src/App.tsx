@@ -4,15 +4,12 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Canvas } from "./components/Canvas";
 import { BoardMenu } from "./components/boardmenu/BoardMenu";
 import { DropdownsPanel } from "./components/catalog/DropdownsPanel";
-import { CatalogDndProvider } from "./components/catalog/CatalogDndProvider";
 import { SideControls } from "./components/zoom/SideControls";
 import { SelectionInfoPopup } from "./components/selection/SelectionInfoPopup";
 import { BottomControls } from "./components/history/BottomControls";
 import { Mini3DOverlay } from "./components/mini3d/Mini3DOverlay";
-import { AppProvider } from "./context/AppContext";
-import { StorageProvider } from "./context/StorageContext";
-import { ConfirmationProvider } from "./context/ConfirmationContext";
-import { SettingsModalProvider, useSettingsModal } from "./context/SettingsModalContext";
+import { AppProviders } from "./context/AppProviders";
+import { useSettingsModal } from "./context/SettingsModalContext";
 import { SettingsModal } from "./components/settings/SettingsModal";
 import { useCatalog } from "./context/CatalogContext";
 import { useUi } from "./context/UiContext";
@@ -91,17 +88,9 @@ function AppContent() {
 
 function App() {
   return (
-    <ConfirmationProvider>
-      <StorageProvider>
-        <AppProvider>
-          <SettingsModalProvider>
-            <CatalogDndProvider>
-              <AppContent />
-            </CatalogDndProvider>
-          </SettingsModalProvider>
-        </AppProvider>
-      </StorageProvider>
-    </ConfirmationProvider>
+    <AppProviders>
+      <AppContent />
+    </AppProviders>
   );
 }
 
