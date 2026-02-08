@@ -1,5 +1,8 @@
-import { WDH_BOARD_813_406_64 } from '../../wdh'
+import type { Wdh } from '../../wdh'
 import type { BoardTemplate } from '../boards'
+
+/** 32"×16" style, 64 mm height. */
+const WDH_BOARD_813_406_64: Wdh = [813, 406, 64]
 
 export const WESTCOAST_BOARD_TEMPLATES: BoardTemplate[] = [
   { id: 'board-westcoast-mini', type: 'classic', brand: 'West Coast Pedalboard', model: 'Mini', name: 'West Coast Pedalboard Mini', wdh: [406, 203, 38], image: null },

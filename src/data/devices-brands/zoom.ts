@@ -1,10 +1,13 @@
 import type { Wdh } from "../../wdh";
-import { WDH_ZOOM_AC, WDH_ZOOM_MS } from "../../wdh";
 import type { DeviceTemplate } from "../devices";
 import { deviceTemplate, deviceImage } from "../deviceHelpers";
 
 const WDH_ZOOM_338: Wdh = [338, 180, 77];
 const WDH_ZOOM_SMALL: Wdh = [10, 10, 10];
+/** Zoom AC-2 / AC-3. */
+const WDH_ZOOM_AC: Wdh = [77.5, 130, 58.5];
+/** Zoom MS series (MS-50G+, MS-60B+, etc.). */
+const WDH_ZOOM_MS: Wdh = [77.5, 130.3, 58.5];
 
 type ZoomRow = { model: string; name: string; wdh: Wdh; type: "multifx" | "pedal"; image: string };
 const zoomMultifx: ZoomRow[] = [

@@ -1,8 +1,12 @@
-import { WDH_MXR_BASS, WDH_MXR_STANDARD } from "../../wdh";
+import type { Wdh } from "../../wdh";
 import type { DeviceTemplate } from "../devices";
 import { createBrandHelpers } from "../deviceHelpers";
 
 const { pedal, img } = createBrandHelpers("mxr", "MXR");
+/** MXR standard (e.g. Phase 90, Carbon Copy). */
+const WDH_MXR_STANDARD: Wdh = [60, 110, 50];
+/** MXR bass / double (e.g. Bass D.I.+, Dime Distortion). */
+const WDH_MXR_BASS: Wdh = [124, 92, 55];
 
 export const MXR_DEVICE_TEMPLATES: DeviceTemplate[] = [
   pedal("Standard Pedal", WDH_MXR_STANDARD, img("mxr-phase90.png")),

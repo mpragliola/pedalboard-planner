@@ -1,8 +1,13 @@
-import { WDH_CRYBABY_STANDARD, WDH_MXR_STANDARD } from "../../wdh";
+import type { Wdh } from "../../wdh";
 import type { DeviceTemplate } from "../devices";
 import { deviceTemplate, deviceImage } from "../deviceHelpers";
 
-const dunlopRows: { model: string; wdh: [number, number, number]; image: string }[] = [
+/** Dunlop Cry Baby standard wah. */
+const WDH_CRYBABY_STANDARD: Wdh = [102, 252, 76];
+/** MXR standard (e.g. Phase 90, Carbon Copy). */
+const WDH_MXR_STANDARD: Wdh = [60, 110, 50];
+
+const dunlopRows: { model: string; wdh: Wdh; image: string }[] = [
   {
     model: "GCB95 Cry Baby Standard",
     wdh: WDH_CRYBABY_STANDARD,

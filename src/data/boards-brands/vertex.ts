@@ -1,5 +1,10 @@
-import { WDH_BOARD_457_305_64, WDH_BOARD_813_406_64 } from '../../wdh'
+import type { Wdh } from '../../wdh'
 import type { BoardTemplate } from '../boards'
+
+/** 18"×12" style, 64 mm height. */
+const WDH_BOARD_457_305_64: Wdh = [457, 305, 64]
+/** 32"×16" style, 64 mm height. */
+const WDH_BOARD_813_406_64: Wdh = [813, 406, 64]
 
 export const VERTEX_BOARD_TEMPLATES: BoardTemplate[] = [
   { id: 'board-vertex-small', type: 'classic', brand: 'Vertex', model: 'Pedalboard Small', name: 'Vertex Pedalboard Small', wdh: WDH_BOARD_457_305_64, image: null },
