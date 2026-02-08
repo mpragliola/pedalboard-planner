@@ -8,16 +8,19 @@ import { SideControls } from "./components/zoom/SideControls";
 import { SelectionInfoPopup } from "./components/selection/SelectionInfoPopup";
 import { BottomControls } from "./components/history/BottomControls";
 import { Mini3DOverlay } from "./components/mini3d/Mini3DOverlay";
+import { OverlayMessage } from "./components/common/OverlayMessage";
 import { AppProviders } from "./context/AppProviders";
 import { useSettingsModal } from "./context/SettingsModalContext";
 import { SettingsModal } from "./components/settings/SettingsModal";
 import { useCatalog } from "./context/CatalogContext";
+import { useCable } from "./context/CableContext";
 import { useUi } from "./context/UiContext";
 import "./App.scss";
 
 function AppContent() {
   const { dropdownPanelRef } = useCatalog();
   const { showMini3d, floatingUiVisible, setFloatingUiVisible, panelExpanded, setPanelExpanded } = useUi();
+  const { selectedCableId } = useCable();
   const { open: settingsOpen, setOpen: setSettingsOpen } = useSettingsModal();
   const [mini3dMounted, setMini3dMounted] = useState(showMini3d);
 
@@ -76,9 +79,13 @@ function AppContent() {
       <BottomControls />
       <SelectionInfoPopup />
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
-      <p className="disclaimer" aria-live="polite">
-        Prototype — may contain bugs; catalog is incomplete and may have errors.
-      </p>
+      <OverlayMessage
+        message={
+          selectedCableId
+            ? "Click and drag to move. Double click to add point. Long click to remove point"
+            : "Prototype — may contain bugs; catalog is incomplete and may have errors."
+        }
+      />
       <footer className="copyright">
         PedalboardFactory — by <a href="mailto:marcopragliola@gmail.com">Marco Pragliola</a>
       </footer>

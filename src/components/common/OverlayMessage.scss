@@ -1,0 +1,20 @@
+@use "../../styles/variables" as vars;
+
+.overlay-message {
+  position: fixed;
+  top: vars.$space-8;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: vars.$z-disclaimer;
+  margin: 0;
+  padding: vars.$space-4 vars.$space-12;
+  font-size: 0.7rem;
+  color: rgba(vars.$color-white, 0.7);
+  background: vars.$black-35;
+  border-radius: vars.$radius-md;
+  pointer-events: none;
+  white-space: nowrap;
+  max-width: calc(100vw - #{vars.$space-24});
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
