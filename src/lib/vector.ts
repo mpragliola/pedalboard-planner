@@ -67,6 +67,16 @@ export function vec2Rotate(v: Vec2, radians: number): Vec2 {
   };
 }
 
+/** Returns the arithmetic mean of a list of 2D points (or zero vector for empty input). */
+export function vec2Average(points: readonly Vec2[]): Vec2 {
+  let sum = { x: 0, y: 0 };
+  if (points.length === 0) return sum;
+  for (const point of points) {
+    sum = vec2Add(sum, point);
+  }
+  return vec2Scale(sum, 1 / points.length);
+}
+
 /** Component-wise addition for 3D vectors. */
 export function vec3Add(a: Vec3, b: Vec3): Vec3 {
   return { x: a.x + b.x, y: a.y + b.y, z: a.z + b.z };
