@@ -5,8 +5,12 @@
   inset: 0;
   z-index: vars.$z-cable-layer;
   cursor: crosshair;
-  pointer-events: auto;
+  pointer-events: none;
   touch-action: none;
+
+  &.cable-layer-active {
+    pointer-events: auto;
+  }
 
   &.cable-layer-modal-open {
     pointer-events: none;

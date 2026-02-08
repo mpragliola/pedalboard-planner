@@ -76,6 +76,7 @@ export function CanvasObject({
   return (
     <div
       className={`canvas-object-wrapper ${isDragging ? "canvas-object-wrapper-dragging" : ""}`}
+      data-object-id={obj.id}
       style={{
         position: "absolute",
         left: wrapperLeft,

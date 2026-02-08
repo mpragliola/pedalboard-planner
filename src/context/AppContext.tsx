@@ -98,8 +98,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [cablesVisibility, setCablesVisibility] = useState<"shown" | "dim" | "hidden">("shown");
   const [unit, setUnit] = useState<"mm" | "in">(savedState?.unit ?? "mm");
   const [catalogMode, setCatalogMode] = useState<CatalogMode>("boards");
-  const [selectedObjectIds, setSelectedObjectIds] = useState<string[]>([]);
-  const [selectedCableId, setSelectedCableId] = useState<string | null>(null);
+  type Selection = { kind: "object"; id: string } | { kind: "cable"; id: string } | null;
+  const [selection, setSelection] = useState<Selection>(null);
   const [floatingUiVisible, setFloatingUiVisible] = useState(true);
   const [panelExpanded, setPanelExpanded] = useState(false);
   const dropdownPanelRef = useRef<HTMLDivElement>(null);
@@ -167,12 +167,38 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const filters = useBoardDeviceFilters();
   const { setSelectedBoard, setSelectedDevice } = filters;
 
+  const setSelectedObjectIds = useCallback(
+    (action: string[] | ((prev: string[]) => string[])) => {
+      setSelection((prev) => {
+        const prevIds = prev?.kind === "object" ? [prev.id] : [];
+        const nextIds = typeof action === "function" ? action(prevIds) : action;
+        const nextId = nextIds[0] ?? null;
+        return nextId ? { kind: "object", id: nextId } : null;
+      });
+    },
+    [setSelection]
+  );
+
+  const setSelectedCableId = useCallback(
+    (action: string | null | ((prev: string | null) => string | null)) => {
+      setSelection((prev) => {
+        const prevId = prev?.kind === "cable" ? prev.id : null;
+        const nextId = typeof action === "function" ? action(prevId) : action;
+        return nextId ? { kind: "cable", id: nextId } : null;
+      });
+    },
+    [setSelection]
+  );
+
+  const selectedObjectIds = selection?.kind === "object" ? [selection.id] : [];
+  const selectedCableId = selection?.kind === "cable" ? selection.id : null;
+
   const handleObjectPointerDown = useCallback(
     (id: string, e: React.PointerEvent) => {
-      setSelectedObjectIds([id]);
+      setSelection({ kind: "object", id });
       handleObjectDragStart(id, e);
     },
-    [handleObjectDragStart]
+    [handleObjectDragStart, setSelection]
   );
 
   const handleCanvasPointerDown = useCallback(
@@ -184,22 +210,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
             ".canvas-object-wrapper, .cable-hit-area, .cable-endpoint-dot, .cable-connector-label"
           ) ?? false;
         if (!hitSelectable) {
-          setSelectedObjectIds([]);
-          setSelectedCableId(null);
+          setSelection(null);
         }
       }
       canvasPanPointerDown(e);
     },
-    [spaceDown, canvasPanPointerDown]
+    [spaceDown, canvasPanPointerDown, setSelection]
   );
 
   const handleCablePointerDown = useCallback(
     (id: string, e: React.PointerEvent) => {
       e.stopPropagation();
-      setSelectedCableId(id);
+      setSelection({ kind: "cable", id });
       handleCableDragStart(id, e);
     },
-    [handleCableDragStart]
+    [handleCableDragStart, setSelection]
   );
 
   const handleImageError = useCallback((id: string) => {
@@ -264,10 +289,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       setObjects((prev) => [...prev, newObj]);
       (mode === "boards" ? setSelectedBoard : setSelectedDevice)("");
-      setSelectedObjectIds([]);
-      setSelectedCableId(null);
+      setSelection(null);
     },
-    [setSelectedBoard, setSelectedDevice, setSelectedObjectIds, setSelectedCableId, setObjects]
+    [setSelectedBoard, setSelectedDevice, setObjects]
   );
 
   const handleBoardSelect = useCallback(
@@ -302,17 +326,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const newObj = createFn(params, { x: cx - w / 2, y: cy - d / 2 });
       setObjects((prev) => [...prev, newObj]);
       (mode === "boards" ? setSelectedBoard : setSelectedDevice)("");
-      setSelectedObjectIds([]);
-      setSelectedCableId(null);
+      setSelection(null);
     },
-    [setSelectedBoard, setSelectedDevice, setSelectedObjectIds, setSelectedCableId, getPlacementInVisibleViewport, setObjects]
+    [setSelectedBoard, setSelectedDevice, getPlacementInVisibleViewport, setObjects]
   );
 
   const handleDeleteObject = useCallback(
     (id: string) => {
       setObjects((prev) => prev.filter((o) => o.id !== id));
       setSelectedObjectIds((prev) => prev.filter((sid) => sid !== id));
-      setSelectedCableId(null);
     },
     [setObjects]
   );
@@ -359,8 +381,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         (state.past ?? []).map((o) => ({ objects: o, cables: cbl })),
         (state.future ?? []).map((o) => ({ objects: o, cables: cbl }))
       );
-      setSelectedObjectIds([]);
-      setSelectedCableId(null);
+      setSelection(null);
       setUnit(state.unit ?? "mm");
       setShowGrid(state.showGrid ?? false);
       if (typeof state.zoom === "number") setZoom(state.zoom);
@@ -373,8 +394,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const newBoard = useCallback(() => {
     replaceHistoryRaw({ objects: initialObjects, cables: [] }, [], []);
-    setSelectedObjectIds([]);
-    setSelectedCableId(null);
+    setSelection(null);
     setUnit("mm");
     setShowGrid(false);
     setZoom(1);

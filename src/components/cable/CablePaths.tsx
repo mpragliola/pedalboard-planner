@@ -380,7 +380,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
         top: -CANVAS_HALF,
         width: CANVAS_SIZE,
         height: CANVAS_SIZE,
-        pointerEvents: "auto",
+        pointerEvents: "none",
         zIndex: 1000,
         colorScheme: "normal",
         opacity,

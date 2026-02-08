@@ -115,6 +115,10 @@ export function CableLayerOverlay() {
       /* Space+drag → let canvas handle panning */
       if (spaceDown) return;
 
+      if (!hasSegments && !hasPreview) {
+        return;
+      }
+
       /* Track active pointers for pinch detection */
       activePointersRef.current.add(e.pointerId);
       if (activePointersRef.current.size >= 2) {
@@ -315,9 +319,13 @@ export function CableLayerOverlay() {
     [hasSegments, hasPreview, clearDrawing]
   );
 
+  const overlayActive = pendingSegments !== null || hasSegments || hasPreview;
+
   return (
     <div
-      className={`cable-layer-overlay ruler-overlay${pendingSegments !== null ? " cable-layer-modal-open" : ""}`}
+      className={`cable-layer-overlay ruler-overlay${
+        overlayActive ? " cable-layer-active" : ""
+      }${pendingSegments !== null ? " cable-layer-modal-open" : ""}`}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
