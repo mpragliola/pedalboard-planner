@@ -1,11 +1,13 @@
-import type { Vec2 } from "./vector"
+import { clamp } from "./math"
+import { vec2Add, vec2Cross, vec2Dot, vec2Length, vec2Scale, vec2Sub, type Vec2 } from "./vector"
 /** Turn angle (rad) below which we use sharp corner to avoid huge radius and numeric issues. */
 const MIN_TURN_RAD = 0.01
 
 /**
  * Builds an SVG path d string for a polyline with rounded joins at vertices.
- * Arc radius is chosen so the arc spans exactly the turn angle: more collinear → smaller arc (no arc at 180°).
- * Falls back to sharp when segment length < radius or turn is effectively 0.
+ * Rounded joints are obtained by using circular arcs tangent to the incoming
+ * and outgoing segments, with the arc endpoints located at a distance of
+ * `radius` from the vertex along each segment.
  * @param points - Screen-space points (e.g. from canvas coords * zoom + pan)
  * @param radius - Distance from vertex to arc endpoints along each segment (screen px)
  */
@@ -24,26 +26,21 @@ export function buildRoundedPathD(
       d += ` L ${curr.x} ${curr.y}`
       break
     }
-    const dxIn = curr.x - prev.x
-    const dyIn = curr.y - prev.y
-    const L_in = Math.hypot(dxIn, dyIn)
-    const dxOut = next.x - curr.x
-    const dyOut = next.y - curr.y
-    const L_out = Math.hypot(dxOut, dyOut)
+    const inVec = vec2Sub(curr, prev)
+    const outVec = vec2Sub(next, curr)
+    const L_in = vec2Length(inVec)
+    const L_out = vec2Length(outVec)
     if (L_in < radius || L_out < radius) {
       d += ` L ${curr.x} ${curr.y}`
       continue
     }
-    const dirInX = dxIn / L_in
-    const dirInY = dyIn / L_in
-    const dirOutX = dxOut / L_out
-    const dirOutY = dyOut / L_out
-    const pInX = curr.x - dirInX * radius
-    const pInY = curr.y - dirInY * radius
-    const pOutX = curr.x + dirOutX * radius
-    const pOutY = curr.y + dirOutY * radius
-    const chordLen = Math.hypot(pOutX - pInX, pOutY - pInY)
-    const dot = Math.max(-1, Math.min(1, dirInX * dirOutX + dirInY * dirOutY))
+    const dirIn = vec2Scale(inVec, 1 / L_in)
+    const dirOut = vec2Scale(outVec, 1 / L_out)
+    const pIn = vec2Sub(curr, vec2Scale(dirIn, radius))
+    const pOut = vec2Add(curr, vec2Scale(dirOut, radius))
+    const chord = vec2Sub(pOut, pIn)
+    const chordLen = vec2Length(chord)
+    const dot = clamp(vec2Dot(dirIn, dirOut), -1, 1)
     const turnAngleRad = Math.acos(dot)
     if (turnAngleRad < MIN_TURN_RAD) {
       d += ` L ${curr.x} ${curr.y}`
@@ -57,18 +54,14 @@ export function buildRoundedPathD(
     }
     const arcRadius = chordLen / (2 * sinHalf)
     const dFromMid = arcRadius * Math.cos(halfTurn)
-    const midX = (pInX + pOutX) / 2
-    const midY = (pInY + pOutY) / 2
-    const perpX = -(pOutY - pInY) / chordLen
-    const perpY = (pOutX - pInX) / chordLen
-    const toCurr = (curr.x - midX) * perpX + (curr.y - midY) * perpY
+    const mid = vec2Scale(vec2Add(pIn, pOut), 0.5)
+    const perp = { x: -chord.y / chordLen, y: chord.x / chordLen }
+    const toCurr = (curr.x - mid.x) * perp.x + (curr.y - mid.y) * perp.y
     const sign = toCurr > 0 ? 1 : -1
-    const cx = midX + perpX * sign * dFromMid
-    const cy = midY + perpY * sign * dFromMid
-    const sweep = (pInX - cx) * (pOutY - cy) - (pInY - cy) * (pOutX - cx) > 0 ? 0 : 1
-    d += ` L ${pInX} ${pInY}`
-    d += ` A ${arcRadius} ${arcRadius} 0 0 ${sweep} ${pOutX} ${pOutY}`
-  d += ` A ${arcRadius} ${arcRadius} 0 0 ${sweep} ${pOutX} ${pOutY}`
+    const center = vec2Add(mid, vec2Scale(perp, sign * dFromMid))
+    const sweep = vec2Cross(vec2Sub(pIn, center), vec2Sub(pOut, center)) > 0 ? 0 : 1
+    d += ` L ${pIn.x} ${pIn.y}`
+    d += ` A ${arcRadius} ${arcRadius} 0 0 ${sweep} ${pOut.x} ${pOut.y}`
   }
   return d
 }

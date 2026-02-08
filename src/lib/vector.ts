@@ -52,6 +52,11 @@ export function vec2Cross(a: Vec2, b: Vec2): number {
   return a.x * b.y - a.y * b.x;
 }
 
+/** 2D dot product */
+export function vec2Dot(a: Vec2, b: Vec2): number {
+  return a.x * b.x + a.y * b.y;
+}
+
 /** Rotate a 2D vector around origin by radians. */
 export function vec2Rotate(v: Vec2, radians: number): Vec2 {
   const cos = Math.cos(radians);
