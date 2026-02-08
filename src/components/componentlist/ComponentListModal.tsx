@@ -57,8 +57,7 @@ function escapeCsvField(value: string): string {
 
 function buildComponentListCsv(
   objects: { brand?: string; model?: string; type?: string; name?: string; id: string; templateId?: string }[],
-  cables: Cable[],
-  getObjectName: (id: string) => string
+  cables: Cable[]
 ): string {
   const rows: string[] = [];
   rows.push("Components");
@@ -131,8 +130,6 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
     [cables]
   );
 
-  const getObjectName = useCallback((id: string) => objects.find((o) => o.id === id)?.name ?? id, [objects]);
-
   const handleRemoveComponent = useCallback(
     async (obj: { id: string; name: string }) => {
       const confirmed = await requestConfirmation({
@@ -148,10 +145,10 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
   );
 
   const handleExportCsv = useCallback(() => {
-    const csv = buildComponentListCsv(objects, cables, getObjectName);
+    const csv = buildComponentListCsv(objects, cables);
     const filename = `pedalboard-components-${new Date().toISOString().slice(0, 10)}.csv`;
     downloadCsv(csv, filename);
-  }, [objects, cables, getObjectName]);
+  }, [objects, cables]);
 
   const removeCable = useCallback(
     (id: string) => {

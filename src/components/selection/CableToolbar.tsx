@@ -1,6 +1,5 @@
 import { faArrowDown, faArrowUp, faPen, faTrash } from "@fortawesome/free-solid-svg-icons";
 import type { Cable } from "../../types";
-import type { Point } from "../../lib/vector";
 import { getBoundingBoxOfPoints } from "../../lib/geometry";
 import { useConfirmation } from "../../context/ConfirmationContext";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
@@ -23,9 +22,11 @@ export function CableToolbar({ cable, onEdit, onDelete, onSendToBack, onBringToF
   const scaleUp = useMediaQuery("(max-width: 768px)");
 
   const bounds = getBoundingBoxOfPoints(cable.segments);
-  const { x: centerX, y: centerY } = bounds
-    ? { x: (bounds.minX + bounds.maxX) / 2, y: (bounds.minY + bounds.maxY) / 2 }
-    : vec2Average(cable);
+  const center =
+    bounds
+      ? { x: (bounds.minX + bounds.maxX) / 2, y: (bounds.minY + bounds.maxY) / 2 }
+      : cableCenter(cable);
+  const { x: centerX, y: centerY } = center;
   const left = centerX;
   // Prefer above the cable bounds to keep the path clear; flip below if near the top edge.
   let top = (bounds ? bounds.minY : centerY) - TOOLBAR_GAP - TOOLBAR_HEIGHT;
@@ -94,4 +95,16 @@ export function CableToolbar({ cable, onEdit, onDelete, onSendToBack, onBringToF
       <SelectionToolbarButton icon={faTrash} title="Delete" ariaLabel="Delete cable" onClick={handleDelete} danger />
     </div>
   );
+}
+
+function cableCenter(cable: Cable) {
+  if (cable.segments.length === 0) return { x: 0, y: 0 };
+  let sumX = 0;
+  let sumY = 0;
+  for (const p of cable.segments) {
+    sumX += p.x;
+    sumY += p.y;
+  }
+  const count = cable.segments.length;
+  return { x: sumX / count, y: sumY / count };
 }

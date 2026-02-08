@@ -6,7 +6,7 @@ import { useUi } from "../../context/UiContext";
 import { getObjectDimensions } from "../../lib/objectDimensions";
 import { buildRoundedPathD, buildSmoothPathD, DEFAULT_JOIN_RADIUS } from "../../lib/polylinePath";
 import { formatLength } from "../../lib/rulerFormat";
-import { vec2Add, vec2Scale, vec2Sub, type Vec2, type Point } from "../../lib/vector";
+import { vec2Add, vec2Scale, vec2Sub, type Vec2, type Point, vec2Length } from "../../lib/vector";
 import { useCanvasCoords } from "../../hooks/useCanvasCoords";
 import { useCableDraw } from "../../hooks/useCableDraw";
 import { useCablePhysics } from "../../hooks/useCablePhysics";
@@ -25,10 +25,6 @@ const CURRENT_CABLE_GAP_SCALE = 2;
 const CABLE_STROKE_WIDTH_MM = 5;
 const ENDPOINT_DOT_RADIUS_PX = 5;
 
-function vec2Length(point: Vec2): number {
-  return Math.hypot(point.x, point.y);
-}
-
 export function CableLayerOverlay() {
   const { canvasRef, zoom, pan, spaceDown } = useCanvas();
   const { objects } = useBoard();
@@ -46,7 +42,7 @@ export function CableLayerOverlay() {
   }, [setCableLayer]);
 
   const {
-    points,
+    points: cablePoints,
     segmentStart,
     currentEnd,
     onPointerDown,
@@ -247,13 +243,14 @@ export function CableLayerOverlay() {
   const currentCableStrokeDasharray = `${dashLengthPx} ${gapLengthPx}`;
   const toScreenPoint = (point: Vec2): Vec2 => toScreen(point.x, point.y);
 
-  const committedScreenPoints: Vec2[] = points.length > 0 ? points.map((point) => toScreenPoint(point)) : [];
+  const committedScreenPoints: Vec2[] =
+    cablePoints.length > 0 ? cablePoints.map((point) => toScreenPoint(point)) : [];
 
-  const points: Vec2[] = (() => {
-    if (points.length === 0 && segmentStart) {
+  const displayPoints: Vec2[] = (() => {
+    if (cablePoints.length === 0 && segmentStart) {
       return [toScreenPoint(segmentStart)];
     }
-    if (points.length === 0) return [];
+    if (cablePoints.length === 0) return [];
     const pts = [...committedScreenPoints];
     if (hasPreview && currentEnd) {
       pts.push(toScreenPoint(currentEnd));
@@ -274,17 +271,17 @@ export function CableLayerOverlay() {
         ? `M ${toScreenPoint(segmentStart).x} ${toScreenPoint(segmentStart).y} L ${toScreenPoint(currentEnd).x} ${toScreenPoint(currentEnd).y}`
         : "";
 
-  const firstPoint = points[0];
-  const lastPoint = points.length > 1 ? points[points.length - 1] : null;
+  const firstPoint = displayPoints[0];
+  const lastPoint = displayPoints.length > 1 ? displayPoints[displayPoints.length - 1] : null;
 
   const committedLength = useMemo(() => {
-    if (points.length < 2) return 0;
+    if (cablePoints.length < 2) return 0;
     let sum = 0;
-    for (let i = 1; i < points.length; i += 1) {
-      sum += vec2Length(vec2Sub(points[i], points[i - 1]));
+    for (let i = 1; i < cablePoints.length; i += 1) {
+      sum += vec2Length(vec2Sub(cablePoints[i], cablePoints[i - 1]));
     }
     return sum;
-  }, [points]);
+  }, [cablePoints]);
   const currentLength =
     segmentStart && currentEnd ? vec2Length(vec2Sub(currentEnd, segmentStart)) : 0;
   const totalLength = committedLength + currentLength;
@@ -293,8 +290,8 @@ export function CableLayerOverlay() {
     hasSegments || hasPreview
       ? hasPreview && segmentStart && currentEnd
         ? toScreenPoint(vec2Scale(vec2Add(segmentStart, currentEnd), 0.5))
-        : points.length > 0
-        ? toScreenPoint(points[points.length - 1])
+        : cablePoints.length > 0
+        ? toScreenPoint(cablePoints[cablePoints.length - 1])
         : segmentStart
         ? toScreenPoint(segmentStart)
         : null
