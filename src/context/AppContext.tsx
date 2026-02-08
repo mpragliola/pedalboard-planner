@@ -1,16 +1,15 @@
 import { useState, useCallback, useRef, useEffect, useMemo, type ReactNode } from "react";
 import { BOARD_TEMPLATES } from "../data/boards";
 import { DEVICE_TEMPLATES } from "../data/devices";
-import { initialObjects, MM_TO_PX, HISTORY_DEPTH, DEBOUNCE_SAVE_MS, DEFAULT_PLACEMENT_FALLBACK } from "../constants";
+import { initialObjects, MM_TO_PX, HISTORY_DEPTH, DEFAULT_PLACEMENT_FALLBACK } from "../constants";
 import {
   createObjectFromTemplate,
   createObjectFromCustomBoard,
   createObjectFromCustomDevice,
   initNextObjectIdFromObjects,
 } from "../lib/templateHelpers";
-import { StateManager } from "../lib/stateManager";
 import { getObjectDimensions } from "../lib/objectDimensions";
-import { parseState, serializeState, type SavedState } from "../lib/stateSerialization";
+import { type SavedState } from "../lib/stateSerialization";
 import { visibleViewportPlacement } from "../lib/placementStrategy";
 import { useCanvasZoomPan } from "../hooks/useCanvasZoomPan";
 import { useCableDrag } from "../hooks/useCableDrag";
@@ -26,16 +25,14 @@ import { CableProvider, type CableContextValue } from "./CableContext";
 import { CanvasProvider, type CanvasContextValue } from "./CanvasContext";
 import { CatalogProvider, type CatalogContextValue, type CatalogMode } from "./CatalogContext";
 import { HistoryProvider, type HistoryContextValue } from "./HistoryContext";
+import { useStorage } from "./StorageContext";
 import { UiProvider, type UiContextValue } from "./UiContext";
 
-const stateManager = new StateManager("pedal/state");
-
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [savedState] = useState<SavedState | null>(() => {
-    const state = stateManager.load();
-    if (state?.objects?.length) initNextObjectIdFromObjects(state.objects);
-    return state;
-  });
+  const { savedState, loadStateFromFile, saveStateToFile, persistState } = useStorage();
+  useEffect(() => {
+    if (savedState?.objects?.length) initNextObjectIdFromObjects(savedState.objects);
+  }, [savedState]);
 
   /** Compound state so undo/redo covers both objects and cables in a single timeline. */
   interface BoardState {
@@ -386,19 +383,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const loadBoardFromFile = useCallback(
     async (file: File): Promise<void> => {
-      let text = "";
-      try {
-        text = await file.text();
-      } catch {
-        throw new Error("Could not read the selected file.");
-      }
-      const state = parseState(text);
-      if (!state) {
-        throw new Error("The selected file is not a valid pedalboard JSON file.");
-      }
+      const state = await loadStateFromFile(file);
       loadBoardState(state);
     },
-    [loadBoardState]
+    [loadBoardState, loadStateFromFile]
   );
 
   const saveBoardToFile = useCallback(() => {
@@ -410,15 +398,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       unit,
       cables,
     };
-    const payload = serializeState(state);
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `pedalboard-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }, [objects, zoom, pan, showGrid, unit, cables]);
+    saveStateToFile(state);
+  }, [objects, zoom, pan, showGrid, unit, cables, saveStateToFile]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -441,30 +422,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const futureForSave = useMemo(() => historyFuture.map((e) => e.objects), [historyFuture]);
 
   // Persist state (and undo history) to localStorage, debounced
-  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-    saveTimeoutRef.current = setTimeout(() => {
-      saveTimeoutRef.current = null;
-      stateManager.save({
-        objects,
-        past: pastForSave,
-        future: futureForSave,
-        zoom,
-        pan,
-        showGrid,
-        unit,
-        cables,
-      });
-    }, DEBOUNCE_SAVE_MS);
-    return () => {
-      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-    };
-  }, [objects, pastForSave, futureForSave, zoom, pan, showGrid, unit, cables]);
-
-  // Persist immediately when cables change (cables are user data; don't rely only on debounce)
-  useEffect(() => {
-    stateManager.save({
+    persistState({
       objects,
       past: pastForSave,
       future: futureForSave,
@@ -474,6 +433,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
       unit,
       cables,
     });
+  }, [objects, pastForSave, futureForSave, zoom, pan, showGrid, unit, cables, persistState]);
+
+  // Persist immediately when cables change (cables are user data; don't rely only on debounce)
+  useEffect(() => {
+    persistState(
+      {
+        objects,
+        past: pastForSave,
+        future: futureForSave,
+        zoom,
+        pan,
+        showGrid,
+        unit,
+        cables,
+      },
+      { immediate: true }
+    );
   }, [cables]); // eslint-disable-line react-hooks/exhaustive-deps -- intentionally only on cables
 
   stateForSaveRef.current = {

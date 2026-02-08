@@ -10,6 +10,7 @@ import { SelectionInfoPopup } from "./components/selection/SelectionInfoPopup";
 import { BottomControls } from "./components/history/BottomControls";
 import { Mini3DOverlay } from "./components/mini3d/Mini3DOverlay";
 import { AppProvider } from "./context/AppContext";
+import { StorageProvider } from "./context/StorageContext";
 import { ConfirmationProvider } from "./context/ConfirmationContext";
 import { SettingsModalProvider, useSettingsModal } from "./context/SettingsModalContext";
 import { SettingsModal } from "./components/settings/SettingsModal";
@@ -91,13 +92,15 @@ function AppContent() {
 function App() {
   return (
     <ConfirmationProvider>
-      <AppProvider>
-        <SettingsModalProvider>
-          <CatalogDndProvider>
-            <AppContent />
-          </CatalogDndProvider>
-        </SettingsModalProvider>
-      </AppProvider>
+      <StorageProvider>
+        <AppProvider>
+          <SettingsModalProvider>
+            <CatalogDndProvider>
+              <AppContent />
+            </CatalogDndProvider>
+          </SettingsModalProvider>
+        </AppProvider>
+      </StorageProvider>
     </ConfirmationProvider>
   );
 }
