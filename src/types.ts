@@ -4,9 +4,12 @@ import type { Point } from './lib/vector'
 
 export type ObjectSubtype = 'board' | 'device'
 
-/** Rotation in degrees: 0, 90, 180, 270. Affects footprint (90/270 swap width/depth). */
+/**
+ * A generic object on the canvas, either a board or a device. Contains all 
+ * properties needed for rendering and interaction.
+ */
 export interface CanvasObjectType {
-  /** Unique numeric instance ID (e.g. "1", "2", "3"). */
+  /** Unique instance ID */
   id: string
   /** Template ID for looking up image (e.g. "device-boss-ds-1", "board-aclam-xs1"). */
   templateId?: string
@@ -18,7 +21,7 @@ export interface CanvasObjectType {
   width: number
   depth: number
   height: number
-  /** Rotation in degrees. Default 0. */
+  /** Rotation in degrees: 0, 90, 180, 270. Affects footprint (90/270 swap width/depth). */
   rotation?: number
   /** Omitted when object has an image. */
   color?: string
@@ -39,6 +42,11 @@ export type ConnectorKind =
   | 'XLR female'
   | 'Ethernet'
 
+/**
+ * Represents a cable connecting two objects on the canvas.
+ * You can specify a shape, a color, and two connectors with optional
+ * labels (e.g. "Input", "Output", "Send", "In L", "Out R") for each end.
+ */
 export interface Cable {
   id: string
   segments: Point[]
