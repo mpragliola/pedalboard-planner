@@ -10,6 +10,67 @@
   padding: vars.$modal-padding;
 }
 
+/* Shared content styling for portal-based overlays using .modal-overlay */
+.modal-overlay .modal-content {
+  display: flex;
+  flex-direction: column;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: hidden;
+  background: vars.$color-surface;
+  border-radius: vars.$modal-radius;
+  box-shadow: vars.$modal-shadow-soft;
+}
+
+.modal-overlay .modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: vars.$modal-header-padding;
+  border-bottom: 1px solid vars.$black-08;
+  flex-shrink: 0;
+}
+
+.modal-overlay .modal-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: vars.$color-text-strong;
+  margin: 0;
+}
+
+.modal-overlay .modal-close {
+  width: vars.$modal-close-size;
+  height: vars.$modal-close-size;
+  border: none;
+  border-radius: vars.$radius-md;
+  background: transparent;
+  font-size: 1.25rem;
+  line-height: 1;
+  color: vars.$color-text-muted;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background vars.$duration-fast, color vars.$duration-fast;
+
+  &:hover {
+    background: vars.$black-06;
+    color: vars.$color-text-strong;
+  }
+
+  &.modal-close--compact {
+    width: vars.$modal-close-size-compact;
+    height: vars.$modal-close-size-compact;
+    font-size: 1.15rem;
+  }
+}
+
+.modal-overlay .modal-body {
+  padding: vars.$modal-body-padding;
+  overflow-y: auto;
+  flex: 1;
+}
+
 /* Native dialog: fill viewport so backdrop clicks hit the dialog; center content with flex */
 .modal-dialog {
   position: fixed;

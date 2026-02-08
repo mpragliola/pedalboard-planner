@@ -197,15 +197,15 @@
   }
 
   .connectors-icons-with-name {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 2px;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
   }
 
   .connector-name {
     font-size: 0.75rem;
     color: vars.$color-text-muted;
-    max-width: 100%;
+    max-width: 140px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
