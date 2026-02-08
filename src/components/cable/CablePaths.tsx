@@ -55,14 +55,12 @@ interface ConnectorLabel {
 
 /** Compute connector label positions: opposite to the cable direction at each anchor. */
 function connectorLabelsForCable(cable: Cable): { a: ConnectorLabel; b: ConnectorLabel } | null {
-  const segs = cable.segments;
-  if (segs.length === 0) return null;
-  const first = segs[0];
-  const last = segs[segs.length - 1];
-  const firstStart = first.start;
-  const firstEnd = first.end;
-  const lastStart = last.start;
-  const lastEnd = last.end;
+  const points = cable.segments;
+  if (points.length < 2) return null;
+  const firstStart = points[0];
+  const firstEnd = points[1];
+  const lastStart = points[points.length - 2];
+  const lastEnd = points[points.length - 1];
   const firstVector = vec2Sub(firstEnd, firstStart);
   const lastVector = vec2Sub(lastEnd, lastStart);
   if (vec2Length(firstVector) < 1e-6 || vec2Length(lastVector) < 1e-6) return null;
@@ -155,11 +153,8 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
     };
 
     for (const cable of cables) {
-      if (cable.segments.length === 0) continue;
-      const points: Point[] = [
-        cable.segments[0].start,
-        ...cable.segments.map((segment) => segment.end),
-      ];
+      const points: Point[] = cable.segments;
+      if (points.length < 2) continue;
       const isDraggedCable = cable.id === dragCableId && dragHandleIndex !== null && !!dragPoints;
       const activePoints = isDraggedCable ? (dragPoints as Point[]) : points;
       const hitD = buildRoundedPathD(activePoints, joinRadius);
@@ -200,18 +195,18 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
     physicsPointsB,
   ]);
 
-  const rebuildSegments = (points: Point[]) =>
-    points.slice(0, -1).map((start, idx) => ({ start, end: points[idx + 1] }));
+  const normalizePoints = (points: Point[]) => points;
 
   const nearestSegmentIndex = (cable: Cable, canvasPoint: Point): number | null => {
-    if (cable.segments.length === 0) return null;
+    if (cable.segments.length < 2) return null;
     let bestIdx = 0;
     let bestDist2 = Infinity;
-    cable.segments.forEach((seg, idx) => {
-      const ax = seg.start.x;
-      const ay = seg.start.y;
-      const bx = seg.end.x;
-      const by = seg.end.y;
+    const points = cable.segments;
+    for (let idx = 0; idx < points.length - 1; idx += 1) {
+      const ax = points[idx].x;
+      const ay = points[idx].y;
+      const bx = points[idx + 1].x;
+      const by = points[idx + 1].y;
       const dx = bx - ax;
       const dy = by - ay;
       const len2 = dx * dx + dy * dy;
@@ -226,7 +221,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
         bestDist2 = dist2;
         bestIdx = idx;
       }
-    });
+    }
     return bestDist2 === Infinity ? null : bestIdx;
   };
 
@@ -244,7 +239,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
     const canvasPoint = clientToCanvas(e.clientX, e.clientY);
     const segIndex = nearestSegmentIndex(cable, canvasPoint);
     if (segIndex == null) return;
-    const points: Point[] = [cable.segments[0].start, ...cable.segments.map((s) => s.end)];
+    const points: Point[] = cable.segments;
     const snapped =
       e.shiftKey || e.metaKey
         ? canvasPoint
@@ -253,10 +248,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
     if (flashTimerRef.current) window.clearTimeout(flashTimerRef.current);
     flashTimerRef.current = window.setTimeout(() => setFlashPoint(null), 300);
     const nextPoints = [...points.slice(0, segIndex + 1), snapped, ...points.slice(segIndex + 1)];
-    setCables(
-      (prev) => prev.map((c) => (c.id === cableId ? { ...c, segments: rebuildSegments(nextPoints) } : c)),
-      true
-    );
+    setCables((prev) => prev.map((c) => (c.id === cableId ? { ...c, segments: normalizePoints(nextPoints) } : c)), true);
   };
 
   const handleSvgDoubleClick = (e: React.MouseEvent<SVGSVGElement>) => {
@@ -271,8 +263,8 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
     e.stopPropagation();
     setSelectedCableId(cableId);
     const cable = cables.find((c) => c.id === cableId);
-    if (!cable || cable.segments.length === 0) return;
-    const points: Point[] = [cable.segments[0].start, ...cable.segments.map((s) => s.end)];
+    if (!cable || cable.segments.length < 2) return;
+    const points: Point[] = cable.segments;
     const isExtremity = handleIndex === 0 || handleIndex === points.length - 1;
 
     // Long-press removal
@@ -287,11 +279,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
         if (nextPoints.length < 2) return;
         dragRef.current = null;
         setPressingHandle(null);
-        setCables(
-          (prev) =>
-            prev.map((c) => (c.id === cableId ? { ...c, segments: rebuildSegments(nextPoints) } : c)),
-          true
-        );
+        setCables((prev) => prev.map((c) => (c.id === cableId ? { ...c, segments: normalizePoints(nextPoints) } : c)), true);
         try {
           (e.target as Element).releasePointerCapture(e.pointerId);
         } catch {
@@ -321,11 +309,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
       const nextPoints = drag.points.slice();
       nextPoints[drag.handleIndex] = snapped;
       dragRef.current = { ...drag, points: nextPoints };
-      setCables(
-        (prev) =>
-          prev.map((c) => (c.id === drag.cableId ? { ...c, segments: rebuildSegments(nextPoints) } : c)),
-        false
-      );
+      setCables((prev) => prev.map((c) => (c.id === drag.cableId ? { ...c, segments: normalizePoints(nextPoints) } : c)), false);
     };
 
     const handlePointerUp = (ev: PointerEvent) => {
@@ -339,11 +323,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
       pausePanZoom?.(false);
       const finalPoints = drag.points;
       dragRef.current = null;
-      setCables(
-        (prev) =>
-          prev.map((c) => (c.id === drag.cableId ? { ...c, segments: rebuildSegments(finalPoints) } : c)),
-        true
-      );
+      setCables((prev) => prev.map((c) => (c.id === drag.cableId ? { ...c, segments: normalizePoints(finalPoints) } : c)), true);
       window.removeEventListener("pointermove", handlePointerMove, { capture: true });
       window.removeEventListener("pointerup", handlePointerUp, { capture: true });
       window.removeEventListener("pointercancel", handlePointerUp, { capture: true });
@@ -360,7 +340,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
     selectedCableId && cables.find((c) => c.id === selectedCableId)
       ? (() => {
           const c = cables.find((cable) => cable.id === selectedCableId)!;
-          const pts: Point[] = [c.segments[0].start, ...c.segments.map((s) => s.end)];
+          const pts: Point[] = c.segments;
           return pts.map((p, idx) => ({
             point: p,
             idx,

@@ -39,15 +39,9 @@ export type ConnectorKind =
   | 'XLR female'
   | 'Ethernet'
 
-/** One segment of a cable or polyline (canvas coordinates). */
-export interface CableSegment {
-  start: Point
-  end: Point
-}
-
 export interface Cable {
   id: string
-  segments: CableSegment[]
+  segments: Point[]
   color: string
   connectorA: ConnectorKind
   connectorB: ConnectorKind

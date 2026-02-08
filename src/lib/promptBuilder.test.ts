@@ -68,8 +68,9 @@ describe("PromptBuilder", () => {
           {
             id: "cab1",
             segments: [
-              { start: { x: 0, y: 0 }, end: { x: 100, y: 0 } },
-              { start: { x: 100, y: 0 }, end: { x: 100, y: 50 } },
+              { x: 0, y: 0 },
+              { x: 100, y: 0 },
+              { x: 100, y: 50 },
             ],
             color: "#333",
             connectorA: "mono jack (TS)",
@@ -92,7 +93,7 @@ describe("PromptBuilder", () => {
         cables: [
           {
             id: "cab1",
-            segments: [{ start: { x: 0, y: 0 }, end: { x: 254, y: 0 } }],
+            segments: [{ x: 0, y: 0 }, { x: 254, y: 0 }],
             color: "#000",
             connectorA: "stereo jack (TRS)",
             connectorB: "stereo jack (TRS)",
@@ -131,7 +132,7 @@ describe("PromptBuilder", () => {
         cables: [
           {
             id: "cab1",
-            segments: [{ start: { x: 0, y: 0 }, end: { x: 200, y: 0 } }],
+            segments: [{ x: 0, y: 0 }, { x: 200, y: 0 }],
             color: "#333",
             connectorA: "mono jack (TS)",
             connectorB: "mono jack (TS)",

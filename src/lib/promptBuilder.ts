@@ -30,10 +30,14 @@ export class PromptBuilder {
 
   /** Cable length in mm (canvas units). */
   private cableLengthMm(cable: Cable): number {
-    return cable.segments.reduce(
-      (sum, segment) => sum + Math.hypot(segment.end.x - segment.start.x, segment.end.y - segment.start.y),
-      0
-    );
+    if (cable.segments.length < 2) return 0;
+    let sum = 0;
+    for (let i = 1; i < cable.segments.length; i += 1) {
+      const dx = cable.segments[i].x - cable.segments[i - 1].x;
+      const dy = cable.segments[i].y - cable.segments[i - 1].y;
+      sum += Math.hypot(dx, dy);
+    }
+    return sum;
   }
 
   /** Format length for prompt: "at least X mm" or "at least X in". */

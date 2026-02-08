@@ -71,10 +71,7 @@ function serializeCables(cables: Cable[] | undefined): Record<string, unknown>[]
   if (!cables) return cables;
   return cables.map((cable) => {
     const { segments: _segments, ...rest } = cable;
-    const points = cable.segments.length > 0
-      ? [cable.segments[0].start, ...cable.segments.map((s) => s.end)]
-      : [];
-    const roundedPoints = points.map((p) => [round2(p.x), round2(p.y)]);
+    const roundedPoints = cable.segments.map((p) => [round2(p.x), round2(p.y)]);
     return {
       ...rest,
       points: roundedPoints,
@@ -211,9 +208,7 @@ function normalizeCable(o: unknown): Cable | null {
   const segments: Cable["segments"] = [];
   if (!Array.isArray(c.points) || c.points.length === 0 || !c.points.every(isPointTuple)) return null;
   const points = c.points.map((tuple) => ({ x: tuple[0], y: tuple[1] }));
-  for (let i = 0; i < points.length - 1; i++) {
-    segments.push({ start: points[i], end: points[i + 1] });
-  }
+  segments.push(...points);
 
   return {
     id: c.id,

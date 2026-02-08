@@ -9,7 +9,8 @@ import {
   CABLE_TERMINAL_START_COLOR,
   CABLE_TERMINAL_END_COLOR,
 } from "../../constants/cables";
-import type { Cable, CableSegment, ConnectorKind } from "../../types";
+import type { Cable, ConnectorKind } from "../../types";
+import type { Point } from "../../lib/vector";
 import { ConnectorIcon } from "../common/ConnectorIcon";
 import "./AddCableModal.scss";
 
@@ -219,7 +220,7 @@ function LabelCombo({
 
 export interface AddCableModalProps {
   open: boolean;
-  segments: CableSegment[];
+  segments: Point[];
   onConfirm: (cable: Cable) => void;
   onCancel: () => void;
   /** When set, modal is in edit mode: pre-fill from cable, keep id and segments, title "Edit cable". */
@@ -259,7 +260,7 @@ export function AddCableModal({ open, segments, onConfirm, onCancel, initialCabl
 
   const handleConfirm = () => {
     const segs = isEdit && initialCable ? initialCable.segments : segments;
-    if (segs.length === 0) return;
+    if (segs.length < 2) return;
     const cable: Cable = {
       id: isEdit && initialCable ? initialCable.id : nextCableId(),
       segments: segs,

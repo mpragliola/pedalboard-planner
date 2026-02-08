@@ -1,14 +1,11 @@
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
-import type { Cable, CableSegment } from "../types";
+import type { Cable } from "../types";
 import { vec2Add, vec2Length, vec2Scale, vec2Sub, type Point } from "../lib/vector";
 
 const DRAG_THRESHOLD_PX = 6;
 
-function offsetSegments(segments: CableSegment[], offset: Point): CableSegment[] {
-  return segments.map((segment) => ({
-    start: vec2Add(segment.start, offset),
-    end: vec2Add(segment.end, offset),
-  }));
+function offsetPoints(points: Point[], offset: Point): Point[] {
+  return points.map((point) => vec2Add(point, offset));
 }
 
 export function useCableDrag(
@@ -22,14 +19,14 @@ export function useCableDrag(
     id: string;
     pointerId: number;
     mouse: Point;
-    segments: CableSegment[];
+    segments: Point[];
   } | null>(null);
-  const dragStartRef = useRef<{ mouse: Point; segments: CableSegment[] } | null>(null);
+  const dragStartRef = useRef<{ mouse: Point; segments: Point[] } | null>(null);
   const draggingPointerIdRef = useRef<number | null>(null);
   const hasPushedHistoryRef = useRef(false);
 
   const handleCableSegmentsUpdate = useCallback(
-    (id: string, segments: CableSegment[], saveToHistory = false) => {
+    (id: string, segments: Point[], saveToHistory = false) => {
       setCables((prev) => prev.map((c) => (c.id === id ? { ...c, segments } : c)), saveToHistory);
     },
     [setCables]
@@ -79,7 +76,7 @@ export function useCableDrag(
       setPendingDrag(null);
       handleCableSegmentsUpdate(
         pendingDrag.id,
-        offsetSegments(pendingDrag.segments, canvasDelta),
+        offsetPoints(pendingDrag.segments, canvasDelta),
         true
       );
     };
@@ -108,7 +105,7 @@ export function useCableDrag(
       if (saveToHistory) hasPushedHistoryRef.current = true;
       handleCableSegmentsUpdate(
         draggingCableId,
-        offsetSegments(dragStartRef.current.segments, canvasDelta),
+        offsetPoints(dragStartRef.current.segments, canvasDelta),
         saveToHistory
       );
     };

@@ -35,8 +35,13 @@ function ComponentThumbnail({ obj }: { obj: CanvasObjectType }) {
   );
 }
 
-function cableLengthMm(segments: Cable["segments"]): number {
-  return segments.reduce((sum, segment) => sum + vec2Length(vec2Sub(segment.end, segment.start)), 0);
+function cableLengthMm(points: Cable["segments"]): number {
+  if (points.length < 2) return 0;
+  let sum = 0;
+  for (let i = 1; i < points.length; i += 1) {
+    sum += vec2Length(vec2Sub(points[i], points[i - 1]));
+  }
+  return sum;
 }
 
 interface ComponentListModalProps {
@@ -79,7 +84,7 @@ function buildComponentListCsv(
         cable.connectorB,
         cable.connectorBName ?? "",
         String(cableLengthMm(cable.segments).toFixed(1)),
-        String(cable.segments.length),
+        String(Math.max(0, cable.segments.length - 1)),
       ]
         .map(escapeCsvField)
         .join(",")

@@ -360,7 +360,7 @@ describe("parseState", () => {
           color: "#111111",
           connectorA: "mono jack (TS)",
           connectorB: "mono jack (TS)",
-          segments: [{ start: { x: 0, y: 0 }, end: { x: 100, y: 0 } }],
+          segments: [{ x: 0, y: 0 }, { x: 100, y: 0 }],
         },
       ]);
     });

@@ -1,7 +1,7 @@
 import { faArrowDown, faArrowUp, faPen, faTrash } from "@fortawesome/free-solid-svg-icons";
 import type { Cable } from "../../types";
 import type { Point } from "../../lib/vector";
-import { getBoundingBoxOfSegments } from "../../lib/geometry";
+import { getBoundingBoxOfPoints } from "../../lib/geometry";
 import { useConfirmation } from "../../context/ConfirmationContext";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { SelectionToolbarButton } from "./SelectionToolbarButton";
@@ -9,23 +9,6 @@ import "./SelectionToolbar.scss";
 
 const TOOLBAR_GAP = 12;
 const TOOLBAR_HEIGHT = 40;
-
-function cableCenter(cable: Cable): Point {
-  if (cable.segments.length === 0) return { x: 0, y: 0 };
-  let sumX = 0;
-  let sumY = 0;
-  let count = 0;
-  const first = cable.segments[0];
-  sumX += first.start.x;
-  sumY += first.start.y;
-  count += 1;
-  for (const s of cable.segments) {
-    sumX += s.end.x;
-    sumY += s.end.y;
-    count += 1;
-  }
-  return { x: sumX / count, y: sumY / count };
-}
 
 interface CableToolbarProps {
   cable: Cable;
@@ -39,10 +22,10 @@ export function CableToolbar({ cable, onEdit, onDelete, onSendToBack, onBringToF
   const { requestConfirmation } = useConfirmation();
   const scaleUp = useMediaQuery("(max-width: 768px)");
 
-  const bounds = getBoundingBoxOfSegments(cable.segments);
+  const bounds = getBoundingBoxOfPoints(cable.segments);
   const { x: centerX, y: centerY } = bounds
     ? { x: (bounds.minX + bounds.maxX) / 2, y: (bounds.minY + bounds.maxY) / 2 }
-    : cableCenter(cable);
+    : vec2Average(cable);
   const left = centerX;
   // Prefer above the cable bounds to keep the path clear; flip below if near the top edge.
   let top = (bounds ? bounds.minY : centerY) - TOOLBAR_GAP - TOOLBAR_HEIGHT;
