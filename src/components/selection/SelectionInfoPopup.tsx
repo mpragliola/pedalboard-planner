@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useBoard } from "../../context/BoardContext";
 import { useCable } from "../../context/CableContext";
 import { useUi } from "../../context/UiContext";
-import { getObjectDimensions } from "../../lib/stateManager";
+import { getObjectDimensions } from "../../lib/objectDimensions";
 import { formatDimension, formatLengthCm } from "../../lib/rulerFormat";
 import type { CableSegment } from "../../types";
 import { InfoLine } from "./InfoLine";

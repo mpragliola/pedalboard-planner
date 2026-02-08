@@ -3,7 +3,7 @@ import { useBoard } from "../../context/BoardContext";
 import { useCable } from "../../context/CableContext";
 import { useCanvas } from "../../context/CanvasContext";
 import { useUi } from "../../context/UiContext";
-import { getObjectDimensions } from "../../lib/stateManager";
+import { getObjectDimensions } from "../../lib/objectDimensions";
 import { buildRoundedPathD, buildSmoothPathD, DEFAULT_JOIN_RADIUS } from "../../lib/polylinePath";
 import { formatLength } from "../../lib/rulerFormat";
 import { vec2Add, vec2Scale, vec2Sub, type Vec2 } from "../../lib/vector";

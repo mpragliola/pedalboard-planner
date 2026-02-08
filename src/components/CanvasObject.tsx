@@ -1,6 +1,6 @@
 import type { RefObject } from "react";
 import { DEFAULT_OBJECT_COLOR, BASE_URL } from "../constants";
-import { getObjectDimensions } from "../lib/stateManager";
+import { getObjectDimensions } from "../lib/objectDimensions";
 import { normalizeRotation } from "../lib/geometry";
 import type { CanvasObjectType } from "../types";
 import "./CanvasObject.scss";

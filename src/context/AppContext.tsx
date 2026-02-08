@@ -8,7 +8,9 @@ import {
   createObjectFromCustomDevice,
   initNextObjectIdFromObjects,
 } from "../lib/templateHelpers";
-import { StateManager, getObjectDimensions, type SavedState } from "../lib/stateManager";
+import { StateManager } from "../lib/stateManager";
+import { getObjectDimensions } from "../lib/objectDimensions";
+import { parseState, serializeState, type SavedState } from "../lib/stateSerialization";
 import { visibleViewportPlacement } from "../lib/placementStrategy";
 import { useCanvasZoomPan } from "../hooks/useCanvasZoomPan";
 import { useCableDrag } from "../hooks/useCableDrag";
@@ -390,7 +392,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       } catch {
         throw new Error("Could not read the selected file.");
       }
-      const state = StateManager.parseState(text);
+      const state = parseState(text);
       if (!state) {
         throw new Error("The selected file is not a valid pedalboard JSON file.");
       }
@@ -408,7 +410,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       unit,
       cables,
     };
-    const payload = StateManager.serializeState(state);
+    const payload = serializeState(state);
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");

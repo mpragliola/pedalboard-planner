@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { StateManager } from "./stateManager";
-import type { SavedState } from "./stateManager";
+import { parseState, serializeState } from "./stateSerialization";
+import type { SavedState } from "./stateSerialization";
 
 // A valid object record with all required fields for validation
 const validObject = {
@@ -73,64 +73,64 @@ const customDeviceObject = {
   name: "My Custom Pedal",
 };
 
-describe("StateManager.parseState", () => {
+describe("parseState", () => {
   describe("validation", () => {
     it("returns null for invalid JSON", () => {
-      expect(StateManager.parseState("not json")).toBe(null);
-      expect(StateManager.parseState("{invalid}")).toBe(null);
-      expect(StateManager.parseState("")).toBe(null);
+      expect(parseState("not json")).toBe(null);
+      expect(parseState("{invalid}")).toBe(null);
+      expect(parseState("")).toBe(null);
     });
 
     it("returns null when objects is missing", () => {
-      expect(StateManager.parseState("{}")).toBe(null);
-      expect(StateManager.parseState('{"zoom":1}')).toBe(null);
-      expect(StateManager.parseState('{"pan":{"x":0,"y":0}}')).toBe(null);
+      expect(parseState("{}")).toBe(null);
+      expect(parseState('{"zoom":1}')).toBe(null);
+      expect(parseState('{"pan":{"x":0,"y":0}}')).toBe(null);
     });
 
     it("returns null when objects is not an array", () => {
-      expect(StateManager.parseState('{"objects":null}')).toBe(null);
-      expect(StateManager.parseState('{"objects":"string"}')).toBe(null);
-      expect(StateManager.parseState('{"objects":123}')).toBe(null);
-      expect(StateManager.parseState('{"objects":{}}')).toBe(null);
+      expect(parseState('{"objects":null}')).toBe(null);
+      expect(parseState('{"objects":"string"}')).toBe(null);
+      expect(parseState('{"objects":123}')).toBe(null);
+      expect(parseState('{"objects":{}}')).toBe(null);
     });
 
     it("returns null when objects array contains invalid items", () => {
-      expect(StateManager.parseState('{"objects":[null]}')).toBe(null);
-      expect(StateManager.parseState('{"objects":["string"]}')).toBe(null);
-      expect(StateManager.parseState('{"objects":[{"id":"x"}]}')).toBe(null);
+      expect(parseState('{"objects":[null]}')).toBe(null);
+      expect(parseState('{"objects":["string"]}')).toBe(null);
+      expect(parseState('{"objects":[{"id":"x"}]}')).toBe(null);
     });
 
     it("returns null when object is missing required fields", () => {
       const missingId = { ...validObject };
       delete (missingId as Record<string, unknown>).id;
-      expect(StateManager.parseState(JSON.stringify({ objects: [missingId] }))).toBe(null);
+      expect(parseState(JSON.stringify({ objects: [missingId] }))).toBe(null);
 
       const missingSubtype = { ...validObject };
       delete (missingSubtype as Record<string, unknown>).subtype;
-      expect(StateManager.parseState(JSON.stringify({ objects: [missingSubtype] }))).toBe(null);
+      expect(parseState(JSON.stringify({ objects: [missingSubtype] }))).toBe(null);
 
       const missingPos = { ...validObject };
       delete (missingPos as Record<string, unknown>).pos;
-      expect(StateManager.parseState(JSON.stringify({ objects: [missingPos] }))).toBe(null);
+      expect(parseState(JSON.stringify({ objects: [missingPos] }))).toBe(null);
     });
 
     it("returns null when object has wrong field types", () => {
-      expect(StateManager.parseState(JSON.stringify({ objects: [{ ...validObject, id: 123 }] }))).toBe(null);
+      expect(parseState(JSON.stringify({ objects: [{ ...validObject, id: 123 }] }))).toBe(null);
       expect(
-        StateManager.parseState(JSON.stringify({ objects: [{ ...validObject, pos: { x: "string", y: 0 } }] }))
+        parseState(JSON.stringify({ objects: [{ ...validObject, pos: { x: "string", y: 0 } }] }))
       ).toBe(null);
-      expect(StateManager.parseState(JSON.stringify({ objects: [{ ...validObject, width: null }] }))).toBe(null);
+      expect(parseState(JSON.stringify({ objects: [{ ...validObject, width: null }] }))).toBe(null);
     });
 
     it("accepts legacy object records with x/y coordinates", () => {
       const legacy = { ...validObject, x: 12, y: 34 };
       delete (legacy as Record<string, unknown>).pos;
-      const out = StateManager.parseState(JSON.stringify({ objects: [legacy] })) as SavedState;
+      const out = parseState(JSON.stringify({ objects: [legacy] })) as SavedState;
       expect(out.objects[0].pos).toEqual({ x: 12, y: 34 });
     });
 
     it("accepts empty objects array", () => {
-      const out = StateManager.parseState('{"objects":[]}');
+      const out = parseState('{"objects":[]}');
       expect(out).not.toBe(null);
       expect((out as SavedState).objects).toEqual([]);
     });
@@ -139,31 +139,31 @@ describe("StateManager.parseState", () => {
   describe("image restoration from templates", () => {
     it("restores image for known board template", () => {
       const raw = JSON.stringify({ objects: [aclamBoardObject] });
-      const out = StateManager.parseState(raw) as SavedState;
+      const out = parseState(raw) as SavedState;
       expect(out.objects[0].image).toBe("images/boards/aclam/aclam-smart-track-xs2.png");
     });
 
     it("restores image for known device template", () => {
       const raw = JSON.stringify({ objects: [bossDeviceObject] });
-      const out = StateManager.parseState(raw) as SavedState;
+      const out = parseState(raw) as SavedState;
       expect(out.objects[0].image).toBe("images/devices/boss/boss-ds1.png");
     });
 
     it("returns null image for unknown template id", () => {
       const raw = JSON.stringify({ objects: [validObject] });
-      const out = StateManager.parseState(raw) as SavedState;
+      const out = parseState(raw) as SavedState;
       expect(out.objects[0].image).toBe(null);
     });
 
     it("returns null image for custom board objects", () => {
       const raw = JSON.stringify({ objects: [customBoardObject] });
-      const out = StateManager.parseState(raw) as SavedState;
+      const out = parseState(raw) as SavedState;
       expect(out.objects[0].image).toBe(null);
     });
 
     it("returns null image for custom device objects", () => {
       const raw = JSON.stringify({ objects: [customDeviceObject] });
-      const out = StateManager.parseState(raw) as SavedState;
+      const out = parseState(raw) as SavedState;
       expect(out.objects[0].image).toBe(null);
     });
 
@@ -172,7 +172,7 @@ describe("StateManager.parseState", () => {
         objects: [validObject],
         past: [[bossDeviceObject]],
       });
-      const out = StateManager.parseState(raw) as SavedState;
+      const out = parseState(raw) as SavedState;
       expect(out.past![0][0].image).toBe("images/devices/boss/boss-ds1.png");
     });
 
@@ -181,7 +181,7 @@ describe("StateManager.parseState", () => {
         objects: [validObject],
         future: [[aclamBoardObject]],
       });
-      const out = StateManager.parseState(raw) as SavedState;
+      const out = parseState(raw) as SavedState;
       expect(out.future![0][0].image).toBe("images/boards/aclam/aclam-smart-track-xs2.png");
     });
   });
@@ -189,7 +189,7 @@ describe("StateManager.parseState", () => {
   describe("name derivation", () => {
     it("preserves existing name when provided", () => {
       const raw = JSON.stringify({ objects: [{ ...validObject, name: "Custom Name" }] });
-      const out = StateManager.parseState(raw) as SavedState;
+      const out = parseState(raw) as SavedState;
       expect(out.objects[0].name).toBe("Custom Name");
     });
 
@@ -197,7 +197,7 @@ describe("StateManager.parseState", () => {
       const obj = { ...validObject, brand: "TestBrand", model: "TestModel" };
       delete (obj as Record<string, unknown>).name;
       const raw = JSON.stringify({ objects: [obj] });
-      const out = StateManager.parseState(raw) as SavedState;
+      const out = parseState(raw) as SavedState;
       expect(out.objects[0].name).toBe("TestBrand TestModel");
     });
 
@@ -205,7 +205,7 @@ describe("StateManager.parseState", () => {
       const obj = { ...validObject, brand: "", model: "", type: "pedal" };
       delete (obj as Record<string, unknown>).name;
       const raw = JSON.stringify({ objects: [obj] });
-      const out = StateManager.parseState(raw) as SavedState;
+      const out = parseState(raw) as SavedState;
       expect(out.objects[0].name).toBe("pedal");
     });
 
@@ -213,7 +213,7 @@ describe("StateManager.parseState", () => {
       const obj = { ...validObject, brand: "", model: "", type: "" };
       delete (obj as Record<string, unknown>).name;
       const raw = JSON.stringify({ objects: [obj] });
-      const out = StateManager.parseState(raw) as SavedState;
+      const out = parseState(raw) as SavedState;
       expect(out.objects[0].name).toBe("Object");
     });
   });
@@ -221,73 +221,73 @@ describe("StateManager.parseState", () => {
   describe("optional fields parsing", () => {
     it("parses zoom when valid number", () => {
       const raw = JSON.stringify({ objects: [validObject], zoom: 1.5 });
-      const out = StateManager.parseState(raw) as SavedState;
+      const out = parseState(raw) as SavedState;
       expect(out.zoom).toBe(1.5);
     });
 
     it("ignores zoom when not a number", () => {
       const raw = JSON.stringify({ objects: [validObject], zoom: "1.5" });
-      const out = StateManager.parseState(raw) as SavedState;
+      const out = parseState(raw) as SavedState;
       expect(out.zoom).toBeUndefined();
     });
 
     it("parses pan when valid object with x and y numbers", () => {
       const raw = JSON.stringify({ objects: [validObject], pan: { x: 10.5, y: 20.5 } });
-      const out = StateManager.parseState(raw) as SavedState;
+      const out = parseState(raw) as SavedState;
       expect(out.pan).toEqual({ x: 10.5, y: 20.5 });
     });
 
     it("ignores pan when x is not a number", () => {
       const raw = JSON.stringify({ objects: [validObject], pan: { x: "10", y: 20 } });
-      const out = StateManager.parseState(raw) as SavedState;
+      const out = parseState(raw) as SavedState;
       expect(out.pan).toBeUndefined();
     });
 
     it("ignores pan when y is missing", () => {
       const raw = JSON.stringify({ objects: [validObject], pan: { x: 10 } });
-      const out = StateManager.parseState(raw) as SavedState;
+      const out = parseState(raw) as SavedState;
       expect(out.pan).toBeUndefined();
     });
 
     it("ignores pan when null", () => {
       const raw = JSON.stringify({ objects: [validObject], pan: null });
-      const out = StateManager.parseState(raw) as SavedState;
+      const out = parseState(raw) as SavedState;
       expect(out.pan).toBeUndefined();
     });
 
     it("parses unit when 'mm' or 'in'", () => {
-      expect((StateManager.parseState(JSON.stringify({ objects: [validObject], unit: "mm" })) as SavedState).unit).toBe(
+      expect((parseState(JSON.stringify({ objects: [validObject], unit: "mm" })) as SavedState).unit).toBe(
         "mm"
       );
-      expect((StateManager.parseState(JSON.stringify({ objects: [validObject], unit: "in" })) as SavedState).unit).toBe(
+      expect((parseState(JSON.stringify({ objects: [validObject], unit: "in" })) as SavedState).unit).toBe(
         "in"
       );
     });
 
     it("ignores unit when invalid", () => {
       expect(
-        (StateManager.parseState(JSON.stringify({ objects: [validObject], unit: "cm" })) as SavedState).unit
+        (parseState(JSON.stringify({ objects: [validObject], unit: "cm" })) as SavedState).unit
       ).toBeUndefined();
       expect(
-        (StateManager.parseState(JSON.stringify({ objects: [validObject], unit: 123 })) as SavedState).unit
+        (parseState(JSON.stringify({ objects: [validObject], unit: 123 })) as SavedState).unit
       ).toBeUndefined();
     });
 
     it("parses showGrid when boolean", () => {
       expect(
-        (StateManager.parseState(JSON.stringify({ objects: [validObject], showGrid: true })) as SavedState).showGrid
+        (parseState(JSON.stringify({ objects: [validObject], showGrid: true })) as SavedState).showGrid
       ).toBe(true);
       expect(
-        (StateManager.parseState(JSON.stringify({ objects: [validObject], showGrid: false })) as SavedState).showGrid
+        (parseState(JSON.stringify({ objects: [validObject], showGrid: false })) as SavedState).showGrid
       ).toBe(false);
     });
 
     it("ignores showGrid when not boolean", () => {
       expect(
-        (StateManager.parseState(JSON.stringify({ objects: [validObject], showGrid: "true" })) as SavedState).showGrid
+        (parseState(JSON.stringify({ objects: [validObject], showGrid: "true" })) as SavedState).showGrid
       ).toBeUndefined();
       expect(
-        (StateManager.parseState(JSON.stringify({ objects: [validObject], showGrid: 1 })) as SavedState).showGrid
+        (parseState(JSON.stringify({ objects: [validObject], showGrid: 1 })) as SavedState).showGrid
       ).toBeUndefined();
     });
   });
@@ -298,7 +298,7 @@ describe("StateManager.parseState", () => {
         objects: [validObject],
         past: [[validObject], [validObject, validObject]],
       });
-      const out = StateManager.parseState(raw) as SavedState;
+      const out = parseState(raw) as SavedState;
       expect(out.past).toHaveLength(2);
       expect(out.past![0]).toHaveLength(1);
       expect(out.past![1]).toHaveLength(2);
@@ -306,38 +306,38 @@ describe("StateManager.parseState", () => {
 
     it("ignores past when not an array", () => {
       const raw = JSON.stringify({ objects: [validObject], past: "invalid" });
-      const out = StateManager.parseState(raw) as SavedState;
+      const out = parseState(raw) as SavedState;
       expect(out.past).toBeUndefined();
     });
 
     it("ignores past when contains non-arrays", () => {
       const raw = JSON.stringify({ objects: [validObject], past: [validObject] });
-      const out = StateManager.parseState(raw) as SavedState;
+      const out = parseState(raw) as SavedState;
       expect(out.past).toBeUndefined();
     });
 
     it("ignores past when contains invalid objects", () => {
       const raw = JSON.stringify({ objects: [validObject], past: [[{ id: "invalid" }]] });
-      const out = StateManager.parseState(raw) as SavedState;
+      const out = parseState(raw) as SavedState;
       expect(out.past).toBeUndefined();
     });
 
     it("parses future when valid", () => {
       const raw = JSON.stringify({ objects: [validObject], future: [[validObject]] });
-      const out = StateManager.parseState(raw) as SavedState;
+      const out = parseState(raw) as SavedState;
       expect(out.future).toHaveLength(1);
     });
 
     it("handles empty past and future arrays", () => {
       const raw = JSON.stringify({ objects: [validObject], past: [], future: [] });
-      const out = StateManager.parseState(raw) as SavedState;
+      const out = parseState(raw) as SavedState;
       expect(out.past).toEqual([]);
       expect(out.future).toEqual([]);
     });
   });
 
   describe("cable parsing", () => {
-    it("parses cables with point-based segments", () => {
+    it("parses cables with points", () => {
       const raw = JSON.stringify({
         objects: [validObject],
         cables: [
@@ -346,11 +346,14 @@ describe("StateManager.parseState", () => {
             color: "#111111",
             connectorA: "mono jack (TS)",
             connectorB: "mono jack (TS)",
-            segments: [{ start: { x: 0, y: 0 }, end: { x: 100, y: 0 } }],
+            points: [
+              [0, 0],
+              [100, 0],
+            ],
           },
         ],
       });
-      const out = StateManager.parseState(raw) as SavedState;
+      const out = parseState(raw) as SavedState;
       expect(out.cables).toEqual([
         {
           id: "c1",
@@ -361,42 +364,17 @@ describe("StateManager.parseState", () => {
         },
       ]);
     });
-
-    it("normalizes legacy cables with x1/y1/x2/y2 segments", () => {
-      const raw = JSON.stringify({
-        objects: [validObject],
-        cables: [
-          {
-            id: "c-legacy",
-            color: "#222222",
-            connectorA: "mono jack (TS)",
-            connectorB: "mono jack (TS)",
-            segments: [{ x1: 10, y1: 20, x2: 30, y2: 40 }],
-          },
-        ],
-      });
-      const out = StateManager.parseState(raw) as SavedState;
-      expect(out.cables).toEqual([
-        {
-          id: "c-legacy",
-          color: "#222222",
-          connectorA: "mono jack (TS)",
-          connectorB: "mono jack (TS)",
-          segments: [{ start: { x: 10, y: 20 }, end: { x: 30, y: 40 } }],
-        },
-      ]);
-    });
   });
 
 });
 
-describe("StateManager.serializeState", () => {
+describe("serializeState", () => {
   describe("coordinate rounding", () => {
     it("rounds object coordinates to 2 decimal places", () => {
       const state: SavedState = {
         objects: [{ ...validObject, pos: { x: 1.234567, y: 5.6789 } } as SavedState["objects"][0]],
       };
-      const ser = StateManager.serializeState(state);
+      const ser = serializeState(state);
       const obj = (ser.objects as Record<string, unknown>[])[0];
       expect(obj.pos).toEqual({ x: 1.23, y: 5.68 });
     });
@@ -406,7 +384,7 @@ describe("StateManager.serializeState", () => {
         objects: [],
         pan: { x: 100.999, y: 200.111 },
       };
-      const ser = StateManager.serializeState(state);
+      const ser = serializeState(state);
       expect(ser.pan).toEqual({ x: 101, y: 200.11 });
     });
 
@@ -414,7 +392,7 @@ describe("StateManager.serializeState", () => {
       const state: SavedState = {
         objects: [{ ...validObject, pos: { x: 0, y: -10.556 } } as SavedState["objects"][0]],
       };
-      const ser = StateManager.serializeState(state);
+      const ser = serializeState(state);
       const obj = (ser.objects as Record<string, unknown>[])[0];
       expect(obj.pos).toEqual({ x: 0, y: -10.56 });
     });
@@ -425,7 +403,7 @@ describe("StateManager.serializeState", () => {
       const state: SavedState = {
         objects: [{ ...validObject, image: "some/path.png" } as SavedState["objects"][0]],
       };
-      const ser = StateManager.serializeState(state);
+      const ser = serializeState(state);
       const obj = (ser.objects as Record<string, unknown>[])[0];
       expect(obj.image).toBeUndefined();
     });
@@ -436,7 +414,7 @@ describe("StateManager.serializeState", () => {
         past: [[{ ...validObject, image: "past.png" } as SavedState["objects"][0]]],
         future: [[{ ...validObject, image: "future.png" } as SavedState["objects"][0]]],
       };
-      const ser = StateManager.serializeState(state);
+      const ser = serializeState(state);
       expect(((ser.past as unknown[][])[0][0] as Record<string, unknown>).image).toBeUndefined();
       expect(((ser.future as unknown[][])[0][0] as Record<string, unknown>).image).toBeUndefined();
     });
@@ -447,7 +425,7 @@ describe("StateManager.serializeState", () => {
       const state: SavedState = {
         objects: [customBoardObject as SavedState["objects"][0]],
       };
-      const ser = StateManager.serializeState(state);
+      const ser = serializeState(state);
       const obj = (ser.objects as Record<string, unknown>[])[0];
       expect(obj.name).toBe("My Custom Board");
     });
@@ -456,7 +434,7 @@ describe("StateManager.serializeState", () => {
       const state: SavedState = {
         objects: [customDeviceObject as SavedState["objects"][0]],
       };
-      const ser = StateManager.serializeState(state);
+      const ser = serializeState(state);
       const obj = (ser.objects as Record<string, unknown>[])[0];
       expect(obj.name).toBe("My Custom Pedal");
     });
@@ -465,7 +443,7 @@ describe("StateManager.serializeState", () => {
       const state: SavedState = {
         objects: [{ ...validObject, name: "Should be stripped" } as SavedState["objects"][0]],
       };
-      const ser = StateManager.serializeState(state);
+      const ser = serializeState(state);
       const obj = (ser.objects as Record<string, unknown>[])[0];
       expect(obj.name).toBeUndefined();
     });
@@ -474,7 +452,7 @@ describe("StateManager.serializeState", () => {
       const state: SavedState = {
         objects: [{ ...bossDeviceObject, name: "Boss DS-1" } as SavedState["objects"][0]],
       };
-      const ser = StateManager.serializeState(state);
+      const ser = serializeState(state);
       const obj = (ser.objects as Record<string, unknown>[])[0];
       expect(obj.name).toBeUndefined();
     });
@@ -486,7 +464,7 @@ describe("StateManager.serializeState", () => {
         objects: [validObject as SavedState["objects"][0]],
         past: [[validObject as SavedState["objects"][0]]],
       };
-      const ser = StateManager.serializeState(state);
+      const ser = serializeState(state);
       expect(ser.past).toHaveLength(1);
     });
 
@@ -495,13 +473,13 @@ describe("StateManager.serializeState", () => {
         objects: [validObject as SavedState["objects"][0]],
         future: [[validObject as SavedState["objects"][0]]],
       };
-      const ser = StateManager.serializeState(state);
+      const ser = serializeState(state);
       expect(ser.future).toHaveLength(1);
     });
 
     it("handles undefined past and future", () => {
       const state: SavedState = { objects: [] };
-      const ser = StateManager.serializeState(state);
+      const ser = serializeState(state);
       expect(ser.past).toBeUndefined();
       expect(ser.future).toBeUndefined();
     });
@@ -510,19 +488,19 @@ describe("StateManager.serializeState", () => {
   describe("other fields", () => {
     it("preserves zoom", () => {
       const state: SavedState = { objects: [], zoom: 2.5 };
-      const ser = StateManager.serializeState(state);
+      const ser = serializeState(state);
       expect(ser.zoom).toBe(2.5);
     });
 
     it("preserves showGrid", () => {
       const state: SavedState = { objects: [], showGrid: true };
-      const ser = StateManager.serializeState(state);
+      const ser = serializeState(state);
       expect(ser.showGrid).toBe(true);
     });
 
     it("preserves unit", () => {
       const state: SavedState = { objects: [], unit: "in" };
-      const ser = StateManager.serializeState(state);
+      const ser = serializeState(state);
       expect(ser.unit).toBe("in");
     });
   });
@@ -541,9 +519,9 @@ describe("round-trip serialization", () => {
       showGrid: true,
     };
 
-    const serialized = StateManager.serializeState(original);
+    const serialized = serializeState(original);
     const json = JSON.stringify(serialized);
-    const parsed = StateManager.parseState(json) as SavedState;
+    const parsed = parseState(json) as SavedState;
 
     expect(parsed.objects).toHaveLength(2);
     expect(parsed.objects[0].pos).toEqual({ x: 123.46, y: 789.12 }); // rounded
@@ -560,9 +538,9 @@ describe("round-trip serialization", () => {
       objects: [customBoardObject as SavedState["objects"][0]],
     };
 
-    const serialized = StateManager.serializeState(original);
+    const serialized = serializeState(original);
     const json = JSON.stringify(serialized);
-    const parsed = StateManager.parseState(json) as SavedState;
+    const parsed = parseState(json) as SavedState;
 
     expect(parsed.objects[0].name).toBe("My Custom Board");
     expect(parsed.objects[0].image).toBe(null); // custom objects have no template image
@@ -573,9 +551,9 @@ describe("round-trip serialization", () => {
       objects: [{ ...bossDeviceObject, name: "Boss DS-1" } as SavedState["objects"][0]],
     };
 
-    const serialized = StateManager.serializeState(original);
+    const serialized = serializeState(original);
     const json = JSON.stringify(serialized);
-    const parsed = StateManager.parseState(json) as SavedState;
+    const parsed = parseState(json) as SavedState;
 
     // Name was stripped during serialization, then derived from brand+model
     expect(parsed.objects[0].name).toBe("Boss DS-1");

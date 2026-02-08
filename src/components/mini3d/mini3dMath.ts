@@ -2,7 +2,7 @@
  * Mini3D-specific math and layout helpers.
  */
 
-import { getObjectDimensions } from "../../lib/stateManager";
+import { getObjectDimensions } from "../../lib/objectDimensions";
 import { normalizeRotation } from "../../lib/geometry";
 import { rectsOverlap, type Rect } from "../../lib/geometry2d";
 import { getBounds2DCenter, getBounds2DOfRects, getBounds2DSize } from "../../lib/bounds";

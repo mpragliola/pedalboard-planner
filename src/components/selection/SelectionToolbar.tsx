@@ -1,6 +1,6 @@
 import { faArrowDown, faArrowUp, faRotateRight, faTrash } from "@fortawesome/free-solid-svg-icons";
 import type { CanvasObjectType } from "../../types";
-import { getObjectDimensions } from "../../lib/stateManager";
+import { getObjectDimensions } from "../../lib/objectDimensions";
 import { useConfirmation } from "../../context/ConfirmationContext";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { SelectionToolbarButton } from "./SelectionToolbarButton";

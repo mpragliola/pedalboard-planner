@@ -3,7 +3,7 @@ import { CABLE_TERMINAL_START_COLOR, CABLE_TERMINAL_END_COLOR } from "../../cons
 import { buildRoundedPathD, buildSmoothPathD, DEFAULT_JOIN_RADIUS } from "../../lib/polylinePath";
 import { vec2Add, vec2Length, vec2Normalize, vec2Scale, vec2Sub, type Offset, type Point } from "../../lib/vector";
 import { snapToObjects } from "../../lib/snapToBoundingBox";
-import { getObjectDimensions } from "../../lib/stateManager";
+import { getObjectDimensions } from "../../lib/objectDimensions";
 import { useBoard } from "../../context/BoardContext";
 import { useCable } from "../../context/CableContext";
 import { useCanvas } from "../../context/CanvasContext";
