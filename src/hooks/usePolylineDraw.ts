@@ -1,11 +1,13 @@
 import { useState, useCallback, useRef, useMemo } from "react";
+import { vec2Abs, vec2Sub } from "../lib/vector";
+import type { Point } from "../lib/vector";
 
 export type Segment = { x1: number; y1: number; x2: number; y2: number };
 
 export interface PolylineDrawState {
   segments: Segment[];
-  segmentStart: { x: number; y: number } | null;
-  currentEnd: { x: number; y: number } | null;
+  segmentStart: Point | null;
+  currentEnd: Point | null;
 }
 
 export interface PolylineDrawHandlers {
@@ -32,13 +34,13 @@ const MIN_SEGMENT_LENGTH = 0.5;
  * Segments are committed on pointer up (after click or drag).
  */
 export function usePolylineDraw(
-  clientToCanvas: (clientX: number, clientY: number) => { x: number; y: number },
+  clientToCanvas: (clientX: number, clientY: number) => Point,
   onDoubleClickExit?: () => void
 ): UsePolylineDrawResult {
   const [segments, setSegments] = useState<Segment[]>([]);
-  const [segmentStart, setSegmentStart] = useState<{ x: number; y: number } | null>(null);
-  const [currentEnd, setCurrentEnd] = useState<{ x: number; y: number } | null>(null);
-  const pointerDownRef = useRef<{ x: number; y: number } | null>(null);
+  const [segmentStart, setSegmentStart] = useState<Point | null>(null);
+  const [currentEnd, setCurrentEnd] = useState<Point | null>(null);
+  const pointerDownRef = useRef<Point | null>(null);
 
   const onPointerDown = useCallback(
     (e: React.PointerEvent) => {
@@ -49,8 +51,7 @@ export function usePolylineDraw(
       }
       e.preventDefault();
       e.stopPropagation();
-      const { x, y } = clientToCanvas(e.clientX, e.clientY);
-      const point = { x, y };
+      const point = clientToCanvas(e.clientX, e.clientY);
       pointerDownRef.current = point;
       if (!segmentStart) {
         setSegmentStart(point);
@@ -62,10 +63,9 @@ export function usePolylineDraw(
 
   /** Constrain point to horizontal or vertical from start (whichever is closer to raw). */
   const constrainToAxis = useCallback(
-    (start: { x: number; y: number }, raw: { x: number; y: number }): { x: number; y: number } => {
-      const dx = Math.abs(raw.x - start.x);
-      const dy = Math.abs(raw.y - start.y);
-      return dy < dx ? { x: raw.x, y: start.y } : { x: start.x, y: raw.y };
+    (start: Point, raw: Point): Point => {
+      const delta = vec2Abs(vec2Sub(raw, start));
+      return delta.y < delta.x ? { x: raw.x, y: start.y } : { x: start.x, y: raw.y };
     },
     []
   );

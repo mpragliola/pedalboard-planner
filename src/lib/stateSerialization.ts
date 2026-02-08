@@ -1,5 +1,6 @@
 /** State serialization + parsing helpers (no storage). */
 import type { CanvasObjectType, Cable } from "../types";
+import type { Offset, Point } from "./vector";
 import { getTemplateImage, getTemplateWdh, hasKnownTemplateDimensions } from "./objectDimensions";
 
 /** Shape of state persisted to storage (e.g. localStorage). */
@@ -8,7 +9,7 @@ export interface SavedState {
   past?: CanvasObjectType[][];
   future?: CanvasObjectType[][];
   zoom?: number;
-  pan?: { x: number; y: number };
+  pan?: Offset;
   showGrid?: boolean;
   unit?: "mm" | "in";
   cables?: Cable[];
@@ -182,7 +183,7 @@ function isValidObjectRecord(o: unknown): o is Record<string, unknown> {
   );
 }
 
-function isValidPointLike(value: unknown): value is { x: number; y: number } {
+function isValidPointLike(value: unknown): value is Point {
   if (typeof value !== "object" || value === null) return false;
   const v = value as Record<string, unknown>;
   return typeof v.x === "number" && typeof v.y === "number";

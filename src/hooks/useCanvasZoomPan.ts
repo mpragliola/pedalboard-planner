@@ -1,4 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
+import { vec2Add, vec2Scale } from "../lib/vector";
+import type { Offset, Point } from "../lib/vector";
 import {
   ZOOM_MIN,
   ZOOM_MAX,
@@ -15,13 +17,19 @@ function dist(a: { clientX: number; clientY: number }, b: { clientX: number; cli
   return Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
 }
 
-function center(a: { clientX: number; clientY: number }, b: { clientX: number; clientY: number }) {
-  return { x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 };
+type ClientPoint = { clientX: number; clientY: number };
+
+function clientPointToPoint(p: ClientPoint): Point {
+  return { x: p.clientX, y: p.clientY };
+}
+
+function center(a: ClientPoint, b: ClientPoint): Point {
+  return vec2Scale(vec2Add(clientPointToPoint(a), clientPointToPoint(b)), 0.5);
 }
 
 export interface UseCanvasZoomPanOptions {
   initialZoom?: number;
-  initialPan?: { x: number; y: number };
+  initialPan?: Offset;
   /** Called when pinch starts (2 fingers); use to cancel object drag so pinch and drag are mutually exclusive. */
   onPinchStart?: () => void;
 }
@@ -29,7 +37,7 @@ export interface UseCanvasZoomPanOptions {
 export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
   const onPinchStart = options?.onPinchStart;
   const [zoom, setZoom] = useState<number>(options?.initialZoom ?? 1);
-  const [pan, setPan] = useState<{ x: number; y: number }>(options?.initialPan ?? { x: 0, y: 0 });
+  const [pan, setPan] = useState<Offset>(options?.initialPan ?? { x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const pauseRef = useRef(false);
   const [spaceDown, setSpaceDown] = useState(false);
@@ -39,7 +47,7 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
   const pinchRef = useRef<{
     initialDistance: number;
     initialZoom: number;
-    initialPan: { x: number; y: number };
+    initialPan: Offset;
     centerX: number;
     centerY: number;
     mode: "pinch" | "pan"; // 'pinch' for zoom, 'pan' for two-finger drag
@@ -55,7 +63,7 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
   const wheelApplyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const wheelEndTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingZoomRef = useRef(zoomRef.current);
-  const pendingPivotRef = useRef({ x: 0, y: 0 });
+  const pendingPivotRef = useRef<Point>({ x: 0, y: 0 });
   /* Keep pending in sync when we apply from buttons/center so wheel uses correct base */
   useEffect(() => {
     if (!animating) {

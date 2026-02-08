@@ -47,6 +47,11 @@ export function vec2Multiply(a: Vec2, b: Vec2): Vec2 {
   return { x: a.x * b.x, y: a.y * b.y };
 }
 
+/** Component-wise absolute value for 2D vectors. */
+export function vec2Abs(v: Vec2): Vec2 {
+  return { x: Math.abs(v.x), y: Math.abs(v.y) };
+}
+
 /** 2D cross product magnitude (signed area). */
 export function vec2Cross(a: Vec2, b: Vec2): number {
   return a.x * b.y - a.y * b.x;

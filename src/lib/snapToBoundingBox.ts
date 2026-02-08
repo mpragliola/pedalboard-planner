@@ -1,6 +1,8 @@
 /** Object snapping helpers based on axis-aligned bounding boxes. */
 import { normalizeRotation } from "./geometry";
+import { closestPointOnRectPerimeter } from "./geometry2d";
 import type { CanvasObjectType } from "../types";
+import type { Point } from "./vector";
 
 /** Axis-aligned rectangle in canvas coordinates. */
 export interface Aabb {
@@ -26,34 +28,6 @@ export function getObjectAabb(
 }
 
 /** Closest point on the perimeter of a rectangle to (px, py). */
-export function closestPointOnRectPerimeter(
-  px: number,
-  py: number,
-  left: number,
-  top: number,
-  w: number,
-  h: number
-): { x: number; y: number } {
-  const right = left + w;
-  const bottom = top + h;
-  const cx = Math.max(left, Math.min(right, px));
-  const cy = Math.max(top, Math.min(bottom, py));
-  const inside = px > left && px < right && py > top && py < bottom;
-  if (inside) {
-    const dl = cx - left;
-    const dr = right - cx;
-    const dt = cy - top;
-    const db = bottom - cy;
-    const minHoriz = Math.min(dl, dr);
-    const minVert = Math.min(dt, db);
-    if (minHoriz <= minVert) {
-      return { x: px < left + w / 2 ? left : right, y: cy };
-    }
-    return { x: cx, y: py < top + h / 2 ? top : bottom };
-  }
-  return { x: cx, y: cy };
-}
-
 /** Default snap tolerance in canvas units (mm). Only snap when within this distance of an edge. */
 export const SNAP_TOLERANCE_MM = 10;
 
@@ -67,7 +41,7 @@ export function snapToObjects(
   objects: CanvasObjectType[],
   getObjectDimensions: (o: CanvasObjectType) => [number, number, number],
   toleranceMm: number = SNAP_TOLERANCE_MM
-): { x: number; y: number } {
+): Point {
   if (objects.length === 0) return { x: canvasX, y: canvasY };
   const maxDistSq = toleranceMm * toleranceMm;
   let bestX = canvasX;

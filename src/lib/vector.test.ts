@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  vec2Abs,
   vec2Add,
   vec2Cross,
   vec2Length,
@@ -24,6 +25,8 @@ describe("vector helpers", () => {
     expect(vec2Scale({ x: -2, y: 6 }, 0.5)).toEqual({ x: -1, y: 3 });
     expect(vec2Multiply({ x: 2, y: -3 }, { x: 4, y: 0.5 })).toEqual({ x: 8, y: -1.5 });
     expect(vec2Cross({ x: 3, y: 0 }, { x: 0, y: 2 })).toBe(6);
+    expect(vec2Abs({ x: -2, y: 3 })).toEqual({ x: 2, y: 3 });
+    expect(vec2Abs({ x: -0, y: -4 })).toEqual({ x: 0, y: 4 });
   });
 
   it("rotates vec2 coordinates", () => {

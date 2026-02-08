@@ -18,6 +18,7 @@ import { useBoardDeviceFilters } from "../hooks/useBoardDeviceFilters";
 import { useHistory } from "../hooks/useHistory";
 import { useCatalogDrag } from "../hooks/useCatalogDrag";
 import { getObjectAabb } from "../lib/snapToBoundingBox";
+import type { Point } from "../lib/vector";
 import type { CanvasObjectType, Cable } from "../types";
 import { BoardIoProvider, type BoardIoContextValue } from "./BoardIoContext";
 import { BoardProvider, type BoardContextValue } from "./BoardContext";
@@ -232,7 +233,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   /** Uses placement strategy so new device/board appears at center of browser viewport. */
-  const getPlacementInVisibleViewport = useCallback((): { x: number; y: number } => {
+  const getPlacementInVisibleViewport = useCallback((): Point => {
     const canvasEl = canvasRef.current;
     if (!canvasEl) return DEFAULT_PLACEMENT_FALLBACK;
     return visibleViewportPlacement({

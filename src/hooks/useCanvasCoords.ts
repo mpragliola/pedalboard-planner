@@ -1,5 +1,6 @@
-import { useCallback } from 'react'
-import { canvasToScreenPoint, clientToCanvasPoint, type Pan2D } from '../lib/canvasCoords'
+import { useCallback } from "react";
+import { canvasToScreenPoint, clientToCanvasPoint } from "../lib/canvasCoords";
+import type { Offset, Point } from "../lib/vector";
 
 /**
  * Converts between client/screen coordinates and canvas coordinates.
@@ -8,10 +9,10 @@ import { canvasToScreenPoint, clientToCanvasPoint, type Pan2D } from '../lib/can
 export function useCanvasCoords(
   canvasRef: React.RefObject<HTMLDivElement | null>,
   zoom: number,
-  pan: Pan2D
+  pan: Offset
 ) {
   const clientToCanvas = useCallback(
-    (clientX: number, clientY: number) => {
+    (clientX: number, clientY: number): Point => {
       const el = canvasRef.current
       if (!el) return { x: 0, y: 0 }
       const r = el.getBoundingClientRect()
@@ -21,7 +22,7 @@ export function useCanvasCoords(
   )
 
   const toScreen = useCallback(
-    (x: number, y: number) => canvasToScreenPoint(x, y, zoom, pan),
+    (x: number, y: number): Point => canvasToScreenPoint({ x, y }, zoom, pan),
     [pan.x, pan.y, zoom]
   )
 

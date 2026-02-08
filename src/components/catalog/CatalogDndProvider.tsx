@@ -15,6 +15,7 @@ import { useCanvas } from "../../context/CanvasContext";
 import { useCatalog } from "../../context/CatalogContext";
 import { LONG_PRESS_MS, MOVE_THRESHOLD_PX, MM_TO_PX } from "../../constants";
 import { DEFAULT_OBJECT_COLOR } from "../../constants";
+import type { Point } from "../../lib/vector";
 import "./CatalogDragGhost.scss";
 
 const CANVAS_DROP_ID = "canvas-drop";
@@ -54,10 +55,10 @@ function CatalogDragOverlayContent({ data, zoom = 1 }: { data: CatalogDragData; 
 export function CatalogDndProvider({ children }: { children: React.ReactNode }) {
   const { placeFromCatalog } = useCatalog();
   const { zoom } = useCanvas();
-  const lastPointerRef = useRef({ x: 0, y: 0 });
+  const lastPointerRef = useRef<Point>({ x: 0, y: 0 });
   const [activeData, setActiveData] = useState<CatalogDragData | null>(null);
   /** Pointer position during drag; we position our own ghost from this so it's always centered. */
-  const [dragPointer, setDragPointer] = useState<{ x: number; y: number } | null>(null);
+  const [dragPointer, setDragPointer] = useState<Point | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -75,7 +76,7 @@ export function CatalogDndProvider({ children }: { children: React.ReactNode }) 
   );
 
   const removeListenersRef = useRef<() => void>(() => {});
-  const initialPointerRef = useRef<{ x: number; y: number } | null>(null);
+  const initialPointerRef = useRef<Point | null>(null);
   const capturedPointerIdRef = useRef<number | null>(null);
 
   const captureInitialPointer: Modifier = ({ activatorEvent, transform }) => {

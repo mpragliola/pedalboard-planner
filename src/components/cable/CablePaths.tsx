@@ -1,7 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CABLE_TERMINAL_START_COLOR, CABLE_TERMINAL_END_COLOR } from "../../constants/cables";
 import { buildRoundedPathD, buildSmoothPathD, DEFAULT_JOIN_RADIUS } from "../../lib/polylinePath";
-import { vec2Add, vec2Length, vec2Normalize, vec2Scale, vec2Sub, type Offset, type Point } from "../../lib/vector";
+import {
+  vec2Add,
+  vec2Dot,
+  vec2Length,
+  vec2Normalize,
+  vec2Scale,
+  vec2Sub,
+  type Offset,
+  type Point,
+} from "../../lib/vector";
 import { snapToObjects } from "../../lib/snapToBoundingBox";
 import { getObjectDimensions } from "../../lib/objectDimensions";
 import { useBoard } from "../../context/BoardContext";
@@ -203,20 +212,14 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
     let bestDist2 = Infinity;
     const points = cable.segments;
     for (let idx = 0; idx < points.length - 1; idx += 1) {
-      const ax = points[idx].x;
-      const ay = points[idx].y;
-      const bx = points[idx + 1].x;
-      const by = points[idx + 1].y;
-      const dx = bx - ax;
-      const dy = by - ay;
-      const len2 = dx * dx + dy * dy;
-      const t =
-        len2 === 0
-          ? 0
-          : Math.max(0, Math.min(1, ((canvasPoint.x - ax) * dx + (canvasPoint.y - ay) * dy) / len2));
-      const px = ax + t * dx;
-      const py = ay + t * dy;
-      const dist2 = (canvasPoint.x - px) ** 2 + (canvasPoint.y - py) ** 2;
+      const a = points[idx];
+      const b = points[idx + 1];
+      const ab = vec2Sub(b, a);
+      const ap = vec2Sub(canvasPoint, a);
+      const len2 = vec2Dot(ab, ab);
+      const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, vec2Dot(ap, ab) / len2));
+      const proj = { x: a.x + t * ab.x, y: a.y + t * ab.y };
+      const dist2 = vec2Dot(vec2Sub(canvasPoint, proj), vec2Sub(canvasPoint, proj));
       if (dist2 < bestDist2) {
         bestDist2 = dist2;
         bestIdx = idx;
