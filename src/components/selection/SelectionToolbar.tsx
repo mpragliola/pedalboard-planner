@@ -24,7 +24,7 @@ interface SelectionToolbarProps {
   onBringToFront: (id: string) => void;
 }
 
-export function SelectionToolbar({ obj, onDelete, onRotate, onSendToBack, onBringToFront }: SelectionToolbarProps) {
+function SelectionToolbar({ obj, onDelete, onRotate, onSendToBack, onBringToFront }: SelectionToolbarProps) {
   const { requestConfirmation } = useConfirmation();
   const scaleUp = useMediaQuery("(max-width: 768px)");
 
@@ -92,3 +92,6 @@ export function SelectionToolbar({ obj, onDelete, onRotate, onSendToBack, onBrin
     </div>
   );
 }
+
+export { SelectionToolbar };
+export default SelectionToolbar;
