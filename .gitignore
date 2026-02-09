@@ -32,6 +32,7 @@ lerna-debug.log*
 *.njsproj
 *.sln
 *.sw?
+.claude/*
 
 # OS
 .DS_Store
