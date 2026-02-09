@@ -1,24 +1,158 @@
-import { useState, useMemo, useEffect } from "react";
+import { useReducer, useMemo, useEffect, useCallback } from "react";
 import { BOARD_TEMPLATES } from "../data/boards";
 import { DEVICE_TEMPLATES } from "../data/devices";
 import { DEVICE_TYPE_ORDER } from "../constants";
 
+interface FiltersState {
+  selectedBoard: string;
+  selectedDevice: string;
+  boardBrandFilter: string;
+  boardTextFilter: string;
+  boardWidthMin: string;
+  boardWidthMax: string;
+  boardDepthMin: string;
+  boardDepthMax: string;
+  deviceBrandFilter: string;
+  deviceTypeFilter: string;
+  deviceTextFilter: string;
+  deviceWidthMin: string;
+  deviceWidthMax: string;
+  deviceDepthMin: string;
+  deviceDepthMax: string;
+}
+
+const initialState: FiltersState = {
+  selectedBoard: "",
+  selectedDevice: "",
+  boardBrandFilter: "",
+  boardTextFilter: "",
+  boardWidthMin: "",
+  boardWidthMax: "",
+  boardDepthMin: "",
+  boardDepthMax: "",
+  deviceBrandFilter: "",
+  deviceTypeFilter: "",
+  deviceTextFilter: "",
+  deviceWidthMin: "",
+  deviceWidthMax: "",
+  deviceDepthMin: "",
+  deviceDepthMax: "",
+};
+
+type FiltersAction =
+  | { type: "set"; field: keyof FiltersState; value: string }
+  | { type: "resetBoard" }
+  | { type: "resetDevice" };
+
+function filtersReducer(state: FiltersState, action: FiltersAction): FiltersState {
+  switch (action.type) {
+    case "set":
+      if (state[action.field] === action.value) return state;
+      return { ...state, [action.field]: action.value };
+    case "resetBoard":
+      return {
+        ...state,
+        boardBrandFilter: "",
+        boardTextFilter: "",
+        boardWidthMin: "",
+        boardWidthMax: "",
+        boardDepthMin: "",
+        boardDepthMax: "",
+      };
+    case "resetDevice":
+      return {
+        ...state,
+        deviceBrandFilter: "",
+        deviceTypeFilter: "",
+        deviceTextFilter: "",
+        deviceWidthMin: "",
+        deviceWidthMax: "",
+        deviceDepthMin: "",
+        deviceDepthMax: "",
+      };
+  }
+}
+
+function useSetter(dispatch: React.Dispatch<FiltersAction>, field: keyof FiltersState) {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  return useCallback((value: string) => dispatch({ type: "set", field, value }), [dispatch, field]);
+}
+
+const parseNum = (s: string): number | null => {
+  const n = Number(s.trim());
+  return s.trim() === "" || Number.isNaN(n) ? null : n;
+};
+
+interface HasWdh {
+  wdh: [number, number, number];
+}
+
+/** Shared size-range filtering for both boards and devices. */
+function applyDimensionFilters<T extends HasWdh>(
+  list: T[],
+  widthMin: string,
+  widthMax: string,
+  depthMin: string,
+  depthMax: string
+): T[] {
+  const wMin = parseNum(widthMin);
+  const wMax = parseNum(widthMax);
+  const dMin = parseNum(depthMin);
+  const dMax = parseNum(depthMax);
+  if (wMin != null) list = list.filter((t) => t.wdh[0] >= wMin);
+  if (wMax != null) list = list.filter((t) => t.wdh[0] <= wMax);
+  if (dMin != null) list = list.filter((t) => t.wdh[1] >= dMin);
+  if (dMax != null) list = list.filter((t) => t.wdh[1] <= dMax);
+  return list;
+}
+
+interface HasTextFields {
+  name?: string;
+  brand?: string;
+  model?: string;
+}
+
+function applyTextFilter<T extends HasTextFields>(list: T[], text: string): T[] {
+  const q = text.trim().toLowerCase();
+  if (!q) return list;
+  return list.filter((t) => [t.name, t.brand, t.model].some((s) => s?.toLowerCase().includes(q)));
+}
+
 export function useBoardDeviceFilters() {
-  const [selectedBoard, setSelectedBoard] = useState<string>("");
-  const [selectedDevice, setSelectedDevice] = useState<string>("");
-  const [boardBrandFilter, setBoardBrandFilter] = useState<string>("");
-  const [boardTextFilter, setBoardTextFilter] = useState<string>("");
-  const [boardWidthMin, setBoardWidthMin] = useState<string>("");
-  const [boardWidthMax, setBoardWidthMax] = useState<string>("");
-  const [boardDepthMin, setBoardDepthMin] = useState<string>("");
-  const [boardDepthMax, setBoardDepthMax] = useState<string>("");
-  const [deviceBrandFilter, setDeviceBrandFilter] = useState<string>("");
-  const [deviceTypeFilter, setDeviceTypeFilter] = useState<string>("");
-  const [deviceTextFilter, setDeviceTextFilter] = useState<string>("");
-  const [deviceWidthMin, setDeviceWidthMin] = useState<string>("");
-  const [deviceWidthMax, setDeviceWidthMax] = useState<string>("");
-  const [deviceDepthMin, setDeviceDepthMin] = useState<string>("");
-  const [deviceDepthMax, setDeviceDepthMax] = useState<string>("");
+  const [state, dispatch] = useReducer(filtersReducer, initialState);
+  const {
+    selectedBoard,
+    selectedDevice,
+    boardBrandFilter,
+    boardTextFilter,
+    boardWidthMin,
+    boardWidthMax,
+    boardDepthMin,
+    boardDepthMax,
+    deviceBrandFilter,
+    deviceTypeFilter,
+    deviceTextFilter,
+    deviceWidthMin,
+    deviceWidthMax,
+    deviceDepthMin,
+    deviceDepthMax,
+  } = state;
+
+  const setSelectedBoard = useSetter(dispatch, "selectedBoard");
+  const setSelectedDevice = useSetter(dispatch, "selectedDevice");
+  const setBoardBrandFilter = useSetter(dispatch, "boardBrandFilter");
+  const setBoardTextFilter = useSetter(dispatch, "boardTextFilter");
+  const setBoardWidthMin = useSetter(dispatch, "boardWidthMin");
+  const setBoardWidthMax = useSetter(dispatch, "boardWidthMax");
+  const setBoardDepthMin = useSetter(dispatch, "boardDepthMin");
+  const setBoardDepthMax = useSetter(dispatch, "boardDepthMax");
+  const setDeviceBrandFilter = useSetter(dispatch, "deviceBrandFilter");
+  const setDeviceTypeFilter = useSetter(dispatch, "deviceTypeFilter");
+  const setDeviceTextFilter = useSetter(dispatch, "deviceTextFilter");
+  const setDeviceWidthMin = useSetter(dispatch, "deviceWidthMin");
+  const setDeviceWidthMax = useSetter(dispatch, "deviceWidthMax");
+  const setDeviceDepthMin = useSetter(dispatch, "deviceDepthMin");
+  const setDeviceDepthMax = useSetter(dispatch, "deviceDepthMax");
 
   const boardBrands = useMemo(() => {
     const set = new Set(BOARD_TEMPLATES.map((t) => t.brand).filter(Boolean));
@@ -51,24 +185,11 @@ export function useBoardDeviceFilters() {
     return [Math.min(...depths), Math.max(...depths)] as const;
   }, []);
 
-  const parseNum = (s: string): number | null => {
-    const n = Number(s.trim());
-    return s.trim() === "" || Number.isNaN(n) ? null : n;
-  };
-
   const filteredBoards = useMemo(() => {
     let list = BOARD_TEMPLATES;
     if (boardBrandFilter) list = list.filter((t) => t.brand === boardBrandFilter);
-    const q = boardTextFilter.trim().toLowerCase();
-    if (q) list = list.filter((t) => [t.name, t.brand, t.model].some((s) => s?.toLowerCase().includes(q)));
-    const wMin = parseNum(boardWidthMin);
-    const wMax = parseNum(boardWidthMax);
-    const dMin = parseNum(boardDepthMin);
-    const dMax = parseNum(boardDepthMax);
-    if (wMin != null) list = list.filter((t) => t.wdh[0] >= wMin);
-    if (wMax != null) list = list.filter((t) => t.wdh[0] <= wMax);
-    if (dMin != null) list = list.filter((t) => t.wdh[1] >= dMin);
-    if (dMax != null) list = list.filter((t) => t.wdh[1] <= dMax);
+    list = applyTextFilter(list, boardTextFilter);
+    list = applyDimensionFilters(list, boardWidthMin, boardWidthMax, boardDepthMin, boardDepthMax);
     return [...list].sort((a, b) => {
       const byType = (a.type ?? "").localeCompare(b.type ?? "");
       if (byType !== 0) return byType;
@@ -84,16 +205,8 @@ export function useBoardDeviceFilters() {
       if (deviceTypeFilter && t.type !== deviceTypeFilter) return false;
       return true;
     });
-    const q = deviceTextFilter.trim().toLowerCase();
-    if (q) list = list.filter((t) => [t.name, t.brand, t.model].some((s) => s?.toLowerCase().includes(q)));
-    const wMin = parseNum(deviceWidthMin);
-    const wMax = parseNum(deviceWidthMax);
-    const dMin = parseNum(deviceDepthMin);
-    const dMax = parseNum(deviceDepthMax);
-    if (wMin != null) list = list.filter((t) => t.wdh[0] >= wMin);
-    if (wMax != null) list = list.filter((t) => t.wdh[0] <= wMax);
-    if (dMin != null) list = list.filter((t) => t.wdh[1] >= dMin);
-    if (dMax != null) list = list.filter((t) => t.wdh[1] <= dMax);
+    list = applyTextFilter(list, deviceTextFilter);
+    list = applyDimensionFilters(list, deviceWidthMin, deviceWidthMax, deviceDepthMin, deviceDepthMax);
     return [...list].sort((a, b) => {
       const typeA = DEVICE_TYPE_ORDER.indexOf(a.type);
       const typeB = DEVICE_TYPE_ORDER.indexOf(b.type);
@@ -115,75 +228,39 @@ export function useBoardDeviceFilters() {
 
   useEffect(() => {
     if (selectedBoard && !filteredBoards.some((t) => t.id === selectedBoard)) setSelectedBoard("");
-  }, [selectedBoard, filteredBoards]);
+  }, [selectedBoard, filteredBoards, setSelectedBoard]);
 
   useEffect(() => {
     if (selectedDevice && !filteredDevices.some((t) => t.id === selectedDevice)) setSelectedDevice("");
-  }, [selectedDevice, filteredDevices]);
+  }, [selectedDevice, filteredDevices, setSelectedDevice]);
 
   useEffect(() => {
     if (deviceBrandFilter && !deviceBrands.includes(deviceBrandFilter)) setDeviceBrandFilter("");
   }, [deviceBrandFilter, deviceBrands, setDeviceBrandFilter]);
 
-  const resetBoardFilters = () => {
-    setBoardBrandFilter("");
-    setBoardTextFilter("");
-    setBoardWidthMin("");
-    setBoardWidthMax("");
-    setBoardDepthMin("");
-    setBoardDepthMax("");
-  };
-
-  const resetDeviceFilters = () => {
-    setDeviceBrandFilter("");
-    setDeviceTypeFilter("");
-    setDeviceTextFilter("");
-    setDeviceWidthMin("");
-    setDeviceWidthMax("");
-    setDeviceDepthMin("");
-    setDeviceDepthMax("");
-  };
+  const resetBoardFilters = useCallback(() => dispatch({ type: "resetBoard" }), []);
+  const resetDeviceFilters = useCallback(() => dispatch({ type: "resetDevice" }), []);
 
   return {
-    selectedBoard,
-    setSelectedBoard,
-    selectedDevice,
-    setSelectedDevice,
-    boardBrandFilter,
-    setBoardBrandFilter,
-    boardTextFilter,
-    setBoardTextFilter,
-    boardWidthMin,
-    setBoardWidthMin,
-    boardWidthMax,
-    setBoardWidthMax,
-    boardDepthMin,
-    setBoardDepthMin,
-    boardDepthMax,
-    setBoardDepthMax,
-    deviceBrandFilter,
-    setDeviceBrandFilter,
-    deviceTypeFilter,
-    setDeviceTypeFilter,
-    deviceTextFilter,
-    setDeviceTextFilter,
-    deviceWidthMin,
-    setDeviceWidthMin,
-    deviceWidthMax,
-    setDeviceWidthMax,
-    deviceDepthMin,
-    setDeviceDepthMin,
-    deviceDepthMax,
-    setDeviceDepthMax,
-    boardWidthRange,
-    boardDepthRange,
-    deviceWidthRange,
-    deviceDepthRange,
-    boardBrands,
-    deviceBrands,
-    filteredBoards,
-    filteredDevices,
-    resetBoardFilters,
-    resetDeviceFilters,
+    selectedBoard, setSelectedBoard,
+    selectedDevice, setSelectedDevice,
+    boardBrandFilter, setBoardBrandFilter,
+    boardTextFilter, setBoardTextFilter,
+    boardWidthMin, setBoardWidthMin,
+    boardWidthMax, setBoardWidthMax,
+    boardDepthMin, setBoardDepthMin,
+    boardDepthMax, setBoardDepthMax,
+    deviceBrandFilter, setDeviceBrandFilter,
+    deviceTypeFilter, setDeviceTypeFilter,
+    deviceTextFilter, setDeviceTextFilter,
+    deviceWidthMin, setDeviceWidthMin,
+    deviceWidthMax, setDeviceWidthMax,
+    deviceDepthMin, setDeviceDepthMin,
+    deviceDepthMax, setDeviceDepthMax,
+    boardWidthRange, boardDepthRange,
+    deviceWidthRange, deviceDepthRange,
+    boardBrands, deviceBrands,
+    filteredBoards, filteredDevices,
+    resetBoardFilters, resetDeviceFilters,
   };
 }
