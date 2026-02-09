@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { addGlobalPointerListeners } from "../lib/pointerEvents";
 import { vec2Length, vec2Scale, vec2Sub, type Point } from "../lib/vector";
 
 export interface DragStart<T> {
@@ -129,14 +130,7 @@ export function useDragState<T>(options: UseDragStateOptions<T>) {
       setPhaseTag("idle");
     };
 
-    window.addEventListener("pointermove", handlePointerMove, { capture: true });
-    window.addEventListener("pointerup", handlePointerUp, { capture: true });
-    window.addEventListener("pointercancel", handlePointerUp, { capture: true });
-    return () => {
-      window.removeEventListener("pointermove", handlePointerMove, { capture: true });
-      window.removeEventListener("pointerup", handlePointerUp, { capture: true });
-      window.removeEventListener("pointercancel", handlePointerUp, { capture: true });
-    };
+    return addGlobalPointerListeners(handlePointerMove, handlePointerUp);
   }, [phaseTag, thresholdPx, zoom, onDragActivated]);
 
   // ── Dragging phase: relay movement, end on pointer up ────────────────
@@ -165,14 +159,7 @@ export function useDragState<T>(options: UseDragStateOptions<T>) {
       clearDragState();
     };
 
-    window.addEventListener("pointermove", handlePointerMove, { capture: true });
-    window.addEventListener("pointerup", handlePointerUp, { capture: true });
-    window.addEventListener("pointercancel", handlePointerUp, { capture: true });
-    return () => {
-      window.removeEventListener("pointermove", handlePointerMove, { capture: true });
-      window.removeEventListener("pointerup", handlePointerUp, { capture: true });
-      window.removeEventListener("pointercancel", handlePointerUp, { capture: true });
-    };
+    return addGlobalPointerListeners(handlePointerMove, handlePointerUp);
   }, [phaseTag, zoom, onDragMove, clearDragState]);
 
   return {

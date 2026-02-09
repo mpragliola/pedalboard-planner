@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
+import { addGlobalPointerListeners } from "../lib/pointerEvents";
 import { vec2Add, vec2Scale } from "../lib/vector";
 import type { Offset, Point } from "../lib/vector";
 import {
@@ -310,14 +311,7 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
         panStartRef.current = null;
       }
     };
-    window.addEventListener("pointermove", handlePointerMove, { capture: true });
-    window.addEventListener("pointerup", handlePointerUp, { capture: true });
-    window.addEventListener("pointercancel", handlePointerUp, { capture: true });
-    return () => {
-      window.removeEventListener("pointermove", handlePointerMove, { capture: true });
-      window.removeEventListener("pointerup", handlePointerUp, { capture: true });
-      window.removeEventListener("pointercancel", handlePointerUp, { capture: true });
-    };
+    return addGlobalPointerListeners(handlePointerMove, handlePointerUp);
   }, [isPanning]);
 
   const handleCanvasPointerDown = useCallback(
