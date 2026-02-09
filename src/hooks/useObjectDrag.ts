@@ -1,8 +1,7 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useCallback, useRef } from "react";
 import type { CanvasObjectType } from "../types";
 import type { Point } from "../lib/vector";
-
-const DRAG_THRESHOLD_PX = 6;
+import { useDragState } from "./useDragState";
 
 export function useObjectDrag(
   objects: CanvasObjectType[],
@@ -13,49 +12,11 @@ export function useObjectDrag(
   zoom: number,
   spaceDown: boolean
 ) {
-  const [draggingObjectId, setDraggingObjectId] = useState<string | null>(null);
-  const [pendingDrag, setPendingDrag] = useState<{
-    id: string;
-    pointerId: number;
-    mouse: Point;
-    objPos: Point;
-  } | null>(null);
-  const dragStartRef = useRef<{ mouse: Point; objPos: Point } | null>(null);
   const dragTargetIdsRef = useRef<Set<string>>(new Set());
-  const draggingPointerIdRef = useRef<number | null>(null);
-  const hasPushedHistoryRef = useRef(false);
 
   const getObjectsToDrag = useCallback((): string[] => {
     const ids = dragTargetIdsRef.current;
     return ids.size ? Array.from(ids) : [];
-  }, []);
-
-  const handleObjectDragStart = useCallback(
-    (id: string, e: React.PointerEvent) => {
-      if (e.button !== 0 || spaceDown) return;
-      if (dragTargetIdsRef.current.size > 0) return;
-      e.preventDefault();
-      e.stopPropagation();
-      const obj = objects.find((o) => o.id === id);
-      if (!obj) return;
-      setPendingDrag({
-        id,
-        pointerId: e.pointerId,
-        mouse: { x: e.clientX, y: e.clientY },
-        objPos: obj.pos,
-      });
-    },
-    [objects, spaceDown]
-  );
-
-  const clearDragState = useCallback(() => {
-    setPendingDrag(null);
-    draggingPointerIdRef.current = null;
-    if (dragTargetIdsRef.current.size === 0) return;
-    dragTargetIdsRef.current = new Set();
-    dragStartRef.current = null;
-    setDraggingObjectId(null);
-    hasPushedHistoryRef.current = false;
   }, []);
 
   const handleObjectPositionUpdate = useCallback(
@@ -79,60 +40,30 @@ export function useObjectDrag(
     [setObjects]
   );
 
-  useEffect(() => {
-    if (!pendingDrag) return;
-    const pointerId = pendingDrag.pointerId;
-    const handlePointerMove = (e: PointerEvent) => {
-      if (e.pointerId !== pointerId) return;
-      if (!pendingDrag) return;
-      const dx = e.clientX - pendingDrag.mouse.x;
-      const dy = e.clientY - pendingDrag.mouse.y;
-      const dist = Math.hypot(dx, dy);
-      if (dist < DRAG_THRESHOLD_PX) return;
-      const newX = pendingDrag.objPos.x + dx / zoom;
-      const newY = pendingDrag.objPos.y + dy / zoom;
-      dragTargetIdsRef.current = new Set([pendingDrag.id]);
-      draggingPointerIdRef.current = pointerId;
-      dragStartRef.current = {
-        mouse: { x: e.clientX, y: e.clientY },
-        objPos: { x: newX, y: newY },
+  const { draggingId: draggingObjectId, handleDragStart, clearDragState } = useDragState<{ objPos: Point }>({
+    zoom,
+    spaceDown,
+    canStart: () => dragTargetIdsRef.current.size === 0,
+    getPendingPayload: (id) => {
+      const obj = objects.find((o) => o.id === id);
+      if (!obj) return null;
+      return { objPos: obj.pos };
+    },
+    onDragActivated: ({ pending, canvasDelta, event }) => {
+      const newX = pending.payload.objPos.x + canvasDelta.x;
+      const newY = pending.payload.objPos.y + canvasDelta.y;
+      dragTargetIdsRef.current = new Set([pending.id]);
+      handleObjectPositionUpdate(pending.id, { x: newX, y: newY }, true);
+      return {
+        mouse: { x: event.clientX, y: event.clientY },
+        payload: { objPos: { x: newX, y: newY } },
       };
-      hasPushedHistoryRef.current = true;
-      setDraggingObjectId(pendingDrag.id);
-      setPendingDrag(null);
-      handleObjectPositionUpdate(pendingDrag.id, { x: newX, y: newY }, true);
-    };
-    const handlePointerUp = (e: PointerEvent) => {
-      if (e.pointerId !== pointerId) return;
-      setPendingDrag(null);
-    };
-    window.addEventListener("pointermove", handlePointerMove, { capture: true });
-    window.addEventListener("pointerup", handlePointerUp, { capture: true });
-    window.addEventListener("pointercancel", handlePointerUp, { capture: true });
-    return () => {
-      window.removeEventListener("pointermove", handlePointerMove, { capture: true });
-      window.removeEventListener("pointerup", handlePointerUp, { capture: true });
-      window.removeEventListener("pointercancel", handlePointerUp, { capture: true });
-    };
-  }, [pendingDrag, zoom, handleObjectPositionUpdate]);
-
-  useEffect(() => {
-    if (!draggingObjectId) return;
-    const handlePointerMove = (e: PointerEvent) => {
-      if (draggingPointerIdRef.current !== null && e.pointerId !== draggingPointerIdRef.current) return;
+    },
+    onDragMove: ({ dragStart, canvasDelta, saveToHistory }) => {
       const ids = getObjectsToDrag();
-      if (ids.length === 0 || !dragStartRef.current) return;
-
-      const dx = (e.clientX - dragStartRef.current.mouse.x) / zoom;
-      const dy = (e.clientY - dragStartRef.current.mouse.y) / zoom;
-      const newX = dragStartRef.current.objPos.x + dx;
-      const newY = dragStartRef.current.objPos.y + dy;
-
-      const saveToHistory = !hasPushedHistoryRef.current;
-      if (saveToHistory) {
-        hasPushedHistoryRef.current = true;
-      }
-
+      if (ids.length === 0) return;
+      const newX = dragStart.payload.objPos.x + canvasDelta.x;
+      const newY = dragStart.payload.objPos.y + canvasDelta.y;
       if (ids.length === 1) {
         handleObjectPositionUpdate(ids[0], { x: newX, y: newY }, saveToHistory);
       } else {
@@ -141,32 +72,16 @@ export function useObjectDrag(
           saveToHistory
         );
       }
-    };
-    const handlePointerUp = (e: PointerEvent) => {
-      if (draggingPointerIdRef.current !== null && e.pointerId !== draggingPointerIdRef.current) return;
-      clearDragState();
-    };
-    window.addEventListener("pointermove", handlePointerMove, { capture: true });
-    window.addEventListener("pointerup", handlePointerUp, { capture: true });
-    window.addEventListener("pointercancel", handlePointerUp, { capture: true });
-    return () => {
-      window.removeEventListener("pointermove", handlePointerMove, { capture: true });
-      window.removeEventListener("pointerup", handlePointerUp, { capture: true });
-      window.removeEventListener("pointercancel", handlePointerUp, { capture: true });
-    };
-  }, [
-    draggingObjectId,
-    zoom,
-    getObjectsToDrag,
-    clearDragState,
-    handleObjectPositionUpdate,
-    handleObjectsPositionUpdate,
-    setObjects,
-  ]);
+    },
+    onDragEnd: () => {
+      if (dragTargetIdsRef.current.size === 0) return;
+      dragTargetIdsRef.current = new Set();
+    },
+  });
 
   return {
     draggingObjectId,
-    handleObjectDragStart,
+    handleObjectDragStart: handleDragStart,
     clearDragState,
   };
 }
