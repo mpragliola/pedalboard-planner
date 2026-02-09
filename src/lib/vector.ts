@@ -52,6 +52,12 @@ export function vec2Abs(v: Vec2): Vec2 {
   return { x: Math.abs(v.x), y: Math.abs(v.y) };
 }
 
+/** Constrain target to horizontal or vertical from origin (whichever is closer). */
+export function vec2ConstrainToAxis(origin: Vec2, target: Vec2): Vec2 {
+  const delta = vec2Abs(vec2Sub(target, origin));
+  return delta.y < delta.x ? { x: target.x, y: origin.y } : { x: origin.x, y: target.y };
+}
+
 /** 2D cross product magnitude (signed area). */
 export function vec2Cross(a: Vec2, b: Vec2): number {
   return a.x * b.y - a.y * b.x;

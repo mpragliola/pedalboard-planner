@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from 'react'
 import { useCanvas } from '../../context/CanvasContext'
 import { useUi } from '../../context/UiContext'
 import { buildRoundedPathD, DEFAULT_JOIN_RADIUS } from '../../lib/polylinePath'
+import { vec2Add, vec2Average, vec2Scale } from '../../lib/vector'
 import { formatLength } from '../../lib/rulerFormat'
 import { useCanvasCoords } from '../../hooks/useCanvasCoords'
 import { usePolylineDraw } from '../../hooks/usePolylineDraw'
@@ -17,7 +18,7 @@ export function LineRulerOverlay() {
   }, [setLineRuler])
 
   const {
-    segments,
+    points,
     segmentStart,
     currentEnd,
     onPointerDown,
@@ -78,26 +79,21 @@ export function LineRulerOverlay() {
 
   const popupCenter = (() => {
     if (hasPreview && segmentStart && currentEnd) {
-      return {
-        x: pan.x + ((segmentStart.x + currentEnd.x) / 2) * zoom,
-        y: pan.y + ((segmentStart.y + currentEnd.y) / 2) * zoom,
-      }
+      const midpoint = vec2Average([segmentStart, currentEnd])
+      return vec2Add(pan, vec2Scale(midpoint, zoom))
     }
-    if (segments.length > 0) {
-      const last = segments[segments.length - 1]
-      return {
-        x: pan.x + last.x2 * zoom,
-        y: pan.y + last.y2 * zoom,
-      }
+    if (points.length > 0) {
+      const last = points[points.length - 1]
+      return vec2Add(pan, vec2Scale(last, zoom))
     }
     return null
   })()
 
   const joinRadiusPx = DEFAULT_JOIN_RADIUS * zoom
   const committedPathD =
-    segments.length > 0
+    points.length > 0
       ? buildRoundedPathD(
-          [toScreen(segments[0].x1, segments[0].y1), ...segments.map((s) => toScreen(s.x2, s.y2))],
+          points.map((point) => toScreen(point.x, point.y)),
           joinRadiusPx
         )
       : ''

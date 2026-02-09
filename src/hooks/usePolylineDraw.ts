@@ -1,11 +1,11 @@
 import { useState, useCallback, useRef, useMemo } from "react";
-import { vec2Abs, vec2Sub } from "../lib/vector";
+import { vec2ConstrainToAxis, vec2Length, vec2Sub } from "../lib/vector";
 import type { Point } from "../lib/vector";
 
-export type Segment = { x1: number; y1: number; x2: number; y2: number };
+export type PolylinePoints = Point[];
 
 export interface PolylineDrawState {
-  segments: Segment[];
+  points: PolylinePoints;
   segmentStart: Point | null;
   currentEnd: Point | null;
 }
@@ -37,7 +37,7 @@ export function usePolylineDraw(
   clientToCanvas: (clientX: number, clientY: number) => Point,
   onDoubleClickExit?: () => void
 ): UsePolylineDrawResult {
-  const [segments, setSegments] = useState<Segment[]>([]);
+  const [points, setPoints] = useState<PolylinePoints>([]);
   const [segmentStart, setSegmentStart] = useState<Point | null>(null);
   const [currentEnd, setCurrentEnd] = useState<Point | null>(null);
   const pointerDownRef = useRef<Point | null>(null);
@@ -61,23 +61,14 @@ export function usePolylineDraw(
     [clientToCanvas, segmentStart, onDoubleClickExit]
   );
 
-  /** Constrain point to horizontal or vertical from start (whichever is closer to raw). */
-  const constrainToAxis = useCallback(
-    (start: Point, raw: Point): Point => {
-      const delta = vec2Abs(vec2Sub(raw, start));
-      return delta.y < delta.x ? { x: raw.x, y: start.y } : { x: start.x, y: raw.y };
-    },
-    []
-  );
-
   const onPointerMove = useCallback(
     (e: React.PointerEvent) => {
       if (!segmentStart) return;
       const raw = clientToCanvas(e.clientX, e.clientY);
-      const end = e.ctrlKey ? constrainToAxis(segmentStart, raw) : raw;
+      const end = e.ctrlKey ? vec2ConstrainToAxis(segmentStart, raw) : raw;
       setCurrentEnd(end);
     },
-    [clientToCanvas, segmentStart, constrainToAxis]
+    [clientToCanvas, segmentStart]
   );
 
   const onPointerUp = useCallback(
@@ -86,23 +77,20 @@ export function usePolylineDraw(
       pointerDownRef.current = null;
       if (!segmentStart || !currentEnd) return;
       const raw = clientToCanvas(e.clientX, e.clientY);
-      const releasePoint = e.ctrlKey ? constrainToAxis(segmentStart, raw) : raw;
-      const len = Math.hypot(releasePoint.x - segmentStart.x, releasePoint.y - segmentStart.y);
+      const releasePoint = e.ctrlKey ? vec2ConstrainToAxis(segmentStart, raw) : raw;
+      const len = vec2Length(vec2Sub(releasePoint, segmentStart));
       if (len > MIN_SEGMENT_LENGTH) {
-        setSegments((prev) => [
-          ...prev,
-          {
-            x1: segmentStart.x,
-            y1: segmentStart.y,
-            x2: releasePoint.x,
-            y2: releasePoint.y,
-          },
-        ]);
+        setPoints((prev) => {
+          if (prev.length === 0) {
+            return [segmentStart, releasePoint];
+          }
+          return [...prev, releasePoint];
+        });
       }
       setSegmentStart(releasePoint);
       setCurrentEnd(releasePoint);
     },
-    [clientToCanvas, segmentStart, currentEnd, constrainToAxis]
+    [clientToCanvas, segmentStart, currentEnd]
   );
 
   const onDoubleClick = useCallback(
@@ -114,16 +102,20 @@ export function usePolylineDraw(
     [onDoubleClickExit]
   );
 
-  const committedLength = useMemo(
-    () => segments.reduce((sum, s) => sum + Math.hypot(s.x2 - s.x1, s.y2 - s.y1), 0),
-    [segments]
-  );
+  const committedLength = useMemo(() => {
+    if (points.length < 2) return 0;
+    let sum = 0;
+    for (let i = 1; i < points.length; i += 1) {
+      sum += vec2Length(vec2Sub(points[i], points[i - 1]));
+    }
+    return sum;
+  }, [points]);
   const currentLength =
-    segmentStart && currentEnd ? Math.hypot(currentEnd.x - segmentStart.x, currentEnd.y - segmentStart.y) : 0;
+    segmentStart && currentEnd ? vec2Length(vec2Sub(currentEnd, segmentStart)) : 0;
   const totalLength = committedLength + currentLength;
 
   return {
-    segments,
+    points,
     segmentStart,
     currentEnd,
     onPointerDown,
@@ -133,7 +125,7 @@ export function usePolylineDraw(
     committedLength,
     currentLength,
     totalLength,
-    hasSegments: segments.length > 0,
+    hasSegments: points.length >= 2,
     hasPreview: segmentStart !== null && currentEnd !== null,
   };
 }
