@@ -1,5 +1,5 @@
-import { useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { useDialogControl } from "../../hooks/useDialogControl";
 import "./ConfirmationDialog.scss";
 
 export interface ConfirmationDialogProps {
@@ -23,34 +23,7 @@ export function ConfirmationDialog({
   onConfirm,
   onCancel,
 }: ConfirmationDialogProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
-    if (open && !dialog.open) {
-      dialog.showModal();
-    } else if (!open && dialog.open) {
-      dialog.close();
-    }
-  }, [open]);
-
-  // Handle native close event (Escape key)
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
-    const handleClose = () => onCancel();
-    dialog.addEventListener("close", handleClose);
-    return () => dialog.removeEventListener("close", handleClose);
-  }, [onCancel]);
-
-  const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
-    if (e.target === dialogRef.current) {
-      onCancel();
-    }
-  };
+  const { dialogRef, handleBackdropClick } = useDialogControl(open, onCancel);
 
   const dialog = (
     <dialog

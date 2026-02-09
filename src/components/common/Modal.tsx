@@ -1,6 +1,7 @@
-import { useRef, useEffect, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { ModalContext } from "../../context/ModalContext";
+import { useDialogControl } from "../../hooks/useDialogControl";
 import "./Modal.scss";
 
 interface ModalProps {
@@ -36,37 +37,7 @@ export function Modal({
   ariaLabel,
   ignoreBackdropClickForMs = 0,
 }: ModalProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  const openedAtRef = useRef<number>(0);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
-    if (open && !dialog.open) {
-      dialog.showModal();
-      openedAtRef.current = Date.now();
-    } else if (!open && dialog.open) {
-      dialog.close();
-    }
-  }, [open]);
-
-  // Handle backdrop click (click outside content)
-  const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
-    if (e.target !== dialogRef.current) return;
-    if (ignoreBackdropClickForMs > 0 && Date.now() - openedAtRef.current < ignoreBackdropClickForMs) return;
-    onClose();
-  };
-
-  // Handle native close event (Escape key)
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
-    const handleClose = () => onClose();
-    dialog.addEventListener("close", handleClose);
-    return () => dialog.removeEventListener("close", handleClose);
-  }, [onClose]);
+  const { dialogRef, handleBackdropClick } = useDialogControl(open, onClose, { ignoreBackdropClickForMs });
 
   if (!open) return null;
 
