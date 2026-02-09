@@ -6,13 +6,8 @@ export interface DragStart<T> {
   payload: T;
 }
 
-interface PendingDrag<T> extends DragStart<T> {
-  id: string;
-  pointerId: number;
-}
-
 export interface DragActivateContext<T> {
-  pending: PendingDrag<T>;
+  pending: { id: string; pointerId: number; mouse: Point; payload: T };
   screenDelta: Point;
   canvasDelta: Point;
   event: PointerEvent;
@@ -39,6 +34,16 @@ export interface UseDragStateOptions<T> {
   onDragEnd?: () => void;
 }
 
+// ── State machine ──────────────────────────────────────────────────────
+// Exactly one of these is active at any time. Impossible states are
+// unrepresentable: you can't be "pending" and "dragging" simultaneously,
+// and phase-specific fields only exist on the phase that uses them.
+
+type Phase<T> =
+  | { tag: "idle" }
+  | { tag: "pending"; id: string; pointerId: number; mouse: Point; payload: T }
+  | { tag: "dragging"; id: string; pointerId: number; start: DragStart<T>; hasPushedHistory: boolean };
+
 export function useDragState<T>(options: UseDragStateOptions<T>) {
   const {
     zoom,
@@ -52,37 +57,30 @@ export function useDragState<T>(options: UseDragStateOptions<T>) {
     onDragEnd,
   } = options;
 
-  const [draggingId, setDraggingId] = useState<string | null>(null);
-  const [pendingDrag, setPendingDrag] = useState<PendingDrag<T> | null>(null);
-  const dragStartRef = useRef<DragStart<T> | null>(null);
-  const draggingPointerIdRef = useRef<number | null>(null);
-  const hasPushedHistoryRef = useRef(false);
+  const phaseRef = useRef<Phase<T>>({ tag: "idle" });
+  // Render trigger: mirrors phaseRef.tag so effects and consumers react to transitions.
+  const [phaseTag, setPhaseTag] = useState<"idle" | "pending" | "dragging">("idle");
+  const draggingId = phaseRef.current.tag === "dragging" ? phaseRef.current.id : null;
 
   const clearDragState = useCallback(() => {
-    setPendingDrag(null);
-    draggingPointerIdRef.current = null;
-    dragStartRef.current = null;
-    setDraggingId(null);
-    hasPushedHistoryRef.current = false;
+    phaseRef.current = { tag: "idle" };
+    setPhaseTag("idle");
     onDragEnd?.();
   }, [onDragEnd]);
 
   const handleDragStart = useCallback(
     (id: string, e: React.PointerEvent) => {
       if (e.button !== 0 || spaceDown) return;
-      if (draggingId || pendingDrag) return;
+      if (phaseRef.current.tag !== "idle") return;
       if (canStart && !canStart(id, e)) return;
       const payload = getPendingPayload(id, e);
       if (!payload) return;
       e.preventDefault();
       e.stopPropagation();
+
+      const pending = { id, pointerId: e.pointerId, mouse: { x: e.clientX, y: e.clientY }, payload };
+
       if (activateOnStart) {
-        const pending = {
-          id,
-          pointerId: e.pointerId,
-          mouse: { x: e.clientX, y: e.clientY },
-          payload,
-        };
         const dragStart = onDragActivated({
           pending,
           screenDelta: { x: 0, y: 0 },
@@ -90,47 +88,47 @@ export function useDragState<T>(options: UseDragStateOptions<T>) {
           event: e.nativeEvent as PointerEvent,
         });
         if (!dragStart) return;
-        draggingPointerIdRef.current = e.pointerId;
-        dragStartRef.current = dragStart;
-        hasPushedHistoryRef.current = true;
-        setDraggingId(id);
+        phaseRef.current = { tag: "dragging", id, pointerId: e.pointerId, start: dragStart, hasPushedHistory: true };
+        setPhaseTag("dragging");
         return;
       }
-      setPendingDrag({
-        id,
-        pointerId: e.pointerId,
-        mouse: { x: e.clientX, y: e.clientY },
-        payload,
-      });
+
+      phaseRef.current = { tag: "pending", ...pending };
+      setPhaseTag("pending");
     },
-    [activateOnStart, canStart, draggingId, pendingDrag, getPendingPayload, onDragActivated, spaceDown]
+    [activateOnStart, canStart, getPendingPayload, onDragActivated, spaceDown]
   );
 
+  // ── Pending phase: listen for threshold movement to activate ─────────
   useEffect(() => {
-    if (!pendingDrag) return;
-    const pointerId = pendingDrag.pointerId;
+    if (phaseTag !== "pending") return;
+    const p = phaseRef.current;
+    if (p.tag !== "pending") return;
+    const pointerId = p.pointerId;
+
     const handlePointerMove = (e: PointerEvent) => {
       if (e.pointerId !== pointerId) return;
-      const screenDelta = vec2Sub({ x: e.clientX, y: e.clientY }, pendingDrag.mouse);
+      const cur = phaseRef.current;
+      if (cur.tag !== "pending") return;
+      const screenDelta = vec2Sub({ x: e.clientX, y: e.clientY }, cur.mouse);
       if (vec2Length(screenDelta) < thresholdPx) return;
       const canvasDelta = vec2Scale(screenDelta, 1 / zoom);
-      draggingPointerIdRef.current = pointerId;
       const dragStart = onDragActivated({
-        pending: pendingDrag,
+        pending: cur,
         screenDelta,
         canvasDelta,
         event: e,
       });
       if (!dragStart) return;
-      dragStartRef.current = dragStart;
-      hasPushedHistoryRef.current = true;
-      setDraggingId(pendingDrag.id);
-      setPendingDrag(null);
+      phaseRef.current = { tag: "dragging", id: cur.id, pointerId, start: dragStart, hasPushedHistory: true };
+      setPhaseTag("dragging");
     };
     const handlePointerUp = (e: PointerEvent) => {
       if (e.pointerId !== pointerId) return;
-      setPendingDrag(null);
+      phaseRef.current = { tag: "idle" };
+      setPhaseTag("idle");
     };
+
     window.addEventListener("pointermove", handlePointerMove, { capture: true });
     window.addEventListener("pointerup", handlePointerUp, { capture: true });
     window.addEventListener("pointercancel", handlePointerUp, { capture: true });
@@ -139,22 +137,22 @@ export function useDragState<T>(options: UseDragStateOptions<T>) {
       window.removeEventListener("pointerup", handlePointerUp, { capture: true });
       window.removeEventListener("pointercancel", handlePointerUp, { capture: true });
     };
-  }, [pendingDrag, thresholdPx, zoom, onDragActivated]);
+  }, [phaseTag, thresholdPx, zoom, onDragActivated]);
 
+  // ── Dragging phase: relay movement, end on pointer up ────────────────
   useEffect(() => {
-    if (!draggingId) return;
+    if (phaseTag !== "dragging") return;
+
     const handlePointerMove = (e: PointerEvent) => {
-      if (draggingPointerIdRef.current !== null && e.pointerId !== draggingPointerIdRef.current) return;
-      if (!dragStartRef.current) return;
-      const screenDelta = vec2Sub({ x: e.clientX, y: e.clientY }, dragStartRef.current.mouse);
+      const cur = phaseRef.current;
+      if (cur.tag !== "dragging" || e.pointerId !== cur.pointerId) return;
+      const screenDelta = vec2Sub({ x: e.clientX, y: e.clientY }, cur.start.mouse);
       const canvasDelta = vec2Scale(screenDelta, 1 / zoom);
-      const saveToHistory = !hasPushedHistoryRef.current;
-      if (saveToHistory) {
-        hasPushedHistoryRef.current = true;
-      }
+      const saveToHistory = !cur.hasPushedHistory;
+      if (saveToHistory) cur.hasPushedHistory = true;
       onDragMove({
-        draggingId,
-        dragStart: dragStartRef.current,
+        draggingId: cur.id,
+        dragStart: cur.start,
         screenDelta,
         canvasDelta,
         event: e,
@@ -162,9 +160,11 @@ export function useDragState<T>(options: UseDragStateOptions<T>) {
       });
     };
     const handlePointerUp = (e: PointerEvent) => {
-      if (draggingPointerIdRef.current !== null && e.pointerId !== draggingPointerIdRef.current) return;
+      const cur = phaseRef.current;
+      if (cur.tag !== "dragging" || e.pointerId !== cur.pointerId) return;
       clearDragState();
     };
+
     window.addEventListener("pointermove", handlePointerMove, { capture: true });
     window.addEventListener("pointerup", handlePointerUp, { capture: true });
     window.addEventListener("pointercancel", handlePointerUp, { capture: true });
@@ -173,7 +173,7 @@ export function useDragState<T>(options: UseDragStateOptions<T>) {
       window.removeEventListener("pointerup", handlePointerUp, { capture: true });
       window.removeEventListener("pointercancel", handlePointerUp, { capture: true });
     };
-  }, [draggingId, zoom, onDragMove, clearDragState]);
+  }, [phaseTag, zoom, onDragMove, clearDragState]);
 
   return {
     draggingId,
