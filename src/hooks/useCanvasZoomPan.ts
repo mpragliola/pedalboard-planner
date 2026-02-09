@@ -163,6 +163,14 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
     [zoomToward]
   );
 
+  /* Clean up wheel-zoom timers on unmount */
+  useEffect(() => {
+    return () => {
+      if (wheelApplyTimeoutRef.current !== null) clearTimeout(wheelApplyTimeoutRef.current);
+      if (wheelEndTimeoutRef.current !== null) clearTimeout(wheelEndTimeoutRef.current);
+    };
+  }, []);
+
   /* Attach wheel to document and only handle when cursor is over canvas so zoom works
    * even when overlays (cable layer, etc.) are on top, and so we don't depend on ref
    * being set when this effect first runs (Canvas mounts after AppProvider). */

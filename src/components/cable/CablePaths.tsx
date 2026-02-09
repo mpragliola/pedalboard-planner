@@ -118,6 +118,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
 
   const dragRef = useRef<DragState | null>(null);
   const pressTimerRef = useRef<number | null>(null);
+  const dragCleanupRef = useRef<(() => void) | null>(null);
   const [pressingHandle, setPressingHandle] = useState<PressState | null>(null);
   const [flashPoint, setFlashPoint] = useState<FlashPoint | null>(null);
   const flashTimerRef = useRef<number | null>(null);
@@ -125,6 +126,8 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
   useEffect(() => {
     return () => {
       if (flashTimerRef.current) window.clearTimeout(flashTimerRef.current);
+      if (pressTimerRef.current) window.clearTimeout(pressTimerRef.current);
+      dragCleanupRef.current?.();
     };
   }, []);
 
@@ -315,6 +318,13 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
       setCables((prev) => prev.map((c) => (c.id === drag.cableId ? { ...c, segments: normalizePoints(nextPoints) } : c)), false);
     };
 
+    const removeListeners = () => {
+      window.removeEventListener("pointermove", handlePointerMove, { capture: true });
+      window.removeEventListener("pointerup", handlePointerUp, { capture: true });
+      window.removeEventListener("pointercancel", handlePointerUp, { capture: true });
+      dragCleanupRef.current = null;
+    };
+
     const handlePointerUp = (ev: PointerEvent) => {
       const drag = dragRef.current;
       if (!drag || ev.pointerId !== drag.pointerId) return;
@@ -327,14 +337,13 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
       const finalPoints = drag.points;
       dragRef.current = null;
       setCables((prev) => prev.map((c) => (c.id === drag.cableId ? { ...c, segments: normalizePoints(finalPoints) } : c)), true);
-      window.removeEventListener("pointermove", handlePointerMove, { capture: true });
-      window.removeEventListener("pointerup", handlePointerUp, { capture: true });
-      window.removeEventListener("pointercancel", handlePointerUp, { capture: true });
+      removeListeners();
     };
 
     window.addEventListener("pointermove", handlePointerMove, { capture: true });
     window.addEventListener("pointerup", handlePointerUp, { capture: true });
     window.addEventListener("pointercancel", handlePointerUp, { capture: true });
+    dragCleanupRef.current = removeListeners;
   };
 
   if (!visible || cables.length === 0) return null;

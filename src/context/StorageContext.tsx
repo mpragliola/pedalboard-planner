@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { DEBOUNCE_SAVE_MS } from "../constants";
 import { StateManager } from "../lib/stateManager";
 import { parseState, serializeState, type SavedState } from "../lib/stateSerialization";
@@ -43,6 +43,8 @@ export function StorageProvider({ children }: { children: ReactNode }) {
     URL.revokeObjectURL(url);
   }, []);
 
+  const pendingSaveRef = useRef<SavedState | null>(null);
+
   const persistState = useCallback(
     (state: SavedState, opts?: { immediate?: boolean }) => {
       if (opts?.immediate) {
@@ -50,17 +52,34 @@ export function StorageProvider({ children }: { children: ReactNode }) {
           clearTimeout(saveTimeoutRef.current);
           saveTimeoutRef.current = null;
         }
+        pendingSaveRef.current = null;
         stateManager.save(state);
         return;
       }
+      pendingSaveRef.current = state;
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
       saveTimeoutRef.current = setTimeout(() => {
         saveTimeoutRef.current = null;
+        pendingSaveRef.current = null;
         stateManager.save(state);
       }, DEBOUNCE_SAVE_MS);
     },
     []
   );
+
+  // Flush pending save and clear timer on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
+      }
+      if (pendingSaveRef.current) {
+        stateManager.save(pendingSaveRef.current);
+        pendingSaveRef.current = null;
+      }
+    };
+  }, []);
 
   return (
     <StorageContext.Provider value={{ savedState, loadStateFromFile, saveStateToFile, persistState }}>
