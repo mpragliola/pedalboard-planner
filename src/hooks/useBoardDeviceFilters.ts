@@ -87,7 +87,11 @@ interface HasWdh {
   wdh: [number, number, number];
 }
 
-/** Shared size-range filtering for both boards and devices. */
+/** 
+ * Shared size-range filtering for both boards and devices. 
+ * Takes a list of items with a Whd property (Width, Height, Depth) 
+ * and applies min/max filters for width and depth.
+ */
 function applyDimensionFilters<T extends HasWdh>(
   list: T[],
   widthMin: string,
@@ -112,12 +116,21 @@ interface HasTextFields {
   model?: string;
 }
 
+/**
+ * Filters a list of item whose name, brand, and/or model fields match a
+ * text query (case-insensitive, also partial match).
+ */
 function applyTextFilter<T extends HasTextFields>(list: T[], text: string): T[] {
   const q = text.trim().toLowerCase();
   if (!q) return list;
   return list.filter((t) => [t.name, t.brand, t.model].some((s) => s?.toLowerCase().includes(q)));
 }
 
+/**
+ * It manages the state for board and device filters, including selected items, 
+ * brand/type filters, text search, and dimension ranges. It also computes 
+ * the filtered lists of boards and devices based on the current filter state.
+ */
 export function useBoardDeviceFilters() {
   const [state, dispatch] = useReducer(filtersReducer, initialState);
   const {
@@ -168,23 +181,21 @@ export function useBoardDeviceFilters() {
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [deviceTypeFilter]);
 
-  const boardWidthRange = useMemo(() => {
-    const widths = BOARD_TEMPLATES.map((t) => t.wdh[0]);
-    return [Math.min(...widths), Math.max(...widths)] as const;
-  }, []);
-  const boardDepthRange = useMemo(() => {
-    const depths = BOARD_TEMPLATES.map((t) => t.wdh[1]);
-    return [Math.min(...depths), Math.max(...depths)] as const;
-  }, []);
-  const deviceWidthRange = useMemo(() => {
-    const widths = DEVICE_TEMPLATES.map((t) => t.wdh[0]);
-    return [Math.min(...widths), Math.max(...widths)] as const;
-  }, []);
-  const deviceDepthRange = useMemo(() => {
-    const depths = DEVICE_TEMPLATES.map((t) => t.wdh[1]);
-    return [Math.min(...depths), Math.max(...depths)] as const;
-  }, []);
+  const minMax = (arr: number[]): [number, number] => {
+    return [Math.min(...arr), Math.max(...arr)];
+  }
 
+  const boardWidthRange = useMemo(() => minMax(BOARD_TEMPLATES.map((t) => t.wdh[0])), []);
+  const boardDepthRange = useMemo(() => minMax(BOARD_TEMPLATES.map((t) => t.wdh[1])), []);
+  const deviceWidthRange = useMemo(() => minMax(DEVICE_TEMPLATES.map((t) => t.wdh[0])), []);
+  const deviceDepthRange = useMemo(() => minMax(DEVICE_TEMPLATES.map((t) => t.wdh[1])), []);
+
+  /**
+   * Filtering logic for boards and devices. It applies brand/type filters, text search, and 
+   * dimension range filters to the full list of templates. 
+   * The resulting filtered lists are memoized for performance. 
+   * It also sorts the filtered lists by type, brand, and model for better UX.
+   */
   const filteredBoards = useMemo(() => {
     let list = BOARD_TEMPLATES;
     if (boardBrandFilter) list = list.filter((t) => t.brand === boardBrandFilter);
