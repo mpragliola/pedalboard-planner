@@ -29,7 +29,7 @@ export function LineRulerOverlay() {
     totalLength,
     hasSegments,
     hasPreview,
-  } = usePolylineDraw(clientToCanvas, exitMode)
+  } = usePolylineDraw({ clientToCanvas, onDoubleClickExit: exitMode })
 
   const lastTapRef = useRef<{ time: number; clientX: number; clientY: number } | null>(null)
   const DOUBLE_TAP_MS = 350

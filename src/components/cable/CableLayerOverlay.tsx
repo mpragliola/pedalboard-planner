@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useBoard } from "../../context/BoardContext";
 import { useCable } from "../../context/CableContext";
 import { useCanvas } from "../../context/CanvasContext";
@@ -6,7 +6,7 @@ import { useUi } from "../../context/UiContext";
 import { getObjectDimensions } from "../../lib/objectDimensions";
 import { buildRoundedPathD, buildSmoothPathD, DEFAULT_JOIN_RADIUS } from "../../lib/polylinePath";
 import { formatLength } from "../../lib/rulerFormat";
-import { vec2Add, vec2Scale, vec2Sub, type Vec2, type Point, vec2Length } from "../../lib/vector";
+import { vec2Add, vec2Scale, type Vec2, type Point } from "../../lib/vector";
 import { useCanvasCoords } from "../../hooks/useCanvasCoords";
 import { useCableDraw } from "../../hooks/useCableDraw";
 import { useCablePhysics } from "../../hooks/useCablePhysics";
@@ -52,6 +52,8 @@ export function CableLayerOverlay() {
     clearDrawing,
     hasSegments,
     hasPreview,
+    committedLength,
+    totalLength,
   } = useCableDraw({
     clientToCanvas,
     objects,
@@ -269,18 +271,6 @@ export function CableLayerOverlay() {
 
   const firstPoint = displayPoints[0];
   const lastPoint = displayPoints.length > 1 ? displayPoints[displayPoints.length - 1] : null;
-
-  const committedLength = useMemo(() => {
-    if (cablePoints.length < 2) return 0;
-    let sum = 0;
-    for (let i = 1; i < cablePoints.length; i += 1) {
-      sum += vec2Length(vec2Sub(cablePoints[i], cablePoints[i - 1]));
-    }
-    return sum;
-  }, [cablePoints]);
-  const currentLength =
-    segmentStart && currentEnd ? vec2Length(vec2Sub(currentEnd, segmentStart)) : 0;
-  const totalLength = committedLength + currentLength;
 
   const popupCenter: Vec2 | null =
     hasSegments || hasPreview

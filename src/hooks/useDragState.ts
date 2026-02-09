@@ -31,6 +31,7 @@ export interface UseDragStateOptions<T> {
   zoom: number;
   spaceDown: boolean;
   thresholdPx?: number;
+  activateOnStart?: boolean;
   canStart?: (id: string, e: React.PointerEvent) => boolean;
   getPendingPayload: (id: string, e: React.PointerEvent) => T | null;
   onDragActivated: (ctx: DragActivateContext<T>) => DragStart<T> | null;
@@ -43,6 +44,7 @@ export function useDragState<T>(options: UseDragStateOptions<T>) {
     zoom,
     spaceDown,
     thresholdPx = 6,
+    activateOnStart = false,
     canStart,
     getPendingPayload,
     onDragActivated,
@@ -74,6 +76,26 @@ export function useDragState<T>(options: UseDragStateOptions<T>) {
       if (!payload) return;
       e.preventDefault();
       e.stopPropagation();
+      if (activateOnStart) {
+        const pending = {
+          id,
+          pointerId: e.pointerId,
+          mouse: { x: e.clientX, y: e.clientY },
+          payload,
+        };
+        const dragStart = onDragActivated({
+          pending,
+          screenDelta: { x: 0, y: 0 },
+          canvasDelta: { x: 0, y: 0 },
+          event: e.nativeEvent as PointerEvent,
+        });
+        if (!dragStart) return;
+        draggingPointerIdRef.current = e.pointerId;
+        dragStartRef.current = dragStart;
+        hasPushedHistoryRef.current = true;
+        setDraggingId(id);
+        return;
+      }
       setPendingDrag({
         id,
         pointerId: e.pointerId,
@@ -81,7 +103,7 @@ export function useDragState<T>(options: UseDragStateOptions<T>) {
         payload,
       });
     },
-    [canStart, draggingId, pendingDrag, getPendingPayload, spaceDown]
+    [activateOnStart, canStart, draggingId, pendingDrag, getPendingPayload, onDragActivated, spaceDown]
   );
 
   useEffect(() => {

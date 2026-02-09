@@ -18,6 +18,7 @@ import { useCable } from "../../context/CableContext";
 import { useCanvas } from "../../context/CanvasContext";
 import { useCanvasCoords } from "../../hooks/useCanvasCoords";
 import { useCablePhysics } from "../../hooks/useCablePhysics";
+import { useDragState } from "../../hooks/useDragState";
 import type { Cable, CanvasObjectType } from "../../types";
 import "./CablePaths.scss";
 
@@ -36,7 +37,6 @@ const HANDLE_REMOVE_PRESS_MS = 600;
 
 type DragState = {
   cableId: string;
-  pointerId: number;
   points: Point[];
   handleIndex: number;
 };
@@ -113,21 +113,20 @@ interface CablePathsProps {
 export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCablePointerDown }: CablePathsProps) {
   const { objects } = useBoard();
   const { setCables, setSelectedCableId } = useCable();
-  const { canvasRef, zoom, pan, pausePanZoom } = useCanvas();
+  const { canvasRef, zoom, pan, pausePanZoom, spaceDown } = useCanvas();
   const { clientToCanvas } = useCanvasCoords(canvasRef, zoom, pan);
 
   const dragRef = useRef<DragState | null>(null);
   const pressTimerRef = useRef<number | null>(null);
-  const dragCleanupRef = useRef<(() => void) | null>(null);
   const [pressingHandle, setPressingHandle] = useState<PressState | null>(null);
   const [flashPoint, setFlashPoint] = useState<FlashPoint | null>(null);
   const flashTimerRef = useRef<number | null>(null);
+  const pendingHandleIndexRef = useRef<number | null>(null);
 
   useEffect(() => {
     return () => {
       if (flashTimerRef.current) window.clearTimeout(flashTimerRef.current);
       if (pressTimerRef.current) window.clearTimeout(pressTimerRef.current);
-      dragCleanupRef.current?.();
     };
   }, []);
 
@@ -208,6 +207,59 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
   ]);
 
   const normalizePoints = (points: Point[]) => points;
+
+  const { handleDragStart: handleHandleDragStart } = useDragState<{ points: Point[]; handleIndex: number }>({
+    zoom,
+    spaceDown,
+    activateOnStart: true,
+    getPendingPayload: (id) => {
+      const handleIndex = pendingHandleIndexRef.current;
+      pendingHandleIndexRef.current = null;
+      if (handleIndex === null) return null;
+      const cable = cables.find((c) => c.id === id);
+      if (!cable || cable.segments.length < 2) return null;
+      return { points: cable.segments, handleIndex };
+    },
+    onDragActivated: ({ pending, event }) => {
+      dragRef.current = { cableId: pending.id, points: pending.payload.points, handleIndex: pending.payload.handleIndex };
+      return {
+        mouse: { x: event.clientX, y: event.clientY },
+        payload: { points: pending.payload.points, handleIndex: pending.payload.handleIndex },
+      };
+    },
+    onDragMove: ({ event }) => {
+      const drag = dragRef.current;
+      if (!drag) return;
+      if (pressTimerRef.current) {
+        window.clearTimeout(pressTimerRef.current);
+        pressTimerRef.current = null;
+      }
+      setPressingHandle(null);
+      pausePanZoom?.(true);
+      const canvasPoint = clientToCanvas(event.clientX, event.clientY);
+      const snapped =
+        event.shiftKey || event.metaKey
+          ? canvasPoint
+          : snapToObjects(canvasPoint.x, canvasPoint.y, objects as CanvasObjectType[], getObjectDimensions);
+      const nextPoints = drag.points.slice();
+      nextPoints[drag.handleIndex] = snapped;
+      dragRef.current = { ...drag, points: nextPoints };
+      setCables((prev) => prev.map((c) => (c.id === drag.cableId ? { ...c, segments: normalizePoints(nextPoints) } : c)), false);
+    },
+    onDragEnd: () => {
+      if (pressTimerRef.current) {
+        window.clearTimeout(pressTimerRef.current);
+        pressTimerRef.current = null;
+      }
+      setPressingHandle(null);
+      pausePanZoom?.(false);
+      const drag = dragRef.current;
+      if (!drag) return;
+      const finalPoints = drag.points;
+      dragRef.current = null;
+      setCables((prev) => prev.map((c) => (c.id === drag.cableId ? { ...c, segments: normalizePoints(finalPoints) } : c)), true);
+    },
+  });
 
   const nearestSegmentIndex = (cable: Cable, canvasPoint: Point): number | null => {
     if (cable.segments.length < 2) return null;
@@ -295,55 +347,10 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
       }, HANDLE_REMOVE_PRESS_MS);
     }
 
-    dragRef.current = { cableId, pointerId: e.pointerId, points, handleIndex };
+    dragRef.current = { cableId, points, handleIndex };
+    pendingHandleIndexRef.current = handleIndex;
     (e.target as Element).setPointerCapture(e.pointerId);
-
-    const handlePointerMove = (ev: PointerEvent) => {
-      const drag = dragRef.current;
-      if (!drag || ev.pointerId !== drag.pointerId) return;
-      if (pressTimerRef.current) {
-        window.clearTimeout(pressTimerRef.current);
-        pressTimerRef.current = null;
-      }
-      if (pressingHandle) setPressingHandle(null);
-      pausePanZoom?.(true);
-      const canvasPoint = clientToCanvas(ev.clientX, ev.clientY);
-      const snapped =
-        ev.shiftKey || ev.metaKey
-          ? canvasPoint
-          : snapToObjects(canvasPoint.x, canvasPoint.y, objects as CanvasObjectType[], getObjectDimensions);
-      const nextPoints = drag.points.slice();
-      nextPoints[drag.handleIndex] = snapped;
-      dragRef.current = { ...drag, points: nextPoints };
-      setCables((prev) => prev.map((c) => (c.id === drag.cableId ? { ...c, segments: normalizePoints(nextPoints) } : c)), false);
-    };
-
-    const removeListeners = () => {
-      window.removeEventListener("pointermove", handlePointerMove, { capture: true });
-      window.removeEventListener("pointerup", handlePointerUp, { capture: true });
-      window.removeEventListener("pointercancel", handlePointerUp, { capture: true });
-      dragCleanupRef.current = null;
-    };
-
-    const handlePointerUp = (ev: PointerEvent) => {
-      const drag = dragRef.current;
-      if (!drag || ev.pointerId !== drag.pointerId) return;
-      if (pressTimerRef.current) {
-        window.clearTimeout(pressTimerRef.current);
-        pressTimerRef.current = null;
-      }
-      if (pressingHandle) setPressingHandle(null);
-      pausePanZoom?.(false);
-      const finalPoints = drag.points;
-      dragRef.current = null;
-      setCables((prev) => prev.map((c) => (c.id === drag.cableId ? { ...c, segments: normalizePoints(finalPoints) } : c)), true);
-      removeListeners();
-    };
-
-    window.addEventListener("pointermove", handlePointerMove, { capture: true });
-    window.addEventListener("pointerup", handlePointerUp, { capture: true });
-    window.addEventListener("pointercancel", handlePointerUp, { capture: true });
-    dragCleanupRef.current = removeListeners;
+    handleHandleDragStart(cableId, e);
   };
 
   if (!visible || cables.length === 0) return null;

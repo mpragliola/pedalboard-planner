@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useMemo } from "react";
+import { useState, useCallback, useRef, useMemo, type MutableRefObject } from "react";
 import { vec2ConstrainToAxis, vec2Length, vec2Sub } from "../lib/vector";
 import type { Point } from "../lib/vector";
 
@@ -24,19 +24,40 @@ export interface UsePolylineDrawResult extends PolylineDrawState, PolylineDrawHa
   totalLength: number;
   hasSegments: boolean;
   hasPreview: boolean;
+  /** Returns the full set of points that would be committed (committed + current segment). */
+  getFinalPoints: () => Point[];
+  /** Clear all drawing state (points, segmentStart, currentEnd). */
+  clearDrawing: () => void;
+}
+
+export interface UsePolylineDrawOptions {
+  clientToCanvas: (clientX: number, clientY: number) => Point;
+  /** Transform a raw canvas point (e.g. snap-to-objects). Default: identity. */
+  resolvePoint?: (raw: Point, shiftKey: boolean) => Point;
+  /** Constrain angle when CTRL is held. Default: vec2ConstrainToAxis (H/V). */
+  constrainPoint?: (start: Point, raw: Point) => Point;
+  onDoubleClickExit?: () => void;
+  /** Ref to callback invoked when the drawing should be "finished" (e.g. cable: open modal). */
+  onFinishClickRef?: MutableRefObject<(() => void) | undefined>;
+  /** Distance tolerance (mm) for "finish click" near last vertex. 0 = disabled. Default: 0. */
+  finishClickTolerance?: number;
 }
 
 const MIN_SEGMENT_LENGTH = 0.5;
+const DEFAULT_CONSTRAIN = vec2ConstrainToAxis;
+const IDENTITY_RESOLVE = (raw: Point, _shiftKey: boolean) => raw;
 
-/**
- * Manages polyline drawing state (click + move): segments, current segment start/end,
- * and pointer handlers. Does not handle coordinate conversion or exit (ESC/double-click).
- * Segments are committed on pointer up (after click or drag).
- */
-export function usePolylineDraw(
-  clientToCanvas: (clientX: number, clientY: number) => Point,
-  onDoubleClickExit?: () => void
-): UsePolylineDrawResult {
+export function usePolylineDraw(opts: UsePolylineDrawOptions): UsePolylineDrawResult {
+  const {
+    clientToCanvas,
+    resolvePoint: resolvePointOpt,
+    constrainPoint = DEFAULT_CONSTRAIN,
+    onDoubleClickExit,
+    onFinishClickRef,
+    finishClickTolerance = 0,
+  } = opts;
+  const resolvePoint = resolvePointOpt ?? IDENTITY_RESOLVE;
+
   const [points, setPoints] = useState<PolylinePoints>([]);
   const [segmentStart, setSegmentStart] = useState<Point | null>(null);
   const [currentEnd, setCurrentEnd] = useState<Point | null>(null);
@@ -46,29 +67,36 @@ export function usePolylineDraw(
     (e: React.PointerEvent) => {
       if (e.button !== 0) return;
       if ((e.nativeEvent as MouseEvent).detail === 2) {
-        onDoubleClickExit?.();
+        e.preventDefault();
+        e.stopPropagation();
+        // Double-click: finish if we have segments and a finish handler, otherwise exit
+        if ((points.length >= 2 || segmentStart) && onFinishClickRef?.current) {
+          onFinishClickRef.current();
+        } else {
+          onDoubleClickExit?.();
+        }
         return;
       }
       e.preventDefault();
       e.stopPropagation();
-      const point = clientToCanvas(e.clientX, e.clientY);
+      const point = resolvePoint(clientToCanvas(e.clientX, e.clientY), e.shiftKey);
       pointerDownRef.current = point;
       if (!segmentStart) {
         setSegmentStart(point);
         setCurrentEnd(point);
       }
     },
-    [clientToCanvas, segmentStart, onDoubleClickExit]
+    [clientToCanvas, resolvePoint, segmentStart, points.length, onDoubleClickExit, onFinishClickRef]
   );
 
   const onPointerMove = useCallback(
     (e: React.PointerEvent) => {
       if (!segmentStart) return;
-      const raw = clientToCanvas(e.clientX, e.clientY);
-      const end = e.ctrlKey ? vec2ConstrainToAxis(segmentStart, raw) : raw;
-      setCurrentEnd(end);
+      const raw = resolvePoint(clientToCanvas(e.clientX, e.clientY), e.shiftKey);
+      const point = e.ctrlKey ? constrainPoint(segmentStart, raw) : raw;
+      setCurrentEnd(point);
     },
-    [clientToCanvas, segmentStart]
+    [clientToCanvas, resolvePoint, constrainPoint, segmentStart]
   );
 
   const onPointerUp = useCallback(
@@ -76,9 +104,14 @@ export function usePolylineDraw(
       if (e.button !== 0) return;
       pointerDownRef.current = null;
       if (!segmentStart || !currentEnd) return;
-      const raw = clientToCanvas(e.clientX, e.clientY);
-      const releasePoint = e.ctrlKey ? vec2ConstrainToAxis(segmentStart, raw) : raw;
+      const raw = resolvePoint(clientToCanvas(e.clientX, e.clientY), e.shiftKey);
+      const releasePoint = e.ctrlKey ? constrainPoint(segmentStart, raw) : raw;
       const len = vec2Length(vec2Sub(releasePoint, segmentStart));
+      // Click near last vertex with at least one segment → treat as "finish" (don't add tiny segment)
+      if (finishClickTolerance > 0 && points.length >= 2 && len <= finishClickTolerance) {
+        onFinishClickRef?.current?.();
+        return;
+      }
       if (len > MIN_SEGMENT_LENGTH) {
         setPoints((prev) => {
           if (prev.length === 0) {
@@ -90,16 +123,20 @@ export function usePolylineDraw(
       setSegmentStart(releasePoint);
       setCurrentEnd(releasePoint);
     },
-    [clientToCanvas, segmentStart, currentEnd]
+    [clientToCanvas, resolvePoint, constrainPoint, segmentStart, currentEnd, points.length, finishClickTolerance, onFinishClickRef]
   );
 
   const onDoubleClick = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      onDoubleClickExit?.();
+      if ((points.length >= 2 || (segmentStart && currentEnd)) && onFinishClickRef?.current) {
+        onFinishClickRef.current();
+      } else {
+        onDoubleClickExit?.();
+      }
     },
-    [onDoubleClickExit]
+    [points.length, segmentStart, currentEnd, onDoubleClickExit, onFinishClickRef]
   );
 
   const committedLength = useMemo(() => {
@@ -114,6 +151,22 @@ export function usePolylineDraw(
     segmentStart && currentEnd ? vec2Length(vec2Sub(currentEnd, segmentStart)) : 0;
   const totalLength = committedLength + currentLength;
 
+  const getFinalPoints = useCallback((): Point[] => {
+    const len =
+      segmentStart && currentEnd ? vec2Length(vec2Sub(currentEnd, segmentStart)) : 0;
+    if (len <= MIN_SEGMENT_LENGTH) return points;
+    if (points.length === 0 && segmentStart && currentEnd) {
+      return [segmentStart, currentEnd];
+    }
+    return segmentStart && currentEnd ? [...points, currentEnd] : points;
+  }, [segmentStart, currentEnd, points]);
+
+  const clearDrawing = useCallback(() => {
+    setPoints([]);
+    setSegmentStart(null);
+    setCurrentEnd(null);
+  }, []);
+
   return {
     points,
     segmentStart,
@@ -127,5 +180,7 @@ export function usePolylineDraw(
     totalLength,
     hasSegments: points.length >= 2,
     hasPreview: segmentStart !== null && currentEnd !== null,
+    getFinalPoints,
+    clearDrawing,
   };
 }
