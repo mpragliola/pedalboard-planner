@@ -58,6 +58,17 @@ export function vec2ConstrainToAxis(origin: Vec2, target: Vec2): Vec2 {
   return delta.y < delta.x ? { x: target.x, y: origin.y } : { x: origin.x, y: target.y };
 }
 
+/** Constrain target to the nearest 45-degree direction from origin (0/45/90/135/...), keeping distance. */
+export function vec2ConstrainTo45(origin: Vec2, target: Vec2): Vec2 {
+  const dx = target.x - origin.x;
+  const dy = target.y - origin.y;
+  const angle = Math.atan2(dy, dx);
+  const step = Math.PI / 4;
+  const snapped = Math.round(angle / step) * step;
+  const dist = Math.hypot(dx, dy);
+  return { x: origin.x + dist * Math.cos(snapped), y: origin.y + dist * Math.sin(snapped) };
+}
+
 /** 2D cross product magnitude (signed area). */
 export function vec2Cross(a: Vec2, b: Vec2): number {
   return a.x * b.y - a.y * b.x;
