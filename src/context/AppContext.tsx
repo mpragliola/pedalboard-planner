@@ -4,9 +4,9 @@ import { DEVICE_TEMPLATES } from "../data/devices";
 import { initialObjects, MM_TO_PX, HISTORY_DEPTH, DEFAULT_PLACEMENT_FALLBACK } from "../constants";
 import {
   createObjectFromTemplate,
-  createObjectFromCustomBoard,
-  createObjectFromCustomDevice,
+  createCustomObject,
   initNextObjectIdFromObjects,
+  modeToSubtype,
 } from "../lib/templateHelpers";
 import { getObjectDimensions } from "../lib/objectDimensions";
 import { type SavedState } from "../lib/stateSerialization";
@@ -283,10 +283,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const template = templates.find((t) => t.id === id);
       if (!template) return;
 
-      const subtype = mode === "boards" ? "board" : ("device" as const);
       const w = template.wdh[0] * MM_TO_PX;
       const d = template.wdh[1] * MM_TO_PX;
-      const newObj = createObjectFromTemplate(subtype, template, { x: canvasX - w / 2, y: canvasY - d / 2 });
+      const newObj = createObjectFromTemplate(modeToSubtype(mode), template, { x: canvasX - w / 2, y: canvasY - d / 2 });
 
       setObjects((prev) => [...prev, newObj]);
       (mode === "boards" ? setSelectedBoard : setSelectedDevice)("");
@@ -323,8 +322,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const { x: cx, y: cy } = getPlacementInVisibleViewport();
       const w = params.widthMm * MM_TO_PX;
       const d = params.depthMm * MM_TO_PX;
-      const createFn = mode === "boards" ? createObjectFromCustomBoard : createObjectFromCustomDevice;
-      const newObj = createFn(params, { x: cx - w / 2, y: cy - d / 2 });
+      const newObj = createCustomObject(modeToSubtype(mode), params, { x: cx - w / 2, y: cy - d / 2 });
       setObjects((prev) => [...prev, newObj]);
       (mode === "boards" ? setSelectedBoard : setSelectedDevice)("");
       setSelection(null);

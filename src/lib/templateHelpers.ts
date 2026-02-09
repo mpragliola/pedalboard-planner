@@ -57,11 +57,6 @@ export function createObjectFromTemplate(
   };
 }
 
-const CUSTOM_BOARD_ID = "board-custom";
-const CUSTOM_DEVICE_ID = "device-custom";
-const CUSTOM_BOARD_HEIGHT_MM = 20;
-const CUSTOM_DEVICE_HEIGHT_MM = 50;
-
 export interface CustomItemParams {
   widthMm: number;
   depthMm: number;
@@ -69,30 +64,33 @@ export interface CustomItemParams {
   name: string;
 }
 
-export function createObjectFromCustomBoard(params: CustomItemParams, pos: Point): CanvasObjectType {
-  const template: BoardTemplate = {
-    id: CUSTOM_BOARD_ID,
-    type: "classic",
+const CUSTOM_DEFAULTS: Record<ObjectSubtype, { id: string; type: string; defaultName: string; heightMm: number }> = {
+  board: { id: "board-custom", type: "classic", defaultName: "Custom board", heightMm: 20 },
+  device: { id: "device-custom", type: "pedal", defaultName: "Custom device", heightMm: 50 },
+};
+
+/** Create a custom canvas object (board or device) from user-specified dimensions. */
+export function createCustomObject(subtype: ObjectSubtype, params: CustomItemParams, pos: Point): CanvasObjectType {
+  const cfg = CUSTOM_DEFAULTS[subtype];
+  const template: BoardTemplate | DeviceTemplate = {
+    id: cfg.id,
+    type: cfg.type as never, // narrowed by CUSTOM_DEFAULTS config
     brand: "",
     model: "Custom",
-    name: params.name.trim() || "Custom board",
-    wdh: [params.widthMm, params.depthMm, CUSTOM_BOARD_HEIGHT_MM],
+    name: params.name.trim() || cfg.defaultName,
+    wdh: [params.widthMm, params.depthMm, cfg.heightMm],
     color: params.color,
     image: null,
   };
-  return createObjectFromTemplate("board", template, pos);
+  return createObjectFromTemplate(subtype, template, pos);
 }
 
-export function createObjectFromCustomDevice(params: CustomItemParams, pos: Point): CanvasObjectType {
-  const template: DeviceTemplate = {
-    id: CUSTOM_DEVICE_ID,
-    type: "pedal",
-    brand: "",
-    model: "Custom",
-    name: params.name.trim() || "Custom device",
-    wdh: [params.widthMm, params.depthMm, CUSTOM_DEVICE_HEIGHT_MM],
-    color: params.color,
-    image: null,
-  };
-  return createObjectFromTemplate("device", template, pos);
+/** @deprecated Use createCustomObject("board", ...) */
+export const createObjectFromCustomBoard = (p: CustomItemParams, pos: Point) => createCustomObject("board", p, pos);
+/** @deprecated Use createCustomObject("device", ...) */
+export const createObjectFromCustomDevice = (p: CustomItemParams, pos: Point) => createCustomObject("device", p, pos);
+
+/** Map catalog mode to object subtype. */
+export function modeToSubtype(mode: "boards" | "devices"): ObjectSubtype {
+  return mode === "boards" ? "board" : "device";
 }
