@@ -27,6 +27,17 @@ function center(a: ClientPoint, b: ClientPoint): Point {
   return vec2Scale(vec2Add(clientPointToPoint(a), clientPointToPoint(b)), 0.5);
 }
 
+function isEditableTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  if (target.isContentEditable) return true;
+  const tag = target.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA") {
+    const input = target as HTMLInputElement | HTMLTextAreaElement;
+    return !input.readOnly && !input.disabled;
+  }
+  return Boolean(target.closest('[contenteditable="true"]'));
+}
+
 export interface UseCanvasZoomPanOptions {
   initialZoom?: number;
   initialPan?: Offset;
@@ -249,12 +260,14 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === "Space") {
+        if (isEditableTarget(e.target)) return;
         e.preventDefault();
         setSpaceDown(true);
       }
     };
     const handleKeyUp = (e: KeyboardEvent) => {
       if (e.code === "Space") {
+        if (isEditableTarget(e.target)) return;
         e.preventDefault();
         setSpaceDown(false);
         if (isPanning) {
