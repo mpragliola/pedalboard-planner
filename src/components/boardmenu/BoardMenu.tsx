@@ -18,6 +18,12 @@ interface BoardMenuAction {
   disabled?: boolean;
 }
 
+/**
+ * Board menu with actions: new, load, save, settings, about.
+ * Handles file input for loading boards and shows modals for GPT prompt and info.
+ * Uses context for board IO, confirmation dialogs, and settings modal control.
+ * Is included in the Catalog overlay.
+ */
 export function BoardMenu() {
   const { newBoard, loadBoardFromFile, saveBoardToFile } = useBoardIo();
   const { requestConfirmation } = useConfirmation();

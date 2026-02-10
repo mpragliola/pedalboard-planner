@@ -1,6 +1,7 @@
 import { forwardRef, useState } from "react";
 import { DEVICE_TYPE_ORDER, DEVICE_TYPE_LABEL } from "../../constants";
 import type { DeviceType } from "../../data/devices";
+import type { RangeFilter } from "../../hooks/useFilterState";
 import { useCatalog } from "../../context/CatalogContext";
 import { useUi } from "../../context/UiContext";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
@@ -13,47 +14,41 @@ import "./DropdownsPanel.scss";
 
 export type { CatalogMode } from "./CatalogModeSwitch";
 
+/** Factory for min/max range filter handlers that auto-clamp the opposite bound. */
+function createRangeHandler(
+  type: "min" | "max",
+  range: readonly [number, number],
+  filter: RangeFilter
+) {
+  const [setSelf, getOpp, setOpp] =
+    type === "min"
+      ? [filter.setMin, () => filter.max, filter.setMax] as const
+      : [filter.setMax, () => filter.min, filter.setMin] as const;
+
+  return (v: string) => {
+    const boundary = type === "min" ? range[0] : range[1];
+    const isAtBoundary = v === String(boundary);
+    setSelf(isAtBoundary ? "" : v);
+    const num = Number(v);
+    const oppositeVal = getOpp() ? Number(getOpp()) : type === "min" ? range[1] : range[0];
+    if (!isAtBoundary) {
+      if (type === "min" && num > oppositeVal) setOpp(v);
+      if (type === "max" && num < oppositeVal) setOpp(v);
+    }
+  };
+}
+
 export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel(_props, ref) {
   const { catalogMode, setCatalogMode, filters, onCustomCreate } = useCatalog();
   const { unit } = useUi();
 
   const {
-    boardBrandFilter,
-    setBoardBrandFilter,
-    boardTextFilter,
-    setBoardTextFilter,
-    boardWidthMin,
-    setBoardWidthMin,
-    boardWidthMax,
-    setBoardWidthMax,
-    boardDepthMin,
-    setBoardDepthMin,
-    boardDepthMax,
-    setBoardDepthMax,
-    boardBrands,
-    boardWidthRange,
-    boardDepthRange,
-    filteredBoards,
-    resetBoardFilters,
-    deviceTypeFilter,
-    setDeviceTypeFilter,
-    deviceBrandFilter,
-    setDeviceBrandFilter,
-    deviceTextFilter,
-    setDeviceTextFilter,
-    deviceWidthMin,
-    setDeviceWidthMin,
-    deviceWidthMax,
-    setDeviceWidthMax,
-    deviceDepthMin,
-    setDeviceDepthMin,
-    deviceDepthMax,
-    setDeviceDepthMax,
-    deviceBrands,
-    deviceWidthRange,
-    deviceDepthRange,
-    filteredDevices,
-    resetDeviceFilters,
+    boardBrand, boardText, boardWidth, boardDepth,
+    boardBrands, boardWidthRange, boardDepthRange, filteredBoards,
+    hasBoardFilters, resetBoardFilters,
+    deviceType, deviceBrand, deviceText, deviceWidth, deviceDepth,
+    deviceBrands, deviceWidthRange, deviceDepthRange, filteredDevices,
+    hasDeviceFilters, resetDeviceFilters,
   } = filters;
 
   const isPhone = useMediaQuery("(max-width: 767px)");
@@ -63,115 +58,28 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
   const [customExpanded, setCustomExpanded] = useState(false);
   const [catalogViewMode, setCatalogViewMode] = useState<CatalogViewMode>("text");
 
-  const hasBoardFilters = !!(
-    boardBrandFilter ||
-    boardTextFilter ||
-    boardWidthMin ||
-    boardWidthMax ||
-    boardDepthMin ||
-    boardDepthMax
-  );
-  const hasDeviceFilters = !!(
-    deviceBrandFilter ||
-    deviceTypeFilter ||
-    deviceTextFilter ||
-    deviceWidthMin ||
-    deviceWidthMax ||
-    deviceDepthMin ||
-    deviceDepthMax
-  );
-
   const formatSliderValue = (mm: number) => (unit === "in" ? (mm / 25.4).toFixed(2) : String(Math.round(mm)));
   const unitLabel = unit === "in" ? "in" : "mm";
 
-  /** Factory for min/max range filter handlers that auto-clamp the opposite bound. */
-  const createRangeHandler =
-    (
-      type: "min" | "max",
-      range: readonly [number, number],
-      currentOpposite: string | undefined,
-      setSelf: (v: string) => void,
-      setOpposite: (v: string) => void
-    ) =>
-    (v: string) => {
-      const boundary = type === "min" ? range[0] : range[1];
-      const isAtBoundary = v === String(boundary);
-      setSelf(isAtBoundary ? "" : v);
-      const num = Number(v);
-      const oppositeVal = currentOpposite ? Number(currentOpposite) : type === "min" ? range[1] : range[0];
-      if (!isAtBoundary) {
-        if (type === "min" && num > oppositeVal) setOpposite(v);
-        if (type === "max" && num < oppositeVal) setOpposite(v);
-      }
-    };
-
-  const handleBoardWidthMin = createRangeHandler(
-    "min",
-    boardWidthRange,
-    boardWidthMax,
-    setBoardWidthMin,
-    setBoardWidthMax
-  );
-  const handleBoardWidthMax = createRangeHandler(
-    "max",
-    boardWidthRange,
-    boardWidthMin,
-    setBoardWidthMax,
-    setBoardWidthMin
-  );
-  const handleBoardDepthMin = createRangeHandler(
-    "min",
-    boardDepthRange,
-    boardDepthMax,
-    setBoardDepthMin,
-    setBoardDepthMax
-  );
-  const handleBoardDepthMax = createRangeHandler(
-    "max",
-    boardDepthRange,
-    boardDepthMin,
-    setBoardDepthMax,
-    setBoardDepthMin
-  );
-  const handleDeviceWidthMin = createRangeHandler(
-    "min",
-    deviceWidthRange,
-    deviceWidthMax,
-    setDeviceWidthMin,
-    setDeviceWidthMax
-  );
-  const handleDeviceWidthMax = createRangeHandler(
-    "max",
-    deviceWidthRange,
-    deviceWidthMin,
-    setDeviceWidthMax,
-    setDeviceWidthMin
-  );
-  const handleDeviceDepthMin = createRangeHandler(
-    "min",
-    deviceDepthRange,
-    deviceDepthMax,
-    setDeviceDepthMin,
-    setDeviceDepthMax
-  );
-  const handleDeviceDepthMax = createRangeHandler(
-    "max",
-    deviceDepthRange,
-    deviceDepthMin,
-    setDeviceDepthMax,
-    setDeviceDepthMin
-  );
+  const handleBoardWidthMin = createRangeHandler("min", boardWidthRange, boardWidth);
+  const handleBoardWidthMax = createRangeHandler("max", boardWidthRange, boardWidth);
+  const handleBoardDepthMin = createRangeHandler("min", boardDepthRange, boardDepth);
+  const handleBoardDepthMax = createRangeHandler("max", boardDepthRange, boardDepth);
+  const handleDeviceWidthMin = createRangeHandler("min", deviceWidthRange, deviceWidth);
+  const handleDeviceWidthMax = createRangeHandler("max", deviceWidthRange, deviceWidth);
+  const handleDeviceDepthMin = createRangeHandler("min", deviceDepthRange, deviceDepth);
+  const handleDeviceDepthMax = createRangeHandler("max", deviceDepthRange, deviceDepth);
 
   const deviceGroups: {
     deviceType: DeviceType;
     label: string;
     options: { id: string; name: string; type: string; image?: string | null; widthMm?: number; depthMm?: number }[];
-  }[] = DEVICE_TYPE_ORDER.map((deviceType) => {
-    const templates = filteredDevices.filter((t) => t.type === deviceType);
+  }[] = DEVICE_TYPE_ORDER.map((dt) => {
+    const templates = filteredDevices.filter((t) => t.type === dt);
     if (templates.length === 0) return null;
     return {
-      deviceType,
-      label: DEVICE_TYPE_LABEL[deviceType],
+      deviceType: dt,
+      label: DEVICE_TYPE_LABEL[dt],
       options: templates.map((t) => ({
         id: t.id,
         name: t.name,
@@ -198,8 +106,8 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
             <select
               id="board-brand-filter"
               className="dropdown dropdown-filter"
-              value={boardBrandFilter}
-              onChange={(e) => setBoardBrandFilter(e.target.value)}
+              value={boardBrand.value}
+              onChange={(e) => boardBrand.set(e.target.value)}
             >
               <option value="">All brands</option>
               {boardBrands.map((brand) => (
@@ -230,19 +138,19 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
                   id="board-text-filter"
                   label="Search"
                   placeholder="Name, brand, model…"
-                  value={boardTextFilter}
-                  onChange={setBoardTextFilter}
+                  value={boardText.value}
+                  onChange={boardText.set}
                 />
                 <SizeFilters
                   unitLabel={unitLabel}
                   widthRange={boardWidthRange}
-                  widthMin={boardWidthMin ?? ""}
-                  widthMax={boardWidthMax ?? ""}
+                  widthMin={boardWidth.min}
+                  widthMax={boardWidth.max}
                   onWidthMinChange={handleBoardWidthMin}
                   onWidthMaxChange={handleBoardWidthMax}
                   depthRange={boardDepthRange}
-                  depthMin={boardDepthMin ?? ""}
-                  depthMax={boardDepthMax ?? ""}
+                  depthMin={boardDepth.min}
+                  depthMax={boardDepth.max}
                   onDepthMinChange={handleBoardDepthMin}
                   onDepthMaxChange={handleBoardDepthMax}
                   formatSliderValue={formatSliderValue}
@@ -316,8 +224,8 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
                 <select
                   id="device-type-filter"
                   className="dropdown dropdown-filter"
-                  value={deviceTypeFilter}
-                  onChange={(e) => setDeviceTypeFilter(e.target.value)}
+                  value={deviceType.value}
+                  onChange={(e) => deviceType.set(e.target.value)}
                 >
                   <option value="">All types</option>
                   {DEVICE_TYPE_ORDER.map((type) => (
@@ -334,8 +242,8 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
                 <select
                   id="device-brand-filter"
                   className="dropdown dropdown-filter"
-                  value={deviceBrandFilter}
-                  onChange={(e) => setDeviceBrandFilter(e.target.value)}
+                  value={deviceBrand.value}
+                  onChange={(e) => deviceBrand.set(e.target.value)}
                 >
                   <option value="">All brands</option>
                   {deviceBrands.map((brand) => (
@@ -368,19 +276,19 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
                   id="device-text-filter"
                   label="Search"
                   placeholder="Name, brand, model…"
-                  value={deviceTextFilter}
-                  onChange={setDeviceTextFilter}
+                  value={deviceText.value}
+                  onChange={deviceText.set}
                 />
                 <SizeFilters
                   unitLabel={unitLabel}
                   widthRange={deviceWidthRange}
-                  widthMin={deviceWidthMin ?? ""}
-                  widthMax={deviceWidthMax ?? ""}
+                  widthMin={deviceWidth.min}
+                  widthMax={deviceWidth.max}
                   onWidthMinChange={handleDeviceWidthMin}
                   onWidthMaxChange={handleDeviceWidthMax}
                   depthRange={deviceDepthRange}
-                  depthMin={deviceDepthMin ?? ""}
-                  depthMax={deviceDepthMax ?? ""}
+                  depthMin={deviceDepth.min}
+                  depthMax={deviceDepth.max}
                   onDepthMinChange={handleDeviceDepthMin}
                   onDepthMaxChange={handleDeviceDepthMax}
                   formatSliderValue={formatSliderValue}
