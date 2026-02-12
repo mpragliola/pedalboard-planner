@@ -52,7 +52,6 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
                   className="settings-bg-preview"
                   style={{
                     backgroundImage: `url("${option.imageUrl}")`,
-                    backgroundRepeat: option.repeat,
                     backgroundSize: "120px auto",
                   }}
                 />

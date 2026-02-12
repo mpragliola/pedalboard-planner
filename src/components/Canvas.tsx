@@ -76,6 +76,7 @@ export function Canvas() {
   // Application units: 1 mm = 1 px; 1 cm = 10 px, 1 in = 25.4 px (match board dimensions)
   const gridSizePx = unit === "mm" ? 10 : 25.4;
   const gridSizeCss = `${gridSizePx}px`;
+  const backgroundTileSize = tileSize * 0.5;
 
   return (
     <div
@@ -94,8 +95,7 @@ export function Canvas() {
         className="canvas-bg"
         style={{
           backgroundImage: `url("${canvasBackground.imageUrl}")`,
-          backgroundRepeat: canvasBackground.repeat,
-          backgroundSize: `${tileSize}px auto`,
+          backgroundSize: `${backgroundTileSize}px auto`,
           backgroundPosition: `${pan.x}px ${pan.y}px`,
         }}
       />
