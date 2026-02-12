@@ -2,6 +2,7 @@
 import type { CanvasObjectType, Cable } from "../types";
 import type { Offset, Point } from "./vector";
 import { getTemplateImage, getTemplateWdh, hasKnownTemplateDimensions } from "./objectDimensions";
+import { isCanvasBackgroundId, type CanvasBackgroundId } from "../constants/backgrounds";
 
 /** Shape of state persisted to storage (e.g. localStorage). */
 export interface SavedState {
@@ -12,6 +13,7 @@ export interface SavedState {
   pan?: Offset;
   showGrid?: boolean;
   unit?: "mm" | "in";
+  background?: CanvasBackgroundId;
   cables?: Cable[];
 }
 
@@ -141,6 +143,7 @@ export function parseState(json: string): SavedState | null {
       pan: validPan,
       showGrid: typeof d.showGrid === "boolean" ? d.showGrid : undefined,
       unit: d.unit === "mm" || d.unit === "in" ? (d.unit as "mm" | "in") : undefined,
+      background: isCanvasBackgroundId(d.background) ? d.background : undefined,
       cables: cables ?? undefined,
     };
   } catch {

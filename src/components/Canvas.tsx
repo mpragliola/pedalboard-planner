@@ -14,6 +14,7 @@ import { useCable } from "../context/CableContext";
 import { useCanvas } from "../context/CanvasContext";
 import { useCatalog } from "../context/CatalogContext";
 import { useUi } from "../context/UiContext";
+import { CANVAS_BACKGROUNDS } from "../constants/backgrounds";
 import { CANVAS_DROP_ID } from "./catalog/CatalogDndProvider";
 import "./Canvas.scss";
 
@@ -53,11 +54,13 @@ export function Canvas() {
   } = useBoard();
   const { cables, selectedCableId, onCablePointerDown, setCables, setSelectedCableId } = useCable();
   const { shouldIgnoreCatalogClick } = useCatalog();
-  const { showGrid, xray, ruler, lineRuler, cableLayer, cablesVisibility, setFloatingUiVisible, unit } = useUi();
+  const { showGrid, xray, ruler, lineRuler, cableLayer, cablesVisibility, setFloatingUiVisible, unit, background } =
+    useUi();
 
   const [editingCableId, setEditingCableId] = useState<string | null>(null);
   const selectedCable = selectedCableId ? cables.find((c) => c.id === selectedCableId) : null;
   const editingCable = editingCableId ? cables.find((c) => c.id === editingCableId) : null;
+  const canvasBackground = CANVAS_BACKGROUNDS.find((bg) => bg.id === background) ?? CANVAS_BACKGROUNDS[0];
 
   useEffect(() => {
     if (!canvasAnimating || !viewportRef.current) return;
@@ -90,6 +93,8 @@ export function Canvas() {
       <div
         className="canvas-bg"
         style={{
+          backgroundImage: `url("${canvasBackground.imageUrl}")`,
+          backgroundRepeat: canvasBackground.repeat,
           backgroundSize: `${tileSize}px auto`,
           backgroundPosition: `${pan.x}px ${pan.y}px`,
         }}

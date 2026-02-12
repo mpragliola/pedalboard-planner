@@ -1,4 +1,5 @@
 import { createContext, useContext, type Dispatch, type ReactNode, type SetStateAction } from "react";
+import type { CanvasBackgroundId } from "../constants/backgrounds";
 
 export interface UiContextValue {
   showGrid: boolean;
@@ -21,6 +22,8 @@ export interface UiContextValue {
   setPanelExpanded: Dispatch<SetStateAction<boolean>>;
   unit: "mm" | "in";
   setUnit: Dispatch<SetStateAction<"mm" | "in">>;
+  background: CanvasBackgroundId;
+  setBackground: Dispatch<SetStateAction<CanvasBackgroundId>>;
 }
 
 const UiContext = createContext<UiContextValue | null>(null);

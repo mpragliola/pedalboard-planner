@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect, useMemo, type ReactNode } fro
 import { BOARD_TEMPLATES } from "../data/boards";
 import { DEVICE_TEMPLATES } from "../data/devices";
 import { initialObjects, MM_TO_PX, HISTORY_DEPTH, DEFAULT_PLACEMENT_FALLBACK } from "../constants";
+import { DEFAULT_CANVAS_BACKGROUND } from "../constants/backgrounds";
 import {
   createObjectFromTemplate,
   createCustomObject,
@@ -99,6 +100,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [cableLayer, setCableLayer] = useState(false);
   const [cablesVisibility, setCablesVisibility] = useState<"shown" | "dim" | "hidden">("shown");
   const [unit, setUnit] = useState<"mm" | "in">(savedState?.unit ?? "mm");
+  const [background, setBackground] = useState(savedState?.background ?? DEFAULT_CANVAS_BACKGROUND);
   const [catalogMode, setCatalogMode] = useState<CatalogMode>("boards");
   const interactions = useCanvasInteractions();
   const {
@@ -123,6 +125,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     pan: { x: 0, y: 0 },
     showGrid: false,
     unit: "mm",
+    background: DEFAULT_CANVAS_BACKGROUND,
     cables: [],
   });
 
@@ -334,23 +337,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
       );
       setSelection(null);
       setUnit(state.unit ?? "mm");
+      setBackground(state.background ?? DEFAULT_CANVAS_BACKGROUND);
       setShowGrid(state.showGrid ?? false);
       if (typeof state.zoom === "number") setZoom(state.zoom);
       if (state.pan && typeof state.pan.x === "number" && typeof state.pan.y === "number") {
         setPan(state.pan);
       }
     },
-    [replaceHistoryRaw, setZoom, setPan]
+    [replaceHistoryRaw, setZoom, setPan, setBackground]
   );
 
   const newBoard = useCallback(() => {
     replaceHistoryRaw({ objects: initialObjects, cables: [] }, [], []);
     setSelection(null);
     setUnit("mm");
+    setBackground(DEFAULT_CANVAS_BACKGROUND);
     setShowGrid(false);
     setZoom(1);
     setPan({ x: 0, y: 0 });
-  }, [replaceHistoryRaw, setZoom, setPan]);
+  }, [replaceHistoryRaw, setZoom, setPan, setBackground]);
 
   const loadBoardFromFile = useCallback(
     async (file: File): Promise<void> => {
@@ -367,10 +372,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       pan,
       showGrid,
       unit,
+      background,
       cables,
     };
     saveStateToFile(state);
-  }, [objects, zoom, pan, showGrid, unit, cables, saveStateToFile]);
+  }, [objects, zoom, pan, showGrid, unit, background, cables, saveStateToFile]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -402,9 +408,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       pan,
       showGrid,
       unit,
+      background,
       cables,
     });
-  }, [objects, pastForSave, futureForSave, zoom, pan, showGrid, unit, cables, persistState]);
+  }, [objects, pastForSave, futureForSave, zoom, pan, showGrid, unit, background, cables, persistState]);
 
   // Persist immediately when cables change (cables are user data; don't rely only on debounce)
   useEffect(() => {
@@ -417,6 +424,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         pan,
         showGrid,
         unit,
+        background,
         cables,
       },
       { immediate: true }
@@ -431,6 +439,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     pan,
     showGrid,
     unit,
+    background,
     cables,
   };
 
@@ -463,6 +472,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setPanelExpanded,
       unit,
       setUnit,
+      background,
+      setBackground,
     }),
     [
       showGrid,
@@ -485,6 +496,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setPanelExpanded,
       unit,
       setUnit,
+      background,
+      setBackground,
     ]
   );
 

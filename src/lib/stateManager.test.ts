@@ -273,6 +273,24 @@ describe("parseState", () => {
       ).toBeUndefined();
     });
 
+    it("parses background when valid", () => {
+      expect(
+        (parseState(JSON.stringify({ objects: [validObject], background: "floorboards" })) as SavedState).background
+      ).toBe("floorboards");
+      expect(
+        (parseState(JSON.stringify({ objects: [validObject], background: "concrete" })) as SavedState).background
+      ).toBe("concrete");
+    });
+
+    it("ignores background when invalid", () => {
+      expect(
+        (parseState(JSON.stringify({ objects: [validObject], background: "brick" })) as SavedState).background
+      ).toBeUndefined();
+      expect(
+        (parseState(JSON.stringify({ objects: [validObject], background: 42 })) as SavedState).background
+      ).toBeUndefined();
+    });
+
     it("parses showGrid when boolean", () => {
       expect(
         (parseState(JSON.stringify({ objects: [validObject], showGrid: true })) as SavedState).showGrid
@@ -502,6 +520,12 @@ describe("serializeState", () => {
       const state: SavedState = { objects: [], unit: "in" };
       const ser = serializeState(state);
       expect(ser.unit).toBe("in");
+    });
+
+    it("preserves background", () => {
+      const state: SavedState = { objects: [], background: "studio-grid" };
+      const ser = serializeState(state);
+      expect(ser.background).toBe("studio-grid");
     });
   });
 });
