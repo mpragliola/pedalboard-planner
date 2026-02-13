@@ -49,8 +49,8 @@
 }
 
 .mini3d-tools-group.expanded .mini3d-tools-secondary {
-  max-width: calc(vars.$zoom-button-size * 2 + vars.$space-8);
-  /* 44*2 + 8 for two secondary 3D action buttons */
+  max-width: calc(vars.$zoom-button-size * 3 + vars.$space-8 * 2);
+  /* 44*3 + 8*2 for three secondary 3D action buttons */
   overflow: visible;
   opacity: 1;
   transition:

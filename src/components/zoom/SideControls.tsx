@@ -9,6 +9,7 @@ import {
   faPlug,
   faRuler,
   faSlash,
+  faStar,
   faSquare,
   faTh,
   faXRay,
@@ -69,6 +70,8 @@ export function SideControls() {
     setShowMini3dFloor,
     showMini3dShadows,
     setShowMini3dShadows,
+    showMini3dSurfaceDetail,
+    setShowMini3dSurfaceDetail,
     ruler,
     setRuler,
     lineRuler,
@@ -173,6 +176,14 @@ export function SideControls() {
             onClick={() => setShowMini3dShadows((v) => !v)}
             active={showMini3dShadows}
             className="mini3d-shadow-toggle"
+          />
+          <SideControl
+            label="3D surface detail"
+            title="Toggle floor bump and specular detail in 3D view"
+            icon={faStar}
+            onClick={() => setShowMini3dSurfaceDetail((v) => !v)}
+            active={showMini3dSurfaceDetail}
+            className="mini3d-material-toggle"
           />
         </div>
       </div>

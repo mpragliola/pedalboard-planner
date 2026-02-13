@@ -6,8 +6,8 @@
 
   .modal-content {
     font-size: 0.72rem;
-    min-width: 320px;
-    max-width: vars.$modal-max-width-sm;
+    min-width: min(520px, calc(100vw - 48px));
+    max-width: vars.$modal-max-width-xl;
     width: 100%;
     max-height: vars.$modal-max-height;
     box-shadow: vars.$modal-shadow;
@@ -65,17 +65,17 @@
 
   .settings-bg-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    gap: 6px;
   }
 
   .settings-bg-option {
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    padding: 6px;
+    padding: 4px;
     border: 1px solid vars.$black-20;
-    border-radius: 8px;
+    border-radius: 7px;
     background: vars.$color-surface;
     color: vars.$color-text;
     cursor: pointer;
@@ -104,17 +104,17 @@
   .settings-bg-preview {
     display: block;
     width: 100%;
-    height: 44px;
+    aspect-ratio: 1 / 1;
     border-radius: 5px;
     border: 1px solid vars.$black-20;
     background-position: center;
   }
 
   .settings-bg-name {
-    margin-top: 6px;
-    font-size: 0.85em;
+    margin-top: 4px;
+    font-size: 0.78em;
     text-align: left;
-    line-height: 1.2;
+    line-height: 1.15;
   }
 }
 

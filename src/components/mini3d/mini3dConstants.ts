@@ -1,0 +1,37 @@
+import { TILE_SIZE_BASE } from "../../constants";
+
+export const DEFAULT_YAW = -Math.PI / 4;
+export const DEFAULT_PITCH = 0.55;
+export const MIN_PITCH = 0.2;
+export const MAX_PITCH = 1.35;
+export const MIN_ORBIT_DISTANCE = 6.5;
+export const DRAG_SENSITIVITY = 0.006;
+export const OPEN_FADE_MS = 500;
+export const OVERLAY_OPACITY = 0.85;
+export const CONVERGENCE_ANIMATION_MS = 600;
+export const PER_COMPONENT_DELAY_MS = 40;
+export const CONVERGENCE_BASE_TOTAL_MS = 800;
+export const WORLD_SCALE = 0.01;
+export const CONVERGENCE_OFFSET_DISTANCE = 180 * WORLD_SCALE;
+export const MIN_BOX_HEIGHT = 0.12;
+export const GROUND_Y = -1.01;
+export const GROUND_PLANE_SIZE = 5000;
+// Match 2D canvas background tile size (TILE_SIZE_BASE * 0.5) at zoom=1.
+export const GROUND_TILE_WORLD_SIZE = (TILE_SIZE_BASE * 0.5) * WORLD_SCALE;
+export const FIT_PADDING_PX = 24;
+export const FIT_MAX_DISTANCE = 4000;
+export const DISTANCE_LERP = 0.12;
+export const MAX_DISTANCE_STEP = 0.35;
+export const BOX_TRANSITION_MS = 220;
+export const BOX_TRANSITION_EPSILON = 0.0001;
+export const EMPTY_IMAGE_DATA_URI = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
+export const DEVICE_ROUGHNESS = 0.28;
+export const DEVICE_METALNESS = 0.22;
+export const DEVICE_TOP_IMAGE_ROUGHNESS = 0.36;
+export const DEVICE_TOP_IMAGE_METALNESS = 0.14;
+export const BOARD_ROUGHNESS = 0.62;
+export const BOARD_METALNESS = 0.16;
+export const BOARD_TOP_IMAGE_ROUGHNESS = 0.66;
+export const BOARD_TOP_IMAGE_METALNESS = 0.14;
+export const MINI3D_DEFAULT_DEVICE_COLOR = "rgb(108, 116, 132)";
+export const MINI3D_PARSE_FALLBACK_COLOR = { r: 108, g: 116, b: 132 } as const;
