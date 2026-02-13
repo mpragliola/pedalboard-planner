@@ -95,6 +95,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [showGrid, setShowGrid] = useState(false);
   const [xray, setXray] = useState(false);
   const [showMini3d, setShowMini3d] = useState(false);
+  const [showMini3dFloor, setShowMini3dFloor] = useState(true);
+  const [showMini3dShadows, setShowMini3dShadows] = useState(true);
   const [ruler, setRuler] = useState(false);
   const [lineRuler, setLineRuler] = useState(false);
   const [cableLayer, setCableLayer] = useState(false);
@@ -458,6 +460,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setXray,
       showMini3d,
       setShowMini3d,
+      showMini3dFloor,
+      setShowMini3dFloor,
+      showMini3dShadows,
+      setShowMini3dShadows,
       ruler,
       setRuler,
       lineRuler,
@@ -482,6 +488,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setXray,
       showMini3d,
       setShowMini3d,
+      showMini3dFloor,
+      setShowMini3dFloor,
+      showMini3dShadows,
+      setShowMini3dShadows,
       ruler,
       setRuler,
       lineRuler,

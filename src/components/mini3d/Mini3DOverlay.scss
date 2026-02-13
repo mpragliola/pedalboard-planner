@@ -12,7 +12,7 @@
   cursor: pointer;
   touch-action: none;
   opacity: 0;
-  background: rgba(0, 0, 0, 0);
+  background: rgba(0, 0, 0, 0.001);
   transform-origin: left bottom;
   transition:
     opacity var(--mini3d-open-fade-ms, 500ms) ease,
@@ -58,126 +58,6 @@
   transition-timing-function: linear;
 }
 
-.mini3d-stage {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  perspective: var(--mini3d-perspective, 1200px);
-  perspective-origin: 50% 50%;
-  transform-style: preserve-3d;
-}
-
-.mini3d-world {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 0;
-  height: 0;
-  transform-style: preserve-3d;
-  transform:
-    translate3d(var(--mini3d-offset-x, 0px), var(--mini3d-offset-y, 0px), 0)
-    translateZ(var(--mini3d-camera-z, -600px))
-    scale(var(--mini3d-scale, 1))
-    rotateX(var(--mini3d-pitch, 0.35rad))
-    rotateY(var(--mini3d-yaw, -0.7853981634rad));
-  will-change: transform;
-}
-
-.mini3d-item-shift {
-  position: absolute;
-  left: 0;
-  top: 0;
-  transform-style: preserve-3d;
-}
-
-.mini3d-item-shift--opening {
-  animation: mini3d-converge-in 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  animation-delay: var(--mini3d-delay-ms, 0ms);
-}
-
-.mini3d-item-shift--closing {
-  animation: mini3d-converge-out 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  animation-delay: var(--mini3d-delay-ms, 0ms);
-}
-
-.mini3d-box {
-  position: absolute;
-  left: 0;
-  top: 0;
-  transform-style: preserve-3d;
-  transition: transform 220ms cubic-bezier(0.2, 0.9, 0.2, 1);
-  will-change: transform;
-}
-
-.mini3d-face {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  box-sizing: border-box;
-  backface-visibility: hidden;
-  border: 1px solid rgba(0, 0, 0, 0.28);
-}
-
-.mini3d-face--front,
-.mini3d-face--back {
-  width: var(--mini3d-width);
-  height: var(--mini3d-height);
-}
-
-.mini3d-face--right,
-.mini3d-face--left {
-  width: var(--mini3d-depth);
-  height: var(--mini3d-height);
-}
-
-.mini3d-face--top,
-.mini3d-face--bottom {
-  width: var(--mini3d-width);
-  height: var(--mini3d-depth);
-}
-
-.mini3d-face--front {
-  background: var(--mini3d-front-color);
-  transform: translate(-50%, -50%) translateZ(calc(var(--mini3d-depth) / 2));
-}
-
-.mini3d-face--back {
-  background: var(--mini3d-back-color);
-  transform: translate(-50%, -50%) rotateY(180deg) translateZ(calc(var(--mini3d-depth) / 2));
-}
-
-.mini3d-face--right {
-  background: var(--mini3d-right-color);
-  transform: translate(-50%, -50%) rotateY(90deg) translateZ(calc(var(--mini3d-width) / 2));
-}
-
-.mini3d-face--left {
-  background: var(--mini3d-left-color);
-  transform: translate(-50%, -50%) rotateY(-90deg) translateZ(calc(var(--mini3d-width) / 2));
-}
-
-.mini3d-face--top {
-  background-color: var(--mini3d-top-color);
-  background-image: var(--mini3d-top-image);
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: cover;
-  transform: translate(-50%, -50%) rotateX(90deg) translateZ(calc(var(--mini3d-height) / 2));
-}
-
-.mini3d-face--top::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.16), rgba(0, 0, 0, 0.14));
-  pointer-events: none;
-}
-
-.mini3d-face--bottom {
-  background: var(--mini3d-bottom-color);
-  transform: translate(-50%, -50%) rotateX(-90deg) translateZ(calc(var(--mini3d-height) / 2));
-}
-
 .mini3d-instruction {
   position: absolute;
   left: 8px;
@@ -192,26 +72,7 @@
   border-radius: 6px;
   pointer-events: none;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
-}
-
-@keyframes mini3d-converge-in {
-  from {
-    transform: translate3d(calc(var(--mini3d-conv-x, 0) * 1px), 0, calc(var(--mini3d-conv-z, 0) * 1px));
-  }
-
-  to {
-    transform: translate3d(0, 0, 0);
-  }
-}
-
-@keyframes mini3d-converge-out {
-  from {
-    transform: translate3d(0, 0, 0);
-  }
-
-  to {
-    transform: translate3d(calc(var(--mini3d-conv-x, 0) * 1px), 0, calc(var(--mini3d-conv-z, 0) * 1px));
-  }
+  z-index: 1;
 }
 
 @media (max-width: 768px) {
@@ -237,7 +98,6 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0);
+  background: rgba(0, 0, 0, 0.001);
   cursor: zoom-out;
 }
-

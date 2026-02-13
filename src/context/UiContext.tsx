@@ -8,6 +8,10 @@ export interface UiContextValue {
   setXray: Dispatch<SetStateAction<boolean>>;
   showMini3d: boolean;
   setShowMini3d: Dispatch<SetStateAction<boolean>>;
+  showMini3dFloor: boolean;
+  setShowMini3dFloor: Dispatch<SetStateAction<boolean>>;
+  showMini3dShadows: boolean;
+  setShowMini3dShadows: Dispatch<SetStateAction<boolean>>;
   ruler: boolean;
   setRuler: Dispatch<SetStateAction<boolean>>;
   lineRuler: boolean;

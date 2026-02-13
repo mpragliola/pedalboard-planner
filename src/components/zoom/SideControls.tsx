@@ -58,7 +58,26 @@ async function exitDocumentFullscreen() {
 
 export function SideControls() {
   const { centerView } = useCanvas()
-  const { showGrid, setShowGrid, xray, setXray, showMini3d, setShowMini3d, ruler, setRuler, lineRuler, setLineRuler, cableLayer, setCableLayer, cablesVisibility, setCablesVisibility } = useUi()
+  const {
+    showGrid,
+    setShowGrid,
+    xray,
+    setXray,
+    showMini3d,
+    setShowMini3d,
+    showMini3dFloor,
+    setShowMini3dFloor,
+    showMini3dShadows,
+    setShowMini3dShadows,
+    ruler,
+    setRuler,
+    lineRuler,
+    setLineRuler,
+    cableLayer,
+    setCableLayer,
+    cablesVisibility,
+    setCablesVisibility,
+  } = useUi()
   const [componentListOpen, setComponentListOpen] = useState(false)
   const [measurementExpanded, setMeasurementExpanded] = useState(false)
   const [viewExpanded, setViewExpanded] = useState(false)
@@ -129,14 +148,34 @@ export function SideControls() {
           cablesVisibility === "dim" ? " cables-visible-toggle--dim" : ""
         }`}
       />
-      <SideControl
-        label="3D view"
-        title="Toggle 3D miniature overlay"
-        icon={faCube}
-        onClick={() => setShowMini3d((v) => !v)}
-        active={showMini3d}
-        className="mini3d-toggle"
-      />
+      <div className={`mini3d-tools-group ${showMini3d ? 'expanded' : ''}`}>
+        <SideControl
+          label="3D view"
+          title="Toggle 3D miniature overlay"
+          icon={faCube}
+          onClick={() => setShowMini3d((v) => !v)}
+          active={showMini3d}
+          className="mini3d-toggle"
+        />
+        <div className="mini3d-tools-secondary">
+          <SideControl
+            label="3D floor"
+            title="Show or hide the floor in 3D view"
+            icon={faSquare}
+            onClick={() => setShowMini3dFloor((v) => !v)}
+            active={showMini3dFloor}
+            className="mini3d-floor-toggle"
+          />
+          <SideControl
+            label="3D shadows"
+            title="Show or hide shadows in 3D view"
+            icon={faLayerGroup}
+            onClick={() => setShowMini3dShadows((v) => !v)}
+            active={showMini3dShadows}
+            className="mini3d-shadow-toggle"
+          />
+        </div>
+      </div>
       <div className={`view-tools-group ${viewExpanded ? 'expanded' : ''}`}>
         <SideControl
           label="View options"
