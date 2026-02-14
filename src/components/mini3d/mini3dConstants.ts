@@ -87,7 +87,7 @@ export const EMPTY_IMAGE_DATA_URI = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAA
 // Base roughness for device box side faces.
 export const DEVICE_ROUGHNESS = 0.28;
 // Base metalness for device box side faces.
-export const DEVICE_METALNESS = 0.22;
+export const DEVICE_METALNESS = 0.72;
 // Roughness for device top face when using image texture.
 export const DEVICE_TOP_IMAGE_ROUGHNESS = 0.36;
 // Metalness for device top face when using image texture.
@@ -97,9 +97,9 @@ export const DEVICE_TOP_IMAGE_METALNESS = 0.14;
 // Material Tuning: Boards
 // -----------------------------------------------------------------------------
 // Base roughness for board box side faces.
-export const BOARD_ROUGHNESS = 0.62;
+export const BOARD_ROUGHNESS = 0.22;
 // Base metalness for board box side faces.
-export const BOARD_METALNESS = 0.16;
+export const BOARD_METALNESS = 0.66;
 // Roughness for board top face when using image texture.
 export const BOARD_TOP_IMAGE_ROUGHNESS = 0.66;
 // Metalness for board top face when using image texture.

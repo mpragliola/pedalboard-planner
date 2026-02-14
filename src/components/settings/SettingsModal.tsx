@@ -51,8 +51,8 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
                 <span
                   className="settings-bg-preview"
                   style={{
-                    backgroundImage: `url("${option.imageUrl}")`,
-                    backgroundSize: "84px auto",
+                    backgroundImage: `url("${option.previewImageUrl}")`,
+                    backgroundSize: "cover",
                   }}
                 />
                 <span className="settings-bg-name">{option.label}</span>
