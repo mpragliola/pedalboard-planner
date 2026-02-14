@@ -47,6 +47,7 @@ export function AnimatedSceneBox({
   const lastAppliedConvergenceRunRef = useRef(0);
   const hasInitializedRef = useRef(false);
   const isDevice = box.subtype === "device";
+  const hasTopTexture = Boolean(box.imageUrl);
   const baseRoughness = isDevice ? DEVICE_ROUGHNESS : BOARD_ROUGHNESS;
   const baseMetalness = isDevice ? DEVICE_METALNESS : BOARD_METALNESS;
   const topImageRoughness = isDevice ? DEVICE_TOP_IMAGE_ROUGHNESS : BOARD_TOP_IMAGE_ROUGHNESS;
@@ -229,13 +230,14 @@ export function AnimatedSceneBox({
         />
         <meshStandardMaterial
           attach="material-2"
-          color={box.imageUrl ? "#ffffff" : box.color}
-          map={box.imageUrl ? topTexture : null}
-          transparent={Boolean(box.imageUrl)}
-          alphaTest={box.imageUrl ? 0.01 : 0}
-          depthWrite={!box.imageUrl}
-          roughness={box.imageUrl ? topImageRoughness : baseRoughness}
-          metalness={box.imageUrl ? topImageMetalness : baseMetalness}
+          color={hasTopTexture ? "#ffffff" : box.color}
+          map={hasTopTexture ? topTexture : null}
+          // Use cutout alpha without transparent sorting to keep stable depth ordering.
+          transparent={false}
+          alphaTest={hasTopTexture ? 0.01 : 0}
+          depthWrite
+          roughness={hasTopTexture ? topImageRoughness : baseRoughness}
+          metalness={hasTopTexture ? topImageMetalness : baseMetalness}
         />
         <meshStandardMaterial
           attach="material-3"
