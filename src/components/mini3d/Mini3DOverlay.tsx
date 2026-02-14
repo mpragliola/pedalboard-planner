@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
+  type WheelEvent as ReactWheelEvent,
 } from "react";
 import * as THREE from "three";
 import { Canvas } from "@react-three/fiber";
@@ -14,6 +15,10 @@ import { CANVAS_BACKGROUNDS } from "../../constants/backgrounds";
 import { clamp } from "../../lib/math";
 import { Mini3DRootScene, ShadowMapController } from "./Mini3DRootScene";
 import {
+  CAMERA_DISTANCE_SCALE_DEFAULT,
+  CAMERA_DISTANCE_SCALE_MAX,
+  CAMERA_DISTANCE_SCALE_MIN,
+  CAMERA_DISTANCE_WHEEL_SENSITIVITY,
   CONVERGENCE_BASE_TOTAL_MS,
   DEFAULT_PITCH,
   DEFAULT_YAW,
@@ -29,6 +34,15 @@ import { buildSceneLayout } from "./sceneLayout";
 import type { CssVars, DragState, Mini3DOverlayProps, OverlayPhase } from "./mini3dTypes";
 import "./Mini3DOverlay.scss";
 
+type TouchPoint = { x: number; y: number };
+type PinchState = { startDistance: number; startScale: number };
+
+function getDistanceBetweenTouches(points: TouchPoint[]): number {
+  if (points.length < 2) return 0;
+  const [a, b] = points;
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
 export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
   const { objects, draggingObjectId } = useBoard();
   const { showMini3d, showMini3dFloor, showMini3dShadows, showMini3dSurfaceDetail, background } = useUi();
@@ -42,6 +56,9 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
   const showMini3dRef = useRef(showMini3d);
   const prevShowMini3dRef = useRef(false);
   const closeFadeMsRef = useRef(CONVERGENCE_BASE_TOTAL_MS);
+  const distanceScaleRef = useRef(CAMERA_DISTANCE_SCALE_DEFAULT);
+  const activeTouchPointsRef = useRef<Map<number, TouchPoint>>(new Map());
+  const pinchRef = useRef<PinchState | null>(null);
 
   const [isVisible, setIsVisible] = useState(showMini3d);
   const [phase, setPhase] = useState<OverlayPhase>("closing");
@@ -90,6 +107,9 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
     if (showMini3d) {
       if (wasShown) return;
       clearCloseTimer();
+      distanceScaleRef.current = CAMERA_DISTANCE_SCALE_DEFAULT;
+      activeTouchPointsRef.current.clear();
+      pinchRef.current = null;
       setIsVisible(true);
       setPhase("opening");
       setConvergenceRunId((value) => value + 1);
@@ -105,6 +125,8 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
     if (!wasShown || !isVisible) return;
     setIsFullscreen(false);
     dragRef.current = null;
+    activeTouchPointsRef.current.clear();
+    pinchRef.current = null;
     setPhase("closing");
     setConvergenceRunId((value) => value + 1);
     closeFadeMsRef.current = convergenceTotalMs;
@@ -129,18 +151,44 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
     setIsFullscreen((v) => !v);
   }, []);
 
+  const setDistanceScale = useCallback((nextScale: number) => {
+    distanceScaleRef.current = clamp(nextScale, CAMERA_DISTANCE_SCALE_MIN, CAMERA_DISTANCE_SCALE_MAX);
+  }, []);
+
+  const handleWheel = useCallback((e: ReactWheelEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const factor = Math.exp(e.deltaY * CAMERA_DISTANCE_WHEEL_SENSITIVITY);
+    setDistanceScale(distanceScaleRef.current * factor);
+  }, [setDistanceScale]);
+
   const handlePointerDown = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
     if (e.button === 2) return;
     e.preventDefault();
     e.stopPropagation();
 
-    dragRef.current = {
-      pointerId: e.pointerId,
-      startX: e.clientX,
-      startY: e.clientY,
-      startYaw: yawRef.current,
-      startPitch: pitchRef.current,
-    };
+    if (e.pointerType === "touch") {
+      activeTouchPointsRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      const points = [...activeTouchPointsRef.current.values()];
+      if (points.length >= 2) {
+        const startDistance = getDistanceBetweenTouches(points);
+        if (startDistance > 0) {
+          pinchRef.current = { startDistance, startScale: distanceScaleRef.current };
+          dragRef.current = null;
+        }
+      }
+    }
+
+    const shouldStartDrag = e.pointerType !== "touch" || activeTouchPointsRef.current.size < 2;
+    if (shouldStartDrag) {
+      dragRef.current = {
+        pointerId: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        startYaw: yawRef.current,
+        startPitch: pitchRef.current,
+      };
+    }
 
     try {
       containerRef.current?.setPointerCapture(e.pointerId);
@@ -150,6 +198,30 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
   }, []);
 
   const handlePointerMove = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === "touch" && activeTouchPointsRef.current.has(e.pointerId)) {
+      activeTouchPointsRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      const points = [...activeTouchPointsRef.current.values()];
+      if (points.length >= 2) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!pinchRef.current) {
+          const startDistance = getDistanceBetweenTouches(points);
+          if (startDistance > 0) {
+            pinchRef.current = { startDistance, startScale: distanceScaleRef.current };
+          }
+        }
+
+        const pinch = pinchRef.current;
+        if (!pinch || pinch.startDistance <= 0) return;
+        const distanceNow = getDistanceBetweenTouches(points);
+        if (distanceNow <= 0) return;
+        const pinchRatio = distanceNow / pinch.startDistance;
+        setDistanceScale(pinch.startScale / pinchRatio);
+        return;
+      }
+    }
+
     const drag = dragRef.current;
     if (!drag || drag.pointerId !== e.pointerId) return;
 
@@ -160,13 +232,31 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
     const dy = e.clientY - drag.startY;
     yawRef.current = drag.startYaw - dx * DRAG_SENSITIVITY;
     pitchRef.current = clamp(drag.startPitch + dy * DRAG_SENSITIVITY, MIN_PITCH, MAX_PITCH);
-  }, []);
+  }, [setDistanceScale]);
 
   const handlePointerUp = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
-    const drag = dragRef.current;
-    if (!drag || drag.pointerId !== e.pointerId) return;
+    if (e.pointerType === "touch") {
+      activeTouchPointsRef.current.delete(e.pointerId);
+      if (activeTouchPointsRef.current.size < 2) {
+        pinchRef.current = null;
+        const [remainingPointerId, remainingPoint] = activeTouchPointsRef.current.entries().next().value ?? [];
+        if (typeof remainingPointerId === "number" && remainingPoint) {
+          dragRef.current = {
+            pointerId: remainingPointerId,
+            startX: remainingPoint.x,
+            startY: remainingPoint.y,
+            startYaw: yawRef.current,
+            startPitch: pitchRef.current,
+          };
+        }
+      }
+    }
 
-    dragRef.current = null;
+    const drag = dragRef.current;
+    if (drag && drag.pointerId === e.pointerId) {
+      dragRef.current = null;
+    }
+
     try {
       containerRef.current?.releasePointerCapture(e.pointerId);
     } catch {
@@ -216,6 +306,7 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
+        onWheel={handleWheel}
       >
         <Canvas
           shadows
@@ -234,6 +325,7 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
           <Mini3DRootScene
             yawRef={yawRef}
             pitchRef={pitchRef}
+            distanceScaleRef={distanceScaleRef}
             backgroundTexture={canvasBackground}
             showFloor={showMini3dFloor}
             showFloorDetail={showMini3dSurfaceDetail}
@@ -245,7 +337,9 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
           />
         </Canvas>
 
-        <div className="mini3d-instruction">Drag to orbit objects. Double click to toggle fullscreen.</div>
+        <div className="mini3d-instruction">
+          Drag to orbit. Mouse wheel or pinch to move camera slightly closer/farther. Double click to toggle fullscreen.
+        </div>
       </div>
     </>
   );

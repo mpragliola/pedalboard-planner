@@ -33,6 +33,7 @@ export function ShadowMapController({ enabled }: { enabled: boolean }) {
 export function Mini3DRootScene({
   yawRef,
   pitchRef,
+  distanceScaleRef,
   backgroundTexture,
   showFloor,
   showFloorDetail,
@@ -53,7 +54,8 @@ export function Mini3DRootScene({
     ]
   );
   const fitCameraRef = useRef(new THREE.PerspectiveCamera(45, 1, 0.1, FIT_MAX_DISTANCE));
-  const distanceRef = useRef(layout.orbitDistance);
+  const distanceRef = useRef(layout.orbitDistance * distanceScaleRef.current);
+  const lastDistanceScaleRef = useRef(distanceScaleRef.current);
   const orbitPosRef = useRef(new THREE.Vector3());
   const cameraSpaceRef = useRef(new THREE.Vector3());
   const ndcRef = useRef(new THREE.Vector3());
@@ -105,8 +107,10 @@ export function Mini3DRootScene({
 
   useEffect(() => {
     if (freezeAutoFit) return;
-    distanceRef.current = layout.orbitDistance;
-  }, [freezeAutoFit, layout.orbitDistance]);
+    const scale = distanceScaleRef.current;
+    distanceRef.current = clamp(layout.orbitDistance * scale, 0.2, FIT_MAX_DISTANCE);
+    lastDistanceScaleRef.current = scale;
+  }, [distanceScaleRef, freezeAutoFit, layout.orbitDistance]);
 
   useFrame(() => {
     const perspective = camera as THREE.PerspectiveCamera;
@@ -196,12 +200,20 @@ export function Mini3DRootScene({
       return high;
     };
 
+    const currentScale = distanceScaleRef.current;
+    let targetDistance = distanceRef.current;
     if (!freezeAutoFit) {
-      const targetDistance = findBestDistance();
-      const eased = THREE.MathUtils.lerp(distanceRef.current, targetDistance, DISTANCE_LERP);
-      const delta = clamp(eased - distanceRef.current, -MAX_DISTANCE_STEP, MAX_DISTANCE_STEP);
-      distanceRef.current += delta;
+      targetDistance = clamp(findBestDistance() * currentScale, 0.2, FIT_MAX_DISTANCE);
+      lastDistanceScaleRef.current = currentScale;
+    } else if (Math.abs(currentScale - lastDistanceScaleRef.current) > 1e-6) {
+      const scaleRatio = currentScale / Math.max(0.0001, lastDistanceScaleRef.current);
+      targetDistance = clamp(distanceRef.current * scaleRatio, 0.2, FIT_MAX_DISTANCE);
+      lastDistanceScaleRef.current = currentScale;
     }
+
+    const eased = THREE.MathUtils.lerp(distanceRef.current, targetDistance, DISTANCE_LERP);
+    const delta = clamp(eased - distanceRef.current, -MAX_DISTANCE_STEP, MAX_DISTANCE_STEP);
+    distanceRef.current += delta;
 
     camera.position.copy(setOrbitPosition(orbitPosRef.current, yaw, pitch, distanceRef.current, layout.targetY));
     camera.lookAt(0, layout.targetY, 0);

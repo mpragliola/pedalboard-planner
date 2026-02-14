@@ -40,6 +40,7 @@ export type DragState = {
 export interface Mini3DRootSceneProps {
   yawRef: MutableRefObject<number>;
   pitchRef: MutableRefObject<number>;
+  distanceScaleRef: MutableRefObject<number>;
   backgroundTexture: CanvasBackground;
   showFloor: boolean;
   showFloorDetail: boolean;

@@ -44,6 +44,7 @@ export function AnimatedSceneBox({
   const convergenceStartRef = useRef(0);
   const isConvergenceAnimatingRef = useRef(false);
   const convergenceSourceRef = useRef({ x: box.x, z: box.z });
+  const lastAppliedConvergenceRunRef = useRef(0);
   const hasInitializedRef = useRef(false);
   const isDevice = box.subtype === "device";
   const baseRoughness = isDevice ? DEVICE_ROUGHNESS : BOARD_ROUGHNESS;
@@ -120,10 +121,24 @@ export function AnimatedSceneBox({
     const shift = shiftRef.current;
     if (!shift) return;
 
-    if (
-      convergenceRunId === 0 ||
-      (overlayPhase !== "opening" && overlayPhase !== "closing")
-    ) {
+    if (convergenceRunId === 0) {
+      lastAppliedConvergenceRunRef.current = 0;
+      shift.position.set(0, 0, 0);
+      isConvergenceAnimatingRef.current = false;
+      return;
+    }
+
+    if (convergenceRunId === lastAppliedConvergenceRunRef.current) return;
+
+    const direction =
+      overlayPhase === "closing"
+        ? "out"
+        : (overlayPhase === "opening" || overlayPhase === "open")
+          ? "in"
+          : null;
+
+    if (!direction) {
+      lastAppliedConvergenceRunRef.current = convergenceRunId;
       shift.position.set(0, 0, 0);
       isConvergenceAnimatingRef.current = false;
       return;
@@ -134,7 +149,7 @@ export function AnimatedSceneBox({
     const offsetX = (source.x / magnitude) * CONVERGENCE_OFFSET_DISTANCE;
     const offsetZ = (source.z / magnitude) * CONVERGENCE_OFFSET_DISTANCE;
 
-    if (overlayPhase === "opening") {
+    if (direction === "in") {
       convergenceFromRef.current.set(offsetX, 0, offsetZ);
       convergenceToRef.current.set(0, 0, 0);
     } else {
@@ -145,6 +160,7 @@ export function AnimatedSceneBox({
     shift.position.copy(convergenceFromRef.current);
     convergenceStartRef.current = performance.now() + boxIndex * PER_COMPONENT_DELAY_MS;
     isConvergenceAnimatingRef.current = true;
+    lastAppliedConvergenceRunRef.current = convergenceRunId;
   }, [boxIndex, convergenceRunId, overlayPhase]);
 
   useFrame(() => {
