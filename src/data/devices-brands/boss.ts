@@ -1,4 +1,5 @@
 import type { DeviceTemplate } from "../devices";
+import type { Shape3D } from "../../shape3d";
 import { deviceTemplate, deviceImage } from "../deviceHelpers";
 import { Wdh } from "../../wdh";
 
@@ -226,6 +227,9 @@ function addBossPrefix(name: string): string {
   return `Boss ${name}`;
 }
 
+const BOSS_STEP: Shape3D = { type: "pedal-boss-type", ratio: 0.45 };
+const BOSS_STEP_SIZES: readonly Wdh[] = [WDH_COMPACT, WDH_200, WDH_500];
+
 export const BOSS_DEVICE_TEMPLATES: DeviceTemplate[] = bossDevices.map((d) =>
   deviceTemplate("boss", "Boss", {
     type: d.type,
@@ -233,5 +237,6 @@ export const BOSS_DEVICE_TEMPLATES: DeviceTemplate[] = bossDevices.map((d) =>
     wdh: d.wdh,
     name: addBossPrefix(d.name),
     image: d.image ? deviceImage("boss", d.image) : null,
+    shape: BOSS_STEP_SIZES.includes(d.wdh) ? BOSS_STEP : undefined,
   })
 );

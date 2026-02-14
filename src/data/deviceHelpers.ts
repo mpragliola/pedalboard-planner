@@ -1,4 +1,5 @@
 import type { DeviceTemplate, DeviceType } from "./devices";
+import type { Shape3D } from "../shape3d";
 import { deviceId } from "../lib/slug";
 import type { Wdh } from "../wdh";
 
@@ -10,6 +11,7 @@ export interface DeviceTemplateInput {
   type?: DeviceType;
   name?: string;
   color?: string;
+  shape?: Shape3D;
 }
 
 /**
@@ -17,7 +19,7 @@ export interface DeviceTemplateInput {
  * Id is generated via deviceId(brandSlug, model); name defaults to `${brandName} ${model}`.
  */
 export function deviceTemplate(brandSlug: string, brandName: string, input: DeviceTemplateInput): DeviceTemplate {
-  const { model, wdh, image, name, color } = input;
+  const { model, wdh, image, name, color, shape } = input;
   const type = input.type ?? "pedal";
   return {
     id: deviceId(brandSlug, model),
@@ -28,6 +30,7 @@ export function deviceTemplate(brandSlug: string, brandName: string, input: Devi
     wdh,
     image,
     ...(color != null ? { color } : {}),
+    ...(shape != null ? { shape } : {}),
   };
 }
 

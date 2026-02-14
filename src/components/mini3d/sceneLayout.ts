@@ -1,7 +1,8 @@
 import { parseColor } from "../../lib/color";
 import { normalizeRotation } from "../../lib/geometry";
 import { rectsOverlap, type Rect } from "../../lib/geometry2d";
-import { getObjectDimensions } from "../../lib/objectDimensions";
+import { getObjectDimensions, getTemplateShape } from "../../lib/objectDimensions";
+import type { Shape3D } from "../../shape3d";
 import type { CanvasObjectType } from "../../types";
 import {
   GROUND_Y,
@@ -32,6 +33,7 @@ export function buildSceneLayout(objects: CanvasObjectType[]): SceneLayout {
     rotY: number;
     color: string;
     imageUrl: string | null;
+    shape?: Shape3D;
   };
 
   const rawObjects: RawObject[] = [];
@@ -69,11 +71,13 @@ export function buildSceneLayout(objects: CanvasObjectType[]): SceneLayout {
       boardMaxY = Math.max(boardMaxY, centerY + footprintD / 2);
     }
 
+    const shape = obj.shape ?? getTemplateShape(obj.templateId);
     const fallbackColor = obj.subtype === "board" ? "rgb(96, 106, 120)" : MINI3D_DEFAULT_DEVICE_COLOR;
     const parsed = parseColor(obj.color ?? fallbackColor) ?? MINI3D_PARSE_FALLBACK_COLOR;
     rawObjects.push({
       id: obj.id,
       subtype: obj.subtype,
+      shape,
       rect: {
         minX: centerX - footprintW / 2,
         maxX: centerX + footprintW / 2,
@@ -138,6 +142,7 @@ export function buildSceneLayout(objects: CanvasObjectType[]): SceneLayout {
     rotY: item.rotY,
     color: item.color,
     imageUrl: item.imageUrl,
+    ...(item.shape ? { shape: item.shape } : {}),
   }));
 
   let minBoxY = Infinity;

@@ -18,7 +18,13 @@ export class StateManager {
                 ? localStorage.getItem(this.storageKey)
                 : null;
             if (!raw) return null;
-            return parseState(raw);
+            const parsed = parseState(raw);
+            if (parsed) return parsed;
+            // If persisted data is no longer compatible with the schema, wipe it.
+            if (typeof localStorage !== "undefined") {
+                localStorage.removeItem(this.storageKey);
+            }
+            return null;
         } catch {
             return null;
         }
@@ -41,4 +47,3 @@ export class StateManager {
         }
     }
 }
-

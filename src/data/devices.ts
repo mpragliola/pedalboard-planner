@@ -1,3 +1,4 @@
+import type { Shape3D } from "../shape3d";
 import type { Wdh } from "../wdh";
 import { AMT_DEVICE_TEMPLATES } from "./devices-brands/amt";
 import { ATOMIC_DEVICE_TEMPLATES } from "./devices-brands/atomic";
@@ -69,6 +70,7 @@ export interface DeviceTemplate {
   /** Omitted when template has an image. */
   color?: string;
   image: string | null;
+  shape?: Shape3D;
 }
 
 /** Dimensions are in mm. */

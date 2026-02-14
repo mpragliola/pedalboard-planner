@@ -1,4 +1,5 @@
 import type { CSSProperties, MutableRefObject } from "react";
+import type { Shape3D } from "../../shape3d";
 import type { CanvasBackground } from "../../constants/backgrounds";
 
 export type SceneBox = {
@@ -13,6 +14,7 @@ export type SceneBox = {
   rotY: number;
   color: string;
   imageUrl: string | null;
+  shape?: Shape3D;
 };
 
 export type SceneLayout = {

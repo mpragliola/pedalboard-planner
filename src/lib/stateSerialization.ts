@@ -1,7 +1,7 @@
 /** State serialization + parsing helpers (no storage). */
 import type { CanvasObjectType, Cable } from "../types";
 import type { Offset, Point } from "./vector";
-import { getTemplateImage, getTemplateWdh, hasKnownTemplateDimensions } from "./objectDimensions";
+import { getTemplateImage, getTemplateShape, getTemplateWdh, hasKnownTemplateDimensions } from "./objectDimensions";
 import { isCanvasBackgroundId, type CanvasBackgroundId } from "../constants/backgrounds";
 
 /** Shape of state persisted to storage (e.g. localStorage). */
@@ -41,7 +41,7 @@ function isCustomObject(o: CanvasObjectType): boolean {
 /** Strip image from all objects; keep name only for custom elements. Omit width/depth/height when template has known dimensions (restored from template on load). Round coordinates to 2 decimals. */
 function serializeObjects(objects: CanvasObjectType[]): Record<string, unknown>[] {
   return objects.map((o) => {
-    const { image, name, width, depth, height, pos, ...rest } = o as CanvasObjectType & {
+    const { image, name, width, depth, height, pos, shape: _shape, ...rest } = o as CanvasObjectType & {
       image?: string | null;
       name?: string;
       width?: number;
@@ -97,12 +97,13 @@ function normalizeLoadedObjects(objects: Record<string, unknown>[]): CanvasObjec
     const type = str(o, "type");
     const name = str(o, "name") || `${brand} ${model}`.trim() || type || "Object";
     const image = getTemplateImage(templateId);
+    const shape = getTemplateShape(templateId);
     /* For known templates, always use template dims as source of truth. */
     const wdh = getTemplateWdh(templateId);
     const width = wdh ? wdh[0] : num(o, "width");
     const depth = wdh ? wdh[1] : num(o, "depth");
     const height = wdh ? wdh[2] : num(o, "height");
-    return { ...rest, templateId, type, brand, model, image, name, width, depth, height, pos } as CanvasObjectType;
+    return { ...rest, templateId, type, brand, model, image, name, width, depth, height, pos, ...(shape ? { shape } : {}) } as CanvasObjectType;
   });
 }
 

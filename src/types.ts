@@ -1,5 +1,6 @@
 export type { BoardType } from './data/boards'
 export type { DeviceType } from './data/devices'
+import type { Shape3D } from './shape3d'
 import type { Point } from './lib/vector'
 
 export type ObjectSubtype = 'board' | 'device'
@@ -27,6 +28,7 @@ export interface CanvasObjectType {
   color?: string
   image: string | null
   name: string
+  shape?: Shape3D
 }
 
 export type ConnectorKind =

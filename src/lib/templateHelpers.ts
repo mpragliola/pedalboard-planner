@@ -4,6 +4,7 @@ import type { CanvasObjectType, ObjectSubtype } from "../types";
 import type { BoardTemplate } from "../data/boards";
 import type { DeviceTemplate } from "../data/devices";
 import type { Point } from "./vector";
+import type { Shape3D } from "../shape3d";
 
 /** Global counter for unique object IDs. Uses timestamp prefix to survive HMR. */
 let nextObjectId = 1;
@@ -39,6 +40,7 @@ export function createObjectFromTemplate(
   template: BoardTemplate | DeviceTemplate,
   pos: Point
 ): CanvasObjectType {
+  const shape: Shape3D | undefined = "shape" in template ? (template as DeviceTemplate).shape : undefined;
   return {
     id: generateId(),
     templateId: template.id,
@@ -54,6 +56,7 @@ export function createObjectFromTemplate(
     rotation: 0,
     ...(template.image ? {} : { color: template.color ?? DEFAULT_OBJECT_COLOR }),
     image: template.image ? `${IMAGE_PREFIX[subtype]}${template.image}` : null,
+    ...(shape ? { shape } : {}),
   };
 }
 

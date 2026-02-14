@@ -1,7 +1,8 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useFrame, useLoader } from "@react-three/fiber";
 import { clamp } from "../../lib/math";
+import { getShapeGeometry } from "./shapes/shapeGeometry";
 import {
   BOARD_METALNESS,
   BOARD_ROUGHNESS,
@@ -48,6 +49,14 @@ export function AnimatedSceneBox({
   const hasInitializedRef = useRef(false);
   const isDevice = box.subtype === "device";
   const hasTopTexture = Boolean(box.imageUrl);
+  const shape = box.shape;
+  const isBox = !shape || shape.type === "box";
+  const shapeKey = isBox ? null : JSON.stringify([box.width, box.height, box.depth, shape]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const customGeometry = useMemo(
+    () => (isBox || !shape) ? null : getShapeGeometry(box.width, box.height, box.depth, shape),
+    [shapeKey],
+  );
   const baseRoughness = isDevice ? DEVICE_ROUGHNESS : BOARD_ROUGHNESS;
   const baseMetalness = isDevice ? DEVICE_METALNESS : BOARD_METALNESS;
   const topImageRoughness = isDevice ? DEVICE_TOP_IMAGE_ROUGHNESS : BOARD_TOP_IMAGE_ROUGHNESS;
@@ -59,6 +68,8 @@ export function AnimatedSceneBox({
 
   useEffect(() => {
     if (!box.imageUrl) return;
+    // Keep TextureLoader's expected image orientation explicit for top UV mapping.
+    topTexture.flipY = true;
     topTexture.colorSpace = THREE.SRGBColorSpace;
     topTexture.wrapS = THREE.ClampToEdgeWrapping;
     topTexture.wrapT = THREE.ClampToEdgeWrapping;
@@ -215,7 +226,10 @@ export function AnimatedSceneBox({
         position={initialPositionRef.current}
         rotation={initialRotationRef.current}
       >
-        <boxGeometry args={[box.width, box.height, box.depth]} />
+        {customGeometry
+          ? <primitive object={customGeometry} attach="geometry" />
+          : <boxGeometry args={[box.width, box.height, box.depth]} />
+        }
         <meshStandardMaterial
           attach="material-0"
           color={box.color}
