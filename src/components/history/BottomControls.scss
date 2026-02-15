@@ -6,13 +6,31 @@
 }
 
 .bottom-controls {
+  --bottom-control-size: #{vars.$history-button-size};
+  --bottom-controls-gap: #{vars.$space-6};
+  --bottom-controls-padding: #{vars.$space-4};
   bottom: vars.$floating-panel-offset;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: vars.$space-6;
-  padding: vars.$space-4;
+  gap: var(--bottom-controls-gap);
+  padding: var(--bottom-controls-padding);
   background: vars.$panel-bg;
   border-radius: vars.$radius-2xl;
   box-shadow: vars.$panel-shadow;
+}
+
+@media (max-width: 1024px) {
+  .bottom-controls {
+    --bottom-control-size: 28px;
+    --bottom-controls-gap: #{vars.$space-4};
+    --bottom-controls-padding: #{vars.$space-2};
+    bottom: vars.$floating-panel-offset-sm;
+  }
+}
+
+@media (max-width: 768px) {
+  .bottom-controls {
+    --bottom-control-size: 24px;
+  }
 }

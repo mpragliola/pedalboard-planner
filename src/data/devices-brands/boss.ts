@@ -125,7 +125,9 @@ const bossPedalsSlXs: BossRowBase[] = [
 
 // ——— Multifx (SY, VE) ———
 const bossMultifxSyVe: BossRowBase[] = [
-  { model: "SY-1000", name: "SY-1000", wdh: WDH_SY1000, image: "boss-sy-1000.png" },
+  { model: "SY-1000", name: "SY-1000", wdh: WDH_SY1000, image: "boss-sy-1000.png", 
+    shape: { type: "rail-wedge", position: 0.5, rail: 0.25, ratio: 0.3 }
+   },
   { model: "VE-22", name: "VE-22 Vocal Performer", wdh: WDH_VE22, image: "boss-ve-22.png" },
   { model: "VE-500", name: "VE-500 Vocal Performer", wdh: WDH_500, image: "boss-ve-500.png" },
   { model: "SY-300", name: "SY-300", wdh: [420, 240, 70], image: "boss-sy_300_top_tn.png" },
@@ -237,6 +239,6 @@ export const BOSS_DEVICE_TEMPLATES: DeviceTemplate[] = bossDevices.map((d) =>
     wdh: d.wdh,
     name: addBossPrefix(d.name),
     image: d.image ? deviceImage("boss", d.image) : null,
-    shape: BOSS_STEP_SIZES.includes(d.wdh) ? BOSS_STEP : undefined,
+    shape: BOSS_STEP_SIZES.includes(d.wdh) ? BOSS_STEP : d.shape,
   })
 );

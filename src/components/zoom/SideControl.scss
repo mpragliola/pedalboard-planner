@@ -1,16 +1,16 @@
 @use "../../styles/variables" as vars;
 
 .side-control {
-  width: vars.$zoom-button-size;
-  height: vars.$zoom-button-size;
-  min-width: vars.$zoom-button-size;
-  min-height: vars.$zoom-button-size;
+  width: var(--side-control-size, #{vars.$zoom-button-size});
+  height: var(--side-control-size, #{vars.$zoom-button-size});
+  min-width: var(--side-control-size, #{vars.$zoom-button-size});
+  min-height: var(--side-control-size, #{vars.$zoom-button-size});
   flex-shrink: 0;
   border: none;
   border-radius: 50%;
   background: vars.$panel-bg;
   box-shadow: vars.$shadow-control;
-  font-size: 1.5rem;
+  font-size: calc(var(--side-control-size, #{vars.$zoom-button-size}) * 0.52);
   font-weight: 300;
   line-height: 1;
   cursor: pointer;
@@ -50,6 +50,6 @@
 }
 
 .side-control.zoom-out {
-  font-size: 2rem;
-  padding-bottom: vars.$space-4;
+  font-size: calc(var(--side-control-size, #{vars.$zoom-button-size}) * 0.68);
+  padding-bottom: vars.$space-2;
 }

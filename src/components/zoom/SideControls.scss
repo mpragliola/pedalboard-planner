@@ -6,12 +6,14 @@
 }
 
 .side-controls {
+  --side-control-size: #{vars.$zoom-button-size};
+  --side-control-gap: #{vars.$space-8};
   bottom: vars.$floating-panel-offset;
   right: vars.$floating-panel-offset;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: vars.$space-8;
+  gap: var(--side-control-gap);
 }
 
 .view-tools-group,
@@ -20,7 +22,7 @@
   display: flex;
   flex-direction: row-reverse;
   align-items: center;
-  gap: vars.$space-8;
+  gap: var(--side-control-gap);
 }
 
 .view-tools-secondary,
@@ -29,7 +31,7 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: vars.$space-8;
+  gap: var(--side-control-gap);
   max-width: 0;
   overflow: hidden;
   opacity: 0;
@@ -39,8 +41,8 @@
 }
 
 .view-tools-group.expanded .view-tools-secondary {
-  max-width: vars.$zoom-secondary-max-width;
-  /* 44*4 + 8*3 for 4 buttons */
+  max-width: calc(var(--side-control-size) * 4 + var(--side-control-gap) * 3);
+  /* dynamic size for 4 buttons */
   overflow: visible;
   opacity: 1;
   transition:
@@ -49,8 +51,8 @@
 }
 
 .mini3d-tools-group.expanded .mini3d-tools-secondary {
-  max-width: calc(vars.$zoom-button-size * 3 + vars.$space-8 * 2);
-  /* 44*3 + 8*2 for three secondary 3D action buttons */
+  max-width: calc(var(--side-control-size) * 3 + var(--side-control-gap) * 2);
+  /* dynamic size for 3 buttons */
   overflow: visible;
   opacity: 1;
   transition:
@@ -59,8 +61,8 @@
 }
 
 .measurement-tools-group.expanded .measurement-tools-secondary {
-  max-width: vars.$zoom-measurement-max-width;
-  /* 44*2 + 8 for 2 buttons (Ruler, Line ruler) */
+  max-width: calc(var(--side-control-size) * 2 + var(--side-control-gap));
+  /* dynamic size for 2 buttons */
   overflow: visible;
   opacity: 1;
   transition:
@@ -86,4 +88,20 @@
 .side-control.view-group-toggle.open.active,
 .side-control.measurement-group-toggle.open.active {
   color: vars.$color-accent-muted;
+}
+
+@media (max-width: 1024px) {
+  .side-controls {
+    --side-control-size: 40px;
+    --side-control-gap: #{vars.$space-6};
+    bottom: vars.$floating-panel-offset-sm;
+    right: vars.$floating-panel-offset-sm;
+  }
+}
+
+@media (max-width: 768px) {
+  .side-controls {
+    --side-control-size: 34px;
+    --side-control-gap: #{vars.$space-4};
+  }
 }

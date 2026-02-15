@@ -8,6 +8,7 @@ import "./SelectionToolbar.scss";
 
 const TOOLBAR_GAP = 12;
 const TOOLBAR_HEIGHT = 40;
+const TOUCH_TOOLBAR_SCALE = 1.25;
 
 interface CableToolbarProps {
   cable: Cable;
@@ -19,7 +20,7 @@ interface CableToolbarProps {
 
 export function CableToolbar({ cable, onEdit, onDelete, onSendToBack, onBringToFront }: CableToolbarProps) {
   const { requestConfirmation } = useConfirmation();
-  const scaleUp = useMediaQuery("(max-width: 768px)");
+  const scaleUp = useMediaQuery("(max-width: 600px)");
 
   const bounds = getBoundingBoxOfPoints(cable.segments);
   const center =
@@ -73,7 +74,7 @@ export function CableToolbar({ cable, onEdit, onDelete, onSendToBack, onBringToF
       style={{
         left: `${left}px`,
         top: `${top}px`,
-        transform: scaleUp ? `${translateY} scale(1.5)` : translateY,
+        transform: scaleUp ? `${translateY} scale(${TOUCH_TOOLBAR_SCALE})` : translateY,
         transformOrigin: "center center",
       }}
       onPointerDown={(e) => e.stopPropagation()}

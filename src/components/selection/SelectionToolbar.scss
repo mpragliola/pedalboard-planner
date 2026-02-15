@@ -12,10 +12,3 @@
   box-shadow: vars.$shadow-float-strong;
   pointer-events: auto;
 }
-
-@media (max-width: 768px) {
-  .selection-toolbar {
-    transform: scale(1.5);
-    transform-origin: center center;
-  }
-}

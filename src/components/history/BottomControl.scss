@@ -1,12 +1,12 @@
 @use "../../styles/variables" as vars;
 
 .bottom-control {
-  width: vars.$history-button-size;
-  height: vars.$history-button-size;
+  width: var(--bottom-control-size, #{vars.$history-button-size});
+  height: var(--bottom-control-size, #{vars.$history-button-size});
   border: none;
   border-radius: 50%;
   background: transparent;
-  font-size: 1.1rem;
+  font-size: calc(var(--bottom-control-size, #{vars.$history-button-size}) * 0.62);
   color: vars.$color-text;
   cursor: pointer;
   display: flex;

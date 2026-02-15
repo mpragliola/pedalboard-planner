@@ -8,6 +8,7 @@ import "./SelectionToolbar.scss";
 
 const TOOLBAR_GAP = 8;
 const TOOLBAR_HEIGHT = 36;
+const TOUCH_TOOLBAR_SCALE = 1.25;
 
 const ICONS = {
   rotate: faRotateRight,
@@ -26,7 +27,7 @@ interface SelectionToolbarProps {
 
 function SelectionToolbar({ obj, onDelete, onRotate, onSendToBack, onBringToFront }: SelectionToolbarProps) {
   const { requestConfirmation } = useConfirmation();
-  const scaleUp = useMediaQuery("(max-width: 768px)");
+  const scaleUp = useMediaQuery("(max-width: 600px)");
 
   const [width, depth] = getObjectDimensions(obj);
   const centerX = obj.pos.x + width / 2;
@@ -69,7 +70,7 @@ function SelectionToolbar({ obj, onDelete, onRotate, onSendToBack, onBringToFron
       style={{
         left: `${left}px`,
         top: `${top}px`,
-        transform: scaleUp ? "translate(-50%, 0) scale(1.5)" : "translate(-50%, 0)",
+        transform: scaleUp ? `translate(-50%, 0) scale(${TOUCH_TOOLBAR_SCALE})` : "translate(-50%, 0)",
         transformOrigin: "center center",
       }}
       onPointerDown={(e) => e.stopPropagation()}
