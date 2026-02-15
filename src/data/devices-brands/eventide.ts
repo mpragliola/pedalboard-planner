@@ -8,7 +8,7 @@ const WDH_FACTOR: [number, number, number] = [190, 122, 54];
 const WDH_H9_MAX: [number, number, number] = [118, 133, 50];
 
 const eventideRows: { model: string; wdh: [number, number, number]; image: string, shape?: Shape3D }[] = [
-  { model: "H90", wdh: WDH_H9, image: "h90-harmonizer.png", shape: { type: "wedge", ratio: 0.7 } },
+  { model: "H90", wdh: WDH_H9, image: "h90-harmonizer.png", shape: { type: "wedge", ratio: 0.7  } },
   { model: "H9 Max", wdh: WDH_H9_MAX, image: "h9-MAX-harmonizer.png" },
   { model: "Micropitch", wdh: WDH_PEDAL, image: "eventide-micropitch.png" },
   { model: "UltraTap", wdh: WDH_PEDAL, image: "eventide-ultratap.png" },

@@ -9,7 +9,7 @@ export const WDH_NANO_CORTEX: Wdh = [144, 103, 62];
 
 const neuralRows: { model: string; wdh: Wdh; image?: string, shape?: Shape3D }[] = [
   { model: "Quad Cortex", wdh: WDH_QUAD_CORTEX, image: "quadcortex.png", 
-      shape: { type: "half-wedge", topRatio: 0.4, frontRatio: 0.5 } },
+      shape: { type: "half-wedge", topRatio: 0.36, frontRatio: 0.7 } },
   { model: "Mini Cortex", wdh: WDH_MINI_CORTEX, image: "minicortex.png" },
   { model: "Nano Cortex", wdh: WDH_NANO_CORTEX, image: "neural-nano-cortex.png" },
 ];
