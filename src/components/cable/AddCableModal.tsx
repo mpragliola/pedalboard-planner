@@ -275,6 +275,17 @@ export function AddCableModal({ open, segments, onConfirm, onCancel, initialCabl
     onConfirm(cable);
   };
 
+  const handleSwapConnectors = () => {
+    const nextConnectorA = connectorB;
+    const nextConnectorB = connectorA;
+    const nextConnectorAName = connectorBName;
+    const nextConnectorBName = connectorAName;
+    setConnectorA(nextConnectorA);
+    setConnectorB(nextConnectorB);
+    setConnectorAName(nextConnectorAName);
+    setConnectorBName(nextConnectorBName);
+  };
+
   if (!open) return null;
 
   return (
@@ -305,8 +316,19 @@ export function AddCableModal({ open, segments, onConfirm, onCancel, initialCabl
           </div>
         </div>
 
-        <div className="add-cable-row add-cable-template-row">
-          <span className="add-cable-label">Template</span>
+        <div className="add-cable-endpoints">
+          <div className="add-cable-endpoints-head">
+            <span className="add-cable-label">Endpoints</span>
+            <button
+              type="button"
+              className="add-cable-swap-btn"
+              onClick={handleSwapConnectors}
+              title="Swap connector A and B"
+              aria-label="Swap connector A and B"
+            >
+              Swap A/B
+            </button>
+          </div>
           <div className="add-cable-template-buttons" role="group" aria-label="Cable connector templates">
             {CABLE_CONNECTOR_TEMPLATES.map((template) => {
               const active = connectorA === template.connectorA && connectorB === template.connectorB;
@@ -327,10 +349,6 @@ export function AddCableModal({ open, segments, onConfirm, onCancel, initialCabl
               );
             })}
           </div>
-        </div>
-
-        <div className="add-cable-endpoints">
-          <span className="add-cable-label">Endpoints</span>
           <div className="add-cable-endpoint">
             <span
               className="add-cable-endpoint-badge add-cable-endpoint-badge-a"

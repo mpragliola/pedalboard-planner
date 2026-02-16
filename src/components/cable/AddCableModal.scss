@@ -103,13 +103,6 @@
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
 }
 
-/* ---- Templates ---- */
-.add-cable-row.add-cable-template-row {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
 .add-cable-template-buttons {
   display: flex;
   flex-wrap: wrap;
@@ -153,6 +146,48 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.add-cable-endpoints-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.add-cable-endpoints-head .add-cable-label {
+  margin-bottom: 0;
+}
+
+.add-cable-endpoints .add-cable-template-buttons {
+  justify-content: flex-end;
+}
+
+.add-cable-swap-btn {
+  min-height: 32px;
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--add-cable-muted, vars.$color-text-secondary);
+  background: vars.$color-surface;
+  border: 1px solid var(--add-cable-border, vars.$color-surface-outline);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.add-cable-swap-btn:hover {
+  color: vars.$color-text-secondary-dark;
+  border-color: var(--add-cable-muted, vars.$color-text-tertiary);
+  background: var(--add-cable-badge-bg, vars.$color-surface-subtle);
+}
+
+.add-cable-swap-btn:focus {
+  outline: none;
+  border-color: var(--add-cable-focus, vars.$color-primary-alt);
+  box-shadow: 0 0 0 3px vars.$primary-alt-15;
 }
 
 .add-cable-endpoint {

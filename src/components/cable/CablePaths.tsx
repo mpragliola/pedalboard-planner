@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { CONNECTOR_ICON_MAP } from "../../constants";
 import { CABLE_TERMINAL_START_COLOR, CABLE_TERMINAL_END_COLOR } from "../../constants/cables";
 import { buildRoundedPathD, buildSmoothPathD, DEFAULT_JOIN_RADIUS } from "../../lib/polylinePath";
 import {
@@ -54,12 +55,17 @@ type FlashPoint = {
 type HandleType = "start" | "mid" | "end";
 
 /** Distance from anchor to connector label (mm). */
-const LABEL_OFFSET_MM = 10;
+const LABEL_OFFSET_MM = 14;
+/** Connector icon size rendered beneath endpoint labels (canvas mm units). */
+const LABEL_ICON_SIZE_MM = 11;
+/** Vertical distance from label center to icon top (canvas mm units). */
+const LABEL_ICON_GAP_MM = 3;
 
 /** Connector label position and text for one cable endpoint. */
 interface ConnectorLabel {
   position: Point;
   text: string;
+  kind: Cable["connectorA"];
 }
 
 /** Compute connector label positions: opposite to the cable direction at each anchor. */
@@ -85,10 +91,12 @@ function connectorLabelsForCable(cable: Cable): { a: ConnectorLabel; b: Connecto
     a: {
       position: aPos,
       text: textA,
+      kind: cable.connectorA,
     },
     b: {
       position: bPos,
       text: textB,
+      kind: cable.connectorB,
     },
   };
 }
@@ -499,26 +507,48 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
       {connectorLabels.map(({ id, a, b }) => (
         <g key={`labels-${id}`} className="cable-connector-labels" style={{ pointerEvents: "none" }}>
           {a.text ? (
-            <text
-              x={a.position.x}
-              y={a.position.y}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              className="cable-connector-label"
-            >
-              {a.text}
-            </text>
+            <g className="cable-connector-label-group">
+              <text
+                x={a.position.x}
+                y={a.position.y}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                className="cable-connector-label"
+              >
+                {a.text}
+              </text>
+              <image
+                href={CONNECTOR_ICON_MAP[a.kind]}
+                x={a.position.x - LABEL_ICON_SIZE_MM / 2}
+                y={a.position.y + LABEL_ICON_GAP_MM}
+                width={LABEL_ICON_SIZE_MM}
+                height={LABEL_ICON_SIZE_MM}
+                preserveAspectRatio="xMidYMid meet"
+                className="cable-connector-label-icon"
+              />
+            </g>
           ) : null}
           {b.text ? (
-            <text
-              x={b.position.x}
-              y={b.position.y}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              className="cable-connector-label"
-            >
-              {b.text}
-            </text>
+            <g className="cable-connector-label-group">
+              <text
+                x={b.position.x}
+                y={b.position.y}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                className="cable-connector-label"
+              >
+                {b.text}
+              </text>
+              <image
+                href={CONNECTOR_ICON_MAP[b.kind]}
+                x={b.position.x - LABEL_ICON_SIZE_MM / 2}
+                y={b.position.y + LABEL_ICON_GAP_MM}
+                width={LABEL_ICON_SIZE_MM}
+                height={LABEL_ICON_SIZE_MM}
+                preserveAspectRatio="xMidYMid meet"
+                className="cable-connector-label-icon"
+              />
+            </g>
           ) : null}
         </g>
       ))}

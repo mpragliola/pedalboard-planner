@@ -2,15 +2,19 @@
 
 /* Connector labels next to cable anchors (coordinates in canvas mm, so font in user units) */
 .cable-paths-svg {
+  .cable-connector-label-icon {
+    opacity: 0.68;
+  }
+
   .cable-connector-label {
     fill: vars.$color-text;
-    font-size: 4.5px;
+    font-size: 5px;
     font-family: inherit;
-    font-weight: 500;
+    font-weight: 600;
     user-select: none;
     paint-order: stroke;
-    stroke: vars.$white-90;
-    stroke-width: 0.9;
+    stroke: rgba(255, 255, 255, 0.98);
+    stroke-width: 1.2;
   }
 
   .cable-handle-halo {
