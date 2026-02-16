@@ -5,6 +5,7 @@ import { ModalContext } from "../../context/ModalContext";
 import { CONNECTOR_KIND_OPTIONS, CONNECTOR_NAME_OPTIONS } from "../../constants";
 import {
   CABLE_COLORS,
+  CABLE_CONNECTOR_TEMPLATES,
   CABLE_COLOR_OPTIONS,
   CABLE_TERMINAL_START_COLOR,
   CABLE_TERMINAL_END_COLOR,
@@ -15,6 +16,7 @@ import { ConnectorIcon } from "../common/ConnectorIcon";
 import "./AddCableModal.scss";
 
 const DEFAULT_COLOR = CABLE_COLORS[0].hex;
+const DEFAULT_CONNECTOR: ConnectorKind = "mono jack (TS)";
 
 function nextCableId(): string {
   return `cable-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -230,8 +232,8 @@ export interface AddCableModalProps {
 export function AddCableModal({ open, segments, onConfirm, onCancel, initialCable }: AddCableModalProps) {
   const isEdit = Boolean(initialCable);
   const [color, setColor] = useState(DEFAULT_COLOR);
-  const [connectorA, setConnectorA] = useState<ConnectorKind>("mono jack (TS)");
-  const [connectorB, setConnectorB] = useState<ConnectorKind>("mono jack (TS)");
+  const [connectorA, setConnectorA] = useState<ConnectorKind>(DEFAULT_CONNECTOR);
+  const [connectorB, setConnectorB] = useState<ConnectorKind>(DEFAULT_CONNECTOR);
   const [connectorAName, setConnectorAName] = useState("");
   const [connectorBName, setConnectorBName] = useState("");
   const prevOpenRef = useRef(false);
@@ -249,8 +251,8 @@ export function AddCableModal({ open, segments, onConfirm, onCancel, initialCabl
         setConnectorBName(initialCable.connectorBName ?? "");
       } else {
         setColor(DEFAULT_COLOR);
-        setConnectorA("mono jack (TS)");
-        setConnectorB("mono jack (TS)");
+        setConnectorA(DEFAULT_CONNECTOR);
+        setConnectorB(DEFAULT_CONNECTOR);
         setConnectorAName("");
         setConnectorBName("");
       }
@@ -300,6 +302,30 @@ export function AddCableModal({ open, segments, onConfirm, onCancel, initialCabl
                 aria-pressed={color === cableColor.hex}
               />
             ))}
+          </div>
+        </div>
+
+        <div className="add-cable-row add-cable-template-row">
+          <span className="add-cable-label">Template</span>
+          <div className="add-cable-template-buttons" role="group" aria-label="Cable connector templates">
+            {CABLE_CONNECTOR_TEMPLATES.map((template) => {
+              const active = connectorA === template.connectorA && connectorB === template.connectorB;
+              return (
+                <button
+                  key={template.name}
+                  type="button"
+                  className={`add-cable-template-btn${active ? " add-cable-template-btn-active" : ""}`}
+                  onClick={() => {
+                    setConnectorA(template.connectorA);
+                    setConnectorB(template.connectorB);
+                  }}
+                  title={`${template.connectorA} -> ${template.connectorB}`}
+                  aria-pressed={active}
+                >
+                  {template.name}
+                </button>
+              );
+            })}
           </div>
         </div>
 

@@ -103,6 +103,51 @@
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
 }
 
+/* ---- Templates ---- */
+.add-cable-row.add-cable-template-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.add-cable-template-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.add-cable-template-btn {
+  padding: 8px 12px;
+  min-height: 36px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: vars.$color-text-secondary-dark;
+  background: vars.$color-surface;
+  border: 1px solid var(--add-cable-border, vars.$color-surface-outline);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.add-cable-template-btn:hover {
+  border-color: var(--add-cable-muted, vars.$color-text-tertiary);
+  background: var(--add-cable-badge-bg, vars.$color-surface-subtle);
+}
+
+.add-cable-template-btn:focus {
+  outline: none;
+  border-color: var(--add-cable-focus, vars.$color-primary-alt);
+  box-shadow: 0 0 0 3px vars.$primary-alt-15;
+}
+
+.add-cable-template-btn-active {
+  color: vars.$color-primary-strong;
+  border-color: var(--add-cable-focus, vars.$color-primary-alt);
+  background: rgba(vars.$color-primary-alt, 0.1);
+}
+
 /* —— Endpoints —— */
 .add-cable-endpoints {
   display: flex;

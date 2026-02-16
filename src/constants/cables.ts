@@ -1,3 +1,5 @@
+import type { ConnectorKind } from "../types";
+
 /** Cable terminal colors: start (A) = light green, end (B) = light orange. Used on canvas dots and in Add/Edit cable modal. */
 export const CABLE_TERMINAL_START_COLOR = "#9ee69e";
 export const CABLE_TERMINAL_END_COLOR = "#ffb74d";
@@ -30,3 +32,16 @@ export const CABLE_COLORS: CableColor[] = [
 
 /** Hex color values for backwards compatibility. Derived from CABLE_COLORS. */
 export const CABLE_COLOR_OPTIONS: string[] = CABLE_COLORS.map((c) => c.hex);
+
+export interface CableConnectorTemplate {
+  name: string;
+  connectorA: ConnectorKind;
+  connectorB: ConnectorKind;
+}
+
+/** One-tap templates that prefill endpoint connector kinds in Add/Edit Cable modal. */
+export const CABLE_CONNECTOR_TEMPLATES: CableConnectorTemplate[] = [
+  { name: "Mono jack", connectorA: "mono jack (TS)", connectorB: "mono jack (TS)" },
+  { name: "Stereo jack", connectorA: "stereo jack (TRS)", connectorB: "stereo jack (TRS)" },
+  { name: "XLR", connectorA: "XLR male", connectorB: "XLR female" },
+];
