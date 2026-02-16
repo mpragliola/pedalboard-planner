@@ -35,22 +35,29 @@ export function Mini3DRootScene({
   pitchRef,
   distanceScaleRef,
   backgroundTexture,
+  useLowMemoryTextures,
   showFloor,
   showFloorDetail,
+  showFloorSpecular,
   showShadows,
+  disableObjectTextures,
+  shadowMapSize,
   layout,
   freezeAutoFit,
   overlayPhase,
   convergenceRunId,
+  maxObjects,
 }: Mini3DRootSceneProps) {
-  const { camera, size, gl } = useThree();
+  const { camera, size, gl, invalidate } = useThree();
   const proFloorTexture = backgroundTexture.mini3d?.type === "pro" ? backgroundTexture.mini3d : null;
+  const shouldLoadProFloorRoughnessMap = showFloorSpecular && Boolean(proFloorTexture);
+  const shouldLoadProFloorBumpMap = showFloorDetail && Boolean(proFloorTexture);
   const [floorColorTexture, floorRoughnessTexture, floorHeightTexture] = useLoader(
     THREE.TextureLoader,
     [
-      backgroundTexture.imageUrl,
-      proFloorTexture?.roughnessMapUrl ?? EMPTY_IMAGE_DATA_URI,
-      proFloorTexture?.displacementMapUrl ?? EMPTY_IMAGE_DATA_URI,
+      useLowMemoryTextures ? backgroundTexture.previewImageUrl : backgroundTexture.imageUrl,
+      shouldLoadProFloorRoughnessMap ? (proFloorTexture?.roughnessMapUrl ?? EMPTY_IMAGE_DATA_URI) : EMPTY_IMAGE_DATA_URI,
+      shouldLoadProFloorBumpMap ? (proFloorTexture?.displacementMapUrl ?? EMPTY_IMAGE_DATA_URI) : EMPTY_IMAGE_DATA_URI,
     ]
   );
   const fitCameraRef = useRef(new THREE.PerspectiveCamera(45, 1, 0.1, FIT_MAX_DISTANCE));
@@ -82,28 +89,54 @@ export function Mini3DRootScene({
 
   useLayoutEffect(() => {
     const repeat = Math.max(2, GROUND_PLANE_SIZE / GROUND_TILE_WORLD_SIZE);
-    const anisotropy = Math.min(8, gl.capabilities.getMaxAnisotropy());
+    const anisotropy = useLowMemoryTextures ? 1 : Math.min(8, gl.capabilities.getMaxAnisotropy());
 
     floorColorTexture.colorSpace = THREE.SRGBColorSpace;
     floorColorTexture.wrapS = THREE.RepeatWrapping;
     floorColorTexture.wrapT = THREE.RepeatWrapping;
     floorColorTexture.repeat.set(repeat, repeat);
+    floorColorTexture.generateMipmaps = !useLowMemoryTextures;
+    floorColorTexture.minFilter = useLowMemoryTextures ? THREE.LinearFilter : THREE.LinearMipmapLinearFilter;
+    floorColorTexture.magFilter = THREE.LinearFilter;
     floorColorTexture.anisotropy = anisotropy;
     floorColorTexture.needsUpdate = true;
 
-    floorRoughnessTexture.wrapS = THREE.RepeatWrapping;
-    floorRoughnessTexture.wrapT = THREE.RepeatWrapping;
-    floorRoughnessTexture.repeat.set(repeat, repeat);
-    floorRoughnessTexture.anisotropy = anisotropy;
-    floorRoughnessTexture.needsUpdate = true;
+    if (shouldLoadProFloorRoughnessMap) {
+      floorRoughnessTexture.wrapS = THREE.RepeatWrapping;
+      floorRoughnessTexture.wrapT = THREE.RepeatWrapping;
+      floorRoughnessTexture.repeat.set(repeat, repeat);
+      floorRoughnessTexture.generateMipmaps = !useLowMemoryTextures;
+      floorRoughnessTexture.minFilter = useLowMemoryTextures ? THREE.LinearFilter : THREE.LinearMipmapLinearFilter;
+      floorRoughnessTexture.magFilter = THREE.LinearFilter;
+      floorRoughnessTexture.anisotropy = anisotropy;
+      floorRoughnessTexture.needsUpdate = true;
+    }
 
-    // Use displacement source as a 2D bump height map with UVs locked to the color map.
-    floorHeightTexture.wrapS = THREE.RepeatWrapping;
-    floorHeightTexture.wrapT = THREE.RepeatWrapping;
-    floorHeightTexture.repeat.set(repeat, repeat);
-    floorHeightTexture.anisotropy = anisotropy;
-    floorHeightTexture.needsUpdate = true;
-  }, [floorColorTexture, floorHeightTexture, floorRoughnessTexture, gl]);
+    if (shouldLoadProFloorBumpMap) {
+      // Use displacement source as a 2D bump height map with UVs locked to the color map.
+      floorHeightTexture.wrapS = THREE.RepeatWrapping;
+      floorHeightTexture.wrapT = THREE.RepeatWrapping;
+      floorHeightTexture.repeat.set(repeat, repeat);
+      floorHeightTexture.generateMipmaps = !useLowMemoryTextures;
+      floorHeightTexture.minFilter = useLowMemoryTextures ? THREE.LinearFilter : THREE.LinearMipmapLinearFilter;
+      floorHeightTexture.magFilter = THREE.LinearFilter;
+      floorHeightTexture.anisotropy = anisotropy;
+      floorHeightTexture.needsUpdate = true;
+    }
+  }, [
+    floorColorTexture,
+    floorHeightTexture,
+    floorRoughnessTexture,
+    gl,
+    shouldLoadProFloorBumpMap,
+    shouldLoadProFloorRoughnessMap,
+    useLowMemoryTextures,
+  ]);
+
+  // Kick-start rendering in demand mode when visual props change.
+  useEffect(() => {
+    invalidate();
+  }, [layout, overlayPhase, convergenceRunId, showFloor, showFloorDetail, showFloorSpecular, showShadows, invalidate]);
 
   useEffect(() => {
     if (freezeAutoFit) return;
@@ -215,6 +248,13 @@ export function Mini3DRootScene({
     const delta = clamp(eased - distanceRef.current, -MAX_DISTANCE_STEP, MAX_DISTANCE_STEP);
     distanceRef.current += delta;
 
+    // Snap when close enough so demand-mode rendering can stop.
+    if (Math.abs(distanceRef.current - targetDistance) < 0.0005) {
+      distanceRef.current = targetDistance;
+    } else {
+      invalidate();
+    }
+
     camera.position.copy(setOrbitPosition(orbitPosRef.current, yaw, pitch, distanceRef.current, layout.targetY));
     camera.lookAt(0, layout.targetY, 0);
   });
@@ -224,6 +264,9 @@ export function Mini3DRootScene({
     : 0;
   const floorRoughness = proFloorTexture?.roughness ?? 0.62;
   const floorMetalness = proFloorTexture?.metalness ?? 0.08;
+  const useFloorPbrMaterial = showFloorDetail || showFloorSpecular;
+  const effectiveFloorRoughness = showFloorSpecular ? floorRoughness : 1;
+  const effectiveFloorMetalness = showFloorSpecular ? floorMetalness : 0;
 
   return (
     <>
@@ -232,8 +275,8 @@ export function Mini3DRootScene({
         intensity={1.45}
         position={[3.5, 11, 2.5]}
         castShadow={showShadows}
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
+        shadow-mapSize-width={shadowMapSize}
+        shadow-mapSize-height={shadowMapSize}
         shadow-camera-near={0.5}
         shadow-camera-far={30}
         shadow-camera-left={-shadowFrustumHalfSize}
@@ -255,14 +298,14 @@ export function Mini3DRootScene({
       {showFloor ? (
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, GROUND_Y, 0]} receiveShadow={showShadows}>
           <planeGeometry args={[GROUND_PLANE_SIZE, GROUND_PLANE_SIZE, 1, 1]} />
-          {showFloorDetail ? (
+          {useFloorPbrMaterial ? (
             <meshStandardMaterial
               map={floorColorTexture}
-              roughnessMap={proFloorTexture ? floorRoughnessTexture : null}
-              bumpMap={proFloorTexture ? floorHeightTexture : null}
+              roughnessMap={shouldLoadProFloorRoughnessMap ? floorRoughnessTexture : null}
+              bumpMap={shouldLoadProFloorBumpMap ? floorHeightTexture : null}
               bumpScale={floorBumpScale}
-              roughness={floorRoughness}
-              metalness={floorMetalness}
+              roughness={effectiveFloorRoughness}
+              metalness={effectiveFloorMetalness}
             />
           ) : (
             <meshLambertMaterial map={floorColorTexture} />
@@ -270,15 +313,17 @@ export function Mini3DRootScene({
         </mesh>
       ) : null}
 
-      {layout.boxes.map((box, boxIndex) => (
-        <AnimatedSceneBox
-          key={box.id}
-          box={box}
-          boxIndex={boxIndex}
-          showShadows={showShadows}
-          overlayPhase={overlayPhase}
-          convergenceRunId={convergenceRunId}
-        />
+      {(maxObjects > 0 ? layout.boxes.slice(0, maxObjects) : layout.boxes).map((box, boxIndex) => (
+          <AnimatedSceneBox
+            key={box.id}
+            box={box}
+            boxIndex={boxIndex}
+            showShadows={showShadows}
+            disableTopTexture={disableObjectTextures}
+            useLowMemoryTextures={useLowMemoryTextures}
+            overlayPhase={overlayPhase}
+            convergenceRunId={convergenceRunId}
+          />
       ))}
     </>
   );

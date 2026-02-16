@@ -72,6 +72,8 @@ export function SideControls() {
     setShowMini3dShadows,
     showMini3dSurfaceDetail,
     setShowMini3dSurfaceDetail,
+    showMini3dSpecular,
+    setShowMini3dSpecular,
     ruler,
     setRuler,
     lineRuler,
@@ -178,12 +180,20 @@ export function SideControls() {
             className="mini3d-shadow-toggle"
           />
           <SideControl
-            label="3D surface detail"
-            title="Toggle floor bump and specular detail in 3D view"
-            icon={faStar}
+            label="3D bump detail"
+            title="Toggle floor bump detail in 3D view"
+            icon={faLayerGroup}
             onClick={() => setShowMini3dSurfaceDetail((v) => !v)}
             active={showMini3dSurfaceDetail}
             className="mini3d-material-toggle"
+          />
+          <SideControl
+            label="3D specular"
+            title="Toggle floor specular highlights in 3D view"
+            icon={faStar}
+            onClick={() => setShowMini3dSpecular((v) => !v)}
+            active={showMini3dSpecular}
+            className="mini3d-specular-toggle"
           />
         </div>
       </div>

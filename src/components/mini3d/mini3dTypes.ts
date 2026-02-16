@@ -44,18 +44,26 @@ export interface Mini3DRootSceneProps {
   pitchRef: MutableRefObject<number>;
   distanceScaleRef: MutableRefObject<number>;
   backgroundTexture: CanvasBackground;
+  useLowMemoryTextures: boolean;
   showFloor: boolean;
   showFloorDetail: boolean;
+  showFloorSpecular: boolean;
   showShadows: boolean;
+  disableObjectTextures: boolean;
+  shadowMapSize: number;
   layout: SceneLayout;
   freezeAutoFit: boolean;
   overlayPhase: OverlayPhase;
   convergenceRunId: number;
+  /** Maximum number of objects to render. 0 = unlimited. */
+  maxObjects: number;
 }
 
 export type AnimatedSceneBoxProps = {
   box: SceneBox;
   showShadows: boolean;
+  disableTopTexture: boolean;
+  useLowMemoryTextures: boolean;
   boxIndex: number;
   overlayPhase: OverlayPhase;
   convergenceRunId: number;

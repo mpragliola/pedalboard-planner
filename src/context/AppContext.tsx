@@ -98,6 +98,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [showMini3dFloor, setShowMini3dFloor] = useState(true);
   const [showMini3dShadows, setShowMini3dShadows] = useState(true);
   const [showMini3dSurfaceDetail, setShowMini3dSurfaceDetail] = useState(true);
+  const [showMini3dSpecular, setShowMini3dSpecular] = useState(true);
   const [ruler, setRuler] = useState(false);
   const [lineRuler, setLineRuler] = useState(false);
   const [cableLayer, setCableLayer] = useState(false);
@@ -467,6 +468,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setShowMini3dShadows,
       showMini3dSurfaceDetail,
       setShowMini3dSurfaceDetail,
+      showMini3dSpecular,
+      setShowMini3dSpecular,
       ruler,
       setRuler,
       lineRuler,
@@ -497,6 +500,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setShowMini3dShadows,
       showMini3dSurfaceDetail,
       setShowMini3dSurfaceDetail,
+      showMini3dSpecular,
+      setShowMini3dSpecular,
       ruler,
       setRuler,
       lineRuler,

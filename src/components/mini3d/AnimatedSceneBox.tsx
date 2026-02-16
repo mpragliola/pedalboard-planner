@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
-import { useFrame, useLoader } from "@react-three/fiber";
+import { useFrame, useLoader, useThree } from "@react-three/fiber";
 import { clamp } from "../../lib/math";
 import { getShapeGeometry } from "./shapes/shapeGeometry";
 import {
@@ -22,14 +22,22 @@ import {
 import type { AnimatedSceneBoxProps } from "./mini3dTypes";
 import { easeOutCubic, shortestAngleDelta } from "./mini3dUtils";
 
+const MOBILE_TEXTURE_MAX_SIZE = 768;
+
 export function AnimatedSceneBox({
   box,
   showShadows,
+  disableTopTexture,
+  useLowMemoryTextures,
   boxIndex,
   overlayPhase,
   convergenceRunId,
 }: AnimatedSceneBoxProps) {
-  const topTexture = useLoader(THREE.TextureLoader, box.imageUrl ?? EMPTY_IMAGE_DATA_URI);
+  const { gl, invalidate } = useThree();
+  const topTexture = useLoader(
+    THREE.TextureLoader,
+    disableTopTexture ? EMPTY_IMAGE_DATA_URI : (box.imageUrl ?? EMPTY_IMAGE_DATA_URI)
+  );
   const shiftRef = useRef<THREE.Group>(null);
   const meshRef = useRef<THREE.Mesh>(null);
   const initialPositionRef = useRef<[number, number, number]>([box.x, box.y, box.z]);
@@ -48,7 +56,7 @@ export function AnimatedSceneBox({
   const lastAppliedConvergenceRunRef = useRef(0);
   const hasInitializedRef = useRef(false);
   const isDevice = box.subtype === "device";
-  const hasTopTexture = Boolean(box.imageUrl);
+  const hasTopTexture = Boolean(box.imageUrl) && !disableTopTexture;
   const shape = box.shape;
   const isBox = !shape || shape.type === "box";
   const shapeKey = isBox ? null : JSON.stringify([box.width, box.height, box.depth, shape]);
@@ -61,20 +69,64 @@ export function AnimatedSceneBox({
   const baseMetalness = isDevice ? DEVICE_METALNESS : BOARD_METALNESS;
   const topImageRoughness = isDevice ? DEVICE_TOP_IMAGE_ROUGHNESS : BOARD_TOP_IMAGE_ROUGHNESS;
   const topImageMetalness = isDevice ? DEVICE_TOP_IMAGE_METALNESS : BOARD_TOP_IMAGE_METALNESS;
+  const effectiveTopImageRoughness = useLowMemoryTextures
+    ? Math.max(0.22, topImageRoughness - 0.14)
+    : topImageRoughness;
+  const effectiveTopImageMetalness = useLowMemoryTextures
+    ? Math.min(0.92, topImageMetalness + 0.12)
+    : topImageMetalness;
 
   useEffect(() => {
     convergenceSourceRef.current = { x: box.x, z: box.z };
   }, [box.x, box.z]);
 
   useEffect(() => {
-    if (!box.imageUrl) return;
+    if (!hasTopTexture) return;
     // Keep TextureLoader's expected image orientation explicit for top UV mapping.
     topTexture.flipY = true;
     topTexture.colorSpace = THREE.SRGBColorSpace;
     topTexture.wrapS = THREE.ClampToEdgeWrapping;
     topTexture.wrapT = THREE.ClampToEdgeWrapping;
+    if (useLowMemoryTextures) {
+      const maxTextureSize = gl.capabilities.maxTextureSize || MOBILE_TEXTURE_MAX_SIZE;
+      const targetMaxSize = Math.min(MOBILE_TEXTURE_MAX_SIZE, Math.max(512, maxTextureSize));
+      const image = topTexture.image as ({ width?: number; height?: number } & CanvasImageSource) | undefined;
+      const sourceWidth = image?.width ?? 0;
+      const sourceHeight = image?.height ?? 0;
+      if (
+        image &&
+        sourceWidth > 0 &&
+        sourceHeight > 0 &&
+        Math.max(sourceWidth, sourceHeight) > targetMaxSize &&
+        typeof document !== "undefined"
+      ) {
+        const scale = targetMaxSize / Math.max(sourceWidth, sourceHeight);
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(sourceWidth * scale));
+        canvas.height = Math.max(1, Math.round(sourceHeight * scale));
+        const context = canvas.getContext("2d");
+        if (context) {
+          context.imageSmoothingEnabled = true;
+          try {
+            context.drawImage(image, 0, 0, canvas.width, canvas.height);
+            topTexture.image = canvas as unknown as HTMLImageElement;
+          } catch {
+            /* Keep original texture if canvas draw fails. */
+          }
+        }
+      }
+      topTexture.generateMipmaps = false;
+      topTexture.minFilter = THREE.LinearFilter;
+      topTexture.magFilter = THREE.LinearFilter;
+      topTexture.anisotropy = 1;
+    } else {
+      topTexture.generateMipmaps = true;
+      topTexture.minFilter = THREE.LinearMipmapLinearFilter;
+      topTexture.magFilter = THREE.LinearFilter;
+      topTexture.anisotropy = Math.min(4, gl.capabilities.getMaxAnisotropy());
+    }
     topTexture.needsUpdate = true;
-  }, [box.imageUrl, topTexture]);
+  }, [gl, hasTopTexture, topTexture, useLowMemoryTextures]);
 
   useEffect(() => {
     const mesh = meshRef.current;
@@ -113,21 +165,10 @@ export function AnimatedSceneBox({
       return;
     }
 
-    if (!positionChanged && rotationChanged) {
-      // Rotation-only updates should snap to avoid replaying box movement animation.
-      isAnimatingRef.current = false;
-      fromPositionRef.current.set(box.x, box.y, box.z);
-      targetPositionRef.current.set(box.x, box.y, box.z);
-      fromRotationYRef.current = box.rotY;
-      targetRotationYRef.current = box.rotY;
-      mesh.position.set(box.x, box.y, box.z);
-      mesh.rotation.set(0, box.rotY, 0);
-      return;
-    }
-
     transitionStartRef.current = performance.now();
     isAnimatingRef.current = true;
-  }, [box.x, box.y, box.z, box.rotY]);
+    invalidate();
+  }, [box.x, box.y, box.z, box.rotY, invalidate]);
 
   useEffect(() => {
     const shift = shiftRef.current;
@@ -173,10 +214,12 @@ export function AnimatedSceneBox({
     convergenceStartRef.current = performance.now() + boxIndex * PER_COMPONENT_DELAY_MS;
     isConvergenceAnimatingRef.current = true;
     lastAppliedConvergenceRunRef.current = convergenceRunId;
-  }, [boxIndex, convergenceRunId, overlayPhase]);
+    invalidate();
+  }, [boxIndex, convergenceRunId, overlayPhase, invalidate]);
 
   useFrame(() => {
     const now = performance.now();
+    let needsNextFrame = false;
 
     if (isAnimatingRef.current) {
       const mesh = meshRef.current;
@@ -193,6 +236,8 @@ export function AnimatedSceneBox({
         isAnimatingRef.current = false;
         mesh.position.copy(targetPositionRef.current);
         mesh.rotation.y = targetRotationYRef.current;
+      } else {
+        needsNextFrame = true;
       }
     }
 
@@ -203,18 +248,22 @@ export function AnimatedSceneBox({
       const elapsed = now - convergenceStartRef.current;
       if (elapsed <= 0) {
         shift.position.copy(convergenceFromRef.current);
-        return;
-      }
+        needsNextFrame = true;
+      } else {
+        const t = clamp(elapsed / CONVERGENCE_ANIMATION_MS, 0, 1);
+        const easedT = easeOutCubic(t);
+        shift.position.lerpVectors(convergenceFromRef.current, convergenceToRef.current, easedT);
 
-      const t = clamp(elapsed / CONVERGENCE_ANIMATION_MS, 0, 1);
-      const easedT = easeOutCubic(t);
-      shift.position.lerpVectors(convergenceFromRef.current, convergenceToRef.current, easedT);
-
-      if (t >= 1) {
-        isConvergenceAnimatingRef.current = false;
-        shift.position.copy(convergenceToRef.current);
+        if (t >= 1) {
+          isConvergenceAnimatingRef.current = false;
+          shift.position.copy(convergenceToRef.current);
+        } else {
+          needsNextFrame = true;
+        }
       }
     }
+
+    if (needsNextFrame) invalidate();
   });
 
   return (
@@ -250,8 +299,8 @@ export function AnimatedSceneBox({
           transparent={false}
           alphaTest={hasTopTexture ? 0.01 : 0}
           depthWrite
-          roughness={hasTopTexture ? topImageRoughness : baseRoughness}
-          metalness={hasTopTexture ? topImageMetalness : baseMetalness}
+          roughness={hasTopTexture ? effectiveTopImageRoughness : baseRoughness}
+          metalness={hasTopTexture ? effectiveTopImageMetalness : baseMetalness}
         />
         <meshStandardMaterial
           attach="material-3"

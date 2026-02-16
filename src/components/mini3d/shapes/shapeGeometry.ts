@@ -225,6 +225,9 @@ function buildBossType(w: number, h: number, d: number, ratio: number): THREE.Bu
   const v1: V3 = [+hw, -hh, -hd]; // back-right
   const v2: V3 = [-hw, -hh, +hd]; // front-left
   const v3: V3 = [+hw, -hh, +hd]; // front-right
+  // Step-bottom split points (used to keep side faces convex)
+  const v12: V3 = [+hw, -hh, stepZ]; // right step-bottom
+  const v13: V3 = [-hw, -hh, stepZ]; // left step-bottom
   // Back top 2 (lower platform)
   const v4: V3 = [-hw, yBack, -hd];
   const v5: V3 = [+hw, yBack, -hd];
@@ -240,12 +243,20 @@ function buildBossType(w: number, h: number, d: number, ratio: number): THREE.Bu
 
   const b = new GeometryBuilder();
 
-  // +X right: L-shaped hex, front-bottom → back-bottom → back-top → step-high → step-low → front-top
-  b.addFace(0, [v3, v1, v5, v7, v9, v11], [1, 0, 0],
-    [[0, 0], [1, 0], [1, 1], [0.55, 1], [0.55, 0.6], [0, 0.6]]);
-  // -X left: L-shaped hex, back-bottom → front-bottom → front-top → step-low → step-high → back-top
-  b.addFace(1, [v0, v2, v10, v8, v6, v4], [-1, 0, 0],
-    [[0, 0], [1, 0], [1, 0.6], [0.45, 0.6], [0.45, 1], [0, 1]]);
+  // +X right split into convex quads (triangle-fan triangulation is only valid on convex faces).
+  // back-lower: step-bottom → back-bottom → back-top-low → step-top-low
+  b.addFace(0, [v12, v1, v5, v7], [1, 0, 0],
+    [[0, 0], [1, 0], [1, 1], [0, 1]]);
+  // front-tall: front-bottom → step-bottom → step-top-high → front-top
+  b.addFace(0, [v3, v12, v9, v11], [1, 0, 0],
+    [[0, 0], [1, 0], [1, 1], [0, 1]]);
+  // -X left split into convex quads.
+  // back-lower: back-bottom → step-bottom → step-top-low → back-top-low
+  b.addFace(1, [v0, v13, v6, v4], [-1, 0, 0],
+    [[0, 0], [1, 0], [1, 1], [0, 1]]);
+  // front-tall: step-bottom → front-bottom → front-top → step-top-high
+  b.addFace(1, [v13, v2, v10, v8], [-1, 0, 0],
+    [[0, 0], [1, 0], [1, 1], [0, 1]]);
   // +Y top back: back-left → front-left → front-right → back-right
   b.addFace(2, [v4, v6, v7, v5], [0, 1, 0],
     [topUV(-hw, -hd, hw, hd), topUV(-hw, stepZ, hw, hd), topUV(+hw, stepZ, hw, hd), topUV(+hw, -hd, hw, hd)]);
@@ -394,15 +405,25 @@ function buildRailWedge(
   position: number, rail: number, ratio: number,
 ): THREE.BufferGeometry {
   const hw = w / 2, hh = h / 2, hd = d / 2;
-
-  // Height at any depth fraction f (0 = back, 1 = front):
-  const railStart = position;
-  const railEnd = position + rail;
-  const railY = hh - railStart * h * (1 - ratio);
+  const railStart = THREE.MathUtils.clamp(position, 0, 1);
+  const railEnd = THREE.MathUtils.clamp(railStart + rail, railStart, 1);
+  const slopeDrop = h * (1 - ratio);
+  const slopeYAt = (f: number): number => hh - f * slopeDrop;
 
   const zRailStart = -hd + d * railStart;
   const zRailEnd = -hd + d * railEnd;
   const yf = -hh + h * ratio; // front top Y
+  const yStartBase = slopeYAt(railStart);
+  const yEndBase = slopeYAt(railEnd);
+  const railSpanDrop = Math.max(0, yStartBase - yEndBase);
+  // Raise the rail above both adjacent slope segments so both edges protrude.
+  const railLift = Math.min(
+    Math.max(h * 0.05, railSpanDrop * 0.6),
+    Math.max(0, hh - yStartBase),
+  );
+  const yStartRail = yStartBase + railLift;
+  const yEndRail = yEndBase + railLift;
+  const sideUV = (z: number, y: number): V2 => [(z + hd) / (2 * hd), (y + hh) / h];
 
   // Bottom 4
   const v0: V3 = [-hw, -hh, -hd];
@@ -412,34 +433,47 @@ function buildRailWedge(
   // Top back
   const v4: V3 = [-hw, +hh, -hd];
   const v5: V3 = [+hw, +hh, -hd];
-  // Rail start
-  const v6: V3 = [-hw, railY, zRailStart];
-  const v7: V3 = [+hw, railY, zRailStart];
-  // Rail end
-  const v8: V3 = [-hw, railY, zRailEnd];
-  const v9: V3 = [+hw, railY, zRailEnd];
+  // Upper slope to rail-start transition (base slope points)
+  const v6b: V3 = [-hw, yStartBase, zRailStart];
+  const v7b: V3 = [+hw, yStartBase, zRailStart];
+  // Raised rail start edge
+  const v6r: V3 = [-hw, yStartRail, zRailStart];
+  const v7r: V3 = [+hw, yStartRail, zRailStart];
+  // Raised rail end edge
+  const v8r: V3 = [-hw, yEndRail, zRailEnd];
+  const v9r: V3 = [+hw, yEndRail, zRailEnd];
+  // Rail-end to lower-slope transition (base slope points)
+  const v8b: V3 = [-hw, yEndBase, zRailEnd];
+  const v9b: V3 = [+hw, yEndBase, zRailEnd];
   // Front top
   const v10: V3 = [-hw, yf, +hd];
   const v11: V3 = [+hw, yf, +hd];
 
   const b = new GeometryBuilder();
-  const upperSlopeN = triNormal(v4, v6, v7);
-  const lowerSlopeN = triNormal(v8, v10, v11);
+  const upperSlopeN = triNormal(v4, v6b, v7b);
+  const lowerSlopeN = triNormal(v8b, v10, v11);
+  const railTopN = triNormal(v6r, v8r, v9r);
 
-  // +X right (hexagon): front-bottom → back-bottom → back-top → rail-start → rail-end → front-top
-  b.addFace(0, [v3, v1, v5, v7, v9, v11], [1, 0, 0],
-    [[0, 0], [1, 0], [1, 1], [0.5, 0.8], [0.6, 0.8], [0, 0.3]]);
-  // -X left (hexagon): back-bottom → front-bottom → front-top → rail-end → rail-start → back-top
-  b.addFace(1, [v0, v2, v10, v8, v6, v4], [-1, 0, 0],
-    [[0, 0], [1, 0], [1, 0.3], [0.4, 0.8], [0.5, 0.8], [0, 1]]);
+  // +X right side profile with two raised rail edges.
+  b.addFace(0, [v3, v1, v5, v7b, v7r, v9r, v9b, v11], [1, 0, 0],
+    [sideUV(+hd, -hh), sideUV(-hd, -hh), sideUV(-hd, +hh), sideUV(zRailStart, yStartBase), sideUV(zRailStart, yStartRail), sideUV(zRailEnd, yEndRail), sideUV(zRailEnd, yEndBase), sideUV(+hd, yf)]);
+  // -X left side profile with two raised rail edges.
+  b.addFace(1, [v0, v2, v10, v8b, v8r, v6r, v6b, v4], [-1, 0, 0],
+    [sideUV(-hd, -hh), sideUV(+hd, -hh), sideUV(+hd, yf), sideUV(zRailEnd, yEndBase), sideUV(zRailEnd, yEndRail), sideUV(zRailStart, yStartRail), sideUV(zRailStart, yStartBase), sideUV(-hd, +hh)]);
   // +Y upper slope: back-left → front-left → front-right → back-right
-  b.addFace(2, [v4, v6, v7, v5], upperSlopeN,
+  b.addFace(2, [v4, v6b, v7b, v5], upperSlopeN,
     [topUV(-hw, -hd, hw, hd), topUV(-hw, zRailStart, hw, hd), topUV(+hw, zRailStart, hw, hd), topUV(+hw, -hd, hw, hd)]);
-  // +Y rail (flat): left → front-left → front-right → right
-  b.addFace(2, [v6, v8, v9, v7], [0, 1, 0],
+  // -Z rail back edge wall (raised boundary).
+  b.addFace(5, [v7b, v6b, v6r, v7r], [0, 0, -1],
+    [[0, 0], [1, 0], [1, 1], [0, 1]]);
+  // +Y rail (raised, parallel to slope): left → front-left → front-right → right
+  b.addFace(2, [v6r, v8r, v9r, v7r], railTopN,
     [topUV(-hw, zRailStart, hw, hd), topUV(-hw, zRailEnd, hw, hd), topUV(+hw, zRailEnd, hw, hd), topUV(+hw, zRailStart, hw, hd)]);
+  // +Z rail front edge wall (raised boundary).
+  b.addFace(4, [v8b, v9b, v9r, v8r], [0, 0, 1],
+    [[0, 0], [1, 0], [1, 1], [0, 1]]);
   // +Y lower slope
-  b.addFace(2, [v8, v10, v11, v9], lowerSlopeN,
+  b.addFace(2, [v8b, v10, v11, v9b], lowerSlopeN,
     [topUV(-hw, zRailEnd, hw, hd), topUV(-hw, +hd, hw, hd), topUV(+hw, +hd, hw, hd), topUV(+hw, zRailEnd, hw, hd)]);
   // -Y bottom
   b.addFace(3, [v0, v1, v3, v2], [0, -1, 0],

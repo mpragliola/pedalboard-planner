@@ -75,6 +75,42 @@
   z-index: 1;
 }
 
+.mini3d-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+  background: rgba(8, 10, 14, 0.88);
+  color: #f5f5f5;
+  z-index: 1;
+}
+
+.mini3d-fallback__text {
+  max-width: 280px;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.mini3d-fallback__retry {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.mini3d-fallback__retry:active {
+  transform: translateY(1px);
+}
+
 @media (max-width: 768px) {
   .mini3d-overlay {
     left: vars.$floating-panel-offset-sm;

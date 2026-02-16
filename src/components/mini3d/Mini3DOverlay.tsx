@@ -1,14 +1,18 @@
 import {
+  Component,
   useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
+  type ErrorInfo,
   type PointerEvent as ReactPointerEvent,
+  type ReactNode,
   type WheelEvent as ReactWheelEvent,
 } from "react";
 import * as THREE from "three";
 import { Canvas } from "@react-three/fiber";
+import { PerspectiveCamera } from "@react-three/drei";
 import { useBoard } from "../../context/BoardContext";
 import { useUi } from "../../context/UiContext";
 import { CANVAS_BACKGROUNDS } from "../../constants/backgrounds";
@@ -36,6 +40,51 @@ import "./Mini3DOverlay.scss";
 
 type TouchPoint = { x: number; y: number };
 type PinchState = { startDistance: number; startScale: number };
+type TouchTapCandidate = {
+  startX: number;
+  startY: number;
+  moved: boolean;
+  startedWithSingleTouch: boolean;
+};
+type TouchTap = { time: number; x: number; y: number };
+
+const TAP_MOVE_TOLERANCE_PX = 10;
+const DOUBLE_TAP_TIME_WINDOW_MS = 320;
+const DOUBLE_TAP_MAX_DISTANCE_PX = 28;
+const MINI3D_MOBILE_SAFE_MODE_KEY = "mini3d-mobile-safe-mode-v1";
+
+type CanvasErrorBoundaryProps = {
+  onError: () => void;
+  resetKey: number;
+  children: ReactNode;
+};
+
+type CanvasErrorBoundaryState = {
+  hasError: boolean;
+};
+
+class CanvasErrorBoundary extends Component<CanvasErrorBoundaryProps, CanvasErrorBoundaryState> {
+  state: CanvasErrorBoundaryState = { hasError: false };
+
+  static getDerivedStateFromError(): CanvasErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  componentDidCatch(_error: Error, _info: ErrorInfo): void {
+    this.props.onError();
+  }
+
+  componentDidUpdate(prevProps: CanvasErrorBoundaryProps): void {
+    if (this.state.hasError && prevProps.resetKey !== this.props.resetKey) {
+      this.setState({ hasError: false });
+    }
+  }
+
+  render(): ReactNode {
+    if (this.state.hasError) return null;
+    return this.props.children;
+  }
+}
 
 function getDistanceBetweenTouches(points: TouchPoint[]): number {
   if (points.length < 2) return 0;
@@ -45,7 +94,14 @@ function getDistanceBetweenTouches(points: TouchPoint[]): number {
 
 export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
   const { objects, draggingObjectId } = useBoard();
-  const { showMini3d, showMini3dFloor, showMini3dShadows, showMini3dSurfaceDetail, background } = useUi();
+  const {
+    showMini3d,
+    showMini3dFloor,
+    showMini3dShadows,
+    showMini3dSurfaceDetail,
+    showMini3dSpecular,
+    background,
+  } = useUi();
 
   const containerRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<DragState | null>(null);
@@ -59,11 +115,25 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
   const distanceScaleRef = useRef(CAMERA_DISTANCE_SCALE_DEFAULT);
   const activeTouchPointsRef = useRef<Map<number, TouchPoint>>(new Map());
   const pinchRef = useRef<PinchState | null>(null);
+  const touchTapCandidateRef = useRef<Map<number, TouchTapCandidate>>(new Map());
+  const lastTouchTapRef = useRef<TouchTap | null>(null);
+  const contextLossCleanupRef = useRef<(() => void) | null>(null);
+  const invalidateRef = useRef<(() => void) | null>(null);
 
   const [isVisible, setIsVisible] = useState(showMini3d);
   const [phase, setPhase] = useState<OverlayPhase>("closing");
   const [convergenceRunId, setConvergenceRunId] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [canvasFailure, setCanvasFailure] = useState(false);
+  const [canvasResetKey, setCanvasResetKey] = useState(0);
+  const [mobileSafeMode, setMobileSafeMode] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return window.localStorage.getItem(MINI3D_MOBILE_SAFE_MODE_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
 
   const canvasBackground = useMemo(
     () => CANVAS_BACKGROUNDS.find((bg) => bg.id === background) ?? CANVAS_BACKGROUNDS[0],
@@ -76,6 +146,23 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
   );
 
   const sceneLayout = useMemo(() => buildSceneLayout(objects), [objects]);
+  const isPhone = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(max-width: 768px) and (pointer: coarse)").matches;
+  }, []);
+  const isMobile3D = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(max-width: 1024px), (pointer: coarse)").matches;
+  }, []);
+  const maxDpr = isPhone ? 1 : isMobile3D ? 1.5 : 2;
+  const useLowMemoryTextures = isMobile3D || mobileSafeMode;
+  const effectiveShowShadows = showMini3dShadows && !isMobile3D && !canvasFailure;
+  // Keep floor specular available on mobile; heavy floor maps remain disabled by low-memory mode.
+  const effectiveShowFloorDetail = showMini3dSurfaceDetail && !canvasFailure;
+  const effectiveShowFloorSpecular = showMini3dSpecular && !canvasFailure;
+  const shadowMapSize = isMobile3D ? 1024 : 2048;
+  const useDemandMode = isMobile3D;
+  const maxObjects = isPhone ? 12 : 0;
 
   const convergenceTotalMs = useMemo(
     () => CONVERGENCE_BASE_TOTAL_MS + Math.max(0, sceneLayout.boxes.length - 1) * PER_COMPONENT_DELAY_MS,
@@ -85,6 +172,19 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
   useEffect(() => {
     showMini3dRef.current = showMini3d;
   }, [showMini3d]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      if (mobileSafeMode) {
+        window.localStorage.setItem(MINI3D_MOBILE_SAFE_MODE_KEY, "1");
+      } else {
+        window.localStorage.removeItem(MINI3D_MOBILE_SAFE_MODE_KEY);
+      }
+    } catch {
+      /* Ignore storage failures. */
+    }
+  }, [mobileSafeMode]);
 
   const clearOpenTimer = useCallback(() => {
     if (openTimerRef.current != null) {
@@ -110,6 +210,10 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
       distanceScaleRef.current = CAMERA_DISTANCE_SCALE_DEFAULT;
       activeTouchPointsRef.current.clear();
       pinchRef.current = null;
+      touchTapCandidateRef.current.clear();
+      lastTouchTapRef.current = null;
+      setCanvasFailure(false);
+      setCanvasResetKey((value) => value + 1);
       setIsVisible(true);
       setPhase("opening");
       setConvergenceRunId((value) => value + 1);
@@ -125,8 +229,11 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
     if (!wasShown || !isVisible) return;
     setIsFullscreen(false);
     dragRef.current = null;
+    setCanvasFailure(false);
     activeTouchPointsRef.current.clear();
     pinchRef.current = null;
+    touchTapCandidateRef.current.clear();
+    lastTouchTapRef.current = null;
     setPhase("closing");
     setConvergenceRunId((value) => value + 1);
     closeFadeMsRef.current = convergenceTotalMs;
@@ -142,10 +249,26 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
 
   useEffect(() => {
     return () => {
+      if (contextLossCleanupRef.current) {
+        contextLossCleanupRef.current();
+        contextLossCleanupRef.current = null;
+      }
       clearOpenTimer();
       clearCloseTimer();
     };
   }, [clearCloseTimer, clearOpenTimer]);
+
+  const handleCanvasFailure = useCallback(() => {
+    setCanvasFailure(true);
+    if (isMobile3D) {
+      setMobileSafeMode(true);
+    }
+  }, [isMobile3D]);
+
+  const handleCanvasRetry = useCallback(() => {
+    setCanvasFailure(false);
+    setCanvasResetKey((value) => value + 1);
+  }, []);
 
   const toggleFullscreen = useCallback(() => {
     setIsFullscreen((v) => !v);
@@ -160,6 +283,7 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
     e.stopPropagation();
     const factor = Math.exp(e.deltaY * CAMERA_DISTANCE_WHEEL_SENSITIVITY);
     setDistanceScale(distanceScaleRef.current * factor);
+    invalidateRef.current?.();
   }, [setDistanceScale]);
 
   const handlePointerDown = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
@@ -169,6 +293,16 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
 
     if (e.pointerType === "touch") {
       activeTouchPointsRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      const touchCount = activeTouchPointsRef.current.size;
+      touchTapCandidateRef.current.set(e.pointerId, {
+        startX: e.clientX,
+        startY: e.clientY,
+        moved: false,
+        startedWithSingleTouch: touchCount === 1,
+      });
+      if (touchCount >= 2) {
+        lastTouchTapRef.current = null;
+      }
       const points = [...activeTouchPointsRef.current.values()];
       if (points.length >= 2) {
         const startDistance = getDistanceBetweenTouches(points);
@@ -190,6 +324,8 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
       };
     }
 
+    invalidateRef.current?.();
+
     try {
       containerRef.current?.setPointerCapture(e.pointerId);
     } catch {
@@ -199,6 +335,13 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
 
   const handlePointerMove = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
     if (e.pointerType === "touch" && activeTouchPointsRef.current.has(e.pointerId)) {
+      const touchTapCandidate = touchTapCandidateRef.current.get(e.pointerId);
+      if (touchTapCandidate && !touchTapCandidate.moved) {
+        const movedDistance = Math.hypot(e.clientX - touchTapCandidate.startX, e.clientY - touchTapCandidate.startY);
+        if (movedDistance > TAP_MOVE_TOLERANCE_PX) {
+          touchTapCandidate.moved = true;
+        }
+      }
       activeTouchPointsRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
       const points = [...activeTouchPointsRef.current.values()];
       if (points.length >= 2) {
@@ -218,6 +361,7 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
         if (distanceNow <= 0) return;
         const pinchRatio = distanceNow / pinch.startDistance;
         setDistanceScale(pinch.startScale / pinchRatio);
+        invalidateRef.current?.();
         return;
       }
     }
@@ -232,10 +376,14 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
     const dy = e.clientY - drag.startY;
     yawRef.current = drag.startYaw - dx * DRAG_SENSITIVITY;
     pitchRef.current = clamp(drag.startPitch + dy * DRAG_SENSITIVITY, MIN_PITCH, MAX_PITCH);
+    invalidateRef.current?.();
   }, [setDistanceScale]);
 
   const handlePointerUp = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
     if (e.pointerType === "touch") {
+      const wasCancelled = e.type === "pointercancel";
+      const touchTapCandidate = touchTapCandidateRef.current.get(e.pointerId);
+      touchTapCandidateRef.current.delete(e.pointerId);
       activeTouchPointsRef.current.delete(e.pointerId);
       if (activeTouchPointsRef.current.size < 2) {
         pinchRef.current = null;
@@ -250,6 +398,28 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
           };
         }
       }
+
+      if (
+        !wasCancelled &&
+        touchTapCandidate &&
+        touchTapCandidate.startedWithSingleTouch &&
+        !touchTapCandidate.moved &&
+        activeTouchPointsRef.current.size === 0
+      ) {
+        const now = performance.now();
+        const lastTap = lastTouchTapRef.current;
+        if (lastTap && now - lastTap.time <= DOUBLE_TAP_TIME_WINDOW_MS) {
+          const tapDistance = Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y);
+          if (tapDistance <= DOUBLE_TAP_MAX_DISTANCE_PX) {
+            lastTouchTapRef.current = null;
+            toggleFullscreen();
+          } else {
+            lastTouchTapRef.current = { time: now, x: e.clientX, y: e.clientY };
+          }
+        } else {
+          lastTouchTapRef.current = { time: now, x: e.clientX, y: e.clientY };
+        }
+      }
     }
 
     const drag = dragRef.current;
@@ -262,7 +432,7 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
     } catch {
       /* Pointer may already be released. */
     }
-  }, []);
+  }, [toggleFullscreen]);
 
   if (!isVisible) return null;
 
@@ -308,37 +478,75 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
         onPointerCancel={handlePointerUp}
         onWheel={handleWheel}
       >
-        <Canvas
-          shadows
-          gl={{ antialias: true, alpha: true }}
-          frameloop="always"
-          dpr={[1, 2]}
-          onCreated={({ gl }) => {
-            gl.setClearColor("#131a24", 0.1);
-            gl.shadowMap.type = THREE.PCFSoftShadowMap;
-            gl.shadowMap.enabled = showMini3dShadows;
-          }}
-          style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
-        >
-          <ShadowMapController enabled={showMini3dShadows} />
-          <perspectiveCamera makeDefault fov={45} near={0.1} far={FIT_MAX_DISTANCE} position={[4, 4, 4]} />
-          <Mini3DRootScene
-            yawRef={yawRef}
-            pitchRef={pitchRef}
-            distanceScaleRef={distanceScaleRef}
-            backgroundTexture={canvasBackground}
-            showFloor={showMini3dFloor}
-            showFloorDetail={showMini3dSurfaceDetail}
-            showShadows={showMini3dShadows}
-            layout={sceneLayout}
-            freezeAutoFit={isBoardBeingDragged}
-            overlayPhase={phase}
-            convergenceRunId={convergenceRunId}
-          />
-        </Canvas>
+        {canvasFailure ? (
+          <div className="mini3d-fallback">
+            <div className="mini3d-fallback__text">
+              3D preview crashed on this browser. Mobile safe mode is enabled.
+            </div>
+            <button type="button" className="mini3d-fallback__retry" onClick={handleCanvasRetry}>
+              Retry
+            </button>
+          </div>
+        ) : (
+          <CanvasErrorBoundary onError={handleCanvasFailure} resetKey={canvasResetKey}>
+            <Canvas
+              key={canvasResetKey}
+              shadows
+              gl={{
+                antialias: !isMobile3D,
+                alpha: true,
+                ...(isMobile3D ? { powerPreference: "low-power" as const } : {}),
+              }}
+              frameloop={useDemandMode ? "demand" : "always"}
+              dpr={[1, maxDpr]}
+              onCreated={({ gl, invalidate }) => {
+                invalidateRef.current = invalidate;
+                invalidate();
+                gl.setClearColor("#131a24", 0.1);
+                gl.shadowMap.type = THREE.PCFSoftShadowMap;
+                gl.shadowMap.enabled = effectiveShowShadows;
+                const canvas = gl.domElement;
+                const onContextLost = (event: Event) => {
+                  event.preventDefault();
+                  handleCanvasFailure();
+                };
+                if (contextLossCleanupRef.current) {
+                  contextLossCleanupRef.current();
+                }
+                canvas.addEventListener("webglcontextlost", onContextLost as EventListener, false);
+                contextLossCleanupRef.current = () => {
+                  canvas.removeEventListener("webglcontextlost", onContextLost as EventListener, false);
+                };
+              }}
+              style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
+            >
+              <ShadowMapController enabled={effectiveShowShadows} />
+              <PerspectiveCamera makeDefault fov={45} near={0.1} far={FIT_MAX_DISTANCE} position={[4, 4, 4]} />
+              <Mini3DRootScene
+                yawRef={yawRef}
+                pitchRef={pitchRef}
+                distanceScaleRef={distanceScaleRef}
+                backgroundTexture={canvasBackground}
+                useLowMemoryTextures={useLowMemoryTextures}
+                showFloor={showMini3dFloor}
+                showFloorDetail={effectiveShowFloorDetail}
+                showFloorSpecular={effectiveShowFloorSpecular}
+                showShadows={effectiveShowShadows}
+                disableObjectTextures={mobileSafeMode}
+                shadowMapSize={shadowMapSize}
+                layout={sceneLayout}
+                freezeAutoFit={isBoardBeingDragged}
+                overlayPhase={phase}
+                convergenceRunId={convergenceRunId}
+                maxObjects={maxObjects}
+              />
+            </Canvas>
+          </CanvasErrorBoundary>
+        )}
 
         <div className="mini3d-instruction">
-          Drag to orbit. Mouse wheel or pinch to move camera slightly closer/farther. Double click to toggle fullscreen.
+          Drag to orbit. Mouse wheel or pinch to move camera slightly closer/farther. Double tap/click to toggle
+          fullscreen.
         </div>
       </div>
     </>
