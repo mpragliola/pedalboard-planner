@@ -64,20 +64,53 @@ type LastCableTap = {
 
 type HandleType = "start" | "mid" | "end";
 
-/** Distance from anchor to connector label (mm). */
-const LABEL_OFFSET_MM = 19;
+/** Label metrics used for endpoint label + connector icon placement (canvas mm units). */
+const LABEL_FONT_SIZE_MM = 6;
+const LABEL_TEXT_LINE_HEIGHT_MM = 7;
+const LABEL_TEXT_CHAR_WIDTH_MM = LABEL_FONT_SIZE_MM * 0.55;
+const LABEL_TEXT_MIN_WIDTH_MM = 10;
 /** Connector icon size rendered beneath endpoint labels (canvas mm units). */
-const LABEL_ICON_SIZE_MM = 11;
-/** Vertical distance from label center to icon top (canvas mm units). */
+const LABEL_ICON_SIZE_MM = 22;
+/** Vertical gap between label text block and icon (canvas mm units). */
 const LABEL_ICON_GAP_MM = 3;
-
-/** Connector label position and text for one cable endpoint. */
+/** Minimum clearance from terminal point to the nearest point of label+icon bounds. */
+const LABEL_TERMINAL_CLEARANCE_MM = 5;
+/** Connector label geometry and text for one cable endpoint. */
 interface ConnectorLabel {
-  position: Point;
+  labelPosition: Point;
+  iconPosition: Point;
   text: string;
   kind: Cable["connectorA"];
 }
-
+function estimateLabelTextWidthMm(text: string): number {
+  return Math.max(LABEL_TEXT_MIN_WIDTH_MM, text.trim().length * LABEL_TEXT_CHAR_WIDTH_MM);
+}
+function buildConnectorLabel(anchor: Point, awayDir: Offset, text: string, kind: Cable["connectorA"]): ConnectorLabel {
+  const trimmed = text.trim();
+  if (!trimmed) {
+    return {
+      labelPosition: anchor,
+      iconPosition: anchor,
+      text: "",
+      kind,
+    };
+  }
+  const groupWidth = Math.max(LABEL_ICON_SIZE_MM, estimateLabelTextWidthMm(trimmed));
+  const groupHeight = LABEL_TEXT_LINE_HEIGHT_MM + LABEL_ICON_GAP_MM + LABEL_ICON_SIZE_MM;
+  const halfProjectedExtent =
+    (groupWidth * 0.5) * Math.abs(awayDir.x) + (groupHeight * 0.5) * Math.abs(awayDir.y);
+  const center = vec2Add(anchor, vec2Scale(awayDir, LABEL_TERMINAL_CLEARANCE_MM + halfProjectedExtent));
+  const topY = center.y - groupHeight * 0.5;
+  return {
+    labelPosition: { x: center.x, y: topY + LABEL_TEXT_LINE_HEIGHT_MM * 0.5 },
+    iconPosition: {
+      x: center.x - LABEL_ICON_SIZE_MM * 0.5,
+      y: topY + LABEL_TEXT_LINE_HEIGHT_MM + LABEL_ICON_GAP_MM,
+    },
+    text: trimmed,
+    kind,
+  };
+}
 /** Compute connector label positions: opposite to the cable direction at each anchor. */
 function connectorLabelsForCable(cable: Cable): { a: ConnectorLabel; b: ConnectorLabel } | null {
   const points = cable.segments;
@@ -91,26 +124,11 @@ function connectorLabelsForCable(cable: Cable): { a: ConnectorLabel; b: Connecto
   if (vec2Length(firstVector) < 1e-6 || vec2Length(lastVector) < 1e-6) return null;
   const firstDir = vec2Normalize(firstVector);
   const lastDir = vec2Normalize(lastVector);
-  const aOffset: Offset = vec2Scale(firstDir, -LABEL_OFFSET_MM);
-  const bOffset: Offset = vec2Scale(lastDir, LABEL_OFFSET_MM);
-  const aPos = vec2Add(firstStart, aOffset);
-  const bPos = vec2Add(lastEnd, bOffset);
-  const textA = (cable.connectorAName ?? "").trim();
-  const textB = (cable.connectorBName ?? "").trim();
   return {
-    a: {
-      position: aPos,
-      text: textA,
-      kind: cable.connectorA,
-    },
-    b: {
-      position: bPos,
-      text: textB,
-      kind: cable.connectorB,
-    },
+    a: buildConnectorLabel(firstStart, vec2Scale(firstDir, -1), cable.connectorAName ?? "", cable.connectorA),
+    b: buildConnectorLabel(lastEnd, lastDir, cable.connectorBName ?? "", cable.connectorB),
   };
 }
-
 interface EndpointDot {
   point: Point;
   type: "start" | "end";
@@ -537,8 +555,8 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
           {a.text ? (
             <g className="cable-connector-label-group">
               <text
-                x={a.position.x}
-                y={a.position.y}
+                x={a.labelPosition.x}
+                y={a.labelPosition.y}
                 textAnchor="middle"
                 dominantBaseline="middle"
                 className="cable-connector-label"
@@ -547,8 +565,8 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
               </text>
               <image
                 href={CONNECTOR_ICON_MAP[a.kind]}
-                x={a.position.x - LABEL_ICON_SIZE_MM / 2}
-                y={a.position.y + LABEL_ICON_GAP_MM}
+                x={a.iconPosition.x}
+                y={a.iconPosition.y}
                 width={LABEL_ICON_SIZE_MM}
                 height={LABEL_ICON_SIZE_MM}
                 preserveAspectRatio="xMidYMid meet"
@@ -559,8 +577,8 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
           {b.text ? (
             <g className="cable-connector-label-group">
               <text
-                x={b.position.x}
-                y={b.position.y}
+                x={b.labelPosition.x}
+                y={b.labelPosition.y}
                 textAnchor="middle"
                 dominantBaseline="middle"
                 className="cable-connector-label"
@@ -569,8 +587,8 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
               </text>
               <image
                 href={CONNECTOR_ICON_MAP[b.kind]}
-                x={b.position.x - LABEL_ICON_SIZE_MM / 2}
-                y={b.position.y + LABEL_ICON_GAP_MM}
+                x={b.iconPosition.x}
+                y={b.iconPosition.y}
                 width={LABEL_ICON_SIZE_MM}
                 height={LABEL_ICON_SIZE_MM}
                 preserveAspectRatio="xMidYMid meet"
@@ -583,3 +601,5 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
     </svg>
   );
 }
+
+
