@@ -1,4 +1,12 @@
-import { faCircleInfo, faFloppyDisk, faFolderOpen, faGear, faPlus, faWandMagicSparkles } from "@fortawesome/free-solid-svg-icons";
+import {
+  faCircleInfo,
+  faCircleQuestion,
+  faFloppyDisk,
+  faFolderOpen,
+  faGear,
+  faPlus,
+  faWandMagicSparkles,
+} from "@fortawesome/free-solid-svg-icons";
 import type { IconDefinition } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useRef, useState } from "react";
@@ -6,6 +14,7 @@ import { useBoardIo } from "../../context/BoardIoContext";
 import { useConfirmation } from "../../context/ConfirmationContext";
 import { useSettingsModal } from "../../context/SettingsModalContext";
 import { GptModal } from "../gpt/GptModal";
+import { HelpModal } from "../help/HelpModal";
 import { InfoModal } from "../info/InfoModal";
 import "./BoardMenu.scss";
 
@@ -19,7 +28,7 @@ interface BoardMenuAction {
 }
 
 /**
- * Board menu with actions: new, load, save, settings, about.
+ * Board menu with actions: new, load, save, GPT, info, help, settings.
  * Handles file input for loading boards and shows modals for GPT prompt and info.
  * Uses context for board IO, confirmation dialogs, and settings modal control.
  * Is included in the Catalog overlay.
@@ -33,6 +42,7 @@ export function BoardMenu() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isGptOpen, setIsGptOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
 
   const handleNewBoard = async () => {
     const confirmed = await requestConfirmation({
@@ -105,6 +115,13 @@ export function BoardMenu() {
       onClick: () => setIsInfoOpen(true),
     },
     {
+      key: "help",
+      title: "Help and manual",
+      ariaLabel: "Help and manual",
+      icon: faCircleQuestion,
+      onClick: () => setIsHelpOpen(true),
+    },
+    {
       key: "settings",
       title: "Settings",
       ariaLabel: "Settings",
@@ -139,6 +156,7 @@ export function BoardMenu() {
       />
       <GptModal open={isGptOpen} onClose={() => setIsGptOpen(false)} />
       <InfoModal open={isInfoOpen} onClose={() => setIsInfoOpen(false)} />
+      <HelpModal open={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
       {loadError ? (
         <p className="board-menu-error" role="alert">
           {loadError}

@@ -1,0 +1,211 @@
+@use "../../styles/variables" as vars;
+.modal-dialog.help-modal {
+  .modal-content {
+    width: min(1000px, 95vw);
+    max-height: min(90vh, 900px);
+    box-shadow: vars.$modal-shadow;
+  }
+  .modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 14px;
+    overflow: hidden;
+  }
+}
+.help-modal-shell {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 12px;
+  min-height: 0;
+  flex: 1;
+}
+.help-modal-page-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px;
+  border: 1px solid vars.$black-12;
+  border-radius: 10px;
+  background: vars.$color-surface-soft;
+  overflow: auto;
+}
+.help-modal-page-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: vars.$color-text;
+  padding: 7px 9px;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  &:hover {
+    background: vars.$black-04;
+  }
+  &.is-active {
+    background: vars.$color-surface;
+    border-color: vars.$black-12;
+  }
+}
+.help-modal-page-number {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: vars.$color-text-inverse;
+  background: vars.$color-primary;
+  flex-shrink: 0;
+}
+.help-modal-page-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.help-modal-page {
+  border: 1px solid vars.$black-12;
+  border-radius: 10px;
+  padding: 12px;
+  background: vars.$color-surface;
+  overflow: auto;
+}
+.help-modal-page-head {
+  margin-bottom: 10px;
+}
+.help-modal-page-title {
+  margin: 0 0 4px;
+  font-size: 1rem;
+  color: vars.$color-text;
+}
+.help-modal-page-subtitle {
+  margin: 0;
+  color: vars.$color-text-soft;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+.help-modal-shot {
+  margin: 0 0 12px;
+  border: 1px solid vars.$black-12;
+  border-radius: 10px;
+  overflow: hidden;
+  background: vars.$color-surface-soft;
+  img {
+    width: 100%;
+    display: block;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    background: vars.$color-surface-muted;
+  }
+  figcaption {
+    margin: 0;
+    padding: 8px 10px;
+    font-size: 0.74rem;
+    line-height: 1.35;
+    color: vars.$color-text-soft;
+    border-top: 1px solid vars.$black-12;
+    background: vars.$color-surface;
+  }
+}
+.help-modal-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.help-modal-section {
+  h4 {
+    margin: 0 0 5px;
+    font-size: 0.82rem;
+    color: vars.$color-text;
+  }
+  ul {
+    margin: 0;
+    padding-left: 18px;
+    color: vars.$color-text-soft;
+    font-size: 0.76rem;
+    line-height: 1.45;
+  }
+  li {
+    margin-bottom: 4px;
+  }
+}
+.help-modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid vars.$black-10;
+  padding-top: 10px;
+}
+.help-modal-progress {
+  margin-left: auto;
+  margin-right: auto;
+  font-size: 0.76rem;
+  color: vars.$color-text-soft;
+}
+.help-modal-btn {
+  border: 1px solid vars.$black-15;
+  border-radius: 8px;
+  padding: 7px 12px;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+.help-modal-btn-secondary {
+  color: vars.$color-text;
+  background: vars.$color-surface;
+  &:hover:not(:disabled) {
+    background: vars.$color-surface-soft;
+  }
+}
+.help-modal-btn-primary {
+  color: vars.$color-text-inverse;
+  background: vars.$color-primary;
+  border-color: vars.$color-primary;
+  &:hover {
+    background: vars.$color-link;
+  }
+}
+@media (max-width: 900px) {
+  .help-modal-shell {
+    grid-template-columns: 1fr;
+  }
+  .help-modal-page-nav {
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+  }
+  .help-modal-page-tab {
+    min-width: 180px;
+  }
+}
+@media (max-width: 640px) {
+  .modal-dialog.help-modal {
+    .modal-content {
+      width: 96vw;
+    }
+    .modal-body {
+      padding: 10px;
+      gap: 10px;
+    }
+  }
+  .help-modal-actions {
+    flex-wrap: wrap;
+  }
+  .help-modal-progress {
+    order: 4;
+    width: 100%;
+    text-align: center;
+  }
+}
