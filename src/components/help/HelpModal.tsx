@@ -17,28 +17,43 @@ interface HelpPage {
   id: string;
   title: string;
   subtitle: string;
-  screenshotPath: string;
-  screenshotAlt: string;
-  screenshotCaption: string;
+  screenshotPath?: string;
+  screenshotAlt?: string;
+  screenshotCaption?: string;
   sections: HelpSection[];
 }
 
 const HELP_PAGES: HelpPage[] = [
   {
     id: "overview",
-    title: "Overview",
-    subtitle: "Understand the main layout before editing anything.",
-    screenshotPath: "assets/help/01-overview.svg",
-    screenshotAlt: "Main layout: catalog, canvas, side controls, bottom controls, and board menu.",
-    screenshotCaption: "The app is organized into catalog, canvas, side controls, bottom controls, and board menu.",
+    title: "Software Overview",
+    subtitle: "What this app is and who it is for.",
     sections: [
       {
-        heading: "Main Areas",
+        heading: "What Is PedalboardFactory?",
         points: [
-          "Catalog on the left to browse boards/devices.",
-          "Canvas in the center for placement and cable routing.",
-          "Side controls for cables, 3D, view, and measuring tools.",
-          "Board menu for file actions, GPT prompt, info, settings, and help.",
+          "PedalboardFactory is a pedalboard planner for guitar and bass rigs.",
+          "It helps you design board layouts, route cables, and check clearances before buying or assembling gear.",
+          "You can place boards and pedals to scale, measure distances, inspect in 3D, and export project data for planning and budgeting.",
+        ],
+      },
+    ],
+  },
+  {
+    id: "layout-description",
+    title: "Layout Description",
+    subtitle: "Where each part of the interface is located and what it controls.",
+    screenshotPath: "assets/help/01-overview.svg",
+    screenshotAlt: "Main interface zones: catalog, canvas, side controls, bottom controls, and board menu.",
+    screenshotCaption: "Use this map to quickly locate tools in the interface.",
+    sections: [
+      {
+        heading: "Interface Areas",
+        points: [
+          "Catalog on the left for boards, devices, and custom items.",
+          "Canvas in the center for placement, alignment, and cable routing.",
+          "Side controls for cables, 3D, view toggles, and measurement tools.",
+          "Board menu for files, GPT prompt, info, settings, and help/manual.",
         ],
       },
     ],
@@ -118,12 +133,12 @@ const HELP_PAGES: HelpPage[] = [
     ],
   },
   {
-    id: "cables",
-    title: "Cables",
-    subtitle: "Draw and edit cable routes and metadata.",
+    id: "cable-drawing",
+    title: "Cable Drawing",
+    subtitle: "Create cable routes point by point.",
     screenshotPath: "assets/help/03-canvas-cables.svg",
-    screenshotAlt: "Cable drawing and editing with route points, handles, labels, and connector icons.",
-    screenshotCaption: "Use one workflow for cable creation, then refine geometry and connector metadata.",
+    screenshotAlt: "Cable drawing mode with route points and snapping behavior.",
+    screenshotCaption: "Add cable mode creates routed paths across your board.",
     sections: [
       {
         heading: "Cable Drawing",
@@ -134,6 +149,16 @@ const HELP_PAGES: HelpPage[] = [
           "Hold Shift to disable snapping or hold Ctrl to constrain to 45 degrees.",
         ],
       },
+    ],
+  },
+  {
+    id: "cable-editing",
+    title: "Cable Editing",
+    subtitle: "Adjust cable metadata and shape after drawing.",
+    screenshotPath: "assets/help/03-canvas-cables.svg",
+    screenshotAlt: "Cable editing view with handles, labels, and connector options.",
+    screenshotCaption: "Edit connectors, labels, and geometry for each routed cable.",
+    sections: [
       {
         heading: "Cable Editing",
         points: [
@@ -183,36 +208,48 @@ const HELP_PAGES: HelpPage[] = [
     ],
   },
   {
-    id: "measurement",
-    title: "Measurement",
-    subtitle: "Measure clearances and cable runs precisely.",
+    id: "rectangle-ruler",
+    title: "Rectangle Ruler",
+    subtitle: "Measure width, depth, and diagonal of a rectangular area.",
     screenshotPath: "assets/help/04-view-and-tools.svg",
-    screenshotAlt: "Measurement tools for rectangle and polyline distance.",
-    screenshotCaption: "Rectangle and line rulers provide quick physical estimates.",
+    screenshotAlt: "Rectangle ruler in measurement tools.",
+    screenshotCaption: "Use rectangle ruler for fast footprint and clearance checks.",
     sections: [
       {
         heading: "Rectangle Ruler",
         points: [
           "Use rectangle ruler to read width, depth, and diagonal.",
           "Drag between two corners to size a rectangular area quickly.",
-        ],
-      },
-      {
-        heading: "Polyline Ruler",
-        points: [
-          "Use polyline ruler to measure routed distance across multiple segments.",
           "Press Esc at any time to exit measurement mode.",
         ],
       },
     ],
   },
   {
-    id: "files-and-export",
-    title: "Files & Export",
-    subtitle: "Save work, reload boards, and export component data.",
+    id: "polyline-ruler",
+    title: "Polyline Ruler",
+    subtitle: "Measure routed distance across multiple connected segments.",
+    screenshotPath: "assets/help/04-view-and-tools.svg",
+    screenshotAlt: "Polyline ruler in measurement tools.",
+    screenshotCaption: "Use polyline ruler for cable-run and path-length estimates.",
+    sections: [
+      {
+        heading: "Polyline Ruler",
+        points: [
+          "Use polyline ruler to measure routed distance across multiple segments.",
+          "Add points along turns to follow realistic cable paths.",
+          "Press Esc at any time to exit measurement mode.",
+        ],
+      },
+    ],
+  },
+  {
+    id: "board-files",
+    title: "Board Files",
+    subtitle: "Start new projects and save/load board state.",
     screenshotPath: "assets/help/05-files-and-gpt.svg",
-    screenshotAlt: "Board menu file actions and component list export.",
-    screenshotCaption: "Use file actions for persistence and component list export for planning.",
+    screenshotAlt: "Board menu file actions for new, load, and save.",
+    screenshotCaption: "Use board file actions to persist and restore your pedalboard project.",
     sections: [
       {
         heading: "Board Files",
@@ -222,6 +259,16 @@ const HELP_PAGES: HelpPage[] = [
           "Save exports the current board to JSON.",
         ],
       },
+    ],
+  },
+  {
+    id: "component-list",
+    title: "Component List",
+    subtitle: "Review parts and export a CSV bill-style list.",
+    screenshotPath: "assets/help/05-files-and-gpt.svg",
+    screenshotAlt: "Component list with export controls.",
+    screenshotCaption: "Use component list for quick inventory and planning exports.",
+    sections: [
       {
         heading: "Component List",
         points: [
@@ -287,8 +334,19 @@ export function HelpModal({ open, onClose }: HelpModalProps) {
               onClick={() => setPageIndex(idx)}
               aria-current={idx === pageIndex ? "page" : undefined}
             >
-              <span className="help-modal-page-number">{idx + 1}</span>
-              <span className="help-modal-page-label">{entry.title}</span>
+              <span className="help-modal-page-main">
+                <span className="help-modal-page-number">{idx + 1}</span>
+                <span className="help-modal-page-label">{entry.title}</span>
+              </span>
+              {entry.sections.length > 1 ? (
+                <span className="help-modal-page-subchapters" aria-hidden="true">
+                  {entry.sections.map((section) => (
+                    <span key={section.heading} className="help-modal-page-subchapter">
+                      {section.heading}
+                    </span>
+                  ))}
+                </span>
+              ) : null}
             </button>
           ))}
         </nav>
@@ -299,10 +357,12 @@ export function HelpModal({ open, onClose }: HelpModalProps) {
             <p className="help-modal-page-subtitle">{page.subtitle}</p>
           </header>
 
-          <figure className="help-modal-shot">
-            <img src={helpAssetPath(page.screenshotPath)} alt={page.screenshotAlt} loading="lazy" />
-            <figcaption>{page.screenshotCaption}</figcaption>
-          </figure>
+          {page.screenshotPath ? (
+            <figure className="help-modal-shot">
+              <img src={helpAssetPath(page.screenshotPath)} alt={page.screenshotAlt ?? "Manual screenshot"} loading="lazy" />
+              {page.screenshotCaption ? <figcaption>{page.screenshotCaption}</figcaption> : null}
+            </figure>
+          ) : null}
 
           <div className="help-modal-sections">
             {page.sections.map((section) => (
