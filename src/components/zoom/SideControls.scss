@@ -51,8 +51,8 @@
 }
 
 .mini3d-tools-group.expanded .mini3d-tools-secondary {
-  max-width: calc(var(--side-control-size) * 3 + var(--side-control-gap) * 2);
-  /* dynamic size for 3 buttons */
+  max-width: calc(var(--side-control-size) * 4 + var(--side-control-gap) * 3);
+  /* dynamic size for 4 buttons */
   overflow: visible;
   opacity: 1;
   transition:

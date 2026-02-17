@@ -77,16 +77,18 @@
 }
 
 .add-cable-color-swatches {
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .add-cable-color-swatch-btn {
-  aspect-ratio: 1;
-  min-width: 0;
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  min-height: 18px;
   border: 2px solid var(--add-cable-border, vars.$color-surface-outline);
-  border-radius: 8px;
+  border-radius: 5px;
   cursor: pointer;
   padding: 0;
   transition: border-color 0.15s, box-shadow 0.15s;
@@ -103,48 +105,16 @@
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
 }
 
-.add-cable-template-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.add-cable-template-btn {
-  padding: 8px 12px;
-  min-height: 36px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: vars.$color-text-secondary-dark;
-  background: vars.$color-surface;
-  border: 1px solid var(--add-cable-border, vars.$color-surface-outline);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-}
-
-.add-cable-template-btn:hover {
-  border-color: var(--add-cable-muted, vars.$color-text-tertiary);
-  background: var(--add-cable-badge-bg, vars.$color-surface-subtle);
-}
-
-.add-cable-template-btn:focus {
-  outline: none;
-  border-color: var(--add-cable-focus, vars.$color-primary-alt);
-  box-shadow: 0 0 0 3px vars.$primary-alt-15;
-}
-
-.add-cable-template-btn-active {
-  color: vars.$color-primary-strong;
-  border-color: var(--add-cable-focus, vars.$color-primary-alt);
-  background: rgba(vars.$color-primary-alt, 0.1);
-}
-
 /* —— Endpoints —— */
 .add-cable-endpoints {
   display: flex;
   flex-direction: column;
+  gap: 10px;
+}
+
+.add-cable-endpoints-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -159,8 +129,39 @@
   margin-bottom: 0;
 }
 
-.add-cable-endpoints .add-cable-template-buttons {
-  justify-content: flex-end;
+.add-cable-endpoints-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.add-cable-template-select {
+  min-width: 110px;
+  min-height: 32px;
+  flex-shrink: 0;
+  pointer-events: auto;
+  position: relative;
+  z-index: 1;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  font-family: inherit;
+  color: vars.$color-text-secondary-dark;
+  background: vars.$color-surface;
+  border: 1px solid var(--add-cable-border, vars.$color-surface-outline);
+  border-radius: 8px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: auto;
+}
+
+.add-cable-template-select:hover {
+  border-color: var(--add-cable-muted, vars.$color-text-tertiary);
+}
+
+.add-cable-template-select:focus {
+  outline: none;
+  border-color: var(--add-cable-focus, vars.$color-primary-alt);
+  box-shadow: 0 0 0 3px vars.$primary-alt-15;
 }
 
 .add-cable-swap-btn {
@@ -191,10 +192,23 @@
 }
 
 .add-cable-endpoint {
-  display: grid;
-  grid-template-columns: auto minmax(0, 150px) 1fr;
-  align-items: center;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
+  min-width: 0;
+}
+
+.add-cable-endpoint-head-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.add-cable-endpoint-head-row .add-cable-connector-picker {
+  flex: 1;
+  min-width: 0;
+  max-width: none;
 }
 
 .add-cable-endpoint-badge {

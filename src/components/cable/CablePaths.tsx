@@ -35,6 +35,9 @@ const CANVAS_SIZE = CANVAS_HALF * 2;
 /** Hit area stroke width (mm) – invisible path for easier clicking. */
 const HIT_STROKE_MM = 16;
 const HANDLE_REMOVE_PRESS_MS = 600;
+const HANDLE_DRAG_THRESHOLD_PX = 4;
+const DOUBLE_TAP_TIME_WINDOW_MS = 320;
+const DOUBLE_TAP_MAX_DISTANCE_PX = 28;
 
 type DragState = {
   cableId: string;
@@ -52,10 +55,17 @@ type FlashPoint = {
   point: Point;
 };
 
+type LastCableTap = {
+  cableId: string;
+  time: number;
+  x: number;
+  y: number;
+};
+
 type HandleType = "start" | "mid" | "end";
 
 /** Distance from anchor to connector label (mm). */
-const LABEL_OFFSET_MM = 14;
+const LABEL_OFFSET_MM = 19;
 /** Connector icon size rendered beneath endpoint labels (canvas mm units). */
 const LABEL_ICON_SIZE_MM = 11;
 /** Vertical distance from label center to icon top (canvas mm units). */
@@ -130,6 +140,15 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
   const [flashPoint, setFlashPoint] = useState<FlashPoint | null>(null);
   const flashTimerRef = useRef<number | null>(null);
   const pendingHandleIndexRef = useRef<number | null>(null);
+  const lastCableTapRef = useRef<LastCableTap | null>(null);
+
+  const clearHandlePress = () => {
+    if (pressTimerRef.current) {
+      window.clearTimeout(pressTimerRef.current);
+      pressTimerRef.current = null;
+    }
+    setPressingHandle(null);
+  };
 
   useEffect(() => {
     return () => {
@@ -216,10 +235,14 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
 
   const normalizePoints = (points: Point[]) => points;
 
-  const { handleDragStart: handleHandleDragStart } = useDragState<{ points: Point[]; handleIndex: number }>({
+  const { handleDragStart: handleHandleDragStart, clearDragState: clearHandleDragState } = useDragState<{
+    points: Point[];
+    handleIndex: number;
+  }>({
     zoom,
     spaceDown,
-    activateOnStart: true,
+    thresholdPx: HANDLE_DRAG_THRESHOLD_PX,
+    activateOnStart: false,
     getPendingPayload: (id) => {
       const handleIndex = pendingHandleIndexRef.current;
       pendingHandleIndexRef.current = null;
@@ -238,11 +261,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
     onDragMove: ({ event }) => {
       const drag = dragRef.current;
       if (!drag) return;
-      if (pressTimerRef.current) {
-        window.clearTimeout(pressTimerRef.current);
-        pressTimerRef.current = null;
-      }
-      setPressingHandle(null);
+      clearHandlePress();
       pausePanZoom?.(true);
       const canvasPoint = clientToCanvas(event.clientX, event.clientY);
       const snapped =
@@ -255,11 +274,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
       setCables((prev) => prev.map((c) => (c.id === drag.cableId ? { ...c, segments: normalizePoints(nextPoints) } : c)), false);
     },
     onDragEnd: () => {
-      if (pressTimerRef.current) {
-        window.clearTimeout(pressTimerRef.current);
-        pressTimerRef.current = null;
-      }
-      setPressingHandle(null);
+      clearHandlePress();
       pausePanZoom?.(false);
       const drag = dragRef.current;
       if (!drag) return;
@@ -291,20 +306,14 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
     return bestDist2 === Infinity ? null : bestIdx;
   };
 
-  const resolveCableIdFromEvent = (e: React.SyntheticEvent<Element>) => {
-    const target = e.target as Element | null;
-    const hit = target?.closest?.(".cable-hit-area") as SVGPathElement | null;
-    return hit?.getAttribute("data-cable-id") ?? null;
-  };
-
-  const handleSegmentDoubleClick = (cableId: string, e: React.MouseEvent | React.PointerEvent) => {
+  const handleSegmentDoubleClick = (cableId: string, e: React.MouseEvent | React.PointerEvent): boolean => {
     e.stopPropagation();
-    if (!selectedCableId || selectedCableId !== cableId) return;
+    if (!selectedCableId || selectedCableId !== cableId) return false;
     const cable = cables.find((c) => c.id === cableId);
-    if (!cable) return;
+    if (!cable) return false;
     const canvasPoint = clientToCanvas(e.clientX, e.clientY);
     const segIndex = nearestSegmentIndex(cable, canvasPoint);
-    if (segIndex == null) return;
+    if (segIndex == null) return false;
     const points: Point[] = cable.segments;
     const snapped =
       e.shiftKey || e.metaKey
@@ -315,13 +324,23 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
     flashTimerRef.current = window.setTimeout(() => setFlashPoint(null), 300);
     const nextPoints = [...points.slice(0, segIndex + 1), snapped, ...points.slice(segIndex + 1)];
     setCables((prev) => prev.map((c) => (c.id === cableId ? { ...c, segments: normalizePoints(nextPoints) } : c)), true);
+    return true;
   };
 
-  const handleSvgDoubleClick = (e: React.MouseEvent<SVGSVGElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const cableId = resolveCableIdFromEvent(e);
-    if (cableId) handleSegmentDoubleClick(cableId, e);
+  const handleTouchSegmentTap = (cableId: string, e: React.PointerEvent): boolean => {
+    const now = performance.now();
+    const prevTap = lastCableTapRef.current;
+    if (
+      prevTap &&
+      prevTap.cableId === cableId &&
+      now - prevTap.time <= DOUBLE_TAP_TIME_WINDOW_MS &&
+      Math.hypot(e.clientX - prevTap.x, e.clientY - prevTap.y) <= DOUBLE_TAP_MAX_DISTANCE_PX
+    ) {
+      lastCableTapRef.current = null;
+      return handleSegmentDoubleClick(cableId, e);
+    }
+    lastCableTapRef.current = { cableId, time: now, x: e.clientX, y: e.clientY };
+    return false;
   };
 
 
@@ -334,31 +353,37 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
     const isExtremity = handleIndex === 0 || handleIndex === points.length - 1;
 
     // Long-press removal
-    if (pressTimerRef.current) {
-      window.clearTimeout(pressTimerRef.current);
-      pressTimerRef.current = null;
-    }
+    clearHandlePress();
     if (!isExtremity) {
       setPressingHandle({ cableId, handleIndex });
       pressTimerRef.current = window.setTimeout(() => {
         const nextPoints = points.filter((_, idx) => idx !== handleIndex);
         if (nextPoints.length < 2) return;
         dragRef.current = null;
-        setPressingHandle(null);
+        clearHandleDragState();
+        clearHandlePress();
         setCables((prev) => prev.map((c) => (c.id === cableId ? { ...c, segments: normalizePoints(nextPoints) } : c)), true);
         try {
           (e.target as Element).releasePointerCapture(e.pointerId);
         } catch {
           /* ignore */
         }
-        pressTimerRef.current = null;
       }, HANDLE_REMOVE_PRESS_MS);
     }
 
-    dragRef.current = { cableId, points, handleIndex };
     pendingHandleIndexRef.current = handleIndex;
     (e.target as Element).setPointerCapture(e.pointerId);
     handleHandleDragStart(cableId, e);
+  };
+
+  const handleHandlePointerRelease = (e: React.PointerEvent) => {
+    e.stopPropagation();
+    clearHandlePress();
+    try {
+      (e.currentTarget as Element).releasePointerCapture(e.pointerId);
+    } catch {
+      /* ignore */
+    }
   };
 
   if (!visible || cables.length === 0) return null;
@@ -392,7 +417,6 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
         colorScheme: "normal",
         opacity,
       }}
-      onDoubleClickCapture={handleSvgDoubleClick}
     >
       {flashPoint && (
         <circle
@@ -417,10 +441,10 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
             data-cable-id={p.id}
             style={{ cursor: "pointer", pointerEvents: "stroke" }}
             onPointerDown={(e) => {
-              // Skip drag/select when this is part of a double-click; let capture handler insert.
-              if (e.detail >= 2) {
-                e.stopPropagation();
-                return;
+              if (e.pointerType === "touch") {
+                if (handleTouchSegmentTap(p.id, e)) return;
+              } else if (e.detail >= 2) {
+                if (handleSegmentDoubleClick(p.id, e)) return;
               }
               onCablePointerDown(p.id, e);
             }}
@@ -483,6 +507,8 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
               r={7}
               className="cable-handle-halo"
               onPointerDown={(e) => handleHandlePointerDown(selectedCableId!, idx, e)}
+              onPointerUp={handleHandlePointerRelease}
+              onPointerCancel={handleHandlePointerRelease}
               fill={handleFill}
             />
             <circle
@@ -499,6 +525,8 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
                 .filter(Boolean)
                 .join(" ")}
               onPointerDown={(e) => handleHandlePointerDown(selectedCableId!, idx, e)}
+              onPointerUp={handleHandlePointerRelease}
+              onPointerCancel={handleHandlePointerRelease}
               fill={handleFill}
             />
           </g>

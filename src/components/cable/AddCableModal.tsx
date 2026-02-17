@@ -22,6 +22,14 @@ function nextCableId(): string {
   return `cable-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
+function findTemplateName(connectorA: ConnectorKind, connectorB: ConnectorKind): string {
+  return (
+    CABLE_CONNECTOR_TEMPLATES.find(
+      (template) => connectorA === template.connectorA && connectorB === template.connectorB
+    )?.name ?? ""
+  );
+}
+
 /** Connector type: button opens full-screen overlay picker (reliable on mobile). */
 function ConnectorPicker({
   id,
@@ -234,6 +242,7 @@ export function AddCableModal({ open, segments, onConfirm, onCancel, initialCabl
   const [color, setColor] = useState(DEFAULT_COLOR);
   const [connectorA, setConnectorA] = useState<ConnectorKind>(DEFAULT_CONNECTOR);
   const [connectorB, setConnectorB] = useState<ConnectorKind>(DEFAULT_CONNECTOR);
+  const [selectedTemplateName, setSelectedTemplateName] = useState("");
   const [connectorAName, setConnectorAName] = useState("");
   const [connectorBName, setConnectorBName] = useState("");
   const prevOpenRef = useRef(false);
@@ -247,12 +256,14 @@ export function AddCableModal({ open, segments, onConfirm, onCancel, initialCabl
         );
         setConnectorA(initialCable.connectorA);
         setConnectorB(initialCable.connectorB);
+        setSelectedTemplateName(findTemplateName(initialCable.connectorA, initialCable.connectorB));
         setConnectorAName(initialCable.connectorAName ?? "");
         setConnectorBName(initialCable.connectorBName ?? "");
       } else {
         setColor(DEFAULT_COLOR);
         setConnectorA(DEFAULT_CONNECTOR);
         setConnectorB(DEFAULT_CONNECTOR);
+        setSelectedTemplateName("");
         setConnectorAName("");
         setConnectorBName("");
       }
@@ -282,8 +293,28 @@ export function AddCableModal({ open, segments, onConfirm, onCancel, initialCabl
     const nextConnectorBName = connectorAName;
     setConnectorA(nextConnectorA);
     setConnectorB(nextConnectorB);
+    setSelectedTemplateName(findTemplateName(nextConnectorA, nextConnectorB));
     setConnectorAName(nextConnectorAName);
     setConnectorBName(nextConnectorBName);
+  };
+
+  const handleConnectorAChange = (nextConnector: ConnectorKind) => {
+    setConnectorA(nextConnector);
+    setSelectedTemplateName("");
+  };
+
+  const handleConnectorBChange = (nextConnector: ConnectorKind) => {
+    setConnectorB(nextConnector);
+    setSelectedTemplateName("");
+  };
+
+  const handleTemplateChange = (templateName: string) => {
+    setSelectedTemplateName(templateName);
+    if (!templateName) return;
+    const template = CABLE_CONNECTOR_TEMPLATES.find((item) => item.name === templateName);
+    if (!template) return;
+    setConnectorA(template.connectorA);
+    setConnectorB(template.connectorB);
   };
 
   if (!open) return null;
@@ -297,7 +328,7 @@ export function AddCableModal({ open, segments, onConfirm, onCancel, initialCabl
       ariaLabel={isEdit ? "Edit cable – color and connectors" : "Add cable – choose color and connectors"}
       ignoreBackdropClickForMs={200}
     >
-      <div className="add-cable-form" style={{ touchAction: "manipulation" }}>
+      <div className="add-cable-form">
         <div className="add-cable-row add-cable-color-row">
           <span className="add-cable-label">Color</span>
           <div className="add-cable-color-swatches" role="group" aria-label="Cable color">
@@ -319,77 +350,82 @@ export function AddCableModal({ open, segments, onConfirm, onCancel, initialCabl
         <div className="add-cable-endpoints">
           <div className="add-cable-endpoints-head">
             <span className="add-cable-label">Endpoints</span>
-            <button
-              type="button"
-              className="add-cable-swap-btn"
-              onClick={handleSwapConnectors}
-              title="Swap connector A and B"
-              aria-label="Swap connector A and B"
-            >
-              Swap A/B
-            </button>
+            <div className="add-cable-endpoints-actions">
+              <label htmlFor="add-cable-template-select" className="add-cable-sr-only">
+                Connector template
+              </label>
+              <select
+                id="add-cable-template-select"
+                className="add-cable-template-select"
+                value={selectedTemplateName}
+                onChange={(e) => handleTemplateChange(e.target.value)}
+                aria-label="Connector template"
+              >
+                <option value="" aria-label="No template"> </option>
+                {CABLE_CONNECTOR_TEMPLATES.map((template) => (
+                  <option key={template.name} value={template.name}>
+                    {template.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className="add-cable-swap-btn"
+                onClick={handleSwapConnectors}
+                title="Swap connector A and B"
+                aria-label="Swap connector A and B"
+              >
+                Swap A/B
+              </button>
+            </div>
           </div>
-          <div className="add-cable-template-buttons" role="group" aria-label="Cable connector templates">
-            {CABLE_CONNECTOR_TEMPLATES.map((template) => {
-              const active = connectorA === template.connectorA && connectorB === template.connectorB;
-              return (
-                <button
-                  key={template.name}
-                  type="button"
-                  className={`add-cable-template-btn${active ? " add-cable-template-btn-active" : ""}`}
-                  onClick={() => {
-                    setConnectorA(template.connectorA);
-                    setConnectorB(template.connectorB);
-                  }}
-                  title={`${template.connectorA} -> ${template.connectorB}`}
-                  aria-pressed={active}
+          <div className="add-cable-endpoints-grid">
+            <div className="add-cable-endpoint">
+              <div className="add-cable-endpoint-head-row">
+                <span
+                  className="add-cable-endpoint-badge add-cable-endpoint-badge-a"
+                  style={{ backgroundColor: CABLE_TERMINAL_START_COLOR, color: "#1a4d1a" }}
+                  aria-hidden
                 >
-                  {template.name}
-                </button>
-              );
-            })}
-          </div>
-          <div className="add-cable-endpoint">
-            <span
-              className="add-cable-endpoint-badge add-cable-endpoint-badge-a"
-              style={{ backgroundColor: CABLE_TERMINAL_START_COLOR, color: "#1a4d1a" }}
-              aria-hidden
-            >
-              A
-            </span>
-            <ConnectorPicker
-              id="add-cable-connector-a"
-              label=""
-              value={connectorA}
-              onChange={setConnectorA}
-            />
-            <LabelCombo
-              id="add-cable-connector-a-name"
-              value={connectorAName}
-              onChange={setConnectorAName}
-              ariaLabel="Connector A label"
-            />
-          </div>
-          <div className="add-cable-endpoint">
-            <span
-              className="add-cable-endpoint-badge add-cable-endpoint-badge-b"
-              style={{ backgroundColor: CABLE_TERMINAL_END_COLOR, color: "#b35c00" }}
-              aria-hidden
-            >
-              B
-            </span>
-            <ConnectorPicker
-              id="add-cable-connector-b"
-              label=""
-              value={connectorB}
-              onChange={setConnectorB}
-            />
-            <LabelCombo
-              id="add-cable-connector-b-name"
-              value={connectorBName}
-              onChange={setConnectorBName}
-              ariaLabel="Connector B label"
-            />
+                  A
+                </span>
+                <ConnectorPicker
+                  id="add-cable-connector-a"
+                  label=""
+                  value={connectorA}
+                  onChange={handleConnectorAChange}
+                />
+              </div>
+              <LabelCombo
+                id="add-cable-connector-a-name"
+                value={connectorAName}
+                onChange={setConnectorAName}
+                ariaLabel="Connector A label"
+              />
+            </div>
+            <div className="add-cable-endpoint">
+              <div className="add-cable-endpoint-head-row">
+                <span
+                  className="add-cable-endpoint-badge add-cable-endpoint-badge-b"
+                  style={{ backgroundColor: CABLE_TERMINAL_END_COLOR, color: "#b35c00" }}
+                  aria-hidden
+                >
+                  B
+                </span>
+                <ConnectorPicker
+                  id="add-cable-connector-b"
+                  label=""
+                  value={connectorB}
+                  onChange={handleConnectorBChange}
+                />
+              </div>
+              <LabelCombo
+                id="add-cable-connector-b-name"
+                value={connectorBName}
+                onChange={setConnectorBName}
+                ariaLabel="Connector B label"
+              />
+            </div>
           </div>
         </div>
 
