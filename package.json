@@ -18,6 +18,7 @@
     "prompt-dimensions": "npx tsx scripts/prompt-dimensions.ts",
     "convert-to-png": "npx tsx scripts/convert-to-png.ts",
     "generate-bg-thumbnails": "npx tsx scripts/generate-background-thumbnails.ts",
+    "generate-catalog-thumbnails": "npx tsx scripts/generate-catalog-thumbnails.ts",
     "remove-backup-files": "npx tsx scripts/remove-backup-files.ts",
     "distribute-images": "pwsh -File scripts/distribute-processed-images.ps1"
   },

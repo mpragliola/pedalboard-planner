@@ -14,6 +14,7 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { DEFAULT_OBJECT_COLOR } from "../../constants";
+import { buildCatalogImageSourceSet } from "../../lib/catalogImageSources";
 import type { DeviceType } from "../../data/devices";
 import { CatalogDraggableItem } from "./CatalogDndProvider";
 import "./CatalogList.scss";
@@ -113,11 +114,52 @@ function ViewModeToggle({
     </div>
   );
 }
+
+function thumbSizesForViewMode(viewMode: CatalogViewMode): string {
+  switch (viewMode) {
+    case "list":
+      return "36px";
+    case "grid":
+      return "48px";
+    case "large":
+      return "72px";
+    case "xlarge":
+      return "96px";
+    case "text":
+    default:
+      return "1px";
+  }
+}
+
+function CatalogThumbnailImage({ relativePath, sizes }: { relativePath: string; sizes: string }) {
+  const { src, srcSet, fullSrc } = buildCatalogImageSourceSet(relativePath, sizes);
+
+  return (
+    <img
+      src={src}
+      srcSet={srcSet}
+      sizes={sizes}
+      alt=""
+      aria-hidden
+      loading="lazy"
+      decoding="async"
+      onError={(e) => {
+        const target = e.currentTarget;
+        if (target.dataset.catalogFallbackApplied === "1") return;
+        target.dataset.catalogFallbackApplied = "1";
+        target.src = fullSrc;
+        target.removeAttribute("srcset");
+        target.removeAttribute("sizes");
+      }}
+    />
+  );
+}
 export function CatalogList({ id, label, size, options, catalogMode, viewMode, onViewModeChange }: CatalogListProps) {
   const listRef = useRef<HTMLDivElement>(null);
   const scrollRestoreRef = useRef<number | null>(null);
 
   const imageBase = catalogMode === "boards" ? "images/boards/" : "images/devices/";
+  const thumbnailSizes = thumbSizesForViewMode(viewMode);
 
   useLayoutEffect(() => {
     const el = listRef.current;
@@ -166,7 +208,7 @@ export function CatalogList({ id, label, size, options, catalogMode, viewMode, o
               {viewMode !== "text" && (
                 <span className="catalog-list-item-thumb">
                   {opt.image ? (
-                    <img src={`${imageBase}${opt.image}`} alt="" aria-hidden loading="lazy" />
+                    <CatalogThumbnailImage relativePath={`${imageBase}${opt.image}`} sizes={thumbnailSizes} />
                   ) : (
                     <span
                       className="catalog-list-item-placeholder"
@@ -230,6 +272,7 @@ export function CatalogListGrouped({
   }, []);
 
   const imageBase = catalogMode === "boards" ? "images/boards/" : "images/devices/";
+  const thumbnailSizes = thumbSizesForViewMode(viewMode);
 
   useLayoutEffect(() => {
     const el = listRef.current;
@@ -329,7 +372,7 @@ export function CatalogListGrouped({
                         {viewMode !== "text" && (
                           <span className="catalog-list-item-thumb">
                             {opt.image ? (
-                              <img src={`${imageBase}${opt.image}`} alt="" aria-hidden loading="lazy" />
+                              <CatalogThumbnailImage relativePath={`${imageBase}${opt.image}`} sizes={thumbnailSizes} />
                             ) : (
                               <span
                                 className="catalog-list-item-placeholder"
