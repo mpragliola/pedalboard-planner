@@ -281,8 +281,11 @@ const HELP_PAGES: HelpPage[] = [
   },
   {
     id: "gpt-prompt",
-    title: "GPT Prompt",
-    subtitle: "Generate a reusable prompt for price estimation.",
+    title: "GPT Prompt Builder",
+    subtitle: "While Pedalboard Factory has no native AI features, the GPT prompt builder helps "
+      + "you create detailed prompts for use in external LLMs like ChatGPT, Claude, or Gemini, with "
+      + "all the information needed to ask your LLM for price estimates, gear recommendations, or other "
+      + "pedalboard-related advice.",
     screenshotPath: "assets/help/05-files-and-gpt.svg",
     screenshotAlt: "Price estimate prompt dialog with optional settings.",
     screenshotCaption: "Build, edit, and copy a prompt for ChatGPT, Claude, Gemini, or similar tools.",
