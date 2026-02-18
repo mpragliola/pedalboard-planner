@@ -1,5 +1,6 @@
 /** Object creation helpers for catalog templates and custom items. */
-import { MM_TO_PX, DEFAULT_OBJECT_COLOR } from "../constants";
+import { DEFAULT_OBJECT_COLOR } from "../constants/defaults";
+import { MM_TO_PX } from "../constants/interaction";
 import type { CanvasObjectType, ObjectSubtype } from "../types";
 import type { BoardTemplate } from "../data/boards";
 import type { DeviceTemplate } from "../data/devices";

@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { BOARD_TEMPLATES } from "../data/boards";
 import { DEVICE_TEMPLATES } from "../data/devices";
-import { DEVICE_TYPE_ORDER } from "../constants";
+import { DEVICE_TYPE_ORDER } from "../constants/catalog";
 import { useStringFilter, useRangeFilter, isFilterActive, resetFilters, type StringFilter, type RangeFilter } from "./useFilterState";
 
 const parseNum = (s: string): number | null => {

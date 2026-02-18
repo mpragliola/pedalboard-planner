@@ -156,3 +156,28 @@ _Generated on 2026-02-18 from `src/**/*.ts(x)`._
 - `components` has high internal coupling and is expected to remain app-local unless a design-system effort is intentional.
 - `lib` and `hooks` are smaller, clearer seams; these are the strongest package extraction candidates.
 - Top-level orchestrators (`src/context/AppContext.tsx`, `src/App.tsx`) are integration points and should generally not be packaged directly.
+
+## Constants Boundary Update (2026-02-18)
+
+- Constants were split from the `src/constants.ts` umbrella into domain modules.
+- Runtime consumers now import domain constants directly; the umbrella remains as a compatibility façade.
+
+| Module | Boundary |
+|---|---|
+| `src/constants/runtime.ts` | Environment/runtime-derived values (`BASE_URL`, feature flags). |
+| `src/constants/interaction.ts` | Input/zoom/timing/history values used by hooks/context. |
+| `src/constants/layout.ts` | Canvas/UI placement and sizing constants. |
+| `src/constants/catalog.ts` | Catalog sorting/grouping constants for device types. |
+| `src/constants/defaults.ts` | Default initial state/object fallback values. |
+| `src/constants/connectors.ts` | Connector icon/name/kind definitions. |
+| `src/constants.ts` | Compatibility-only barrel re-exporting domain constants. |
+
+### Migration status
+
+- Remaining import from `./constants`: `src/constants.test.ts` (intentional compatibility test).
+- No runtime module currently imports `../constants` after migration.
+
+### Boundary guidance
+
+- Prefer direct imports from `src/constants/*` for new code.
+- Keep `src/constants.ts` for backward compatibility only; avoid adding new direct consumers.

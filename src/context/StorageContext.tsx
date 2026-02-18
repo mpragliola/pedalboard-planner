@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
-import { DEBOUNCE_SAVE_MS } from "../constants";
+import { DEBOUNCE_SAVE_MS } from "../constants/interaction";
 import { StateManager } from "../lib/stateManager";
 import type { SavedState } from "../lib/stateSerialization";
 import {

@@ -1,4 +1,4 @@
-import { BASE_URL } from "../constants";
+import { BASE_URL } from "../constants/runtime";
 
 const THUMB_SMALL_WIDTH = 96;
 const THUMB_LARGE_WIDTH = 192;

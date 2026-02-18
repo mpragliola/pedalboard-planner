@@ -6,13 +6,13 @@ import {
   ZOOM_MIN,
   ZOOM_MAX,
   ZOOM_STEP,
-  TILE_SIZE_BASE,
   WHEEL_PIVOT_MS,
   WHEEL_THROTTLE_MS,
   WHEEL_TRANSITION_MS,
   WHEEL_ZOOM_FACTOR,
   PINCH_DETECTION_THRESHOLD,
-} from "../constants";
+} from "../constants/interaction";
+import { TILE_SIZE_BASE } from "../constants/layout";
 
 function dist(a: { clientX: number; clientY: number }, b: { clientX: number; clientY: number }) {
   return Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);

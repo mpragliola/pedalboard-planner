@@ -3,7 +3,7 @@ import type { CanvasObjectType } from "../types";
 import type { Shape3D } from "../shape3d";
 import { DEVICE_TEMPLATES } from "../data/devices";
 import { BOARD_TEMPLATES } from "../data/boards";
-import { MM_TO_PX } from "../constants";
+import { MM_TO_PX } from "../constants/interaction";
 import { Wdh } from "../wdh";
 
 /** 

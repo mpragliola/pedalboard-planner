@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BASE_URL } from "../constants";
+import { BASE_URL } from "../constants/runtime";
 import { buildCatalogImageSourceSet } from "./catalogImageSources";
 
 function withBase(path: string): string {

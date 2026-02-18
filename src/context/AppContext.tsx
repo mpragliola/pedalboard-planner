@@ -1,7 +1,9 @@
 import { useState, useCallback, useRef, useEffect, useMemo, type ReactNode } from "react";
 import { BOARD_TEMPLATES } from "../data/boards";
 import { DEVICE_TEMPLATES } from "../data/devices";
-import { initialObjects, MM_TO_PX, HISTORY_DEPTH, DEFAULT_PLACEMENT_FALLBACK } from "../constants";
+import { initialObjects } from "../constants/defaults";
+import { MM_TO_PX, HISTORY_DEPTH } from "../constants/interaction";
+import { DEFAULT_PLACEMENT_FALLBACK } from "../constants/layout";
 import { DEFAULT_CANVAS_BACKGROUND } from "../constants/backgrounds";
 import {
   createObjectFromTemplate,
