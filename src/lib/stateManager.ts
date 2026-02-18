@@ -1,6 +1,9 @@
 /** Persistence helpers for editor state (storage only). */
 import type { SavedState } from "./stateSerialization";
-import { parseState, serializeState } from "./stateSerialization";
+import {
+    parseStateWithRuntimeTemplates,
+    serializeStateWithRuntimeTemplates,
+} from "./stateSerialization.runtime";
 
 /**
  * Loads and saves app state to a storage backend (e.g. localStorage).
@@ -18,7 +21,7 @@ export class StateManager {
                 ? localStorage.getItem(this.storageKey)
                 : null;
             if (!raw) return null;
-            const parsed = parseState(raw);
+            const parsed = parseStateWithRuntimeTemplates(raw);
             if (parsed) return parsed;
             // If persisted data is no longer compatible with the schema, wipe it.
             if (typeof localStorage !== "undefined") {
@@ -39,7 +42,7 @@ export class StateManager {
             if (typeof localStorage !== "undefined") {
                 localStorage.setItem(
                     this.storageKey,
-                    JSON.stringify(serializeState(state))
+                    JSON.stringify(serializeStateWithRuntimeTemplates(state))
                 );
             }
         } catch {

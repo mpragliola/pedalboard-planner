@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { parseState, serializeState } from "./stateSerialization";
+import {
+  parseStateWithRuntimeTemplates as parseState,
+  serializeStateWithRuntimeTemplates as serializeState,
+} from "./stateSerialization.runtime";
 import type { SavedState } from "./stateSerialization";
 
 // A valid object record with all required fields for validation

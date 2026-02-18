@@ -1,7 +1,8 @@
 /** State serialization + parsing helpers (no storage). */
 import type { CanvasObjectType, Cable } from "../types";
+import type { Shape3D } from "../shape3d";
+import type { Wdh } from "../wdh";
 import type { Offset, Point } from "./vector";
-import { getTemplateImage, getTemplateShape, getTemplateWdh, hasKnownTemplateDimensions } from "./objectDimensions";
 import { isCanvasBackgroundId, type CanvasBackgroundId } from "../constants/backgrounds";
 
 /** Shape of state persisted to storage (e.g. localStorage). */
@@ -15,6 +16,19 @@ export interface SavedState {
   unit?: "mm" | "in";
   background?: CanvasBackgroundId;
   cables?: Cable[];
+}
+
+/** Runtime adapter for template-based enrichment and known-template checks. */
+export interface StateTemplateResolver {
+  hasKnownTemplateDimensions: (templateId?: string) => boolean;
+  getTemplateImage: (templateId?: string) => string | null;
+  getTemplateShape: (templateId?: string) => Shape3D | undefined;
+  getTemplateWdh: (templateId?: string) => Wdh | undefined;
+}
+
+/** Optional serialization/parse adapters that keep this module pure by default. */
+export interface StateSerializationOptions {
+  templateResolver?: StateTemplateResolver;
 }
 
 function round2(n: number): number {
@@ -39,7 +53,11 @@ function isCustomObject(o: CanvasObjectType): boolean {
 }
 
 /** Strip image from all objects; keep name only for custom elements. Omit width/depth/height when template has known dimensions (restored from template on load). Round coordinates to 2 decimals. */
-function serializeObjects(objects: CanvasObjectType[]): Record<string, unknown>[] {
+function serializeObjects(
+  objects: CanvasObjectType[],
+  options?: StateSerializationOptions
+): Record<string, unknown>[] {
+  const resolver = options?.templateResolver;
   return objects.map((o) => {
     const { image, name, width, depth, height, pos, shape: _shape, ...rest } = o as CanvasObjectType & {
       image?: string | null;
@@ -53,7 +71,7 @@ function serializeObjects(objects: CanvasObjectType[]): Record<string, unknown>[
       pos: { x: round2(pos.x), y: round2(pos.y) },
       name: o.name,
     };
-    const hasKnownTemplateDims = hasKnownTemplateDimensions(o.templateId);
+    const hasKnownTemplateDims = resolver ? resolver.hasKnownTemplateDimensions(o.templateId) : false;
     if (isCustomObject(o)) {
       out.width = o.width;
       out.depth = o.depth;
@@ -83,7 +101,11 @@ function serializeCables(cables: Cable[] | undefined): Record<string, unknown>[]
 }
 
 /** Restore image and dimensions from template when loading. Name derived from brand+model if missing. */
-function normalizeLoadedObjects(objects: Record<string, unknown>[]): CanvasObjectType[] {
+function normalizeLoadedObjects(
+  objects: Record<string, unknown>[],
+  options?: StateSerializationOptions
+): CanvasObjectType[] {
+  const resolver = options?.templateResolver;
   return objects.map((o) => {
     const { x: _legacyX, y: _legacyY, pos: _rawPos, ...rest } = o;
     const rawPos = o.pos as Record<string, unknown> | undefined;
@@ -96,10 +118,10 @@ function normalizeLoadedObjects(objects: Record<string, unknown>[]): CanvasObjec
     const model = str(o, "model");
     const type = str(o, "type");
     const name = str(o, "name") || `${brand} ${model}`.trim() || type || "Object";
-    const image = getTemplateImage(templateId);
-    const shape = getTemplateShape(templateId);
+    const image = resolver ? resolver.getTemplateImage(templateId) : null;
+    const shape = resolver?.getTemplateShape(templateId);
     /* For known templates, always use template dims as source of truth. */
-    const wdh = getTemplateWdh(templateId);
+    const wdh = resolver?.getTemplateWdh(templateId);
     const width = wdh ? wdh[0] : num(o, "width");
     const depth = wdh ? wdh[1] : num(o, "depth");
     const height = wdh ? wdh[2] : num(o, "height");
@@ -108,7 +130,7 @@ function normalizeLoadedObjects(objects: Record<string, unknown>[]): CanvasObjec
 }
 
 /** Parse and validate JSON string into SavedState. Returns null on invalid or missing data. */
-export function parseState(json: string): SavedState | null {
+export function parseState(json: string, options?: StateSerializationOptions): SavedState | null {
   try {
     const data = JSON.parse(json) as unknown;
     if (typeof data !== "object" || data === null || !("objects" in data)) return null;
@@ -116,16 +138,16 @@ export function parseState(json: string): SavedState | null {
     const rawObjects = d.objects;
     if (!Array.isArray(rawObjects) || rawObjects.some((o) => typeof o !== "object" || o === null)) return null;
     const rawObjRecords = rawObjects as Record<string, unknown>[];
-    if (!rawObjRecords.every(isValidObjectRecord)) return null;
-    const objects = normalizeLoadedObjects(rawObjRecords);
+    if (!rawObjRecords.every((o) => isValidObjectRecord(o, options))) return null;
+    const objects = normalizeLoadedObjects(rawObjRecords, options);
 
     const isValidSnapshot = (arr: unknown) =>
-      Array.isArray(arr) && (arr as Record<string, unknown>[]).every(isValidObjectRecord);
+      Array.isArray(arr) && (arr as Record<string, unknown>[]).every((o) => isValidObjectRecord(o, options));
     const past = Array.isArray(d.past) && d.past.every(isValidSnapshot)
-      ? d.past.map((arr: unknown) => normalizeLoadedObjects(arr as Record<string, unknown>[]))
+      ? d.past.map((arr: unknown) => normalizeLoadedObjects(arr as Record<string, unknown>[], options))
       : undefined;
     const future = Array.isArray(d.future) && d.future.every(isValidSnapshot)
-      ? d.future.map((arr: unknown) => normalizeLoadedObjects(arr as Record<string, unknown>[]))
+      ? d.future.map((arr: unknown) => normalizeLoadedObjects(arr as Record<string, unknown>[], options))
       : undefined;
 
     const pan = d.pan as Record<string, unknown> | undefined;
@@ -153,7 +175,7 @@ export function parseState(json: string): SavedState | null {
 }
 
 /** Serialize state for storage/file: no image, name only for custom elements. Coordinates, pan, zoom rounded to 2 decimals. */
-export function serializeState(state: SavedState): Record<string, unknown> {
+export function serializeState(state: SavedState, options?: StateSerializationOptions): Record<string, unknown> {
   const pan =
     state.pan && typeof state.pan.x === "number" && typeof state.pan.y === "number"
       ? { x: round2(state.pan.x), y: round2(state.pan.y) }
@@ -161,9 +183,9 @@ export function serializeState(state: SavedState): Record<string, unknown> {
   const zoom = typeof state.zoom === "number" ? round2(state.zoom) : state.zoom;
   return {
     ...state,
-    objects: serializeObjects(state.objects),
-    past: state.past?.map(serializeObjects),
-    future: state.future?.map(serializeObjects),
+    objects: serializeObjects(state.objects, options),
+    past: state.past?.map((snapshot) => serializeObjects(snapshot, options)),
+    future: state.future?.map((snapshot) => serializeObjects(snapshot, options)),
     pan,
     zoom,
     cables: serializeCables(state.cables),
@@ -171,11 +193,13 @@ export function serializeState(state: SavedState): Record<string, unknown> {
 }
 
 /** Validate minimal record. Width/depth/height optional when templateId matches a known template. */
-function isValidObjectRecord(o: unknown): o is Record<string, unknown> {
+function isValidObjectRecord(o: unknown, options?: StateSerializationOptions): o is Record<string, unknown> {
   if (typeof o !== "object" || o === null) return false;
   const t = o as Record<string, unknown>;
   const templateId = typeof t.templateId === "string" ? t.templateId : undefined;
-  const hasKnownTemplate = hasKnownTemplateDimensions(templateId);
+  const hasKnownTemplate = options?.templateResolver
+    ? options.templateResolver.hasKnownTemplateDimensions(templateId)
+    : false;
   const dimsRequired = !hasKnownTemplate;
   const hasPos = isValidPointLike(t.pos);
   const hasLegacyPos = typeof t.x === "number" && typeof t.y === "number";

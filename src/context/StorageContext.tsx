@@ -1,7 +1,11 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { DEBOUNCE_SAVE_MS } from "../constants";
 import { StateManager } from "../lib/stateManager";
-import { parseState, serializeState, type SavedState } from "../lib/stateSerialization";
+import type { SavedState } from "../lib/stateSerialization";
+import {
+  parseStateWithRuntimeTemplates,
+  serializeStateWithRuntimeTemplates,
+} from "../lib/stateSerialization.runtime";
 
 interface StorageContextValue {
   savedState: SavedState | null;
@@ -25,7 +29,7 @@ export function StorageProvider({ children }: { children: ReactNode }) {
     } catch {
       throw new Error("Could not read the selected file.");
     }
-    const state = parseState(text);
+    const state = parseStateWithRuntimeTemplates(text);
     if (!state) {
       throw new Error("The selected file is not a valid pedalboard JSON file.");
     }
@@ -33,7 +37,7 @@ export function StorageProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const saveStateToFile = useCallback((state: SavedState) => {
-    const payload = serializeState(state);
+    const payload = serializeStateWithRuntimeTemplates(state);
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -93,4 +97,3 @@ export function useStorage(): StorageContextValue {
   if (!ctx) throw new Error("useStorage must be used within StorageProvider");
   return ctx;
 }
-
