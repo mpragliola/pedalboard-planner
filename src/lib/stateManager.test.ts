@@ -122,6 +122,28 @@ describe("parseState", () => {
       expect(parseState(JSON.stringify({ objects: [{ ...validObject, width: null }] }))).toBe(null);
     });
 
+    it("accepts known templates even when serialized dimensions are omitted", () => {
+      const reference = parseState(JSON.stringify({ objects: [bossDeviceObject] })) as SavedState;
+      const fromKnownTemplate = { ...bossDeviceObject };
+      delete (fromKnownTemplate as Record<string, unknown>).width;
+      delete (fromKnownTemplate as Record<string, unknown>).depth;
+      delete (fromKnownTemplate as Record<string, unknown>).height;
+
+      const out = parseState(JSON.stringify({ objects: [fromKnownTemplate] })) as SavedState;
+      expect(out.objects[0].width).toBe(reference.objects[0].width);
+      expect(out.objects[0].depth).toBe(reference.objects[0].depth);
+      expect(out.objects[0].height).toBe(reference.objects[0].height);
+    });
+
+    it("rejects unknown templates when dimensions are missing", () => {
+      const unknownTemplate = { ...validObject };
+      delete (unknownTemplate as Record<string, unknown>).width;
+      delete (unknownTemplate as Record<string, unknown>).depth;
+      delete (unknownTemplate as Record<string, unknown>).height;
+
+      expect(parseState(JSON.stringify({ objects: [unknownTemplate] }))).toBe(null);
+    });
+
     it("accepts legacy object records with x/y coordinates", () => {
       const legacy = { ...validObject, x: 12, y: 34 };
       delete (legacy as Record<string, unknown>).pos;
@@ -382,6 +404,78 @@ describe("parseState", () => {
         },
       ]);
     });
+
+    it("parses optional connector names", () => {
+      const raw = JSON.stringify({
+        objects: [validObject],
+        cables: [
+          {
+            id: "c2",
+            color: "#222222",
+            connectorA: "stereo jack (TRS)",
+            connectorB: "MIDI (DIN)",
+            connectorAName: "Output",
+            connectorBName: "MIDI In",
+            points: [
+              [10, 20],
+              [30, 40],
+            ],
+          },
+        ],
+      });
+      const out = parseState(raw) as SavedState;
+
+      expect(out.cables).toEqual([
+        {
+          id: "c2",
+          color: "#222222",
+          connectorA: "stereo jack (TRS)",
+          connectorB: "MIDI (DIN)",
+          connectorAName: "Output",
+          connectorBName: "MIDI In",
+          segments: [{ x: 10, y: 20 }, { x: 30, y: 40 }],
+        },
+      ]);
+    });
+
+    it("ignores cables when payload is not an array", () => {
+      const out = parseState(JSON.stringify({ objects: [validObject], cables: "invalid" })) as SavedState;
+      expect(out.cables).toBeUndefined();
+    });
+
+    it("ignores cables when any cable record is invalid", () => {
+      const out = parseState(
+        JSON.stringify({
+          objects: [validObject],
+          cables: [
+            {
+              id: "c1",
+              color: "#111111",
+              connectorA: "mono jack (TS)",
+              connectorB: "mono jack (TS)",
+              points: [
+                [0, 0],
+                [100, 0],
+              ],
+            },
+            {
+              id: "bad",
+              color: "#f00",
+              connectorA: "mono jack (TS)",
+              connectorB: "mono jack (TS)",
+              points: [[0, 0, 1]], // invalid tuple length
+            },
+          ],
+        })
+      ) as SavedState;
+
+      expect(out.cables).toBeUndefined();
+    });
+
+    it("parses empty cable arrays", () => {
+      const out = parseState(JSON.stringify({ objects: [validObject], cables: [] })) as SavedState;
+      expect(out.cables).toEqual([]);
+    });
   });
 
 });
@@ -503,6 +597,69 @@ describe("serializeState", () => {
     });
   });
 
+  describe("cable serialization", () => {
+    it("serializes cable segments as rounded point tuples", () => {
+      const state: SavedState = {
+        objects: [],
+        cables: [
+          {
+            id: "cable-1",
+            color: "#abcdef",
+            connectorA: "mono jack (TS)",
+            connectorB: "XLR male",
+            segments: [
+              { x: 1.2345, y: 2.3456 },
+              { x: -9.8765, y: 4.4444 },
+            ],
+          },
+        ],
+      };
+
+      const ser = serializeState(state);
+      expect(ser.cables).toEqual([
+        {
+          id: "cable-1",
+          color: "#abcdef",
+          connectorA: "mono jack (TS)",
+          connectorB: "XLR male",
+          points: [
+            [1.23, 2.35],
+            [-9.88, 4.44],
+          ],
+        },
+      ]);
+    });
+
+    it("preserves optional connector labels during serialization", () => {
+      const state: SavedState = {
+        objects: [],
+        cables: [
+          {
+            id: "cable-2",
+            color: "#333333",
+            connectorA: "MIDI (DIN)",
+            connectorB: "MIDI (DIN female)",
+            connectorAName: "Out",
+            connectorBName: "In",
+            segments: [{ x: 0, y: 0 }, { x: 50, y: 50 }],
+          },
+        ],
+      };
+
+      const ser = serializeState(state);
+      expect((ser.cables as Record<string, unknown>[])[0]).toMatchObject({
+        connectorAName: "Out",
+        connectorBName: "In",
+      });
+    });
+
+    it("keeps empty cable arrays as empty arrays", () => {
+      const state: SavedState = { objects: [], cables: [] };
+      const ser = serializeState(state);
+      expect(ser.cables).toEqual([]);
+    });
+  });
+
   describe("other fields", () => {
     it("preserves zoom", () => {
       const state: SavedState = { objects: [], zoom: 2.5 };
@@ -581,5 +738,42 @@ describe("round-trip serialization", () => {
 
     // Name was stripped during serialization, then derived from brand+model
     expect(parsed.objects[0].name).toBe("Boss DS-1");
+  });
+
+  it("round-trips cable data", () => {
+    const original: SavedState = {
+      objects: [validObject as SavedState["objects"][0]],
+      cables: [
+        {
+          id: "c-round",
+          color: "#123456",
+          connectorA: "mono jack (TS)",
+          connectorB: "stereo jack (TRS)",
+          connectorAName: "Send",
+          connectorBName: "Return",
+          segments: [
+            { x: 0.111, y: 1.999 },
+            { x: 44.444, y: 55.555 },
+          ],
+        },
+      ],
+    };
+
+    const parsed = parseState(JSON.stringify(serializeState(original))) as SavedState;
+
+    expect(parsed.cables).toEqual([
+      {
+        id: "c-round",
+        color: "#123456",
+        connectorA: "mono jack (TS)",
+        connectorB: "stereo jack (TRS)",
+        connectorAName: "Send",
+        connectorBName: "Return",
+        segments: [
+          { x: 0.11, y: 2 },
+          { x: 44.44, y: 55.56 },
+        ],
+      },
+    ]);
   });
 });
