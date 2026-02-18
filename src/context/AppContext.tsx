@@ -10,7 +10,6 @@ import {
   modeToSubtype,
 } from "../lib/templateHelpers";
 import { getObjectDimensions } from "../lib/objectDimensions";
-import { type SavedState } from "../lib/stateSerialization";
 import { visibleViewportPlacement } from "../lib/placementStrategy";
 import { useCanvasInteractions } from "../hooks/useCanvasInteractions";
 import { useCanvasZoomPan } from "../hooks/useCanvasZoomPan";
@@ -30,18 +29,13 @@ import { CatalogProvider, type CatalogContextValue, type CatalogMode } from "./C
 import { HistoryProvider, type HistoryContextValue } from "./HistoryContext";
 import { useStorage } from "./StorageContext";
 import { UiProvider, type UiContextValue } from "./UiContext";
+import { useBoardPersistence, type BoardState } from "./useBoardPersistence";
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const { savedState, loadStateFromFile, saveStateToFile, persistState } = useStorage();
   useEffect(() => {
     if (savedState?.objects?.length) initNextObjectIdFromObjects(savedState.objects);
   }, [savedState]);
-
-  /** Compound state so undo/redo covers both objects and cables in a single timeline. */
-  interface BoardState {
-    objects: CanvasObjectType[];
-    cables: Cable[];
-  }
 
   const historyInitial = useMemo(() => {
     const objs = savedState?.objects ?? initialObjects;
@@ -119,19 +113,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [floatingUiVisible, setFloatingUiVisible] = useState(true);
   const [panelExpanded, setPanelExpanded] = useState(false);
   const dropdownPanelRef = useRef<HTMLDivElement>(null);
-
-  /** Ref updated each render so addCableAndPersist can save synchronously with latest state. */
-  const stateForSaveRef = useRef<SavedState>({
-    objects: initialObjects,
-    past: [],
-    future: [],
-    zoom: 1,
-    pan: { x: 0, y: 0 },
-    showGrid: false,
-    unit: "mm",
-    background: DEFAULT_CANVAS_BACKGROUND,
-    cables: [],
-  });
+  const clearSelection = useCallback(() => setSelection(null), [setSelection]);
 
   const {
     zoom,
@@ -248,9 +230,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       setObjects((prev) => [...prev, newObj]);
       (mode === "boards" ? setSelectedBoard : setSelectedDevice)("");
-      setSelection(null);
+      clearSelection();
     },
-    [setSelectedBoard, setSelectedDevice, setObjects]
+    [setSelectedBoard, setSelectedDevice, setObjects, clearSelection]
   );
 
   const handleBoardSelect = useCallback(
@@ -284,9 +266,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const newObj = createCustomObject(modeToSubtype(mode), params, { x: cx - w / 2, y: cy - d / 2 });
       setObjects((prev) => [...prev, newObj]);
       (mode === "boards" ? setSelectedBoard : setSelectedDevice)("");
-      setSelection(null);
+      clearSelection();
     },
-    [setSelectedBoard, setSelectedDevice, getPlacementInVisibleViewport, setObjects]
+    [setSelectedBoard, setSelectedDevice, getPlacementInVisibleViewport, setObjects, clearSelection]
   );
 
   const handleDeleteObject = useCallback(
@@ -330,57 +312,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [setObjects]
   );
 
-  const loadBoardState = useCallback(
-    (state: SavedState) => {
-      if (state.objects?.length) initNextObjectIdFromObjects(state.objects);
-      const cbl = state.cables ?? [];
-      replaceHistoryRaw(
-        { objects: state.objects ?? initialObjects, cables: cbl },
-        (state.past ?? []).map((o) => ({ objects: o, cables: cbl })),
-        (state.future ?? []).map((o) => ({ objects: o, cables: cbl }))
-      );
-      setSelection(null);
-      setUnit(state.unit ?? "mm");
-      setBackground(state.background ?? DEFAULT_CANVAS_BACKGROUND);
-      setShowGrid(state.showGrid ?? false);
-      if (typeof state.zoom === "number") setZoom(state.zoom);
-      if (state.pan && typeof state.pan.x === "number" && typeof state.pan.y === "number") {
-        setPan(state.pan);
-      }
-    },
-    [replaceHistoryRaw, setZoom, setPan, setBackground]
-  );
-
-  const newBoard = useCallback(() => {
-    replaceHistoryRaw({ objects: initialObjects, cables: [] }, [], []);
-    setSelection(null);
-    setUnit("mm");
-    setBackground(DEFAULT_CANVAS_BACKGROUND);
-    setShowGrid(false);
-    setZoom(1);
-    setPan({ x: 0, y: 0 });
-  }, [replaceHistoryRaw, setZoom, setPan, setBackground]);
-
-  const loadBoardFromFile = useCallback(
-    async (file: File): Promise<void> => {
-      const state = await loadStateFromFile(file);
-      loadBoardState(state);
-    },
-    [loadBoardState, loadStateFromFile]
-  );
-
-  const saveBoardToFile = useCallback(() => {
-    const state: SavedState = {
-      objects,
-      zoom,
-      pan,
-      showGrid,
-      unit,
-      background,
-      cables,
-    };
-    saveStateToFile(state);
-  }, [objects, zoom, pan, showGrid, unit, background, cables, saveStateToFile]);
+  const { newBoard, loadBoardFromFile, saveBoardToFile } = useBoardPersistence({
+    objects,
+    cables,
+    historyPast,
+    historyFuture,
+    zoom,
+    pan,
+    showGrid,
+    unit,
+    background,
+    initialObjects,
+    replaceHistoryRaw,
+    setZoom,
+    setPan,
+    setShowGrid,
+    setUnit,
+    setBackground,
+    clearSelection,
+    loadStateFromFile,
+    saveStateToFile,
+    persistState,
+  });
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -397,55 +350,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [undo, redo]);
-
-  // Extract objects-only past/future for persistence (cable undo is in-session only)
-  const pastForSave = useMemo(() => historyPast.map((e) => e.objects), [historyPast]);
-  const futureForSave = useMemo(() => historyFuture.map((e) => e.objects), [historyFuture]);
-
-  // Persist state (and undo history) to localStorage, debounced
-  useEffect(() => {
-    persistState({
-      objects,
-      past: pastForSave,
-      future: futureForSave,
-      zoom,
-      pan,
-      showGrid,
-      unit,
-      background,
-      cables,
-    });
-  }, [objects, pastForSave, futureForSave, zoom, pan, showGrid, unit, background, cables, persistState]);
-
-  // Persist immediately when cables change (cables are user data; don't rely only on debounce)
-  useEffect(() => {
-    persistState(
-      {
-        objects,
-        past: pastForSave,
-        future: futureForSave,
-        zoom,
-        pan,
-        showGrid,
-        unit,
-        background,
-        cables,
-      },
-      { immediate: true }
-    );
-  }, [cables]); // eslint-disable-line react-hooks/exhaustive-deps -- intentionally only on cables
-
-  stateForSaveRef.current = {
-    objects,
-    past: pastForSave,
-    future: futureForSave,
-    zoom,
-    pan,
-    showGrid,
-    unit,
-    background,
-    cables,
-  };
 
   const addCableAndPersist = useCallback(
     (cable: Cable) => {
