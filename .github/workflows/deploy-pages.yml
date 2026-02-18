@@ -2,20 +2,18 @@ name: Deploy To GitHub Pages
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, develop]
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -31,23 +29,37 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Set deployment variant
+        run: |
+          if [[ "${GITHUB_REF_NAME}" == "develop" ]]; then
+            echo "VITE_BASE_PATH=/pedalboard-planner/unstable/" >> "$GITHUB_ENV"
+            echo "DEPLOY_VARIANT=unstable" >> "$GITHUB_ENV"
+          else
+            echo "VITE_BASE_PATH=/pedalboard-planner/" >> "$GITHUB_ENV"
+            echo "DEPLOY_VARIANT=stable" >> "$GITHUB_ENV"
+          fi
+
       - name: Build
         run: npm run build
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Disable Jekyll processing
+        run: touch dist/.nojekyll
+
+      - name: Deploy stable (root)
+        if: env.DEPLOY_VARIANT == 'stable'
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: dist
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./dist
+          keep_files: true
 
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Deploy unstable (/unstable)
+        if: env.DEPLOY_VARIANT == 'unstable'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./dist
+          destination_dir: unstable
+          keep_files: true
