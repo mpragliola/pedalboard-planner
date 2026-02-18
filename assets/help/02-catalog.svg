@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-label="Catalog and filters screenshot mock">
+  <rect width="1280" height="720" fill="#eef2ff"/>
+  <rect x="56" y="44" width="1168" height="632" rx="18" fill="#ffffff" stroke="#c7d2fe"/>
+  <rect x="86" y="84" width="460" height="552" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+  <rect x="572" y="84" width="622" height="552" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+  <rect x="104" y="110" width="424" height="44" rx="8" fill="#dbeafe"/>
+  <rect x="104" y="166" width="200" height="36" rx="8" fill="#e2e8f0"/>
+  <rect x="316" y="166" width="212" height="36" rx="8" fill="#e2e8f0"/>
+  <rect x="104" y="214" width="424" height="32" rx="8" fill="#e2e8f0"/>
+  <rect x="604" y="114" width="560" height="44" rx="8" fill="#e2e8f0"/>
+  <rect x="604" y="172" width="560" height="100" rx="10" fill="#dbeafe"/>
+  <rect x="604" y="286" width="560" height="100" rx="10" fill="#dbeafe"/>
+  <rect x="604" y="400" width="560" height="100" rx="10" fill="#dbeafe"/>
+  <text x="104" y="74" font-family="Arial, sans-serif" font-size="24" fill="#1e1b4b" font-weight="700">Filters & Search</text>
+  <text x="604" y="74" font-family="Arial, sans-serif" font-size="24" fill="#1e1b4b" font-weight="700">Catalog Results</text>
+</svg>

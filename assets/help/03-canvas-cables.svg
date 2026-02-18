@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-label="Canvas and cables screenshot mock">
+  <rect width="1280" height="720" fill="#f8fafc"/>
+  <rect x="40" y="30" width="1200" height="660" rx="16" fill="#ffffff" stroke="#cbd5e1"/>
+  <rect x="70" y="60" width="1140" height="600" rx="12" fill="#e2e8f0" stroke="#94a3b8"/>
+  <rect x="190" y="150" width="300" height="170" rx="12" fill="#334155" opacity="0.85"/>
+  <rect x="610" y="360" width="290" height="170" rx="12" fill="#475569" opacity="0.85"/>
+  <path d="M 340 325 C 470 420, 560 290, 755 360" stroke="#0f172a" stroke-width="8" fill="none"/>
+  <circle cx="340" cy="325" r="10" fill="#9ee69e" stroke="#1f2937"/>
+  <circle cx="755" cy="360" r="10" fill="#ffb74d" stroke="#1f2937"/>
+  <rect x="290" y="270" width="110" height="44" rx="10" fill="#ffffff" stroke="#cbd5e1"/>
+  <rect x="705" y="308" width="120" height="44" rx="10" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="314" y="299" font-family="Arial, sans-serif" font-size="18" fill="#0f172a" font-weight="700">Input</text>
+  <text x="730" y="337" font-family="Arial, sans-serif" font-size="18" fill="#0f172a" font-weight="700">Output</text>
+</svg>

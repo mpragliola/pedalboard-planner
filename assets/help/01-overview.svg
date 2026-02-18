@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-label="App overview screenshot mock">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f8fafc"/>
+      <stop offset="1" stop-color="#e2e8f0"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <rect x="24" y="24" width="1232" height="672" rx="18" fill="#ffffff" stroke="#cbd5e1"/>
+  <rect x="44" y="44" width="280" height="632" rx="12" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <rect x="340" y="44" width="700" height="632" rx="12" fill="#e2e8f0" stroke="#94a3b8"/>
+  <rect x="1056" y="44" width="180" height="632" rx="12" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <rect x="980" y="612" width="260" height="64" rx="10" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="74" y="86" font-family="Arial, sans-serif" font-size="22" fill="#0f172a" font-weight="700">Catalog Panel</text>
+  <text x="370" y="86" font-family="Arial, sans-serif" font-size="22" fill="#0f172a" font-weight="700">Canvas</text>
+  <text x="1080" y="86" font-family="Arial, sans-serif" font-size="22" fill="#0f172a" font-weight="700">Side Controls</text>
+  <text x="1005" y="650" font-family="Arial, sans-serif" font-size="20" fill="#0f172a" font-weight="700">Bottom Controls</text>
+</svg>
