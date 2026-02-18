@@ -1,57 +1,28 @@
-import type { CanvasObjectType } from "./types";
-import type { ConnectorKind } from "./types";
-import type { DeviceType } from "./data/devices";
-
-/** Base URL for static assets (e.g. '' or '/pedal/'). Use for image paths so they resolve from app root. */
-export const BASE_URL =
-  typeof import.meta !== "undefined" && import.meta.env?.BASE_URL != null ? import.meta.env.BASE_URL : "/";
-
-function getBooleanEnv(name: string, fallback = false): boolean {
-  const value = import.meta.env?.[name];
-  if (typeof value !== "string") return fallback;
-  const normalized = value.trim().toLowerCase();
-  return normalized === "1" || normalized === "true" || normalized === "yes" || normalized === "on";
-}
-
-/** Feature flag for click-to-toggle mini3d auto-rotation. */
-export const FEATURE_MINI3D_AUTOROTATE = getBooleanEnv("VITE_FEATURE_MINI3D_AUTOROTATE", false);
-
-/** Connector kind to SVG image path. */
-export const CONNECTOR_ICON_MAP: Record<ConnectorKind, string> = {
-  "mono jack (TS)": `${BASE_URL}images/connectors/ts.svg`,
-  "mono jack (TS mini)": `${BASE_URL}images/connectors/ts-mini.svg`,
-  "stereo jack (TRS)": `${BASE_URL}images/connectors/trs.svg`,
-  "stereo jack (TRS mini)": `${BASE_URL}images/connectors/trs-mini.svg`,
-  "MIDI (DIN)": `${BASE_URL}images/connectors/MIDI-male.svg`,
-  "MIDI (DIN female)": `${BASE_URL}images/connectors/MIDI-female.svg`,
-  "MIDI (TRS)": `${BASE_URL}images/connectors/trs-mini.svg`,
-  "two mono jacks (TSx2)": `${BASE_URL}images/connectors/2ts.svg`,
-  "XLR male": `${BASE_URL}images/connectors/xlr_male.svg`,
-  "XLR female": `${BASE_URL}images/connectors/xlr_female.svg`,
-  Ethernet: `${BASE_URL}images/connectors/ethernet.svg`,
-};
-
-// Zoom constants
-export const ZOOM_MIN = 0.5;
-export const ZOOM_MAX = 3;
-export const ZOOM_STEP = 0.25;
-/** Threshold for distinguishing pinch-to-zoom from two-finger panning. Ratio < this or > 1/this = pinch. */
-export const PINCH_DETECTION_THRESHOLD = 0.95;
-
-/** Scale: board/device template dimensions are in mm; convert to px for canvas. 1 mm = 1 px. */
-export const MM_TO_PX = 1;
-
-// Timing constants (ms)
-export const LONG_PRESS_MS = 400;
-export const WHEEL_PIVOT_MS = 120;
-export const WHEEL_THROTTLE_MS = 50;
-export const WHEEL_TRANSITION_MS = 250;
-export const DEBOUNCE_SAVE_MS = 400;
-
-// Drag thresholds (px)
-export const DRAG_THRESHOLD_PX = 6;
-/** Max movement during long-press before cancelling (scroll vs hold). Higher on mobile for finger drift. */
-export const MOVE_THRESHOLD_PX = 20;
+/**
+ * Backward-compatible constants façade.
+ * Domain-specific constants now live in `src/constants/*`.
+ */
+export { BASE_URL, FEATURE_MINI3D_AUTOROTATE } from "./constants/runtime";
+export { CONNECTOR_ICON_MAP, CONNECTOR_NAME_OPTIONS, CONNECTOR_KIND_OPTIONS } from "./constants/connectors";
+export {
+  ZOOM_MIN,
+  ZOOM_MAX,
+  ZOOM_STEP,
+  PINCH_DETECTION_THRESHOLD,
+  MM_TO_PX,
+  LONG_PRESS_MS,
+  WHEEL_PIVOT_MS,
+  WHEEL_THROTTLE_MS,
+  WHEEL_TRANSITION_MS,
+  DEBOUNCE_SAVE_MS,
+  DRAG_THRESHOLD_PX,
+  MOVE_THRESHOLD_PX,
+  HISTORY_DEPTH,
+  WHEEL_ZOOM_FACTOR,
+} from "./constants/interaction";
+export { TOOLBAR_GAP_PX, TOOLBAR_HEIGHT_PX, TILE_SIZE_BASE, DEFAULT_PLACEMENT_FALLBACK } from "./constants/layout";
+export { DEVICE_TYPE_ORDER, DEVICE_TYPE_LABEL } from "./constants/catalog";
+export { initialObjects, DEFAULT_OBJECT_COLOR } from "./constants/defaults";
 
 // Cable constants live in their own module; re-export here for compatibility.
 export {
@@ -61,77 +32,3 @@ export {
   CABLE_COLOR_OPTIONS,
 } from "./constants/cables";
 export type { CableColor } from "./constants/cables";
-
-// UI Layout constants
-export const TOOLBAR_GAP_PX = 8;
-export const TOOLBAR_HEIGHT_PX = 36;
-export const TILE_SIZE_BASE = 1200;
-export const DEFAULT_PLACEMENT_FALLBACK = { x: 120, y: 120 };
-
-// History
-export const HISTORY_DEPTH = 200;
-
-// Zoom multiplier for wheel events
-export const WHEEL_ZOOM_FACTOR = 0.002;
-
-export const DEVICE_TYPE_ORDER: DeviceType[] = [
-  "pedal",
-  "multifx",
-  "expression",
-  "volume",
-  "power",
-  "controller",
-  "wireless",
-  "loopswitcher",
-];
-export const DEVICE_TYPE_LABEL: Record<DeviceType, string> = {
-  pedal: "Pedals",
-  multifx: "Multifx",
-  expression: "Expression pedal",
-  volume: "Volume pedal",
-  power: "Power units",
-  controller: "Controllers",
-  wireless: "Wireless systems",
-  loopswitcher: "Loop switchers",
-};
-
-export const initialObjects: CanvasObjectType[] = [];
-
-/** Default fill color when a board or device has no image (and no custom color). */
-export const DEFAULT_OBJECT_COLOR = "rgb(72, 72, 82)";
-
-/** Predefined connector name options (endpoint labels: Input, Output, etc.). */
-export const CONNECTOR_NAME_OPTIONS: string[] = [
-  "Input",
-  "In L",
-  "In R",
-  "MIDI In",
-  "MIDI Out",
-  "MIDI Thru",
-  "MIDI Out/thru",
-  "Exp In",
-  "Output",
-  "Out L",
-  "Out R",
-  "Send",
-  "Send 1",
-  "Send 2",
-  "Return",
-  "Return 1",
-  "Return 2",
-];
-
-/** Physical connector kind options. */
-export const CONNECTOR_KIND_OPTIONS: { value: ConnectorKind; label: string }[] = [
-  { value: "mono jack (TS)", label: "Mono jack (TS)" },
-  { value: "mono jack (TS mini)", label: "Mono jack (TS mini)" },
-  { value: "stereo jack (TRS)", label: "Stereo jack (TRS)" },
-  { value: "stereo jack (TRS mini)", label: "Stereo jack (TRS mini)" },
-  { value: "MIDI (DIN)", label: "MIDI (DIN)" },
-  { value: "MIDI (DIN female)", label: "MIDI (DIN female)" },
-  { value: "MIDI (TRS)", label: "MIDI (TRS)" },
-  { value: "two mono jacks (TSx2)", label: "Two mono jacks (TSx2)" },
-  { value: "XLR male", label: "XLR male" },
-  { value: "XLR female", label: "XLR female" },
-  { value: "Ethernet", label: "Ethernet" },
-];
