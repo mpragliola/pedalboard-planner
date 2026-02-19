@@ -33,6 +33,8 @@ import { useStorage } from "./StorageContext";
 import { UiProvider, type UiContextValue } from "./UiContext";
 import { useBoardPersistence, type BoardState } from "./useBoardPersistence";
 
+const MINI3D_LOW_RESOURCE_MODE_STORAGE_KEY = "mini3d-mobile-safe-mode-v1";
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const { savedState, loadStateFromFile, saveStateToFile, persistState } = useStorage();
   useEffect(() => {
@@ -95,6 +97,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [showMini3dShadows, setShowMini3dShadows] = useState(true);
   const [showMini3dSurfaceDetail, setShowMini3dSurfaceDetail] = useState(true);
   const [showMini3dSpecular, setShowMini3dSpecular] = useState(true);
+  const [mini3dLowResourceMode, setMini3dLowResourceMode] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return window.localStorage.getItem(MINI3D_LOW_RESOURCE_MODE_STORAGE_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
   const [ruler, setRuler] = useState(false);
   const [lineRuler, setLineRuler] = useState(false);
   const [cableLayer, setCableLayer] = useState(false);
@@ -353,6 +363,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [undo, redo]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      if (mini3dLowResourceMode) {
+        window.localStorage.setItem(MINI3D_LOW_RESOURCE_MODE_STORAGE_KEY, "1");
+      } else {
+        window.localStorage.removeItem(MINI3D_LOW_RESOURCE_MODE_STORAGE_KEY);
+      }
+    } catch {
+      /* Ignore storage failures. */
+    }
+  }, [mini3dLowResourceMode]);
+
   const addCableAndPersist = useCallback(
     (cable: Cable) => {
       setCables((prev) => [...prev, cable]);
@@ -376,6 +399,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setShowMini3dSurfaceDetail,
       showMini3dSpecular,
       setShowMini3dSpecular,
+      mini3dLowResourceMode,
+      setMini3dLowResourceMode,
       ruler,
       setRuler,
       lineRuler,
@@ -408,6 +433,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setShowMini3dSurfaceDetail,
       showMini3dSpecular,
       setShowMini3dSpecular,
+      mini3dLowResourceMode,
+      setMini3dLowResourceMode,
       ruler,
       setRuler,
       lineRuler,

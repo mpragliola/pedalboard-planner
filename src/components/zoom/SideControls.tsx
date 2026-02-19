@@ -6,6 +6,7 @@ import {
   faExpand,
   faLayerGroup,
   faList,
+  faMoon,
   faPlug,
   faRuler,
   faSlash,
@@ -74,6 +75,8 @@ export function SideControls() {
     setShowMini3dSurfaceDetail,
     showMini3dSpecular,
     setShowMini3dSpecular,
+    mini3dLowResourceMode,
+    setMini3dLowResourceMode,
     ruler,
     setRuler,
     lineRuler,
@@ -173,8 +176,8 @@ export function SideControls() {
           />
           <SideControl
             label="3D shadows"
-            title="Show or hide shadows in 3D view"
-            icon={faLayerGroup}
+            title="Show or hide cast shadows in 3D view"
+            icon={faMoon}
             onClick={() => setShowMini3dShadows((v) => !v)}
             active={showMini3dShadows}
             className="mini3d-shadow-toggle"
@@ -194,6 +197,18 @@ export function SideControls() {
             onClick={() => setShowMini3dSpecular((v) => !v)}
             active={showMini3dSpecular}
             className="mini3d-specular-toggle"
+          />
+          <SideControl
+            label={`3D quality: ${mini3dLowResourceMode ? "LQ" : "HQ"}`}
+            title={
+              mini3dLowResourceMode
+                ? "Low-resource mode is active. Tap to switch to high-quality rendering."
+                : "High-quality mode is active. Tap to switch to low-resource rendering."
+            }
+            icon={faCube}
+            onClick={() => setMini3dLowResourceMode((v) => !v)}
+            active={!mini3dLowResourceMode}
+            className={`mini3d-high-resource-toggle ${mini3dLowResourceMode ? "mode-lq" : "mode-hq"}`}
           />
         </div>
       </div>
