@@ -276,9 +276,7 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
                             kind={cable.connectorA}
                             title={cable.connectorA}
                             className="connector-icon"
-                            width={24}
-                            height={24}
-                            fallbackLabel={cable.connectorA}
+                            size={24}
                           />
                           {cable.connectorAName ? (
                             <span className="connector-name" title={cable.connectorAName}>
@@ -293,9 +291,7 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
                             kind={cable.connectorB}
                             title={cable.connectorB}
                             className="connector-icon"
-                            width={24}
-                            height={24}
-                            fallbackLabel={cable.connectorB}
+                            size={24}
                           />
                           {cable.connectorBName ? (
                             <span className="connector-name" title={cable.connectorBName}>

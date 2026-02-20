@@ -400,6 +400,11 @@
   touch-action: manipulation;
 }
 
+.add-cable-picker-overlay-icon {
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
 .add-cable-picker-overlay-option:hover,
 .add-cable-picker-overlay-option:focus {
   background: var(--add-cable-badge-bg, vars.$color-surface-subtle);
