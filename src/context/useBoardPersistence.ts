@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { DEFAULT_CANVAS_BACKGROUND, type CanvasBackgroundId } from "../constants/backgrounds";
-import { initNextObjectIdFromObjects } from "../lib/templateHelpers";
+import type { CanvasBackgroundId } from "../constants/backgrounds";
 import type { SavedState } from "../lib/stateSerialization";
 import type { Offset } from "../lib/vector";
 import type { CanvasObjectType, Cable } from "../types";
@@ -12,7 +11,7 @@ export interface BoardState {
   cables: Cable[];
 }
 
-interface UseBoardPersistenceOptions {
+interface BoardPersistenceSnapshot {
   objects: CanvasObjectType[];
   cables: Cable[];
   historyPast: BoardState[];
@@ -22,17 +21,23 @@ interface UseBoardPersistenceOptions {
   showGrid: boolean;
   unit: "mm" | "in";
   background: CanvasBackgroundId;
-  initialObjects: CanvasObjectType[];
-  replaceHistoryRaw: (present: BoardState, past: BoardState[], future: BoardState[]) => void;
-  setZoom: (value: number) => void;
-  setPan: (value: Offset) => void;
-  setShowGrid: (value: boolean) => void;
-  setUnit: (value: "mm" | "in") => void;
-  setBackground: (value: CanvasBackgroundId) => void;
-  clearSelection: () => void;
+}
+
+interface BoardPersistenceStorage {
   loadStateFromFile: (file: File) => Promise<SavedState>;
   saveStateToFile: (state: SavedState) => void;
   persistState: (state: SavedState, opts?: { immediate?: boolean }) => void;
+}
+
+interface BoardPersistenceActions {
+  resetBoardState: () => void;
+  applyLoadedState: (state: SavedState) => void;
+}
+
+interface UseBoardPersistenceOptions {
+  snapshot: BoardPersistenceSnapshot;
+  storage: BoardPersistenceStorage;
+  actions: BoardPersistenceActions;
 }
 
 interface UseBoardPersistenceResult {
@@ -45,30 +50,13 @@ interface UseBoardPersistenceResult {
 }
 
 /**
- * Handles board IO lifecycle: loading state into history/UI, exporting state,
- * and persisting working state (debounced + immediate-on-cables).
+ * Handles board IO lifecycle: load/save file operations plus local persistence.
+ * App-specific transitions (history/UI/selection updates) are delegated to callers.
  */
 export function useBoardPersistence({
-  objects,
-  cables,
-  historyPast,
-  historyFuture,
-  zoom,
-  pan,
-  showGrid,
-  unit,
-  background,
-  initialObjects,
-  replaceHistoryRaw,
-  setZoom,
-  setPan,
-  setShowGrid,
-  setUnit,
-  setBackground,
-  clearSelection,
-  loadStateFromFile,
-  saveStateToFile,
-  persistState,
+  snapshot: { objects, cables, historyPast, historyFuture, zoom, pan, showGrid, unit, background },
+  storage: { loadStateFromFile, saveStateToFile, persistState },
+  actions: { resetBoardState, applyLoadedState },
 }: UseBoardPersistenceOptions): UseBoardPersistenceResult {
   // Persist only object snapshots in history payloads (matches existing save format).
   const pastForSave = useMemo(() => historyPast.map((entry) => entry.objects), [historyPast]);
@@ -95,44 +83,16 @@ export function useBoardPersistence({
     persistedStateRef.current = persistedState;
   }, [persistedState]);
 
-  // Apply loaded state to history + UI controls in a single coordinated transition.
-  const loadBoardState = useCallback(
-    (state: SavedState) => {
-      if (state.objects?.length) initNextObjectIdFromObjects(state.objects);
-      const loadedCables = state.cables ?? [];
-      replaceHistoryRaw(
-        { objects: state.objects ?? initialObjects, cables: loadedCables },
-        (state.past ?? []).map((snapshot) => ({ objects: snapshot, cables: loadedCables })),
-        (state.future ?? []).map((snapshot) => ({ objects: snapshot, cables: loadedCables }))
-      );
-      clearSelection();
-      setUnit(state.unit ?? "mm");
-      setBackground(state.background ?? DEFAULT_CANVAS_BACKGROUND);
-      setShowGrid(state.showGrid ?? false);
-      if (typeof state.zoom === "number") setZoom(state.zoom);
-      if (state.pan && typeof state.pan.x === "number" && typeof state.pan.y === "number") {
-        setPan(state.pan);
-      }
-    },
-    [replaceHistoryRaw, initialObjects, clearSelection, setUnit, setBackground, setShowGrid, setZoom, setPan]
-  );
-
   const newBoard = useCallback(() => {
-    replaceHistoryRaw({ objects: initialObjects, cables: [] }, [], []);
-    clearSelection();
-    setUnit("mm");
-    setBackground(DEFAULT_CANVAS_BACKGROUND);
-    setShowGrid(false);
-    setZoom(1);
-    setPan({ x: 0, y: 0 });
-  }, [replaceHistoryRaw, initialObjects, clearSelection, setUnit, setBackground, setShowGrid, setZoom, setPan]);
+    resetBoardState();
+  }, [resetBoardState]);
 
   const loadBoardFromFile = useCallback(
     async (file: File): Promise<void> => {
       const state = await loadStateFromFile(file);
-      loadBoardState(state);
+      applyLoadedState(state);
     },
-    [loadStateFromFile, loadBoardState]
+    [loadStateFromFile, applyLoadedState]
   );
 
   const saveBoardToFile = useCallback(() => {
