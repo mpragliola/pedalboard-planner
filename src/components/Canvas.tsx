@@ -16,6 +16,7 @@ import { useCatalog } from "../context/CatalogContext";
 import { useUi } from "../context/UiContext";
 import { useRendering } from "../context/RenderingContext";
 import { useSelection } from "../context/SelectionContext";
+import type { Cable } from "../types";
 import { CANVAS_BACKGROUNDS } from "../constants/backgrounds";
 import { CANVAS_DROP_ID } from "./catalog/CatalogDndProvider";
 import "./Canvas.scss";
@@ -78,6 +79,42 @@ export function Canvas() {
     return () => el.removeEventListener("transitionend", onEnd);
   }, [canvasAnimating, setCanvasAnimating]);
 
+  const handleEditCable = useCallback((cable: Cable) => {
+    setEditingCableId(cable.id);
+  }, []);
+
+  const handleDeleteCable = useCallback(
+    (id: string) => {
+      setCables((prev) => prev.filter((c) => c.id !== id));
+      setSelectedCableId(null);
+    },
+    [setCables, setSelectedCableId]
+  );
+
+  const handleCableSendToBack = useCallback(
+    (id: string) =>
+      setCables((prev) => {
+        const idx = prev.findIndex((c) => c.id === id);
+        if (idx <= 0) return prev;
+        const cable = prev[idx];
+        const rest = prev.slice(0, idx).concat(prev.slice(idx + 1));
+        return [cable, ...rest];
+      }),
+    [setCables]
+  );
+
+  const handleCableBringToFront = useCallback(
+    (id: string) =>
+      setCables((prev) => {
+        const idx = prev.findIndex((c) => c.id === id);
+        if (idx === -1 || idx === prev.length - 1) return prev;
+        const cable = prev[idx];
+        const rest = prev.slice(0, idx).concat(prev.slice(idx + 1));
+        return [...rest, cable];
+      }),
+    [setCables]
+  );
+
   const selectedIdSet = useMemo(() => new Set(selectedObjectIds), [selectedObjectIds]);
   const selectedObject = selectedObjectIds.length === 1 ? objects.find((o) => o.id === selectedObjectIds[0]) : null;
 
@@ -126,29 +163,10 @@ export function Canvas() {
           {selectedCable && (
             <CableToolbar
               cable={selectedCable}
-              onEdit={() => setEditingCableId(selectedCable.id)}
-              onDelete={(id) => {
-                setCables((prev) => prev.filter((c) => c.id !== id));
-                setSelectedCableId(null);
-              }}
-              onSendToBack={(id) =>
-                setCables((prev) => {
-                  const idx = prev.findIndex((c) => c.id === id);
-                  if (idx <= 0) return prev;
-                  const cable = prev[idx];
-                  const rest = prev.slice(0, idx).concat(prev.slice(idx + 1));
-                  return [cable, ...rest];
-                })
-              }
-              onBringToFront={(id) =>
-                setCables((prev) => {
-                  const idx = prev.findIndex((c) => c.id === id);
-                  if (idx === -1 || idx === prev.length - 1) return prev;
-                  const cable = prev[idx];
-                  const rest = prev.slice(0, idx).concat(prev.slice(idx + 1));
-                  return [...rest, cable];
-                })
-              }
+              onEdit={handleEditCable}
+              onDelete={handleDeleteCable}
+              onSendToBack={handleCableSendToBack}
+              onBringToFront={handleCableBringToFront}
             />
           )}
           {objects.map((obj, index) => (
