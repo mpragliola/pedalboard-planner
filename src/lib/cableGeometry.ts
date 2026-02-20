@@ -1,4 +1,5 @@
 import type { Point } from "./vector";
+import { clamp } from "./math";
 
 /**
  * Return the index of the segment [points[i], points[i + 1]] nearest to a point.
@@ -18,7 +19,7 @@ export function nearestSegmentIndexForPoint(points: Point[], target: Point): num
     const apX = target.x - a.x;
     const apY = target.y - a.y;
     const len2 = abX * abX + abY * abY;
-    const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, (apX * abX + apY * abY) / len2));
+    const t = len2 === 0 ? 0 : clamp((apX * abX + apY * abY) / len2, 0, 1);
     const projX = a.x + t * abX;
     const projY = a.y + t * abY;
     const dx = target.x - projX;

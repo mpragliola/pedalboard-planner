@@ -1,5 +1,6 @@
 /** Lightweight 2D geometry helpers used by layout and snapping logic. */
 import type { Point } from "./vector";
+import { clamp } from "./math";
 export type Rect = { minX: number; minY: number; maxX: number; maxY: number };
 
 /** True only when rect interiors overlap (edge-touching is not overlap). */
@@ -31,8 +32,8 @@ export function closestPointOnRectPerimeter(
 ): Point {
   const right = left + width;
   const bottom = top + height;
-  const cx = Math.max(left, Math.min(right, px));
-  const cy = Math.max(top, Math.min(bottom, py));
+  const cx = clamp(px, left, right);
+  const cy = clamp(py, top, bottom);
   const inside = px > left && px < right && py > top && py < bottom;
   if (inside) {
     const dl = cx - left;
