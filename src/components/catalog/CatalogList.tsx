@@ -1,81 +1,17 @@
-import { useRef, useState, useLayoutEffect, useCallback } from "react";
-import {
-  faLinkSlash,
-  faChevronDown,
-  faChevronRight,
-  faGaugeHigh,
-  faGuitar,
-  faLayerGroup,
-  faPlug,
-  faSliders,
-  faVolumeHigh,
-  faWifi,
-} from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
-import { DEFAULT_OBJECT_COLOR } from "../../constants";
-import { buildCatalogImageSourceSet } from "../../lib/catalogImageSources";
-import type { DeviceType } from "../../data/devices";
-import { CatalogDraggableItem } from "./CatalogDndProvider";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import { CatalogListFrame } from "./catalog-list/CatalogListFrame";
+import { CatalogListGroupSection } from "./catalog-list/CatalogListGroupSection";
+import { CatalogListItem } from "./catalog-list/CatalogListItem";
+import { imageBaseForCatalogMode, thumbSizesForCatalogViewMode } from "./catalog-list/catalogListView";
+import type {
+  CatalogListGroup,
+  CatalogListOption,
+  CatalogMode,
+  CatalogViewMode,
+} from "./catalog-list/types";
 import "./CatalogList.scss";
 
-const DEVICE_TYPE_ICON: Record<DeviceType, IconDefinition> = {
-  pedal: faGuitar,
-  multifx: faLayerGroup,
-  expression: faGaugeHigh,
-  volume: faVolumeHigh,
-  power: faPlug,
-  controller: faSliders,
-  wireless: faWifi,
-  loopswitcher: faLinkSlash,
-};
-
-function buildPlaceholderStyle(
-  widthMm: number | undefined,
-  depthMm: number | undefined,
-  color: string
-) {
-  const w = typeof widthMm === "number" && widthMm > 0 ? widthMm : 1;
-  const d = typeof depthMm === "number" && depthMm > 0 ? depthMm : 1;
-  const ratio = w / d;
-  const safeRatio = Number.isFinite(ratio) && ratio > 0 ? ratio : 1;
-  if (safeRatio >= 1) {
-    return {
-      backgroundColor: color,
-      width: "100%",
-      height: `${(1 / safeRatio) * 100}%`,
-    };
-  }
-  return {
-    backgroundColor: color,
-    width: `${safeRatio * 100}%`,
-    height: "100%",
-  };
-}
-
-export type CatalogViewMode = "text" | "list" | "grid" | "large" | "xlarge";
-
-const VIEW_MODE_OPTIONS: ReadonlyArray<{
-  mode: CatalogViewMode;
-  title: string;
-  symbol: string;
-}> = [
-  { mode: "text", title: "Text list", symbol: "\u2630" },
-  { mode: "list", title: "Thumbnail list", symbol: "\u2637" },
-  { mode: "grid", title: "Small grid", symbol: "\u25A6" },
-  { mode: "large", title: "Large grid", symbol: "\u229E" },
-  { mode: "xlarge", title: "Text list", symbol: "\u2656" },
-];
-
-export interface CatalogListOption {
-  id: string;
-  name: string;
-  image?: string | null;
-  widthMm?: number;
-  depthMm?: number;
-  /** Color for placeholder when no image */
-  color?: string;
-}
+export type { CatalogListGroupOption, CatalogListOption, CatalogViewMode } from "./catalog-list/types";
 
 interface CatalogListProps {
   id: string;
@@ -83,83 +19,16 @@ interface CatalogListProps {
   size: number;
   options: CatalogListOption[];
   /** 'boards' | 'devices' - used for drag-from-catalog drop on canvas */
-  catalogMode: "boards" | "devices";
+  catalogMode: CatalogMode;
   /** Controlled view mode */
   viewMode: CatalogViewMode;
   /** Callback when view mode changes */
   onViewModeChange: (mode: CatalogViewMode) => void;
 }
 
-function ViewModeToggle({
-  mode: currentMode,
-  onChange,
-}: {
-  mode: CatalogViewMode;
-  onChange: (m: CatalogViewMode) => void;
-}) {
-  return (
-    <div className="catalog-view-toggle" role="group" aria-label="View mode">
-      {VIEW_MODE_OPTIONS.map(({ mode, title, symbol }) => (
-        <button
-          key={mode}
-          type="button"
-          className={`catalog-view-btn${currentMode === mode ? " active" : ""}`}
-          onClick={() => onChange(mode)}
-          title={title}
-          aria-pressed={currentMode === mode}
-        >
-          {symbol}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function thumbSizesForViewMode(viewMode: CatalogViewMode): string {
-  switch (viewMode) {
-    case "list":
-      return "36px";
-    case "grid":
-      return "48px";
-    case "large":
-      return "72px";
-    case "xlarge":
-      return "96px";
-    case "text":
-    default:
-      return "1px";
-  }
-}
-
-function CatalogThumbnailImage({ relativePath, sizes }: { relativePath: string; sizes: string }) {
-  const { src, srcSet, fullSrc } = buildCatalogImageSourceSet(relativePath, sizes);
-
-  return (
-    <img
-      src={src}
-      srcSet={srcSet}
-      sizes={sizes}
-      alt=""
-      aria-hidden
-      loading="lazy"
-      decoding="async"
-      onError={(e) => {
-        const target = e.currentTarget;
-        if (target.dataset.catalogFallbackApplied === "1") return;
-        target.dataset.catalogFallbackApplied = "1";
-        target.src = fullSrc;
-        target.removeAttribute("srcset");
-        target.removeAttribute("sizes");
-      }}
-    />
-  );
-}
-export function CatalogList({ id, label, size, options, catalogMode, viewMode, onViewModeChange }: CatalogListProps) {
+function useCatalogListRefWithScrollRestore() {
   const listRef = useRef<HTMLDivElement>(null);
   const scrollRestoreRef = useRef<number | null>(null);
-
-  const imageBase = catalogMode === "boards" ? "images/boards/" : "images/devices/";
-  const thumbnailSizes = thumbSizesForViewMode(viewMode);
 
   useLayoutEffect(() => {
     const el = listRef.current;
@@ -170,79 +39,52 @@ export function CatalogList({ id, label, size, options, catalogMode, viewMode, o
     }
   });
 
-  const listClassName = `catalog-list catalog-list--${viewMode}`;
+  return listRef;
+}
+
+export function CatalogList({ id, label, size, options, catalogMode, viewMode, onViewModeChange }: CatalogListProps) {
+  const listRef = useCatalogListRefWithScrollRestore();
+
+  const imageBase = imageBaseForCatalogMode(catalogMode);
+  const thumbnailSizes = thumbSizesForCatalogViewMode(viewMode);
   const minHeight = viewMode === "grid" || viewMode === "large" ? 120 : size * 28;
 
   return (
-    <>
-      <div className="catalog-list-header">
-        {label ? (
-          <label id={`${id}-label`} className="dropdown-label">
-            {label}
-          </label>
-        ) : null}
-        <ViewModeToggle mode={viewMode} onChange={onViewModeChange} />
-      </div>
-      <div
-        ref={listRef}
-        id={id}
-        className={listClassName}
-        role="listbox"
-        aria-label={label || "Add board"}
-        style={{ minHeight }}
-      >
-        {options.length === 0 ? (
-          <div className="catalog-list-empty">No matches</div>
-        ) : (
-          options.map((opt) => (
-            <CatalogDraggableItem
-              key={opt.id}
-              id={opt.id}
-              catalogMode={catalogMode}
-              imageUrl={opt.image ? `${imageBase}${opt.image}` : null}
-              widthMm={opt.widthMm ?? 100}
-              depthMm={opt.depthMm ?? 100}
-              className="catalog-list-item"
-              title={`Long-press to drag ${opt.name} onto the board`}
-            >
-              {viewMode !== "text" && (
-                <span className="catalog-list-item-thumb">
-                  {opt.image ? (
-                    <CatalogThumbnailImage relativePath={`${imageBase}${opt.image}`} sizes={thumbnailSizes} />
-                  ) : (
-                    <span
-                      className="catalog-list-item-placeholder"
-                      style={buildPlaceholderStyle(opt.widthMm, opt.depthMm, opt.color ?? DEFAULT_OBJECT_COLOR)}
-                    />
-                  )}
-                </span>
-              )}
-              <span className="catalog-list-item-text">{opt.name}</span>
-            </CatalogDraggableItem>
-          ))
-        )}
-      </div>
-      <p className="catalog-list-hint">Long-press to drag onto the board</p>
-    </>
+    <CatalogListFrame
+      id={id}
+      label={label}
+      viewMode={viewMode}
+      onViewModeChange={onViewModeChange}
+      listRef={listRef}
+      ariaLabel={label || "Add board"}
+      minHeight={minHeight}
+    >
+      {options.length === 0 ? (
+        <div className="catalog-list-empty">No matches</div>
+      ) : (
+        options.map((option) => (
+          <CatalogListItem
+            key={option.id}
+            option={option}
+            catalogMode={catalogMode}
+            viewMode={viewMode}
+            imageBase={imageBase}
+            thumbnailSizes={thumbnailSizes}
+            defaultWidthMm={100}
+            defaultDepthMm={100}
+          />
+        ))
+      )}
+    </CatalogListFrame>
   );
-}
-
-export interface CatalogListGroupOption {
-  id: string;
-  name: string;
-  type: string;
-  image?: string | null;
-  widthMm?: number;
-  depthMm?: number;
-  color?: string;
 }
 
 interface CatalogListGroupedProps {
   id: string;
   label: string;
   size: number;
-  groups: { deviceType?: DeviceType; label: string; options: CatalogListGroupOption[] }[];
-  catalogMode: "boards" | "devices";
+  groups: CatalogListGroup[];
+  catalogMode: CatalogMode;
   /** Controlled view mode */
   viewMode: CatalogViewMode;
   /** Callback when view mode changes */
@@ -258,8 +100,7 @@ export function CatalogListGrouped({
   viewMode,
   onViewModeChange,
 }: CatalogListGroupedProps) {
-  const listRef = useRef<HTMLDivElement>(null);
-  const scrollRestoreRef = useRef<number | null>(null);
+  const listRef = useCatalogListRefWithScrollRestore();
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
   const toggleGroup = useCallback((groupLabel: string) => {
@@ -271,127 +112,37 @@ export function CatalogListGrouped({
     });
   }, []);
 
-  const imageBase = catalogMode === "boards" ? "images/boards/" : "images/devices/";
-  const thumbnailSizes = thumbSizesForViewMode(viewMode);
-
-  useLayoutEffect(() => {
-    const el = listRef.current;
-    const saved = scrollRestoreRef.current;
-    if (el && saved !== null) {
-      el.scrollTop = saved;
-      scrollRestoreRef.current = null;
-    }
-  });
-
-  const listClassName = `catalog-list catalog-list--${viewMode}`;
-  const minHeight = [ "grid", "large", "xlarge" ].includes(viewMode) ? 120 : size * 28;
+  const imageBase = imageBaseForCatalogMode(catalogMode);
+  const thumbnailSizes = thumbSizesForCatalogViewMode(viewMode);
+  const minHeight = ["grid", "large", "xlarge"].includes(viewMode) ? 120 : size * 28;
 
   return (
-    <>
-      <div className="catalog-list-header">
-        {label ? (
-          <label id={`${id}-label`} className="dropdown-label">
-            {label}
-          </label>
-        ) : null}
-        <ViewModeToggle mode={viewMode} onChange={onViewModeChange} />
-      </div>
-      <div
-        ref={listRef}
-        id={id}
-        className={listClassName}
-        role="listbox"
-        aria-label={label || "Add device"}
-        style={{ minHeight }}
-      >
-        {groups.every((g) => g.options.length === 0) ? (
-          <div className="catalog-list-empty">No matches</div>
-        ) : (
-          groups.map(({ deviceType, label: groupLabel, options: groupOptions }) =>
-            groupOptions.length > 0 ? (
-              <div key={groupLabel} className="catalog-list-group">
-                {viewMode !== "grid" && viewMode !== "large" && (
-                  <button
-                    type="button"
-                    className="catalog-list-group-label"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      toggleGroup(groupLabel);
-                    }}
-                    aria-expanded={!collapsedGroups.has(groupLabel)}
-                    aria-controls={`${id}-group-${groupLabel.replace(/\s+/g, "-")}`}
-                  >
-                    <span className="catalog-list-group-label-text">{groupLabel}</span>
-                    <span className="catalog-list-group-label-icons">
-                      {deviceType && DEVICE_TYPE_ICON[deviceType] && (
-                        <FontAwesomeIcon
-                          icon={DEVICE_TYPE_ICON[deviceType]}
-                          className="catalog-list-group-icon"
-                          aria-hidden
-                        />
-                      )}
-                      <FontAwesomeIcon
-                        icon={collapsedGroups.has(groupLabel) ? faChevronRight : faChevronDown}
-                        className="catalog-list-group-chevron"
-                        aria-hidden
-                      />
-                    </span>
-                  </button>
-                )}
-                <div
-                  id={
-                    viewMode !== "grid" && viewMode !== "large"
-                      ? `${id}-group-${groupLabel.replace(/\s+/g, "-")}`
-                      : undefined
-                  }
-                  className={`catalog-list-group-inner ${
-                    viewMode !== "grid" && viewMode !== "large" && collapsedGroups.has(groupLabel)
-                      ? "collapsed"
-                      : "expanded"
-                  }`}
-                  style={viewMode === "grid" || viewMode === "large" ? { display: "block" } : { display: "grid" }}
-                >
-                  <div
-                    className={
-                      viewMode === "grid" || viewMode === "large"
-                        ? "catalog-list-group-grid"
-                        : "catalog-list-group-content"
-                    }
-                  >
-                    {groupOptions.map((opt) => (
-                      <CatalogDraggableItem
-                        key={opt.id}
-                        id={opt.id}
-                        catalogMode={catalogMode}
-                        imageUrl={opt.image ? `${imageBase}${opt.image}` : null}
-                        widthMm={opt.widthMm ?? 75}
-                        depthMm={opt.depthMm ?? 120}
-                        className="catalog-list-item"
-                        title={`Long-press to drag ${opt.name} onto the board`}
-                      >
-                        {viewMode !== "text" && (
-                          <span className="catalog-list-item-thumb">
-                            {opt.image ? (
-                              <CatalogThumbnailImage relativePath={`${imageBase}${opt.image}`} sizes={thumbnailSizes} />
-                            ) : (
-                              <span
-                                className="catalog-list-item-placeholder"
-                                style={buildPlaceholderStyle(opt.widthMm, opt.depthMm, opt.color ?? DEFAULT_OBJECT_COLOR)}
-                              />
-                            )}
-                          </span>
-                        )}
-                        <span className="catalog-list-item-text">{opt.name}</span>
-                      </CatalogDraggableItem>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ) : null
-          )
-        )}
-      </div>
-      <p className="catalog-list-hint">Long-press to drag onto the board</p>
-    </>
+    <CatalogListFrame
+      id={id}
+      label={label}
+      viewMode={viewMode}
+      onViewModeChange={onViewModeChange}
+      listRef={listRef}
+      ariaLabel={label || "Add device"}
+      minHeight={minHeight}
+    >
+      {groups.every((group) => group.options.length === 0) ? (
+        <div className="catalog-list-empty">No matches</div>
+      ) : (
+        groups.map((group) => (
+          <CatalogListGroupSection
+            key={group.label}
+            listId={id}
+            group={group}
+            catalogMode={catalogMode}
+            viewMode={viewMode}
+            imageBase={imageBase}
+            thumbnailSizes={thumbnailSizes}
+            isCollapsed={collapsedGroups.has(group.label)}
+            onToggle={toggleGroup}
+          />
+        ))
+      )}
+    </CatalogListFrame>
   );
 }
