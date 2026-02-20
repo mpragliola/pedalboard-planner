@@ -1,49 +1,45 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CONNECTOR_ICON_MAP } from "../../constants";
 import { CABLE_TERMINAL_START_COLOR, CABLE_TERMINAL_END_COLOR } from "../../constants/cables";
-import { buildRoundedPathD, buildSmoothPathD, DEFAULT_JOIN_RADIUS } from "../../lib/polylinePath";
-import {
-  vec2Add,
-  vec2Dot,
-  vec2Length,
-  vec2Normalize,
-  vec2Scale,
-  vec2Sub,
-  type Offset,
-  type Point,
-} from "../../lib/vector";
+import { DEFAULT_JOIN_RADIUS } from "../../lib/polylinePath";
+import type { Point } from "../../lib/vector";
 import { snapToObjects } from "../../lib/snapToBoundingBox";
 import { getObjectDimensions } from "../../lib/objectDimensions";
+import { connectorLabelsForCable, type ConnectorLabel } from "../../lib/cableConnectorLabels";
+import { deriveCableDragState, type CableDragState } from "../../lib/cableDrag";
+import { buildCablePathData } from "../../lib/cableStrokePaths";
+import { nearestSegmentIndexForPoint } from "../../lib/cableGeometry";
 import { useBoard } from "../../context/BoardContext";
 import { useCable } from "../../context/CableContext";
 import { useCanvas } from "../../context/CanvasContext";
 import { useCanvasCoords } from "../../hooks/useCanvasCoords";
 import { useCablePhysics } from "../../hooks/useCablePhysics";
 import { useDragState } from "../../hooks/useDragState";
+import {
+  CABLE_PATHS_CANVAS_HALF,
+  CABLE_PATHS_CANVAS_SIZE,
+  CABLE_PATHS_DOUBLE_CLICK_DETAIL_THRESHOLD,
+  CABLE_PATHS_DOUBLE_TAP_MAX_DISTANCE_PX,
+  CABLE_PATHS_DOUBLE_TAP_TIME_WINDOW_MS,
+  CABLE_PATHS_ENDPOINT_DOT_RADIUS_MM,
+  CABLE_PATHS_ENDPOINT_DOT_STROKE,
+  CABLE_PATHS_ENDPOINT_DOT_STROKE_WIDTH_MM,
+  CABLE_PATHS_HANDLE_DOT_RADIUS_MM,
+  CABLE_PATHS_HANDLE_DRAG_THRESHOLD_PX,
+  CABLE_PATHS_HANDLE_HALO_RADIUS_MM,
+  CABLE_PATHS_HANDLE_REMOVE_PRESS_MS,
+  CABLE_PATHS_HALO_EXTRA_MM,
+  CABLE_PATHS_HIT_STROKE_MM,
+  CABLE_PATHS_INSERT_FLASH_DURATION_MS,
+  CABLE_PATHS_INSERT_FLASH_RADIUS_MM,
+  CABLE_PATHS_LABEL_ICON_SIZE_MM,
+  CABLE_PATHS_MID_HANDLE_FILL,
+  CABLE_PATHS_SELECTED_CABLE_HALO_COLOR,
+  CABLE_PATHS_STROKE_WIDTH_MM,
+  CABLE_PATHS_Z_INDEX,
+} from "../../constants/cablePaths";
 import type { Cable, CanvasObjectType } from "../../types";
 import "./CablePaths.scss";
-
-const CABLE_STROKE_WIDTH_MM = 5;
-/** Extra stroke width for selected cable halo (mm), so halo = CABLE_STROKE_WIDTH_MM + 2 * HALO_EXTRA_MM. */
-const HALO_EXTRA_MM = 4;
-const SELECTED_CABLE_HALO_COLOR = "rgba(10, 132, 255, 0.7)";
-const ENDPOINT_DOT_RADIUS = 4;
-/** Canvas-space SVG extent (covers -CANVAS_HALF..CANVAS_HALF) so cables stay visible when panning. */
-const CANVAS_HALF = 2500;
-const CANVAS_SIZE = CANVAS_HALF * 2;
-
-/** Hit area stroke width (mm) – invisible path for easier clicking. */
-const HIT_STROKE_MM = 16;
-const HANDLE_REMOVE_PRESS_MS = 600;
-const HANDLE_DRAG_THRESHOLD_PX = 4;
-const DOUBLE_TAP_TIME_WINDOW_MS = 320;
-const DOUBLE_TAP_MAX_DISTANCE_PX = 28;
-
-type DragState = {
-  cableId: string;
-  points: Point[];
-  handleIndex: number;
-};
 
 type PressState = {
   cableId: string;
@@ -63,72 +59,6 @@ type LastCableTap = {
 };
 
 type HandleType = "start" | "mid" | "end";
-
-/** Label metrics used for endpoint label + connector icon placement (canvas mm units). */
-const LABEL_FONT_SIZE_MM = 6;
-const LABEL_TEXT_LINE_HEIGHT_MM = 7;
-const LABEL_TEXT_CHAR_WIDTH_MM = LABEL_FONT_SIZE_MM * 0.55;
-const LABEL_TEXT_MIN_WIDTH_MM = 10;
-/** Connector icon size rendered beneath endpoint labels (canvas mm units). */
-const LABEL_ICON_SIZE_MM = 22;
-/** Vertical gap between label text block and icon (canvas mm units). */
-const LABEL_ICON_GAP_MM = 3;
-/** Minimum clearance from terminal point to the nearest point of label+icon bounds. */
-const LABEL_TERMINAL_CLEARANCE_MM = 5;
-/** Connector label geometry and text for one cable endpoint. */
-interface ConnectorLabel {
-  labelPosition: Point;
-  iconPosition: Point;
-  text: string;
-  kind: Cable["connectorA"];
-}
-function estimateLabelTextWidthMm(text: string): number {
-  return Math.max(LABEL_TEXT_MIN_WIDTH_MM, text.trim().length * LABEL_TEXT_CHAR_WIDTH_MM);
-}
-function buildConnectorLabel(anchor: Point, awayDir: Offset, text: string, kind: Cable["connectorA"]): ConnectorLabel {
-  const trimmed = text.trim();
-  if (!trimmed) {
-    return {
-      labelPosition: anchor,
-      iconPosition: anchor,
-      text: "",
-      kind,
-    };
-  }
-  const groupWidth = Math.max(LABEL_ICON_SIZE_MM, estimateLabelTextWidthMm(trimmed));
-  const groupHeight = LABEL_TEXT_LINE_HEIGHT_MM + LABEL_ICON_GAP_MM + LABEL_ICON_SIZE_MM;
-  const halfProjectedExtent =
-    (groupWidth * 0.5) * Math.abs(awayDir.x) + (groupHeight * 0.5) * Math.abs(awayDir.y);
-  const center = vec2Add(anchor, vec2Scale(awayDir, LABEL_TERMINAL_CLEARANCE_MM + halfProjectedExtent));
-  const topY = center.y - groupHeight * 0.5;
-  return {
-    labelPosition: { x: center.x, y: topY + LABEL_TEXT_LINE_HEIGHT_MM * 0.5 },
-    iconPosition: {
-      x: center.x - LABEL_ICON_SIZE_MM * 0.5,
-      y: topY + LABEL_TEXT_LINE_HEIGHT_MM + LABEL_ICON_GAP_MM,
-    },
-    text: trimmed,
-    kind,
-  };
-}
-/** Compute connector label positions: opposite to the cable direction at each anchor. */
-function connectorLabelsForCable(cable: Cable): { a: ConnectorLabel; b: ConnectorLabel } | null {
-  const points = cable.segments;
-  if (points.length < 2) return null;
-  const firstStart = points[0];
-  const firstEnd = points[1];
-  const lastStart = points[points.length - 2];
-  const lastEnd = points[points.length - 1];
-  const firstVector = vec2Sub(firstEnd, firstStart);
-  const lastVector = vec2Sub(lastEnd, lastStart);
-  if (vec2Length(firstVector) < 1e-6 || vec2Length(lastVector) < 1e-6) return null;
-  const firstDir = vec2Normalize(firstVector);
-  const lastDir = vec2Normalize(lastVector);
-  return {
-    a: buildConnectorLabel(firstStart, vec2Scale(firstDir, -1), cable.connectorAName ?? "", cable.connectorA),
-    b: buildConnectorLabel(lastEnd, lastDir, cable.connectorBName ?? "", cable.connectorB),
-  };
-}
 interface EndpointDot {
   point: Point;
   type: "start" | "end";
@@ -152,7 +82,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
   const { canvasRef, zoom, pan, pausePanZoom, spaceDown } = useCanvas();
   const { clientToCanvas } = useCanvasCoords(canvasRef, zoom, pan);
 
-  const dragRef = useRef<DragState | null>(null);
+  const dragRef = useRef<CableDragState | null>(null);
   const pressTimerRef = useRef<number | null>(null);
   const [pressingHandle, setPressingHandle] = useState<PressState | null>(null);
   const [flashPoint, setFlashPoint] = useState<FlashPoint | null>(null);
@@ -175,23 +105,8 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
     };
   }, []);
 
-  const dragState = dragRef.current;
-  const dragCableId = dragState?.cableId ?? null;
-  const dragHandleIndex = dragState?.handleIndex ?? null;
-  const dragPoints = dragState?.points ?? null;
-
-  const dragSegA =
-    dragPoints && dragHandleIndex !== null && dragHandleIndex > 0
-      ? { start: dragPoints[dragHandleIndex - 1], end: dragPoints[dragHandleIndex] }
-      : null;
-  const dragSegB =
-    dragPoints && dragHandleIndex !== null && dragHandleIndex < dragPoints.length - 1
-      ? { start: dragPoints[dragHandleIndex + 1], end: dragPoints[dragHandleIndex] }
-      : null;
-  const dragSegBForPath =
-    dragPoints && dragHandleIndex !== null && dragHandleIndex < dragPoints.length - 1
-      ? { start: dragPoints[dragHandleIndex], end: dragPoints[dragHandleIndex + 1] }
-      : null;
+  const { dragCableId, dragHandleIndex, dragPoints, dragSegA, dragSegB, dragSegBForPath } =
+    deriveCableDragState(dragRef.current);
 
   const physicsPointsA = useCablePhysics(dragSegA?.start ?? null, dragSegA?.end ?? null, !!dragSegA);
   const physicsPointsB = useCablePhysics(dragSegB?.start ?? null, dragSegB?.end ?? null, !!dragSegB);
@@ -202,32 +117,21 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
     const endpointDots: EndpointDot[] = [];
     const connectorLabels: { id: string; a: ConnectorLabel; b: ConnectorLabel }[] = [];
 
-    const segmentPathD = (segment: { start: Point; end: Point } | null, physicsPoints: Point[]) => {
-      if (!segment) return "";
-      if (physicsPoints.length >= 2) return buildSmoothPathD(physicsPoints);
-      return `M ${segment.start.x} ${segment.start.y} L ${segment.end.x} ${segment.end.y}`;
-    };
-
     for (const cable of cables) {
       const points: Point[] = cable.segments;
       if (points.length < 2) continue;
       const isDraggedCable = cable.id === dragCableId && dragHandleIndex !== null && !!dragPoints;
       const activePoints = isDraggedCable ? (dragPoints as Point[]) : points;
-      const hitD = buildRoundedPathD(activePoints, joinRadius);
-
-      let strokeDs: string[] = [];
-      if (isDraggedCable && dragHandleIndex !== null) {
-        const beforePoints = activePoints.slice(0, dragHandleIndex);
-        const afterPoints = activePoints.slice(dragHandleIndex + 1);
-        if (beforePoints.length >= 2) strokeDs.push(buildRoundedPathD(beforePoints, joinRadius));
-        strokeDs.push(segmentPathD(dragSegA, physicsPointsA));
-        const physicsPointsBForPath = physicsPointsB.length >= 2 ? [...physicsPointsB].reverse() : physicsPointsB;
-        strokeDs.push(segmentPathD(dragSegBForPath, physicsPointsBForPath));
-        if (afterPoints.length >= 2) strokeDs.push(buildRoundedPathD(afterPoints, joinRadius));
-        strokeDs = strokeDs.filter((d) => d.length > 0);
-      } else {
-        strokeDs = hitD ? [hitD] : [];
-      }
+      const { hitD, strokeDs } = buildCablePathData({
+        activePoints,
+        joinRadius,
+        isDraggedCable,
+        dragHandleIndex,
+        dragSegA,
+        dragSegBForPath,
+        physicsPointsA,
+        physicsPointsB,
+      });
 
       paths.push({ id: cable.id, hitD, strokeDs, color: cable.color });
       const labels = connectorLabelsForCable(cable);
@@ -259,7 +163,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
   }>({
     zoom,
     spaceDown,
-    thresholdPx: HANDLE_DRAG_THRESHOLD_PX,
+    thresholdPx: CABLE_PATHS_HANDLE_DRAG_THRESHOLD_PX,
     activateOnStart: false,
     getPendingPayload: (id) => {
       const handleIndex = pendingHandleIndexRef.current;
@@ -302,35 +206,13 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
     },
   });
 
-  const nearestSegmentIndex = (cable: Cable, canvasPoint: Point): number | null => {
-    if (cable.segments.length < 2) return null;
-    let bestIdx = 0;
-    let bestDist2 = Infinity;
-    const points = cable.segments;
-    for (let idx = 0; idx < points.length - 1; idx += 1) {
-      const a = points[idx];
-      const b = points[idx + 1];
-      const ab = vec2Sub(b, a);
-      const ap = vec2Sub(canvasPoint, a);
-      const len2 = vec2Dot(ab, ab);
-      const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, vec2Dot(ap, ab) / len2));
-      const proj = { x: a.x + t * ab.x, y: a.y + t * ab.y };
-      const dist2 = vec2Dot(vec2Sub(canvasPoint, proj), vec2Sub(canvasPoint, proj));
-      if (dist2 < bestDist2) {
-        bestDist2 = dist2;
-        bestIdx = idx;
-      }
-    }
-    return bestDist2 === Infinity ? null : bestIdx;
-  };
-
   const handleSegmentDoubleClick = (cableId: string, e: React.MouseEvent | React.PointerEvent): boolean => {
     e.stopPropagation();
     if (!selectedCableId || selectedCableId !== cableId) return false;
     const cable = cables.find((c) => c.id === cableId);
     if (!cable) return false;
     const canvasPoint = clientToCanvas(e.clientX, e.clientY);
-    const segIndex = nearestSegmentIndex(cable, canvasPoint);
+    const segIndex = nearestSegmentIndexForPoint(cable.segments, canvasPoint);
     if (segIndex == null) return false;
     const points: Point[] = cable.segments;
     const snapped =
@@ -339,7 +221,10 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
         : snapToObjects(canvasPoint.x, canvasPoint.y, objects as CanvasObjectType[], getObjectDimensions);
     setFlashPoint({ cableId, point: snapped });
     if (flashTimerRef.current) window.clearTimeout(flashTimerRef.current);
-    flashTimerRef.current = window.setTimeout(() => setFlashPoint(null), 300);
+    flashTimerRef.current = window.setTimeout(
+      () => setFlashPoint(null),
+      CABLE_PATHS_INSERT_FLASH_DURATION_MS
+    );
     const nextPoints = [...points.slice(0, segIndex + 1), snapped, ...points.slice(segIndex + 1)];
     setCables((prev) => prev.map((c) => (c.id === cableId ? { ...c, segments: normalizePoints(nextPoints) } : c)), true);
     return true;
@@ -351,8 +236,8 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
     if (
       prevTap &&
       prevTap.cableId === cableId &&
-      now - prevTap.time <= DOUBLE_TAP_TIME_WINDOW_MS &&
-      Math.hypot(e.clientX - prevTap.x, e.clientY - prevTap.y) <= DOUBLE_TAP_MAX_DISTANCE_PX
+      now - prevTap.time <= CABLE_PATHS_DOUBLE_TAP_TIME_WINDOW_MS &&
+      Math.hypot(e.clientX - prevTap.x, e.clientY - prevTap.y) <= CABLE_PATHS_DOUBLE_TAP_MAX_DISTANCE_PX
     ) {
       lastCableTapRef.current = null;
       return handleSegmentDoubleClick(cableId, e);
@@ -360,8 +245,6 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
     lastCableTapRef.current = { cableId, time: now, x: e.clientX, y: e.clientY };
     return false;
   };
-
-
   const handleHandlePointerDown = (cableId: string, handleIndex: number, e: React.PointerEvent) => {
     e.stopPropagation();
     setSelectedCableId(cableId);
@@ -386,7 +269,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
         } catch {
           /* ignore */
         }
-      }, HANDLE_REMOVE_PRESS_MS);
+      }, CABLE_PATHS_HANDLE_REMOVE_PRESS_MS);
     }
 
     pendingHandleIndexRef.current = handleIndex;
@@ -422,16 +305,16 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
   return (
     <svg
       className="cable-paths-svg"
-      viewBox={`${-CANVAS_HALF} ${-CANVAS_HALF} ${CANVAS_SIZE} ${CANVAS_SIZE}`}
+      viewBox={`${-CABLE_PATHS_CANVAS_HALF} ${-CABLE_PATHS_CANVAS_HALF} ${CABLE_PATHS_CANVAS_SIZE} ${CABLE_PATHS_CANVAS_SIZE}`}
       preserveAspectRatio="none"
       style={{
         position: "absolute",
-        left: -CANVAS_HALF,
-        top: -CANVAS_HALF,
-        width: CANVAS_SIZE,
-        height: CANVAS_SIZE,
+        left: -CABLE_PATHS_CANVAS_HALF,
+        top: -CABLE_PATHS_CANVAS_HALF,
+        width: CABLE_PATHS_CANVAS_SIZE,
+        height: CABLE_PATHS_CANVAS_SIZE,
         pointerEvents: "none",
-        zIndex: 1000,
+        zIndex: CABLE_PATHS_Z_INDEX,
         colorScheme: "normal",
         opacity,
       }}
@@ -440,7 +323,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
         <circle
           cx={flashPoint.point.x}
           cy={flashPoint.point.y}
-          r={6}
+          r={CABLE_PATHS_INSERT_FLASH_RADIUS_MM}
           className="cable-insert-flash"
           pointerEvents="none"
         />
@@ -452,7 +335,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
             d={p.hitD}
             fill="none"
             stroke="transparent"
-            strokeWidth={HIT_STROKE_MM}
+            strokeWidth={CABLE_PATHS_HIT_STROKE_MM}
             strokeLinejoin="round"
             strokeLinecap="round"
             className="cable-hit-area"
@@ -461,7 +344,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
             onPointerDown={(e) => {
               if (e.pointerType === "touch") {
                 if (handleTouchSegmentTap(p.id, e)) return;
-              } else if (e.detail >= 2) {
+              } else if (e.detail >= CABLE_PATHS_DOUBLE_CLICK_DETAIL_THRESHOLD) {
                 if (handleSegmentDoubleClick(p.id, e)) return;
               }
               onCablePointerDown(p.id, e);
@@ -475,8 +358,8 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
                   key={`halo-${p.id}-${idx}`}
                   d={d}
                   fill="none"
-                  stroke={SELECTED_CABLE_HALO_COLOR}
-                  strokeWidth={CABLE_STROKE_WIDTH_MM + 2 * HALO_EXTRA_MM}
+                  stroke={CABLE_PATHS_SELECTED_CABLE_HALO_COLOR}
+                  strokeWidth={CABLE_PATHS_STROKE_WIDTH_MM + 2 * CABLE_PATHS_HALO_EXTRA_MM}
                   strokeLinejoin="round"
                   strokeLinecap="round"
                   style={{ pointerEvents: "none" }}
@@ -490,7 +373,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
               d={d}
               fill="none"
               stroke={p.color}
-              strokeWidth={CABLE_STROKE_WIDTH_MM}
+              strokeWidth={CABLE_PATHS_STROKE_WIDTH_MM}
               strokeLinejoin="round"
               strokeLinecap="round"
               style={{ pointerEvents: "none" }}
@@ -503,11 +386,11 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
           key={i}
           cx={dot.point.x}
           cy={dot.point.y}
-          r={ENDPOINT_DOT_RADIUS}
+          r={CABLE_PATHS_ENDPOINT_DOT_RADIUS_MM}
           className="cable-endpoint-dot"
           fill={dot.type === "start" ? CABLE_TERMINAL_START_COLOR : CABLE_TERMINAL_END_COLOR}
-          stroke="rgba(0, 0, 0, 0.25)"
-          strokeWidth="1"
+          stroke={CABLE_PATHS_ENDPOINT_DOT_STROKE}
+          strokeWidth={CABLE_PATHS_ENDPOINT_DOT_STROKE_WIDTH_MM}
         />
       ))}
       {handles.map(({ point, idx, type }) => {
@@ -516,13 +399,13 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
             ? CABLE_TERMINAL_START_COLOR
             : type === "end"
               ? CABLE_TERMINAL_END_COLOR
-              : "rgba(255, 255, 255, 0.9)";
+              : CABLE_PATHS_MID_HANDLE_FILL;
         return (
           <g key={`handle-${idx}`}>
             <circle
               cx={point.x}
               cy={point.y}
-              r={7}
+              r={CABLE_PATHS_HANDLE_HALO_RADIUS_MM}
               className="cable-handle-halo"
               onPointerDown={(e) => handleHandlePointerDown(selectedCableId!, idx, e)}
               onPointerUp={handleHandlePointerRelease}
@@ -532,7 +415,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
             <circle
               cx={point.x}
               cy={point.y}
-              r={4}
+              r={CABLE_PATHS_HANDLE_DOT_RADIUS_MM}
               className={[
                 "cable-handle-dot",
                 `cable-handle-dot--${type}`,
@@ -567,8 +450,8 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
                 href={CONNECTOR_ICON_MAP[a.kind]}
                 x={a.iconPosition.x}
                 y={a.iconPosition.y}
-                width={LABEL_ICON_SIZE_MM}
-                height={LABEL_ICON_SIZE_MM}
+                width={CABLE_PATHS_LABEL_ICON_SIZE_MM}
+                height={CABLE_PATHS_LABEL_ICON_SIZE_MM}
                 preserveAspectRatio="xMidYMid meet"
                 className="cable-connector-label-icon"
               />
@@ -589,8 +472,8 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
                 href={CONNECTOR_ICON_MAP[b.kind]}
                 x={b.iconPosition.x}
                 y={b.iconPosition.y}
-                width={LABEL_ICON_SIZE_MM}
-                height={LABEL_ICON_SIZE_MM}
+                width={CABLE_PATHS_LABEL_ICON_SIZE_MM}
+                height={CABLE_PATHS_LABEL_ICON_SIZE_MM}
                 preserveAspectRatio="xMidYMid meet"
                 className="cable-connector-label-icon"
               />
@@ -601,5 +484,3 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
     </svg>
   );
 }
-
-
