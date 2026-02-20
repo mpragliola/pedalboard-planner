@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import type { BoardTemplate } from "../data/boards";
 import type { DeviceTemplate } from "../data/devices";
+import type { CatalogFilters } from "../types/catalogFilters";
 import {
   deriveBoardBrands,
   deriveDeviceBrands,
@@ -118,5 +119,5 @@ export function useBoardDeviceFilters({ boardTemplates, deviceTemplates }: UseBo
     filteredBoards, filteredDevices,
     hasBoardFilters, hasDeviceFilters,
     resetBoardFilters, resetDeviceFilters,
-  };
+  } satisfies CatalogFilters;
 }
