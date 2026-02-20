@@ -173,7 +173,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     clearSelection,
     setSelectedBoard,
     setSelectedDevice,
-  );
+  });
 
   const applyLoadedState = useCallback(
     (state: SavedState) => {
