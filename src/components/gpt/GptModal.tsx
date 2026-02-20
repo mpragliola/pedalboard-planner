@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useBoard } from '../../context/BoardContext'
 import { useCable } from '../../context/CableContext'
 import { useUi } from '../../context/UiContext'
@@ -33,15 +33,26 @@ export function GptModal({ open, onClose }: GptModalProps) {
   const [loadedPlacePending, setLoadedPlacePending] = useState<string | null>(null)
   const [locationInputKey, setLocationInputKey] = useState(0)
 
-  const promptBuilder = new PromptBuilder(objects, {
+  const builtPrompt = useMemo(() => {
+    const promptBuilder = new PromptBuilder(objects, {
+      includeMaterials,
+      includeCommentsAndTips,
+      location: includeLocation ? location : '',
+      cables,
+      unit,
+      getObjectName,
+    })
+    return promptBuilder.build()
+  }, [
+    objects,
     includeMaterials,
     includeCommentsAndTips,
-    location: includeLocation ? location : '',
+    includeLocation,
+    location,
     cables,
     unit,
     getObjectName,
-  })
-  const builtPrompt = promptBuilder.build()
+  ])
   const [promptText, setPromptText] = useState(builtPrompt)
 
   useEffect(() => {
