@@ -3,7 +3,8 @@
  * Domain-specific constants now live in `src/constants/*`.
  */
 export { BASE_URL, FEATURE_MINI3D_AUTOROTATE } from "./constants/runtime";
-export { CONNECTOR_ICON_MAP, CONNECTOR_NAME_OPTIONS, CONNECTOR_KIND_OPTIONS } from "./constants/connectors";
+export { CONNECTOR_ICON_MAP } from "./constants/connector-icons";
+export { CONNECTOR_NAME_OPTIONS, CONNECTOR_KIND_OPTIONS } from "./constants/connector-kinds";
 export {
   ZOOM_MIN,
   ZOOM_MAX,
