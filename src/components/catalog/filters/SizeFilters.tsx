@@ -1,4 +1,4 @@
-import '../SizeFilters.scss'
+import './SizeFilters.scss'
 import { Slider } from '../../common/Slider'
 
 interface SizeFiltersProps {

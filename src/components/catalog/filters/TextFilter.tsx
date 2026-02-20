@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import '../TextFilter.scss'
+import './TextFilter.scss'
 
 interface TextFilterProps {
   id: string
