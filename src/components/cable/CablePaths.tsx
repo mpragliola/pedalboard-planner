@@ -15,29 +15,7 @@ import { useCanvas } from "../../context/CanvasContext";
 import { useCanvasCoords } from "../../hooks/useCanvasCoords";
 import { useCablePhysics } from "../../hooks/useCablePhysics";
 import { useDragState } from "../../hooks/useDragState";
-import {
-  CABLE_PATHS_CANVAS_HALF,
-  CABLE_PATHS_CANVAS_SIZE,
-  CABLE_PATHS_DOUBLE_CLICK_DETAIL_THRESHOLD,
-  CABLE_PATHS_DOUBLE_TAP_MAX_DISTANCE_PX,
-  CABLE_PATHS_DOUBLE_TAP_TIME_WINDOW_MS,
-  CABLE_PATHS_ENDPOINT_DOT_RADIUS_MM,
-  CABLE_PATHS_ENDPOINT_DOT_STROKE,
-  CABLE_PATHS_ENDPOINT_DOT_STROKE_WIDTH_MM,
-  CABLE_PATHS_HANDLE_DOT_RADIUS_MM,
-  CABLE_PATHS_HANDLE_DRAG_THRESHOLD_PX,
-  CABLE_PATHS_HANDLE_HALO_RADIUS_MM,
-  CABLE_PATHS_HANDLE_REMOVE_PRESS_MS,
-  CABLE_PATHS_HALO_EXTRA_MM,
-  CABLE_PATHS_HIT_STROKE_MM,
-  CABLE_PATHS_INSERT_FLASH_DURATION_MS,
-  CABLE_PATHS_INSERT_FLASH_RADIUS_MM,
-  CABLE_PATHS_LABEL_ICON_SIZE_MM,
-  CABLE_PATHS_MID_HANDLE_FILL,
-  CABLE_PATHS_SELECTED_CABLE_HALO_COLOR,
-  CABLE_PATHS_STROKE_WIDTH_MM,
-  CABLE_PATHS_Z_INDEX,
-} from "../../constants/cablePaths";
+import * as CP from "../../constants/cablePaths";
 import type { Cable, CanvasObjectType } from "../../types";
 import "./CablePaths.scss";
 
@@ -163,7 +141,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
   }>({
     zoom,
     spaceDown,
-    thresholdPx: CABLE_PATHS_HANDLE_DRAG_THRESHOLD_PX,
+    thresholdPx: CP.CABLE_PATHS_HANDLE_DRAG_THRESHOLD_PX,
     activateOnStart: false,
     getPendingPayload: (id) => {
       const handleIndex = pendingHandleIndexRef.current;
@@ -223,7 +201,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
     if (flashTimerRef.current) window.clearTimeout(flashTimerRef.current);
     flashTimerRef.current = window.setTimeout(
       () => setFlashPoint(null),
-      CABLE_PATHS_INSERT_FLASH_DURATION_MS
+      CP.CABLE_PATHS_INSERT_FLASH_DURATION_MS
     );
     const nextPoints = [...points.slice(0, segIndex + 1), snapped, ...points.slice(segIndex + 1)];
     setCables((prev) => prev.map((c) => (c.id === cableId ? { ...c, segments: normalizePoints(nextPoints) } : c)), true);
@@ -236,8 +214,8 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
     if (
       prevTap &&
       prevTap.cableId === cableId &&
-      now - prevTap.time <= CABLE_PATHS_DOUBLE_TAP_TIME_WINDOW_MS &&
-      Math.hypot(e.clientX - prevTap.x, e.clientY - prevTap.y) <= CABLE_PATHS_DOUBLE_TAP_MAX_DISTANCE_PX
+      now - prevTap.time <= CP.CABLE_PATHS_DOUBLE_TAP_TIME_WINDOW_MS &&
+      Math.hypot(e.clientX - prevTap.x, e.clientY - prevTap.y) <= CP.CABLE_PATHS_DOUBLE_TAP_MAX_DISTANCE_PX
     ) {
       lastCableTapRef.current = null;
       return handleSegmentDoubleClick(cableId, e);
@@ -269,7 +247,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
         } catch {
           /* ignore */
         }
-      }, CABLE_PATHS_HANDLE_REMOVE_PRESS_MS);
+      }, CP.CABLE_PATHS_HANDLE_REMOVE_PRESS_MS);
     }
 
     pendingHandleIndexRef.current = handleIndex;
@@ -305,16 +283,16 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
   return (
     <svg
       className="cable-paths-svg"
-      viewBox={`${-CABLE_PATHS_CANVAS_HALF} ${-CABLE_PATHS_CANVAS_HALF} ${CABLE_PATHS_CANVAS_SIZE} ${CABLE_PATHS_CANVAS_SIZE}`}
+      viewBox={`${-CP.CABLE_PATHS_CANVAS_HALF} ${-CP.CABLE_PATHS_CANVAS_HALF} ${CP.CABLE_PATHS_CANVAS_SIZE} ${CP.CABLE_PATHS_CANVAS_SIZE}`}
       preserveAspectRatio="none"
       style={{
         position: "absolute",
-        left: -CABLE_PATHS_CANVAS_HALF,
-        top: -CABLE_PATHS_CANVAS_HALF,
-        width: CABLE_PATHS_CANVAS_SIZE,
-        height: CABLE_PATHS_CANVAS_SIZE,
+        left: -CP.CABLE_PATHS_CANVAS_HALF,
+        top: -CP.CABLE_PATHS_CANVAS_HALF,
+        width: CP.CABLE_PATHS_CANVAS_SIZE,
+        height: CP.CABLE_PATHS_CANVAS_SIZE,
         pointerEvents: "none",
-        zIndex: CABLE_PATHS_Z_INDEX,
+        zIndex: CP.CABLE_PATHS_Z_INDEX,
         colorScheme: "normal",
         opacity,
       }}
@@ -323,7 +301,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
         <circle
           cx={flashPoint.point.x}
           cy={flashPoint.point.y}
-          r={CABLE_PATHS_INSERT_FLASH_RADIUS_MM}
+          r={CP.CABLE_PATHS_INSERT_FLASH_RADIUS_MM}
           className="cable-insert-flash"
           pointerEvents="none"
         />
@@ -335,7 +313,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
             d={p.hitD}
             fill="none"
             stroke="transparent"
-            strokeWidth={CABLE_PATHS_HIT_STROKE_MM}
+            strokeWidth={CP.CABLE_PATHS_HIT_STROKE_MM}
             strokeLinejoin="round"
             strokeLinecap="round"
             className="cable-hit-area"
@@ -344,7 +322,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
             onPointerDown={(e) => {
               if (e.pointerType === "touch") {
                 if (handleTouchSegmentTap(p.id, e)) return;
-              } else if (e.detail >= CABLE_PATHS_DOUBLE_CLICK_DETAIL_THRESHOLD) {
+              } else if (e.detail >= CP.CABLE_PATHS_DOUBLE_CLICK_DETAIL_THRESHOLD) {
                 if (handleSegmentDoubleClick(p.id, e)) return;
               }
               onCablePointerDown(p.id, e);
@@ -358,8 +336,8 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
                   key={`halo-${p.id}-${idx}`}
                   d={d}
                   fill="none"
-                  stroke={CABLE_PATHS_SELECTED_CABLE_HALO_COLOR}
-                  strokeWidth={CABLE_PATHS_STROKE_WIDTH_MM + 2 * CABLE_PATHS_HALO_EXTRA_MM}
+                  stroke={CP.CABLE_PATHS_SELECTED_CABLE_HALO_COLOR}
+                  strokeWidth={CP.CABLE_PATHS_STROKE_WIDTH_MM + 2 * CP.CABLE_PATHS_HALO_EXTRA_MM}
                   strokeLinejoin="round"
                   strokeLinecap="round"
                   style={{ pointerEvents: "none" }}
@@ -373,7 +351,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
               d={d}
               fill="none"
               stroke={p.color}
-              strokeWidth={CABLE_PATHS_STROKE_WIDTH_MM}
+              strokeWidth={CP.CABLE_PATHS_STROKE_WIDTH_MM}
               strokeLinejoin="round"
               strokeLinecap="round"
               style={{ pointerEvents: "none" }}
@@ -386,11 +364,11 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
           key={i}
           cx={dot.point.x}
           cy={dot.point.y}
-          r={CABLE_PATHS_ENDPOINT_DOT_RADIUS_MM}
+          r={CP.CABLE_PATHS_ENDPOINT_DOT_RADIUS_MM}
           className="cable-endpoint-dot"
           fill={dot.type === "start" ? CABLE_TERMINAL_START_COLOR : CABLE_TERMINAL_END_COLOR}
-          stroke={CABLE_PATHS_ENDPOINT_DOT_STROKE}
-          strokeWidth={CABLE_PATHS_ENDPOINT_DOT_STROKE_WIDTH_MM}
+          stroke={CP.CABLE_PATHS_ENDPOINT_DOT_STROKE}
+          strokeWidth={CP.CABLE_PATHS_ENDPOINT_DOT_STROKE_WIDTH_MM}
         />
       ))}
       {handles.map(({ point, idx, type }) => {
@@ -399,13 +377,13 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
             ? CABLE_TERMINAL_START_COLOR
             : type === "end"
               ? CABLE_TERMINAL_END_COLOR
-              : CABLE_PATHS_MID_HANDLE_FILL;
+              : CP.CABLE_PATHS_MID_HANDLE_FILL;
         return (
           <g key={`handle-${idx}`}>
             <circle
               cx={point.x}
               cy={point.y}
-              r={CABLE_PATHS_HANDLE_HALO_RADIUS_MM}
+              r={CP.CABLE_PATHS_HANDLE_HALO_RADIUS_MM}
               className="cable-handle-halo"
               onPointerDown={(e) => handleHandlePointerDown(selectedCableId!, idx, e)}
               onPointerUp={handleHandlePointerRelease}
@@ -415,7 +393,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
             <circle
               cx={point.x}
               cy={point.y}
-              r={CABLE_PATHS_HANDLE_DOT_RADIUS_MM}
+              r={CP.CABLE_PATHS_HANDLE_DOT_RADIUS_MM}
               className={[
                 "cable-handle-dot",
                 `cable-handle-dot--${type}`,
@@ -450,8 +428,8 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
                 href={CONNECTOR_ICON_MAP[a.kind]}
                 x={a.iconPosition.x}
                 y={a.iconPosition.y}
-                width={CABLE_PATHS_LABEL_ICON_SIZE_MM}
-                height={CABLE_PATHS_LABEL_ICON_SIZE_MM}
+                width={CP.CABLE_PATHS_LABEL_ICON_SIZE_MM}
+                height={CP.CABLE_PATHS_LABEL_ICON_SIZE_MM}
                 preserveAspectRatio="xMidYMid meet"
                 className="cable-connector-label-icon"
               />
@@ -472,8 +450,8 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
                 href={CONNECTOR_ICON_MAP[b.kind]}
                 x={b.iconPosition.x}
                 y={b.iconPosition.y}
-                width={CABLE_PATHS_LABEL_ICON_SIZE_MM}
-                height={CABLE_PATHS_LABEL_ICON_SIZE_MM}
+                width={CP.CABLE_PATHS_LABEL_ICON_SIZE_MM}
+                height={CP.CABLE_PATHS_LABEL_ICON_SIZE_MM}
                 preserveAspectRatio="xMidYMid meet"
                 className="cable-connector-label-icon"
               />
