@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { usePolylineDraw, type UsePolylineDrawOptions } from "./usePolylineDraw";
 import type { Point } from "../lib/vector";

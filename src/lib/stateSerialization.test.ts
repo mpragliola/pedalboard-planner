@@ -24,23 +24,6 @@ function makeObject(overrides: Partial<Record<string, unknown>> = {}): Record<st
   };
 }
 
-function makeCustomObject(overrides: Partial<Record<string, unknown>> = {}): Record<string, unknown> {
-  return {
-    id: "cust-1",
-    subtype: "device",
-    type: "pedal",
-    brand: "",
-    model: "My Pedal",
-    templateId: "device-custom",
-    name: "My Custom Pedal",
-    pos: { x: 5, y: 10 },
-    width: 80,
-    depth: 100,
-    height: 50,
-    ...overrides,
-  };
-}
-
 function makeResolver(overrides: Partial<StateTemplateResolver> = {}): StateTemplateResolver {
   return {
     hasKnownTemplateDimensions: () => true,

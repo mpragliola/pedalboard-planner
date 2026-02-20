@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { renderHook } from "@testing-library/react";
-import { useRef } from "react";
 import { useCanvasCoords } from "./useCanvasCoords";
 
 function makeDivRef(rect: DOMRect): React.RefObject<HTMLDivElement | null> {
