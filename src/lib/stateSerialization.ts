@@ -31,6 +31,19 @@ export interface StateSerializationOptions {
   templateResolver?: StateTemplateResolver;
 }
 
+/** Parsed and schema-validated storage payload prior to template enrichment. */
+export interface ValidatedSavedState {
+  objects: Record<string, unknown>[];
+  past?: Record<string, unknown>[][];
+  future?: Record<string, unknown>[][];
+  zoom?: number;
+  pan?: Offset;
+  showGrid?: boolean;
+  unit?: "mm" | "in";
+  background?: CanvasBackgroundId;
+  cables?: Cable[];
+}
+
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
@@ -53,7 +66,7 @@ function isCustomObject(o: CanvasObjectType): boolean {
 }
 
 /** Strip image from all objects; keep name only for custom elements. Omit width/depth/height when template has known dimensions (restored from template on load). Round coordinates to 2 decimals. */
-function serializeObjects(
+export function serializeObjects(
   objects: CanvasObjectType[],
   options?: StateSerializationOptions
 ): Record<string, unknown>[] {
@@ -101,11 +114,10 @@ function serializeCables(cables: Cable[] | undefined): Record<string, unknown>[]
 }
 
 /** Restore image and dimensions from template when loading. Name derived from brand+model if missing. */
-function normalizeLoadedObjects(
+export function enrichObjectsWithTemplates(
   objects: Record<string, unknown>[],
-  options?: StateSerializationOptions
+  templateResolver?: StateTemplateResolver
 ): CanvasObjectType[] {
-  const resolver = options?.templateResolver;
   return objects.map((o) => {
     const { x: _legacyX, y: _legacyY, pos: _rawPos, ...rest } = o;
     const rawPos = o.pos as Record<string, unknown> | undefined;
@@ -118,10 +130,10 @@ function normalizeLoadedObjects(
     const model = str(o, "model");
     const type = str(o, "type");
     const name = str(o, "name") || `${brand} ${model}`.trim() || type || "Object";
-    const image = resolver ? resolver.getTemplateImage(templateId) : null;
-    const shape = resolver?.getTemplateShape(templateId);
+    const image = templateResolver ? templateResolver.getTemplateImage(templateId) : null;
+    const shape = templateResolver?.getTemplateShape(templateId);
     /* For known templates, always use template dims as source of truth. */
-    const wdh = resolver?.getTemplateWdh(templateId);
+    const wdh = templateResolver?.getTemplateWdh(templateId);
     const width = wdh ? wdh[0] : num(o, "width");
     const depth = wdh ? wdh[1] : num(o, "depth");
     const height = wdh ? wdh[2] : num(o, "height");
@@ -129,49 +141,70 @@ function normalizeLoadedObjects(
   });
 }
 
-/** Parse and validate JSON string into SavedState. Returns null on invalid or missing data. */
-export function parseState(json: string, options?: StateSerializationOptions): SavedState | null {
+/** Parse JSON text only. No validation or enrichment. */
+export function parseSavedState(json: string): unknown | null {
   try {
-    const data = JSON.parse(json) as unknown;
-    if (typeof data !== "object" || data === null || !("objects" in data)) return null;
-    const d = data as Record<string, unknown>;
-    const rawObjects = d.objects;
-    if (!Array.isArray(rawObjects) || rawObjects.some((o) => typeof o !== "object" || o === null)) return null;
-    const rawObjRecords = rawObjects as Record<string, unknown>[];
-    if (!rawObjRecords.every((o) => isValidObjectRecord(o, options))) return null;
-    const objects = normalizeLoadedObjects(rawObjRecords, options);
-
-    const isValidSnapshot = (arr: unknown) =>
-      Array.isArray(arr) && (arr as Record<string, unknown>[]).every((o) => isValidObjectRecord(o, options));
-    const past = Array.isArray(d.past) && d.past.every(isValidSnapshot)
-      ? d.past.map((arr: unknown) => normalizeLoadedObjects(arr as Record<string, unknown>[], options))
-      : undefined;
-    const future = Array.isArray(d.future) && d.future.every(isValidSnapshot)
-      ? d.future.map((arr: unknown) => normalizeLoadedObjects(arr as Record<string, unknown>[], options))
-      : undefined;
-
-    const pan = d.pan as Record<string, unknown> | undefined;
-    const validPan =
-      typeof pan === "object" && pan !== null &&
-      typeof pan.x === "number" && typeof pan.y === "number"
-        ? { x: pan.x, y: pan.y }
-        : undefined;
-    const cables = normalizeCableArray(d.cables);
-
-    return {
-      objects,
-      past,
-      future,
-      zoom: typeof d.zoom === "number" ? d.zoom : undefined,
-      pan: validPan,
-      showGrid: typeof d.showGrid === "boolean" ? d.showGrid : undefined,
-      unit: d.unit === "mm" || d.unit === "in" ? (d.unit as "mm" | "in") : undefined,
-      background: isCanvasBackgroundId(d.background) ? d.background : undefined,
-      cables: cables ?? undefined,
-    };
+    return JSON.parse(json) as unknown;
   } catch {
     return null;
   }
+}
+
+/** Validate parsed state shape and normalize optional primitive fields. */
+export function validateSavedState(
+  data: unknown,
+  options?: StateSerializationOptions
+): ValidatedSavedState | null {
+  if (typeof data !== "object" || data === null || !("objects" in data)) return null;
+  const d = data as Record<string, unknown>;
+  const rawObjects = d.objects;
+  if (!Array.isArray(rawObjects) || rawObjects.some((o) => typeof o !== "object" || o === null)) return null;
+  const rawObjRecords = rawObjects as Record<string, unknown>[];
+  if (!rawObjRecords.every((o) => isValidObjectRecord(o, options))) return null;
+
+  const isValidSnapshot = (arr: unknown) =>
+    Array.isArray(arr) && (arr as Record<string, unknown>[]).every((o) => isValidObjectRecord(o, options));
+  const past = Array.isArray(d.past) && d.past.every(isValidSnapshot)
+    ? (d.past as Record<string, unknown>[][])
+    : undefined;
+  const future = Array.isArray(d.future) && d.future.every(isValidSnapshot)
+    ? (d.future as Record<string, unknown>[][])
+    : undefined;
+
+  const pan = d.pan as Record<string, unknown> | undefined;
+  const validPan =
+    typeof pan === "object" && pan !== null &&
+    typeof pan.x === "number" && typeof pan.y === "number"
+      ? { x: pan.x, y: pan.y }
+      : undefined;
+  const cables = normalizeCableArray(d.cables);
+
+  return {
+    objects: rawObjRecords,
+    past,
+    future,
+    zoom: typeof d.zoom === "number" ? d.zoom : undefined,
+    pan: validPan,
+    showGrid: typeof d.showGrid === "boolean" ? d.showGrid : undefined,
+    unit: d.unit === "mm" || d.unit === "in" ? (d.unit as "mm" | "in") : undefined,
+    background: isCanvasBackgroundId(d.background) ? d.background : undefined,
+    cables: cables ?? undefined,
+  };
+}
+
+/** Parse + validate + template-enrich into runtime SavedState shape. */
+export function parseState(json: string, options?: StateSerializationOptions): SavedState | null {
+  const parsed = parseSavedState(json);
+  if (parsed === null) return null;
+  const validated = validateSavedState(parsed, options);
+  if (!validated) return null;
+  const resolver = options?.templateResolver;
+  return {
+    ...validated,
+    objects: enrichObjectsWithTemplates(validated.objects, resolver),
+    past: validated.past?.map((snapshot) => enrichObjectsWithTemplates(snapshot, resolver)),
+    future: validated.future?.map((snapshot) => enrichObjectsWithTemplates(snapshot, resolver)),
+  };
 }
 
 /** Serialize state for storage/file: no image, name only for custom elements. Coordinates, pan, zoom rounded to 2 decimals. */

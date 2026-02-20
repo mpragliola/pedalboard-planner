@@ -1,9 +1,4 @@
-import {
-  getTemplateImage,
-  getTemplateShape,
-  getTemplateWdh,
-  hasKnownTemplateDimensions,
-} from "./objectDimensions";
+import { templateService } from "./templateService";
 import {
   parseState,
   serializeState,
@@ -16,10 +11,10 @@ import {
  * image paths, and shapes.
  */
 const TEMPLATE_RESOLVER: StateTemplateResolver = {
-  hasKnownTemplateDimensions,
-  getTemplateImage,
-  getTemplateShape,
-  getTemplateWdh,
+  hasKnownTemplateDimensions: templateService.hasKnownTemplateDimensions,
+  getTemplateImage: templateService.getTemplateImage,
+  getTemplateShape: templateService.getTemplateShape,
+  getTemplateWdh: templateService.getTemplateWdh,
 };
 
 /** Parse persisted state using runtime template enrichment rules. */
