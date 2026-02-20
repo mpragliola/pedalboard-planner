@@ -4,7 +4,7 @@ import { CABLE_TERMINAL_START_COLOR, CABLE_TERMINAL_END_COLOR } from "../../cons
 import { DEFAULT_JOIN_RADIUS } from "../../lib/polylinePath";
 import type { Point } from "../../lib/vector";
 import { snapToObjects } from "../../lib/snapToBoundingBox";
-import { getObjectDimensions } from "../../lib/objectDimensions";
+import { templateService } from "../../lib/templateService";
 import { connectorLabelsForCable, type ConnectorLabel } from "../../lib/cableConnectorLabels";
 import { deriveCableDragState, type CableDragState } from "../../lib/cableDrag";
 import { buildCablePathData } from "../../lib/cableStrokePaths";
@@ -169,7 +169,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
       const snapped =
         event.shiftKey || event.metaKey
           ? canvasPoint
-          : snapToObjects(canvasPoint.x, canvasPoint.y, objects as CanvasObjectType[], getObjectDimensions);
+          : snapToObjects(canvasPoint.x, canvasPoint.y, objects as CanvasObjectType[], templateService.getObjectDimensions);
       const nextPoints = drag.points.slice();
       nextPoints[drag.handleIndex] = snapped;
       dragRef.current = { ...drag, points: nextPoints };
@@ -198,7 +198,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
     const snapped =
       e.shiftKey || e.metaKey
         ? canvasPoint
-        : snapToObjects(canvasPoint.x, canvasPoint.y, objects as CanvasObjectType[], getObjectDimensions);
+        : snapToObjects(canvasPoint.x, canvasPoint.y, objects as CanvasObjectType[], templateService.getObjectDimensions);
     setFlashPoint({ cableId, point: snapped });
     if (flashTimerRef.current) window.clearTimeout(flashTimerRef.current);
     flashTimerRef.current = window.setTimeout(

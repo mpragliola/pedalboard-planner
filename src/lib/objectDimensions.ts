@@ -1,16 +1,14 @@
-/** Template-based dimension + image helpers. */
-import type { CanvasObjectType } from "../types";
+/** Low-level template lookup helpers (no object-level business rules). */
 import type { Shape3D } from "../shape3d";
 import { DEVICE_TEMPLATES } from "../data/devices";
 import { BOARD_TEMPLATES } from "../data/boards";
 import { MM_TO_PX } from "../constants/interaction";
-import { Wdh } from "../wdh";
+import type { Wdh } from "../wdh";
 
-/** 
+/**
  * Build lookup maps from template id to image path and dimensions.
- * These maps will be used to get object dimensions and images based 
- * on their templateId. We use this implementation because templates
- * are static data and we want fast access without React hooks.
+ * These maps are used for fast, static template lookups without React hooks.
+ * They intentionally do not encode object-level policy decisions.
  */
 
 /** Build a lookup map from template id to image path. */
@@ -56,13 +54,3 @@ export function getTemplateShape(templateId?: string): Shape3D | undefined {
   if (!templateId) return undefined;
   return templateShapeMap.get(templateId);
 }
-
-/** Returns [width, depth, height] in px. For known templates, always from template (source of truth). */
-export function getObjectDimensions(obj: CanvasObjectType): [number, number, number] {
-  const tid = obj.templateId;
-  if (tid && templateWdhMap.has(tid)) {
-    return templateWdhMap.get(tid)!;
-  }
-  return [obj.width, obj.depth, obj.height];
-}
-

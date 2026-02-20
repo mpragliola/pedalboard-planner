@@ -3,7 +3,7 @@ import { useBoard } from "../../context/BoardContext";
 import { useCable } from "../../context/CableContext";
 import { useSelection } from "../../context/SelectionContext";
 import { useUi } from "../../context/UiContext";
-import { getObjectDimensions } from "../../lib/objectDimensions";
+import { templateService } from "../../lib/templateService";
 import { formatDimension, formatLengthCm } from "../../lib/rulerFormat";
 import type { Point } from "../../lib/vector";
 import { InfoLine } from "./InfoLine";
@@ -53,7 +53,7 @@ export function SelectionInfoPopup() {
 
   if (!selectedObject) return null;
 
-  const [width, depth, height] = getObjectDimensions(selectedObject);
+  const [width, depth, height] = templateService.getObjectDimensions(selectedObject);
 
   return (
     <div className="selection-info-popup">
