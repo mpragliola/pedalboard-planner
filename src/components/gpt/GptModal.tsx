@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from 'react'
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { useBoard } from '../../context/BoardContext'
 import { useCable } from '../../context/CableContext'
 import { useUi } from '../../context/UiContext'
@@ -81,11 +81,16 @@ export function GptModal({ open, onClose }: GptModalProps) {
     }
   }, [])
 
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => () => { if (copyTimerRef.current) clearTimeout(copyTimerRef.current) }, [])
+
   const handleCopy = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(promptText)
       setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current)
+      copyTimerRef.current = setTimeout(() => setCopied(false), 2000)
     } catch {
       setCopied(false)
     }
