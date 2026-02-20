@@ -74,10 +74,10 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
     deviceType: DeviceType;
     label: string;
     options: { id: string; name: string; type: string; image?: string | null; widthMm?: number; depthMm?: number }[];
-  }[] = DEVICE_TYPE_ORDER.map((dt) => {
+  }[] = DEVICE_TYPE_ORDER.flatMap((dt) => {
     const templates = filteredDevices.filter((t) => t.type === dt);
-    if (templates.length === 0) return null;
-    return {
+    if (templates.length === 0) return [];
+    return [{
       deviceType: dt,
       label: DEVICE_TYPE_LABEL[dt],
       options: templates.map((t) => ({
@@ -88,8 +88,8 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
         widthMm: t.wdh[0],
         depthMm: t.wdh[1],
       })),
-    };
-  }).filter((g): g is NonNullable<typeof g> => g != null);
+    }];
+  });
 
   return (
     <div ref={ref} className="floating-controls floating-dropdowns">
