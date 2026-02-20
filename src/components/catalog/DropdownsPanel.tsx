@@ -6,10 +6,10 @@ import { useCatalog } from "../../context/CatalogContext";
 import { useUi } from "../../context/UiContext";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { CatalogModeSwitch } from "./CatalogModeSwitch";
-import { TextFilter } from "./TextFilter";
+import { TextFilter } from "./filters/TextFilter";
 import { CatalogList, CatalogListGrouped, type CatalogViewMode } from "./CatalogList";
 import { CustomItemForm } from "./CustomItemForm";
-import { SizeFilters } from "./SizeFilters";
+import { SizeFilters } from "./filters/SizeFilters";
 import "./DropdownsPanel.scss";
 
 export type { CatalogMode } from "./CatalogModeSwitch";
