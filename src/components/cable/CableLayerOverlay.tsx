@@ -123,10 +123,8 @@ export function CableLayerOverlay() {
         e.preventDefault();
         e.stopPropagation();
         if (hasSegments || hasPreview) {
-          /* Defer opening so the upcoming pointerup/click is delivered to the overlay, not the modal backdrop */
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => openAddCableModal());
-          });
+          /* Defer one frame so the upcoming pointerup/click is delivered to the overlay first */
+          requestAnimationFrame(() => openAddCableModal());
           try {
             (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
           } catch {
