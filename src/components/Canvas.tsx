@@ -60,8 +60,14 @@ export function Canvas() {
   const { ruler, lineRuler, cableLayer, cablesVisibility } = useRendering();
 
   const [editingCableId, setEditingCableId] = useState<string | null>(null);
-  const selectedCable = selectedCableId ? cables.find((c) => c.id === selectedCableId) : null;
-  const editingCable = editingCableId ? cables.find((c) => c.id === editingCableId) : null;
+  const selectedCable = useMemo(
+    () => (selectedCableId ? (cables.find((c) => c.id === selectedCableId) ?? null) : null),
+    [cables, selectedCableId]
+  );
+  const editingCable = useMemo(
+    () => (editingCableId ? (cables.find((c) => c.id === editingCableId) ?? null) : null),
+    [cables, editingCableId]
+  );
   const canvasBackground = CANVAS_BACKGROUNDS.find((bg) => bg.id === background) ?? CANVAS_BACKGROUNDS[0];
 
   useEffect(() => {
