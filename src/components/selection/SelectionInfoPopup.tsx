@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useBoard } from "../../context/BoardContext";
 import { useCable } from "../../context/CableContext";
+import { useSelection } from "../../context/SelectionContext";
 import { useUi } from "../../context/UiContext";
 import { getObjectDimensions } from "../../lib/objectDimensions";
 import { formatDimension, formatLengthCm } from "../../lib/rulerFormat";
@@ -20,8 +21,9 @@ function cableLengthMm(points: Point[]): number {
 }
 
 export function SelectionInfoPopup() {
-  const { objects, selectedObjectIds } = useBoard();
-  const { cables, selectedCableId, setSelectedCableId } = useCable();
+  const { objects } = useBoard();
+  const { cables } = useCable();
+  const { selectedObjectIds, selectedCableId, setSelectedCableId } = useSelection();
   const { unit } = useUi();
 
   const selectedObject = selectedObjectIds.length === 1 ? objects.find((o) => o.id === selectedObjectIds[0]) : null;

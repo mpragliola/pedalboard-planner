@@ -12,12 +12,8 @@
  *   3. useObjectDrag / useCableDrag
  *   4. interactions.setHandlers(...)  → late-bind drag handlers
  */
-import { useCallback, useRef, useState } from "react";
-
-export type Selection =
-  | { kind: "object"; id: string }
-  | { kind: "cable"; id: string }
-  | null;
+import { useCallback, useRef } from "react";
+import { useSelection } from "../context/SelectionContext";
 
 const SELECTABLE_SELECTOR = [
   ".canvas-object-wrapper",
@@ -35,34 +31,7 @@ interface Handlers {
 }
 
 export function useCanvasInteractions() {
-  // ── Selection state ────────────────────────────────────────────────────
-  const [selection, setSelection] = useState<Selection>(null);
-
-  const selectedObjectIds = selection?.kind === "object" ? [selection.id] : [];
-  const selectedCableId = selection?.kind === "cable" ? selection.id : null;
-
-  const setSelectedObjectIds = useCallback(
-    (action: string[] | ((prev: string[]) => string[])) => {
-      setSelection((prev) => {
-        const prevIds = prev?.kind === "object" ? [prev.id] : [];
-        const nextIds = typeof action === "function" ? action(prevIds) : action;
-        const nextId = nextIds[0] ?? null;
-        return nextId ? { kind: "object", id: nextId } : null;
-      });
-    },
-    []
-  );
-
-  const setSelectedCableId = useCallback(
-    (action: string | null | ((prev: string | null) => string | null)) => {
-      setSelection((prev) => {
-        const prevId = prev?.kind === "cable" ? prev.id : null;
-        const nextId = typeof action === "function" ? action(prevId) : action;
-        return nextId ? { kind: "cable", id: nextId } : null;
-      });
-    },
-    []
-  );
+  const { setSelection } = useSelection();
 
   // ── Late-bound handlers (set after drag hooks are created) ────────────
   const hRef = useRef<Handlers | null>(null);
@@ -84,7 +53,7 @@ export function useCanvasInteractions() {
       setSelection({ kind: "object", id });
       hRef.current?.objectDragStart(id, e);
     },
-    []
+    [setSelection]
   );
 
   const handleCanvasPointerDown = useCallback(
@@ -95,7 +64,7 @@ export function useCanvasInteractions() {
       }
       hRef.current?.canvasPanPointerDown(e);
     },
-    []
+    [setSelection]
   );
 
   const handleCablePointerDown = useCallback(
@@ -104,13 +73,10 @@ export function useCanvasInteractions() {
       setSelection({ kind: "cable", id });
       hRef.current?.cableDragStart(id, e);
     },
-    []
+    [setSelection]
   );
 
   return {
-    selection, setSelection,
-    selectedObjectIds, setSelectedObjectIds,
-    selectedCableId, setSelectedCableId,
     setHandlers,
     onPinchStart,
     handleObjectPointerDown,

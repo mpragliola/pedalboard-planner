@@ -12,6 +12,7 @@ import { nearestSegmentIndexForPoint } from "../../lib/cableGeometry";
 import { useBoard } from "../../context/BoardContext";
 import { useCable } from "../../context/CableContext";
 import { useCanvas } from "../../context/CanvasContext";
+import { useSelection } from "../../context/SelectionContext";
 import { useCanvasCoords } from "../../hooks/useCanvasCoords";
 import { useCablePhysics } from "../../hooks/useCablePhysics";
 import { useDragState } from "../../hooks/useDragState";
@@ -56,7 +57,8 @@ interface CablePathsProps {
  */
 export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCablePointerDown }: CablePathsProps) {
   const { objects } = useBoard();
-  const { setCables, setSelectedCableId } = useCable();
+  const { setCables } = useCable();
+  const { setSelectedCableId } = useSelection();
   const { canvasRef, zoom, pan, pausePanZoom, spaceDown } = useCanvas();
   const { clientToCanvas } = useCanvasCoords(canvasRef, zoom, pan);
 

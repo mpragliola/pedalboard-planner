@@ -32,6 +32,7 @@ import { HistoryProvider, type HistoryContextValue } from "./HistoryContext";
 import { useStorage } from "./StorageContext";
 import { UiProvider, type UiContextValue } from "./UiContext";
 import { useBoardPersistence, type BoardState } from "./useBoardPersistence";
+import { useSelection } from "./SelectionContext";
 
 const MINI3D_LOW_RESOURCE_MODE_STORAGE_KEY = "mini3d-mobile-safe-mode-v1";
 
@@ -112,11 +113,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [unit, setUnit] = useState<"mm" | "in">(savedState?.unit ?? "mm");
   const [background, setBackground] = useState(savedState?.background ?? DEFAULT_CANVAS_BACKGROUND);
   const [catalogMode, setCatalogMode] = useState<CatalogMode>("boards");
+  const { setSelectedObjectIds, clearSelection } = useSelection();
   const interactions = useCanvasInteractions();
   const {
-    setSelection,
-    selectedObjectIds, setSelectedObjectIds,
-    selectedCableId, setSelectedCableId,
     setHandlers,
     handleObjectPointerDown,
     handleCanvasPointerDown: onCanvasPointerDown,
@@ -125,7 +124,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [floatingUiVisible, setFloatingUiVisible] = useState(true);
   const [panelExpanded, setPanelExpanded] = useState(false);
   const dropdownPanelRef = useRef<HTMLDivElement>(null);
-  const clearSelection = useCallback(() => setSelection(null), [setSelection]);
 
   const {
     zoom,
@@ -288,7 +286,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setObjects((prev) => prev.filter((o) => o.id !== id));
       setSelectedObjectIds((prev) => prev.filter((sid) => sid !== id));
     },
-    [setObjects]
+    [setObjects, setSelectedObjectIds]
   );
 
   const handleRotateObject = useCallback(
@@ -491,8 +489,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     () => ({
       objects,
       setObjects,
-      selectedObjectIds,
-      setSelectedObjectIds,
       imageFailedIds,
       draggingObjectId,
       onImageError: handleImageError,
@@ -506,8 +502,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [
       objects,
       setObjects,
-      selectedObjectIds,
-      setSelectedObjectIds,
       imageFailedIds,
       draggingObjectId,
       handleImageError,
@@ -525,11 +519,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       cables,
       setCables,
       addCable,
-      selectedCableId,
-      setSelectedCableId,
       onCablePointerDown: handleCablePointerDown,
     }),
-    [cables, setCables, addCable, selectedCableId, setSelectedCableId, handleCablePointerDown]
+    [cables, setCables, addCable, handleCablePointerDown]
   );
 
   const catalogValue = useMemo<CatalogContextValue>(

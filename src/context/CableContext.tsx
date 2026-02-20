@@ -6,8 +6,6 @@ export interface CableContextValue {
   setCables: (action: Cable[] | ((prev: Cable[]) => Cable[]), saveToHistory?: boolean) => void;
   /** Add a cable to board state. Persistence is handled by the persistence layer. */
   addCable: (cable: Cable) => void;
-  selectedCableId: string | null;
-  setSelectedCableId: (action: string | null | ((prev: string | null) => string | null)) => void;
   onCablePointerDown: (id: string, e: ReactPointerEvent) => void;
 }
 

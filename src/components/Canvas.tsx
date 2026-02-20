@@ -14,6 +14,7 @@ import { useCable } from "../context/CableContext";
 import { useCanvas } from "../context/CanvasContext";
 import { useCatalog } from "../context/CatalogContext";
 import { useUi } from "../context/UiContext";
+import { useSelection } from "../context/SelectionContext";
 import { CANVAS_BACKGROUNDS } from "../constants/backgrounds";
 import { CANVAS_DROP_ID } from "./catalog/CatalogDndProvider";
 import "./Canvas.scss";
@@ -41,7 +42,6 @@ export function Canvas() {
   } = useCanvas();
   const {
     objects,
-    selectedObjectIds,
     imageFailedIds,
     draggingObjectId,
     onImageError,
@@ -52,7 +52,8 @@ export function Canvas() {
     onSendToBack,
     onBringToFront,
   } = useBoard();
-  const { cables, selectedCableId, onCablePointerDown, setCables, setSelectedCableId } = useCable();
+  const { cables, onCablePointerDown, setCables } = useCable();
+  const { selectedObjectIds, selectedCableId, setSelectedCableId } = useSelection();
   const { shouldIgnoreCatalogClick } = useCatalog();
   const { showGrid, xray, ruler, lineRuler, cableLayer, cablesVisibility, setFloatingUiVisible, unit, background } =
     useUi();
