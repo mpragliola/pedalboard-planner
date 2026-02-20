@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useBoard } from "../../context/BoardContext";
 import { useCable } from "../../context/CableContext";
 import { useSelection } from "../../context/SelectionContext";
@@ -26,8 +26,14 @@ export function SelectionInfoPopup() {
   const { selectedObjectIds, selectedCableId, setSelectedCableId } = useSelection();
   const { unit } = useUi();
 
-  const selectedObject = selectedObjectIds.length === 1 ? objects.find((o) => o.id === selectedObjectIds[0]) : null;
-  const selectedCable = selectedCableId ? cables.find((c) => c.id === selectedCableId) : null;
+  const selectedObject = useMemo(
+    () => (selectedObjectIds.length === 1 ? (objects.find((o) => o.id === selectedObjectIds[0]) ?? null) : null),
+    [objects, selectedObjectIds]
+  );
+  const selectedCable = useMemo(
+    () => (selectedCableId ? (cables.find((c) => c.id === selectedCableId) ?? null) : null),
+    [cables, selectedCableId]
+  );
 
   useEffect(() => {
     if (selectedCableId && !selectedCable) setSelectedCableId(null);
