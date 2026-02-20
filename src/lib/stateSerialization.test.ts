@@ -239,29 +239,40 @@ describe("parseState — cables", () => {
     expect(result!.cables![0].connectorBName).toBe("Input");
   });
 
-  it("returns null when a cable is missing required color field", () => {
+  it("drops cables (sets to undefined) when a cable is missing required color field", () => {
     const bad = { ...validCable, color: undefined };
-    expect(parseState(jsonOf({ objects: [], cables: [bad] }))).toBeNull();
+    const result = parseState(jsonOf({ objects: [], cables: [bad] }));
+    // State is still returned, but cables are dropped when any cable fails validation
+    expect(result).not.toBeNull();
+    expect(result!.cables).toBeUndefined();
   });
 
-  it("returns null when cable points is not an array", () => {
+  it("drops cables when cable points is not an array", () => {
     const bad = { ...validCable, points: "not-an-array" };
-    expect(parseState(jsonOf({ objects: [], cables: [bad] }))).toBeNull();
+    const result = parseState(jsonOf({ objects: [], cables: [bad] }));
+    expect(result).not.toBeNull();
+    expect(result!.cables).toBeUndefined();
   });
 
-  it("returns null when cable points is an empty array", () => {
+  it("drops cables when cable points is an empty array", () => {
     const bad = { ...validCable, points: [] };
-    expect(parseState(jsonOf({ objects: [], cables: [bad] }))).toBeNull();
+    const result = parseState(jsonOf({ objects: [], cables: [bad] }));
+    expect(result).not.toBeNull();
+    expect(result!.cables).toBeUndefined();
   });
 
-  it("returns null when a point tuple has wrong length", () => {
+  it("drops cables when a point tuple has wrong length", () => {
     const bad = { ...validCable, points: [[0, 0, 0]] }; // tuple has 3 items
-    expect(parseState(jsonOf({ objects: [], cables: [bad] }))).toBeNull();
+    const result = parseState(jsonOf({ objects: [], cables: [bad] }));
+    expect(result).not.toBeNull();
+    expect(result!.cables).toBeUndefined();
   });
 
-  it("returns null when connectorAName is wrong type", () => {
+  it("drops cables when connectorAName is wrong type", () => {
     const bad = { ...validCable, connectorAName: 123 };
-    expect(parseState(jsonOf({ objects: [], cables: [bad] }))).toBeNull();
+    const result = parseState(jsonOf({ objects: [], cables: [bad] }));
+    expect(result).not.toBeNull();
+    expect(result!.cables).toBeUndefined();
   });
 });
 
