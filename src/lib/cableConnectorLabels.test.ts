@@ -6,8 +6,8 @@ function makeCable(overrides: Partial<Cable> = {}): Cable {
   return {
     id: "cable-test",
     color: "#ff0000",
-    connectorA: "ts-6.35",
-    connectorB: "ts-6.35",
+    connectorA: "mono jack (TS)",
+    connectorB: "mono jack (TS)",
     segments: [{ x: 0, y: 0 }, { x: 100, y: 0 }],
     ...overrides,
   };
@@ -36,10 +36,10 @@ describe("connectorLabelsForCable", () => {
   });
 
   it("sets correct connector kind on each label", () => {
-    const cable = makeCable({ connectorA: "ts-6.35", connectorB: "trs-6.35" });
+    const cable = makeCable({ connectorA: "mono jack (TS)", connectorB: "stereo jack (TRS)" });
     const result = connectorLabelsForCable(cable)!;
-    expect(result.a.kind).toBe("ts-6.35");
-    expect(result.b.kind).toBe("trs-6.35");
+    expect(result.a.kind).toBe("mono jack (TS)");
+    expect(result.b.kind).toBe("stereo jack (TRS)");
   });
 
   it("returns empty text when connectorAName / connectorBName are undefined", () => {
