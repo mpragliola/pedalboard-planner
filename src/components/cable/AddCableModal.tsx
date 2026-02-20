@@ -228,6 +228,194 @@ function LabelCombo({
   );
 }
 
+interface CableColorSectionProps {
+  selectedColor: string;
+  onColorChange: (nextColor: string) => void;
+}
+
+function CableColorSection({ selectedColor, onColorChange }: CableColorSectionProps) {
+  return (
+    <div className="add-cable-row add-cable-color-row">
+      <span className="add-cable-label">Color</span>
+      <div className="add-cable-color-swatches" role="group" aria-label="Cable color">
+        {CABLE_COLORS.map((cableColor) => {
+          const isSelected = selectedColor === cableColor.hex;
+          return (
+            <button
+              key={cableColor.hex}
+              type="button"
+              className={`add-cable-color-swatch-btn${isSelected ? " add-cable-color-swatch-btn-selected" : ""}`}
+              style={{ backgroundColor: cableColor.hex }}
+              onClick={() => onColorChange(cableColor.hex)}
+              title={cableColor.label}
+              aria-label={cableColor.label}
+              aria-pressed={isSelected}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+interface CableEndpointFieldProps {
+  terminal: "A" | "B";
+  badgeClassName: string;
+  badgeBackgroundColor: string;
+  badgeTextColor: string;
+  connectorId: string;
+  connectorValue: ConnectorKind;
+  onConnectorChange: (nextConnector: ConnectorKind) => void;
+  connectorNameId: string;
+  connectorName: string;
+  onConnectorNameChange: (nextName: string) => void;
+}
+
+function CableEndpointField({
+  terminal,
+  badgeClassName,
+  badgeBackgroundColor,
+  badgeTextColor,
+  connectorId,
+  connectorValue,
+  onConnectorChange,
+  connectorNameId,
+  connectorName,
+  onConnectorNameChange,
+}: CableEndpointFieldProps) {
+  return (
+    <div className="add-cable-endpoint">
+      <div className="add-cable-endpoint-head-row">
+        <span
+          className={`add-cable-endpoint-badge ${badgeClassName}`}
+          style={{ backgroundColor: badgeBackgroundColor, color: badgeTextColor }}
+          aria-hidden
+        >
+          {terminal}
+        </span>
+        <ConnectorPicker id={connectorId} label="" value={connectorValue} onChange={onConnectorChange} />
+      </div>
+      <LabelCombo
+        id={connectorNameId}
+        value={connectorName}
+        onChange={onConnectorNameChange}
+        ariaLabel={`Connector ${terminal} label`}
+      />
+    </div>
+  );
+}
+
+interface CableEndpointsSectionProps {
+  selectedTemplateName: string;
+  onTemplateChange: (templateName: string) => void;
+  onSwapConnectors: () => void;
+  connectorA: ConnectorKind;
+  onConnectorAChange: (nextConnector: ConnectorKind) => void;
+  connectorAName: string;
+  onConnectorANameChange: (nextName: string) => void;
+  connectorB: ConnectorKind;
+  onConnectorBChange: (nextConnector: ConnectorKind) => void;
+  connectorBName: string;
+  onConnectorBNameChange: (nextName: string) => void;
+}
+
+function CableEndpointsSection({
+  selectedTemplateName,
+  onTemplateChange,
+  onSwapConnectors,
+  connectorA,
+  onConnectorAChange,
+  connectorAName,
+  onConnectorANameChange,
+  connectorB,
+  onConnectorBChange,
+  connectorBName,
+  onConnectorBNameChange,
+}: CableEndpointsSectionProps) {
+  return (
+    <div className="add-cable-endpoints">
+      <div className="add-cable-endpoints-head">
+        <span className="add-cable-label">Endpoints</span>
+        <div className="add-cable-endpoints-actions">
+          <label htmlFor="add-cable-template-select" className="add-cable-sr-only">
+            Connector template
+          </label>
+          <select
+            id="add-cable-template-select"
+            className="add-cable-template-select"
+            value={selectedTemplateName}
+            onChange={(e) => onTemplateChange(e.target.value)}
+            aria-label="Connector template"
+          >
+            <option value="" aria-label="No template">
+              {" "}
+            </option>
+            {CABLE_CONNECTOR_TEMPLATES.map((template) => (
+              <option key={template.name} value={template.name}>
+                {template.name}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            className="add-cable-swap-btn"
+            onClick={onSwapConnectors}
+            title="Swap connector A and B"
+            aria-label="Swap connector A and B"
+          >
+            Swap A/B
+          </button>
+        </div>
+      </div>
+      <div className="add-cable-endpoints-grid">
+        <CableEndpointField
+          terminal="A"
+          badgeClassName="add-cable-endpoint-badge-a"
+          badgeBackgroundColor={CABLE_TERMINAL_START_COLOR}
+          badgeTextColor="#1a4d1a"
+          connectorId="add-cable-connector-a"
+          connectorValue={connectorA}
+          onConnectorChange={onConnectorAChange}
+          connectorNameId="add-cable-connector-a-name"
+          connectorName={connectorAName}
+          onConnectorNameChange={onConnectorANameChange}
+        />
+        <CableEndpointField
+          terminal="B"
+          badgeClassName="add-cable-endpoint-badge-b"
+          badgeBackgroundColor={CABLE_TERMINAL_END_COLOR}
+          badgeTextColor="#b35c00"
+          connectorId="add-cable-connector-b"
+          connectorValue={connectorB}
+          onConnectorChange={onConnectorBChange}
+          connectorNameId="add-cable-connector-b-name"
+          connectorName={connectorBName}
+          onConnectorNameChange={onConnectorBNameChange}
+        />
+      </div>
+    </div>
+  );
+}
+
+interface CableFormActionsProps {
+  isEdit: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}
+
+function CableFormActions({ isEdit, onCancel, onConfirm }: CableFormActionsProps) {
+  return (
+    <div className="add-cable-actions">
+      <button type="button" className="add-cable-btn add-cable-cancel" onClick={onCancel}>
+        Cancel
+      </button>
+      <button type="button" className="add-cable-btn add-cable-confirm" onClick={onConfirm}>
+        {isEdit ? "Save" : "Add cable"}
+      </button>
+    </div>
+  );
+}
+
 export interface AddCableModalProps {
   open: boolean;
   segments: Point[];
@@ -329,114 +517,21 @@ export function AddCableModal({ open, segments, onConfirm, onCancel, initialCabl
       ignoreBackdropClickForMs={200}
     >
       <div className="add-cable-form">
-        <div className="add-cable-row add-cable-color-row">
-          <span className="add-cable-label">Color</span>
-          <div className="add-cable-color-swatches" role="group" aria-label="Cable color">
-            {CABLE_COLORS.map((cableColor) => (
-              <button
-                key={cableColor.hex}
-                type="button"
-                className={`add-cable-color-swatch-btn${color === cableColor.hex ? " add-cable-color-swatch-btn-selected" : ""}`}
-                style={{ backgroundColor: cableColor.hex }}
-                onClick={() => setColor(cableColor.hex)}
-                title={cableColor.label}
-                aria-label={cableColor.label}
-                aria-pressed={color === cableColor.hex}
-              />
-            ))}
-          </div>
-        </div>
-
-        <div className="add-cable-endpoints">
-          <div className="add-cable-endpoints-head">
-            <span className="add-cable-label">Endpoints</span>
-            <div className="add-cable-endpoints-actions">
-              <label htmlFor="add-cable-template-select" className="add-cable-sr-only">
-                Connector template
-              </label>
-              <select
-                id="add-cable-template-select"
-                className="add-cable-template-select"
-                value={selectedTemplateName}
-                onChange={(e) => handleTemplateChange(e.target.value)}
-                aria-label="Connector template"
-              >
-                <option value="" aria-label="No template"> </option>
-                {CABLE_CONNECTOR_TEMPLATES.map((template) => (
-                  <option key={template.name} value={template.name}>
-                    {template.name}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                className="add-cable-swap-btn"
-                onClick={handleSwapConnectors}
-                title="Swap connector A and B"
-                aria-label="Swap connector A and B"
-              >
-                Swap A/B
-              </button>
-            </div>
-          </div>
-          <div className="add-cable-endpoints-grid">
-            <div className="add-cable-endpoint">
-              <div className="add-cable-endpoint-head-row">
-                <span
-                  className="add-cable-endpoint-badge add-cable-endpoint-badge-a"
-                  style={{ backgroundColor: CABLE_TERMINAL_START_COLOR, color: "#1a4d1a" }}
-                  aria-hidden
-                >
-                  A
-                </span>
-                <ConnectorPicker
-                  id="add-cable-connector-a"
-                  label=""
-                  value={connectorA}
-                  onChange={handleConnectorAChange}
-                />
-              </div>
-              <LabelCombo
-                id="add-cable-connector-a-name"
-                value={connectorAName}
-                onChange={setConnectorAName}
-                ariaLabel="Connector A label"
-              />
-            </div>
-            <div className="add-cable-endpoint">
-              <div className="add-cable-endpoint-head-row">
-                <span
-                  className="add-cable-endpoint-badge add-cable-endpoint-badge-b"
-                  style={{ backgroundColor: CABLE_TERMINAL_END_COLOR, color: "#b35c00" }}
-                  aria-hidden
-                >
-                  B
-                </span>
-                <ConnectorPicker
-                  id="add-cable-connector-b"
-                  label=""
-                  value={connectorB}
-                  onChange={handleConnectorBChange}
-                />
-              </div>
-              <LabelCombo
-                id="add-cable-connector-b-name"
-                value={connectorBName}
-                onChange={setConnectorBName}
-                ariaLabel="Connector B label"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="add-cable-actions">
-          <button type="button" className="add-cable-btn add-cable-cancel" onClick={onCancel}>
-            Cancel
-          </button>
-          <button type="button" className="add-cable-btn add-cable-confirm" onClick={handleConfirm}>
-            {isEdit ? "Save" : "Add cable"}
-          </button>
-        </div>
+        <CableColorSection selectedColor={color} onColorChange={setColor} />
+        <CableEndpointsSection
+          selectedTemplateName={selectedTemplateName}
+          onTemplateChange={handleTemplateChange}
+          onSwapConnectors={handleSwapConnectors}
+          connectorA={connectorA}
+          onConnectorAChange={handleConnectorAChange}
+          connectorAName={connectorAName}
+          onConnectorANameChange={setConnectorAName}
+          connectorB={connectorB}
+          onConnectorBChange={handleConnectorBChange}
+          connectorBName={connectorBName}
+          onConnectorBNameChange={setConnectorBName}
+        />
+        <CableFormActions isEdit={isEdit} onCancel={onCancel} onConfirm={handleConfirm} />
       </div>
     </Modal>
   );

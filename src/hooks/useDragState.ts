@@ -20,7 +20,6 @@ export interface DragMoveContext<T> {
   screenDelta: Point;
   canvasDelta: Point;
   event: PointerEvent;
-  saveToHistory: boolean;
 }
 
 export interface UseDragStateOptions<T> {
@@ -43,7 +42,7 @@ export interface UseDragStateOptions<T> {
 type Phase<T> =
   | { tag: "idle" }
   | { tag: "pending"; id: string; pointerId: number; mouse: Point; payload: T }
-  | { tag: "dragging"; id: string; pointerId: number; start: DragStart<T>; hasPushedHistory: boolean };
+  | { tag: "dragging"; id: string; pointerId: number; start: DragStart<T> };
 
 export function useDragState<T>(options: UseDragStateOptions<T>) {
   const {
@@ -89,7 +88,7 @@ export function useDragState<T>(options: UseDragStateOptions<T>) {
           event: e.nativeEvent as PointerEvent,
         });
         if (!dragStart) return;
-        phaseRef.current = { tag: "dragging", id, pointerId: e.pointerId, start: dragStart, hasPushedHistory: true };
+        phaseRef.current = { tag: "dragging", id, pointerId: e.pointerId, start: dragStart };
         setPhaseTag("dragging");
         return;
       }
@@ -121,7 +120,7 @@ export function useDragState<T>(options: UseDragStateOptions<T>) {
         event: e,
       });
       if (!dragStart) return;
-      phaseRef.current = { tag: "dragging", id: cur.id, pointerId, start: dragStart, hasPushedHistory: true };
+      phaseRef.current = { tag: "dragging", id: cur.id, pointerId, start: dragStart };
       setPhaseTag("dragging");
     };
     const handlePointerUp = (e: PointerEvent) => {
@@ -142,15 +141,12 @@ export function useDragState<T>(options: UseDragStateOptions<T>) {
       if (cur.tag !== "dragging" || e.pointerId !== cur.pointerId) return;
       const screenDelta = vec2Sub({ x: e.clientX, y: e.clientY }, cur.start.mouse);
       const canvasDelta = vec2Scale(screenDelta, 1 / zoom);
-      const saveToHistory = !cur.hasPushedHistory;
-      if (saveToHistory) cur.hasPushedHistory = true;
       onDragMove({
         draggingId: cur.id,
         dragStart: cur.start,
         screenDelta,
         canvasDelta,
         event: e,
-        saveToHistory,
       });
     };
     const handlePointerUp = (e: PointerEvent) => {

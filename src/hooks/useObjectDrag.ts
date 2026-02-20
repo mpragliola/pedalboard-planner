@@ -59,17 +59,17 @@ export function useObjectDrag(
         payload: { objPos: { x: newX, y: newY } },
       };
     },
-    onDragMove: ({ dragStart, canvasDelta, saveToHistory }) => {
+    onDragMove: ({ dragStart, canvasDelta }) => {
       const ids = getObjectsToDrag();
       if (ids.length === 0) return;
       const newX = dragStart.payload.objPos.x + canvasDelta.x;
       const newY = dragStart.payload.objPos.y + canvasDelta.y;
       if (ids.length === 1) {
-        handleObjectPositionUpdate(ids[0], { x: newX, y: newY }, saveToHistory);
+        handleObjectPositionUpdate(ids[0], { x: newX, y: newY }, false);
       } else {
         handleObjectsPositionUpdate(
           ids.map((id) => ({ id, pos: { x: newX, y: newY } })),
-          saveToHistory
+          false
         );
       }
     },

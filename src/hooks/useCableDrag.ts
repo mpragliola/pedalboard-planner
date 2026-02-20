@@ -35,11 +35,11 @@ export function useCableDrag(
         payload: { segments: pending.payload.segments },
       };
     },
-    onDragMove: ({ draggingId, dragStart, canvasDelta, saveToHistory }) => {
+    onDragMove: ({ draggingId, dragStart, canvasDelta }) => {
       handleCableSegmentsUpdate(
         draggingId,
         offsetPoints(dragStart.payload.segments, canvasDelta),
-        saveToHistory
+        false
       );
     },
   });

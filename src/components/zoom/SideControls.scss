@@ -51,13 +51,39 @@
 }
 
 .mini3d-tools-group.expanded .mini3d-tools-secondary {
-  max-width: calc(var(--side-control-size) * 4 + var(--side-control-gap) * 3);
-  /* dynamic size for 4 buttons */
+  max-width: calc(var(--side-control-size) * 5 + var(--side-control-gap) * 4);
+  /* dynamic size for 5 buttons */
   overflow: visible;
   opacity: 1;
   transition:
     max-width vars.$duration-slow vars.$ease-out,
     opacity vars.$duration-fast vars.$ease-in;
+}
+
+.side-control.mini3d-high-resource-toggle {
+  position: relative;
+}
+
+.side-control.mini3d-high-resource-toggle::after {
+  content: "HQ";
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  padding: 1px 2px;
+  border-radius: 4px;
+  background: rgba(12, 16, 24, 0.82);
+  color: #ffffff;
+  font-size: 0.42em;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.side-control.mini3d-high-resource-toggle.mode-lq::after {
+  content: "LQ";
+  background: rgba(12, 16, 24, 0.74);
+  color: #ffd48f;
 }
 
 .measurement-tools-group.expanded .measurement-tools-secondary {

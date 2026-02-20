@@ -5,6 +5,7 @@ import { faFileCsv } from "@fortawesome/free-solid-svg-icons";
 import { useBoard } from "../../context/BoardContext";
 import { useCable } from "../../context/CableContext";
 import { useConfirmation } from "../../context/ConfirmationContext";
+import { useSelection } from "../../context/SelectionContext";
 import { BASE_URL, DEFAULT_OBJECT_COLOR } from "../../constants";
 import { formatLengthCm } from "../../lib/rulerFormat";
 import { vec2Length, vec2Sub } from "../../lib/vector";
@@ -103,8 +104,9 @@ function downloadCsv(content: string, filename: string) {
 }
 
 export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
-  const { objects, onDeleteObject, setSelectedObjectIds } = useBoard();
-  const { cables, setCables, setSelectedCableId } = useCable();
+  const { objects, onDeleteObject } = useBoard();
+  const { cables, setCables } = useCable();
+  const { setSelectedObjectIds, setSelectedCableId } = useSelection();
   const { requestConfirmation } = useConfirmation();
 
   const handleComponentRowDoubleClick = useCallback(

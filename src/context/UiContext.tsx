@@ -16,6 +16,8 @@ export interface UiContextValue {
   setShowMini3dSurfaceDetail: Dispatch<SetStateAction<boolean>>;
   showMini3dSpecular: boolean;
   setShowMini3dSpecular: Dispatch<SetStateAction<boolean>>;
+  mini3dLowResourceMode: boolean;
+  setMini3dLowResourceMode: Dispatch<SetStateAction<boolean>>;
   ruler: boolean;
   setRuler: Dispatch<SetStateAction<boolean>>;
   lineRuler: boolean;

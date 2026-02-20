@@ -51,7 +51,6 @@ type TouchTap = { time: number; x: number; y: number };
 const TAP_MOVE_TOLERANCE_PX = 10;
 const DOUBLE_TAP_TIME_WINDOW_MS = 320;
 const DOUBLE_TAP_MAX_DISTANCE_PX = 28;
-const MINI3D_MOBILE_SAFE_MODE_KEY = "mini3d-mobile-safe-mode-v1";
 
 type CanvasErrorBoundaryProps = {
   onError: () => void;
@@ -100,6 +99,8 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
     showMini3dShadows,
     showMini3dSurfaceDetail,
     showMini3dSpecular,
+    mini3dLowResourceMode,
+    setMini3dLowResourceMode,
     background,
   } = useUi();
 
@@ -126,14 +127,6 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [canvasFailure, setCanvasFailure] = useState(false);
   const [canvasResetKey, setCanvasResetKey] = useState(0);
-  const [mobileSafeMode, setMobileSafeMode] = useState(() => {
-    if (typeof window === "undefined") return false;
-    try {
-      return window.localStorage.getItem(MINI3D_MOBILE_SAFE_MODE_KEY) === "1";
-    } catch {
-      return false;
-    }
-  });
 
   const canvasBackground = useMemo(
     () => CANVAS_BACKGROUNDS.find((bg) => bg.id === background) ?? CANVAS_BACKGROUNDS[0],
@@ -154,14 +147,15 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
     if (typeof window === "undefined") return false;
     return window.matchMedia("(max-width: 1024px), (pointer: coarse)").matches;
   }, []);
-  const maxDpr = isPhone ? 1 : isMobile3D ? 1.5 : 2;
-  const useLowMemoryTextures = isMobile3D || mobileSafeMode;
-  const effectiveShowShadows = showMini3dShadows && !isMobile3D && !canvasFailure;
+  // Low-resource mode is user-controlled (or enabled after a crash).
+  const useLowMemoryTextures = mini3dLowResourceMode;
+  const maxDpr = isPhone ? 1 : useLowMemoryTextures ? 1.5 : 2;
+  const effectiveShowShadows = showMini3dShadows && (!isMobile3D || !useLowMemoryTextures) && !canvasFailure;
   // Keep floor specular available on mobile; heavy floor maps remain disabled by low-memory mode.
   const effectiveShowFloorDetail = showMini3dSurfaceDetail && !canvasFailure;
   const effectiveShowFloorSpecular = showMini3dSpecular && !canvasFailure;
-  const shadowMapSize = isMobile3D ? 1024 : 2048;
-  const useDemandMode = isMobile3D;
+  const shadowMapSize = useLowMemoryTextures ? 1024 : 2048;
+  const useDemandMode = isMobile3D && useLowMemoryTextures;
   const maxObjects = isPhone ? 12 : 0;
 
   const convergenceTotalMs = useMemo(
@@ -174,17 +168,10 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
   }, [showMini3d]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      if (mobileSafeMode) {
-        window.localStorage.setItem(MINI3D_MOBILE_SAFE_MODE_KEY, "1");
-      } else {
-        window.localStorage.removeItem(MINI3D_MOBILE_SAFE_MODE_KEY);
-      }
-    } catch {
-      /* Ignore storage failures. */
-    }
-  }, [mobileSafeMode]);
+    if (!canvasFailure || mini3dLowResourceMode) return;
+    setCanvasFailure(false);
+    setCanvasResetKey((value) => value + 1);
+  }, [canvasFailure, mini3dLowResourceMode]);
 
   const clearOpenTimer = useCallback(() => {
     if (openTimerRef.current != null) {
@@ -261,9 +248,9 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
   const handleCanvasFailure = useCallback(() => {
     setCanvasFailure(true);
     if (isMobile3D) {
-      setMobileSafeMode(true);
+      setMini3dLowResourceMode(true);
     }
-  }, [isMobile3D]);
+  }, [isMobile3D, setMini3dLowResourceMode]);
 
   const handleCanvasRetry = useCallback(() => {
     setCanvasFailure(false);
@@ -493,9 +480,9 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
               key={canvasResetKey}
               shadows
               gl={{
-                antialias: !isMobile3D,
+                antialias: !useLowMemoryTextures,
                 alpha: true,
-                ...(isMobile3D ? { powerPreference: "low-power" as const } : {}),
+                ...(isMobile3D && useLowMemoryTextures ? { powerPreference: "low-power" as const } : {}),
               }}
               frameloop={useDemandMode ? "demand" : "always"}
               dpr={[1, maxDpr]}
@@ -532,7 +519,7 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
                 showFloorDetail={effectiveShowFloorDetail}
                 showFloorSpecular={effectiveShowFloorSpecular}
                 showShadows={effectiveShowShadows}
-                disableObjectTextures={mobileSafeMode}
+                disableObjectTextures={mini3dLowResourceMode}
                 shadowMapSize={shadowMapSize}
                 layout={sceneLayout}
                 freezeAutoFit={isBoardBeingDragged}

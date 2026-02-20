@@ -50,8 +50,9 @@ export function Mini3DRootScene({
 }: Mini3DRootSceneProps) {
   const { camera, size, gl, invalidate } = useThree();
   const proFloorTexture = backgroundTexture.mini3d?.type === "pro" ? backgroundTexture.mini3d : null;
-  const shouldLoadProFloorRoughnessMap = showFloorSpecular && Boolean(proFloorTexture);
-  const shouldLoadProFloorBumpMap = showFloorDetail && Boolean(proFloorTexture);
+  // In low-memory mode we keep simple floor shading but skip heavy auxiliary floor maps.
+  const shouldLoadProFloorRoughnessMap = showFloorSpecular && Boolean(proFloorTexture) && !useLowMemoryTextures;
+  const shouldLoadProFloorBumpMap = showFloorDetail && Boolean(proFloorTexture) && !useLowMemoryTextures;
   const [floorColorTexture, floorRoughnessTexture, floorHeightTexture] = useLoader(
     THREE.TextureLoader,
     [
@@ -259,7 +260,7 @@ export function Mini3DRootScene({
     camera.lookAt(0, layout.targetY, 0);
   });
 
-  const floorBumpScale = showFloorDetail && proFloorTexture
+  const floorBumpScale = shouldLoadProFloorBumpMap && proFloorTexture
     ? proFloorTexture.bumpScale ?? Math.max(0.01, proFloorTexture.displacementScale ?? 0.015)
     : 0;
   const floorRoughness = proFloorTexture?.roughness ?? 0.62;

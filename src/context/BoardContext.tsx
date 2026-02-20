@@ -1,10 +1,8 @@
 import {
   createContext,
   useContext,
-  type Dispatch,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
-  type SetStateAction,
 } from "react";
 import type { CanvasObjectType } from "../types";
 
@@ -14,8 +12,6 @@ export interface BoardContextValue {
     action: CanvasObjectType[] | ((prev: CanvasObjectType[]) => CanvasObjectType[]),
     saveToHistory?: boolean
   ) => void;
-  selectedObjectIds: string[];
-  setSelectedObjectIds: Dispatch<SetStateAction<string[]>>;
   imageFailedIds: Set<string>;
   draggingObjectId: string | null;
   onImageError: (id: string) => void;

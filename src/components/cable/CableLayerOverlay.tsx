@@ -12,23 +12,15 @@ import { useCableDraw } from "../../hooks/useCableDraw";
 import { useCablePhysics } from "../../hooks/useCablePhysics";
 import { AddCableModal } from "./AddCableModal";
 import { CABLE_TERMINAL_START_COLOR, CABLE_TERMINAL_END_COLOR } from "../../constants/cables";
+import * as CLO from "../../constants/cableLayerOverlay";
 import type { Cable } from "../../types";
 import "../ruler/RulerOverlay.scss";
 import "./CableLayerOverlay.scss";
 
-/** Current (in-progress) cable: dashed, black, 0.5 opacity to distinguish from laid-down cables. */
-const CURRENT_CABLE_STROKE = "#000";
-const CURRENT_CABLE_OPACITY = 0.5;
-/** Dash/gap scale relative to stroke width so dashes stay visible at any zoom. */
-const CURRENT_CABLE_DASH_SCALE = 1 ;
-const CURRENT_CABLE_GAP_SCALE = 2;
-const CABLE_STROKE_WIDTH_MM = 5;
-const ENDPOINT_DOT_RADIUS_PX = 5;
-
 export function CableLayerOverlay() {
   const { canvasRef, zoom, pan, spaceDown } = useCanvas();
   const { objects } = useBoard();
-  const { addCableAndPersist } = useCable();
+  const { addCable } = useCable();
   const { setCableLayer } = useUi();
   const { clientToCanvas, toScreen } = useCanvasCoords(canvasRef, zoom, pan);
   const [pendingSegments, setPendingSegments] = useState<Point[] | null>(null);
@@ -75,12 +67,12 @@ export function CableLayerOverlay() {
 
   const handleAddCableConfirm = useCallback(
     (cable: Cable) => {
-      addCableAndPersist(cable);
+      addCable(cable);
       clearDrawing();
       setPendingSegments(null);
       exitMode();
     },
-    [addCableAndPersist, clearDrawing, exitMode]
+    [addCable, clearDrawing, exitMode]
   );
 
   const handleAddCableCancel = useCallback(() => {
@@ -92,15 +84,12 @@ export function CableLayerOverlay() {
   hasDrawingRef.current = !!(hasSegments || hasPreview);
 
   const lastTapRef = useRef<{ time: number; clientX: number; clientY: number } | null>(null);
-  const DOUBLE_TAP_MS = 350;
-  const DOUBLE_TAP_PX = 50;
-
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
       if (pendingSegments !== null) return;
       if (e.button !== 0 && e.pointerType !== "touch") return;
       /* Let clicks on the action buttons through (Add cable, etc.) */
-      if ((e.target as HTMLElement).closest(".cable-layer-actions")) return;
+      if ((e.target as HTMLElement).closest(CLO.CABLE_LAYER_ACTIONS_SELECTOR)) return;
 
       /* Space+drag → let canvas handle panning */
       if (spaceDown) return;
@@ -127,8 +116,8 @@ export function CableLayerOverlay() {
       const last = lastTapRef.current;
       if (
         last &&
-        now - last.time < DOUBLE_TAP_MS &&
-        Math.hypot(e.clientX - last.clientX, e.clientY - last.clientY) < DOUBLE_TAP_PX
+        now - last.time < CLO.CABLE_LAYER_DOUBLE_TAP_MS &&
+        Math.hypot(e.clientX - last.clientX, e.clientY - last.clientY) < CLO.CABLE_LAYER_DOUBLE_TAP_MAX_DISTANCE_PX
       ) {
         lastTapRef.current = null;
         e.preventDefault();
@@ -161,7 +150,7 @@ export function CableLayerOverlay() {
       if (pendingSegments !== null || isPinchingRef.current) return;
       /* When pointer moves over Add cable button, release capture so the button can receive the click */
       const hit = document.elementFromPoint(e.clientX, e.clientY);
-      if (hit?.closest?.(".cable-layer-actions")) {
+      if (hit?.closest?.(CLO.CABLE_LAYER_ACTIONS_SELECTOR)) {
         try {
           (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
         } catch {
@@ -184,14 +173,14 @@ export function CableLayerOverlay() {
       if (lastPointerReleased && wasPinching) return;
       /* With pointer capture, e.target is the overlay; use elementFromPoint to see where release actually was */
       const hit = document.elementFromPoint(e.clientX, e.clientY);
-      if (hit?.closest?.(".cable-layer-actions")) {
+      if (hit?.closest?.(CLO.CABLE_LAYER_ACTIONS_SELECTOR)) {
         try {
           (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
         } catch {
           /* ok */
         }
         /* Only open modal when release was over Add cable button, not Cancel */
-        if (hit?.closest?.(".cable-layer-add-btn") && (hasSegments || hasPreview)) openAddCableModal();
+        if (hit?.closest?.(CLO.CABLE_LAYER_ADD_BUTTON_SELECTOR) && (hasSegments || hasPreview)) openAddCableModal();
         if (e.button === 0 || e.pointerType === "touch") {
           lastTapRef.current = { time: Date.now(), clientX: e.clientX, clientY: e.clientY };
         }
@@ -235,9 +224,9 @@ export function CableLayerOverlay() {
   }, [exitMode, openAddCableModal, pendingSegments, clearDrawing]);
 
   const joinRadiusPx = DEFAULT_JOIN_RADIUS * zoom;
-  const strokeWidthPx = CABLE_STROKE_WIDTH_MM * zoom;
-  const dashLengthPx = strokeWidthPx * CURRENT_CABLE_DASH_SCALE;
-  const gapLengthPx = strokeWidthPx * CURRENT_CABLE_GAP_SCALE;
+  const strokeWidthPx = CLO.CABLE_LAYER_STROKE_WIDTH_MM * zoom;
+  const dashLengthPx = strokeWidthPx * CLO.CABLE_LAYER_CURRENT_CABLE_DASH_SCALE;
+  const gapLengthPx = strokeWidthPx * CLO.CABLE_LAYER_CURRENT_CABLE_GAP_SCALE;
   const currentCableStrokeDasharray = `${dashLengthPx} ${gapLengthPx}`;
   const toScreenPoint = (point: Vec2): Vec2 => toScreen(point.x, point.y);
 
@@ -283,7 +272,8 @@ export function CableLayerOverlay() {
         : null
       : null;
 
-  const showBothLengths = hasPreview && totalLength > committedLength + 0.01;
+  const showBothLengths =
+    hasPreview && totalLength > committedLength + CLO.CABLE_LAYER_LENGTH_COMPARE_EPSILON_MM;
 
   const handleContextMenu = useCallback(
     (e: React.MouseEvent) => {
@@ -313,9 +303,9 @@ export function CableLayerOverlay() {
           <path
             d={committedPathD}
             fill="none"
-            stroke={CURRENT_CABLE_STROKE}
+            stroke={CLO.CABLE_LAYER_CURRENT_CABLE_STROKE}
             strokeWidth={strokeWidthPx}
-            strokeOpacity={CURRENT_CABLE_OPACITY}
+            strokeOpacity={CLO.CABLE_LAYER_CURRENT_CABLE_OPACITY}
             strokeDasharray={currentCableStrokeDasharray}
             strokeLinejoin="round"
             strokeLinecap="round"
@@ -325,9 +315,9 @@ export function CableLayerOverlay() {
           <path
             d={previewPathD}
             fill="none"
-            stroke={CURRENT_CABLE_STROKE}
+            stroke={CLO.CABLE_LAYER_CURRENT_CABLE_STROKE}
             strokeWidth={strokeWidthPx}
-            strokeOpacity={CURRENT_CABLE_OPACITY}
+            strokeOpacity={CLO.CABLE_LAYER_CURRENT_CABLE_OPACITY}
             strokeDasharray={currentCableStrokeDasharray}
             strokeLinecap="round"
           />
@@ -336,22 +326,22 @@ export function CableLayerOverlay() {
           <circle
             cx={firstPoint.x}
             cy={firstPoint.y}
-            r={ENDPOINT_DOT_RADIUS_PX}
+            r={CLO.CABLE_LAYER_ENDPOINT_DOT_RADIUS_PX}
             className="cable-endpoint-dot"
             fill={CABLE_TERMINAL_START_COLOR}
-            stroke="rgba(0, 0, 0, 0.25)"
-            strokeWidth="1"
+            stroke={CLO.CABLE_LAYER_ENDPOINT_DOT_STROKE}
+            strokeWidth={CLO.CABLE_LAYER_ENDPOINT_DOT_STROKE_WIDTH_PX}
           />
         )}
         {lastPoint && (
           <circle
             cx={lastPoint.x}
             cy={lastPoint.y}
-            r={ENDPOINT_DOT_RADIUS_PX}
+            r={CLO.CABLE_LAYER_ENDPOINT_DOT_RADIUS_PX}
             className="cable-endpoint-dot"
             fill={CABLE_TERMINAL_END_COLOR}
-            stroke="rgba(0, 0, 0, 0.25)"
-            strokeWidth="1"
+            stroke={CLO.CABLE_LAYER_ENDPOINT_DOT_STROKE}
+            strokeWidth={CLO.CABLE_LAYER_ENDPOINT_DOT_STROKE_WIDTH_PX}
           />
         )}
       </svg>
@@ -361,7 +351,7 @@ export function CableLayerOverlay() {
           data-no-canvas-zoom
           style={{
             left: popupCenter.x,
-            top: popupCenter.y - 6,
+            top: popupCenter.y - CLO.CABLE_LAYER_LENGTH_POPUP_Y_OFFSET_PX,
             transform: "translate(-50%, -100%)",
           }}
         >
