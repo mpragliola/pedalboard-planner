@@ -2,8 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useBoard } from "../../context/BoardContext";
 import { useCable } from "../../context/CableContext";
 import { useCanvas } from "../../context/CanvasContext";
-import { useUi } from "../../context/UiContext";
-import { getObjectDimensions } from "../../lib/objectDimensions";
+import { useRendering } from "../../context/RenderingContext";
+import { templateService } from "../../lib/templateService";
 import { buildRoundedPathD, buildSmoothPathD, DEFAULT_JOIN_RADIUS } from "../../lib/polylinePath";
 import { formatLength } from "../../lib/rulerFormat";
 import { vec2Add, vec2Scale, type Vec2, type Point } from "../../lib/vector";
@@ -21,7 +21,7 @@ export function CableLayerOverlay() {
   const { canvasRef, zoom, pan, spaceDown } = useCanvas();
   const { objects } = useBoard();
   const { addCable } = useCable();
-  const { setCableLayer } = useUi();
+  const { setCableLayer } = useRendering();
   const { clientToCanvas, toScreen } = useCanvasCoords(canvasRef, zoom, pan);
   const [pendingSegments, setPendingSegments] = useState<Point[] | null>(null);
   const finishClickRef = useRef<() => void>(() => {});
@@ -49,7 +49,7 @@ export function CableLayerOverlay() {
   } = useCableDraw({
     clientToCanvas,
     objects,
-    getObjectDimensions,
+    getObjectDimensions: templateService.getObjectDimensions,
     onDoubleClickExit: exitMode,
     onFinishClickRef: finishClickRef,
   });

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { useCanvas } from '../../context/CanvasContext'
 import { useUi } from '../../context/UiContext'
+import { useRendering } from '../../context/RenderingContext'
 import { buildRoundedPathD, DEFAULT_JOIN_RADIUS } from '../../lib/polylinePath'
 import { vec2Add, vec2Average, vec2Scale } from '../../lib/vector'
 import { formatLength } from '../../lib/rulerFormat'
@@ -10,7 +11,8 @@ import './RulerOverlay.scss'
 
 export function LineRulerOverlay() {
   const { canvasRef, zoom, pan } = useCanvas()
-  const { unit, setLineRuler } = useUi()
+  const { unit } = useUi()
+  const { setLineRuler } = useRendering()
   const { clientToCanvas, toScreen } = useCanvasCoords(canvasRef, zoom, pan)
 
   const exitMode = useCallback(() => {

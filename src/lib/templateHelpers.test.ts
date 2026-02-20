@@ -1,11 +1,11 @@
 import { describe, it, expect } from "vitest";
 import {
   createObjectFromTemplate,
-  initNextObjectIdFromObjects,
   createObjectFromCustomBoard,
   createObjectFromCustomDevice,
 } from "./templateHelpers";
 import type { BoardTemplate } from "../data/boards";
+import { createObjectIdGenerator } from "./objectIdGenerator";
 
 const boardTemplate: BoardTemplate = {
   id: "board-aclam-s1",
@@ -18,10 +18,10 @@ const boardTemplate: BoardTemplate = {
   image: "aclam/s1.png",
 };
 
-describe("initNextObjectIdFromObjects", () => {
+describe("ObjectIdGenerator seeding", () => {
   it("sets counter so next id does not collide", () => {
-    // Simulate loaded objects with numeric IDs (legacy format)
-    initNextObjectIdFromObjects([
+    const idGenerator = createObjectIdGenerator(() => 1738550000000);
+    idGenerator.seedFromObjects([
       {
         id: "10",
         templateId: "board-aclam-s1",
@@ -37,14 +37,15 @@ describe("initNextObjectIdFromObjects", () => {
         name: "",
       },
     ] as never);
-    const obj = createObjectFromTemplate("board", boardTemplate, { x: 0, y: 0 });
-    // Counter portion of ID should be 11
+
+    const obj = createObjectFromTemplate("board", boardTemplate, { x: 0, y: 0 }, idGenerator);
     const counter = parseInt(obj.id.split("-")[1], 10);
     expect(counter).toBe(11);
   });
 
   it("handles new timestamp-counter format IDs", () => {
-    initNextObjectIdFromObjects([
+    const idGenerator = createObjectIdGenerator(() => 1738550000000);
+    idGenerator.seedFromObjects([
       {
         id: "1738550000000-25",
         templateId: "board-aclam-s1",
@@ -60,8 +61,8 @@ describe("initNextObjectIdFromObjects", () => {
         name: "",
       },
     ] as never);
-    const obj = createObjectFromTemplate("board", boardTemplate, { x: 0, y: 0 });
-    // Counter portion should be 26
+
+    const obj = createObjectFromTemplate("board", boardTemplate, { x: 0, y: 0 }, idGenerator);
     const counter = parseInt(obj.id.split("-")[1], 10);
     expect(counter).toBe(26);
   });
@@ -69,23 +70,26 @@ describe("initNextObjectIdFromObjects", () => {
 
 describe("createObjectFromCustomBoard", () => {
   it("creates board with custom dimensions and name", () => {
+    const idGenerator = createObjectIdGenerator(() => 1738550000000);
     const obj = createObjectFromCustomBoard(
       { widthMm: 400, depthMm: 200, color: "#abc", name: "My board" },
-      { x: 10, y: 20 }
+      { x: 10, y: 20 },
+      idGenerator
     );
+
     expect(obj.width).toBe(400);
     expect(obj.depth).toBe(200);
     expect(obj.name).toBe("My board");
-    // ID is timestamp-counter format
     expect(obj.id).toMatch(/^\d+-\d+$/);
-    // Custom boards have templateId "board-custom"
     expect(obj.templateId).toBe("board-custom");
   });
 
   it("uses default name when empty", () => {
+    const idGenerator = createObjectIdGenerator(() => 1738550000000);
     const obj = createObjectFromCustomBoard(
       { widthMm: 100, depthMm: 100, color: "#000", name: "   " },
-      { x: 0, y: 0 }
+      { x: 0, y: 0 },
+      idGenerator
     );
     expect(obj.name).toBe("Custom board");
   });
@@ -93,24 +97,27 @@ describe("createObjectFromCustomBoard", () => {
 
 describe("createObjectFromCustomDevice", () => {
   it("creates device with custom dimensions and name", () => {
+    const idGenerator = createObjectIdGenerator(() => 1738550000000);
     const obj = createObjectFromCustomDevice(
       { widthMm: 70, depthMm: 120, color: "#f00", name: "My pedal" },
-      { x: 50, y: 50 }
+      { x: 50, y: 50 },
+      idGenerator
     );
+
     expect(obj.subtype).toBe("device");
     expect(obj.width).toBe(70);
     expect(obj.depth).toBe(120);
     expect(obj.name).toBe("My pedal");
-    // ID is timestamp-counter format
     expect(obj.id).toMatch(/^\d+-\d+$/);
-    // Custom devices have templateId "device-custom"
     expect(obj.templateId).toBe("device-custom");
   });
 
   it("uses default name when empty", () => {
+    const idGenerator = createObjectIdGenerator(() => 1738550000000);
     const obj = createObjectFromCustomDevice(
       { widthMm: 50, depthMm: 50, color: "#fff", name: "" },
-      { x: 0, y: 0 }
+      { x: 0, y: 0 },
+      idGenerator
     );
     expect(obj.name).toBe("Custom device");
   });

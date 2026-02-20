@@ -15,6 +15,7 @@ import { Canvas } from "@react-three/fiber";
 import { PerspectiveCamera } from "@react-three/drei";
 import { useBoard } from "../../context/BoardContext";
 import { useUi } from "../../context/UiContext";
+import { useRendering } from "../../context/RenderingContext";
 import { CANVAS_BACKGROUNDS } from "../../constants/backgrounds";
 import { clamp } from "../../lib/math";
 import { Mini3DRootScene, ShadowMapController } from "./Mini3DRootScene";
@@ -93,6 +94,7 @@ function getDistanceBetweenTouches(points: TouchPoint[]): number {
 
 export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
   const { objects, draggingObjectId } = useBoard();
+  const { background } = useUi();
   const {
     showMini3d,
     showMini3dFloor,
@@ -101,8 +103,7 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
     showMini3dSpecular,
     mini3dLowResourceMode,
     setMini3dLowResourceMode,
-    background,
-  } = useUi();
+  } = useRendering();
 
   const containerRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<DragState | null>(null);

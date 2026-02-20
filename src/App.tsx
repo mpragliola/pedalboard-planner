@@ -16,11 +16,13 @@ import { SettingsModal } from "./components/settings/SettingsModal";
 import { useCatalog } from "./context/CatalogContext";
 import { useSelection } from "./context/SelectionContext";
 import { useUi } from "./context/UiContext";
+import { useRendering } from "./context/RenderingContext";
 import "./App.scss";
 
 function AppContent() {
   const { dropdownPanelRef } = useCatalog();
-  const { showMini3d, floatingUiVisible, setFloatingUiVisible, panelExpanded, setPanelExpanded } = useUi();
+  const { floatingUiVisible, setFloatingUiVisible, panelExpanded, setPanelExpanded } = useUi();
+  const { showMini3d } = useRendering();
   const { selectedCableId } = useSelection();
   const { open: settingsOpen, setOpen: setSettingsOpen } = useSettingsModal();
   const [mini3dMounted, setMini3dMounted] = useState(showMini3d);

@@ -14,6 +14,7 @@ import { useCable } from "../context/CableContext";
 import { useCanvas } from "../context/CanvasContext";
 import { useCatalog } from "../context/CatalogContext";
 import { useUi } from "../context/UiContext";
+import { useRendering } from "../context/RenderingContext";
 import { useSelection } from "../context/SelectionContext";
 import { CANVAS_BACKGROUNDS } from "../constants/backgrounds";
 import { CANVAS_DROP_ID } from "./catalog/CatalogDndProvider";
@@ -55,8 +56,8 @@ export function Canvas() {
   const { cables, onCablePointerDown, setCables } = useCable();
   const { selectedObjectIds, selectedCableId, setSelectedCableId } = useSelection();
   const { shouldIgnoreCatalogClick } = useCatalog();
-  const { showGrid, xray, ruler, lineRuler, cableLayer, cablesVisibility, setFloatingUiVisible, unit, background } =
-    useUi();
+  const { showGrid, xray, setFloatingUiVisible, unit, background } = useUi();
+  const { ruler, lineRuler, cableLayer, cablesVisibility } = useRendering();
 
   const [editingCableId, setEditingCableId] = useState<string | null>(null);
   const selectedCable = selectedCableId ? cables.find((c) => c.id === selectedCableId) : null;
