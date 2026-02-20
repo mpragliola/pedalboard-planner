@@ -1,4 +1,3 @@
-import { createPortal } from "react-dom";
 import { useDialogControl } from "../../hooks/useDialogControl";
 import "./ConfirmationDialog.scss";
 
@@ -25,7 +24,7 @@ export function ConfirmationDialog({
 }: ConfirmationDialogProps) {
   const { dialogRef, handleBackdropClick } = useDialogControl(open, onCancel);
 
-  const dialog = (
+  return (
     <dialog
       ref={dialogRef}
       className="confirmation-dialog"
@@ -55,6 +54,4 @@ export function ConfirmationDialog({
       </div>
     </dialog>
   );
-
-  return createPortal(dialog, document.body);
 }

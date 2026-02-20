@@ -9,6 +9,7 @@ import { SelectionInfoPopup } from "./components/selection/SelectionInfoPopup";
 import { BottomControls } from "./components/history/BottomControls";
 import { Mini3DOverlay } from "./components/mini3d/Mini3DOverlay";
 import { OverlayMessage } from "./components/common/OverlayMessage";
+import { ConfirmationDialogPortal } from "./components/confirmation/ConfirmationDialogPortal";
 import { AppProviders } from "./context/AppProviders";
 import { useSettingsModal } from "./context/SettingsModalContext";
 import { SettingsModal } from "./components/settings/SettingsModal";
@@ -79,6 +80,7 @@ function AppContent() {
       <BottomControls />
       <SelectionInfoPopup />
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <ConfirmationDialogPortal />
       <OverlayMessage
         message={
           selectedCableId
