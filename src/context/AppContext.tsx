@@ -376,7 +376,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [mini3dLowResourceMode]);
 
-  const addCableAndPersist = useCallback(
+  const addCable = useCallback(
     (cable: Cable) => {
       setCables((prev) => [...prev, cable]);
     },
@@ -524,12 +524,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     () => ({
       cables,
       setCables,
-      addCableAndPersist,
+      addCable,
       selectedCableId,
       setSelectedCableId,
       onCablePointerDown: handleCablePointerDown,
     }),
-    [cables, setCables, addCableAndPersist, selectedCableId, setSelectedCableId, handleCablePointerDown]
+    [cables, setCables, addCable, selectedCableId, setSelectedCableId, handleCablePointerDown]
   );
 
   const catalogValue = useMemo<CatalogContextValue>(
