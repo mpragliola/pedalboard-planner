@@ -176,7 +176,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   }, [setHandlers, handleObjectDragStart, handleCableDragStart, clearObjectDragState, clearCableDragState, canvasPanPointerDown]);
 
-  const filters = useBoardDeviceFilters();
+  const filters = useBoardDeviceFilters({ boardTemplates: BOARD_TEMPLATES, deviceTemplates: DEVICE_TEMPLATES });
   const { setSelectedBoard, setSelectedDevice } = filters;
 
   const handleImageError = useCallback((id: string) => {
