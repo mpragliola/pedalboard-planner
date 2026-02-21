@@ -6,29 +6,7 @@ import type { BoardTemplate } from "../data/boards";
 import type { DeviceTemplate } from "../data/devices";
 import type { Point } from "./vector";
 import type { Shape3D } from "../shape3d";
-
-/** Global counter for unique object IDs. Uses timestamp prefix to survive HMR. */
-let nextObjectId = 1;
-let idPrefix = Date.now();
-
-/** Call when restoring state so new objects never get IDs that collide with existing ones. */
-export function initNextObjectIdFromObjects(objects: CanvasObjectType[]): void {
-  let maxId = 0;
-  for (const o of objects) {
-    // Handle both old numeric IDs and new prefixed IDs
-    const parts = o.id.split("-");
-    const n = parseInt(parts[parts.length - 1], 10);
-    if (!isNaN(n) && n > maxId) maxId = n;
-  }
-  nextObjectId = maxId + 1;
-  // Reset prefix on load to ensure uniqueness even if IDs were corrupted
-  idPrefix = Date.now();
-}
-
-/** Generate a unique object ID */
-function generateId(): string {
-  return `${idPrefix}-${nextObjectId++}`;
-}
+import type { ObjectIdGenerator } from "./objectIdGenerator";
 
 const IMAGE_PREFIX: Record<ObjectSubtype, string> = {
   board: "images/boards/",
@@ -39,11 +17,12 @@ const IMAGE_PREFIX: Record<ObjectSubtype, string> = {
 export function createObjectFromTemplate(
   subtype: ObjectSubtype,
   template: BoardTemplate | DeviceTemplate,
-  pos: Point
+  pos: Point,
+  idGenerator: ObjectIdGenerator
 ): CanvasObjectType {
   const shape: Shape3D | undefined = "shape" in template ? (template as DeviceTemplate).shape : undefined;
   return {
-    id: generateId(),
+    id: idGenerator.nextId(),
     templateId: template.id,
     subtype,
     type: template.type,
@@ -74,7 +53,12 @@ const CUSTOM_DEFAULTS: Record<ObjectSubtype, { id: string; type: string; default
 };
 
 /** Create a custom canvas object (board or device) from user-specified dimensions. */
-export function createCustomObject(subtype: ObjectSubtype, params: CustomItemParams, pos: Point): CanvasObjectType {
+export function createCustomObject(
+  subtype: ObjectSubtype,
+  params: CustomItemParams,
+  pos: Point,
+  idGenerator: ObjectIdGenerator
+): CanvasObjectType {
   const cfg = CUSTOM_DEFAULTS[subtype];
   const template: BoardTemplate | DeviceTemplate = {
     id: cfg.id,
@@ -86,13 +70,21 @@ export function createCustomObject(subtype: ObjectSubtype, params: CustomItemPar
     color: params.color,
     image: null,
   };
-  return createObjectFromTemplate(subtype, template, pos);
+  return createObjectFromTemplate(subtype, template, pos, idGenerator);
 }
 
 /** @deprecated Use createCustomObject("board", ...) */
-export const createObjectFromCustomBoard = (p: CustomItemParams, pos: Point) => createCustomObject("board", p, pos);
+export const createObjectFromCustomBoard = (
+  p: CustomItemParams,
+  pos: Point,
+  idGenerator: ObjectIdGenerator
+) => createCustomObject("board", p, pos, idGenerator);
 /** @deprecated Use createCustomObject("device", ...) */
-export const createObjectFromCustomDevice = (p: CustomItemParams, pos: Point) => createCustomObject("device", p, pos);
+export const createObjectFromCustomDevice = (
+  p: CustomItemParams,
+  pos: Point,
+  idGenerator: ObjectIdGenerator
+) => createCustomObject("device", p, pos, idGenerator);
 
 /** Map catalog mode to object subtype. */
 export function modeToSubtype(mode: "boards" | "devices"): ObjectSubtype {

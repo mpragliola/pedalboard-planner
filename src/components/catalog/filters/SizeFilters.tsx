@@ -1,5 +1,5 @@
 import './SizeFilters.scss'
-import { Slider } from '../common/Slider'
+import { Slider } from '../../common/Slider'
 
 interface SizeFiltersProps {
   unitLabel: string

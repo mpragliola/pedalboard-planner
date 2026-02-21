@@ -216,8 +216,8 @@ describe("parseState — cables", () => {
   const validCable = {
     id: "cable-1",
     color: "#ff0000",
-    connectorA: "ts-6.35",
-    connectorB: "ts-6.35",
+    connectorA: "mono jack (TS)",
+    connectorB: "mono jack (TS)",
     points: [[0, 0], [100, 50], [200, 0]],
   };
 
@@ -403,8 +403,8 @@ describe("serializeState", () => {
         {
           id: "c-1",
           color: "#00ff00",
-          connectorA: "ts-6.35",
-          connectorB: "ts-6.35",
+          connectorA: "mono jack (TS)",
+          connectorB: "mono jack (TS)",
           segments: [{ x: 0, y: 0 }, { x: 50.123, y: 25.678 }],
         },
       ],
@@ -424,8 +424,8 @@ describe("serializeState", () => {
         {
           id: "c-1",
           color: "#00ff00",
-          connectorA: "ts-6.35",
-          connectorB: "ts-6.35",
+          connectorA: "mono jack (TS)",
+          connectorB: "mono jack (TS)",
           segments: [{ x: 0, y: 0 }, { x: 100, y: 0 }],
         },
       ],
@@ -463,8 +463,8 @@ describe("parseState / serializeState round-trip", () => {
         {
           id: "c1",
           color: "#ff0000",
-          connectorA: "ts-6.35",
-          connectorB: "ts-6.35",
+          connectorA: "mono jack (TS)",
+          connectorB: "mono jack (TS)",
           connectorAName: "Out",
           connectorBName: "In",
           segments: [{ x: 0, y: 0 }, { x: 100, y: 0 }],

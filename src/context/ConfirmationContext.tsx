@@ -1,6 +1,4 @@
 import { createContext, useContext, useState, useCallback, useMemo, useRef, useEffect, type ReactNode } from 'react'
-import { createPortal } from 'react-dom'
-import { ConfirmationDialog } from '../components/confirmation/ConfirmationDialog'
 
 export interface ConfirmationOptions {
   title: string
@@ -14,13 +12,26 @@ interface ConfirmationContextValue {
   requestConfirmation: (options: ConfirmationOptions) => Promise<boolean>
 }
 
+interface ConfirmationDialogState {
+  pending: ConfirmationOptions | null
+  handleConfirm: () => void
+  handleCancel: () => void
+}
+
 type ConfirmationRequest = ConfirmationOptions & { resolve: (value: boolean) => void }
 
 const ConfirmationContext = createContext<ConfirmationContextValue | null>(null)
+const ConfirmationDialogStateContext = createContext<ConfirmationDialogState | null>(null)
 
 export function useConfirmation() {
   const ctx = useContext(ConfirmationContext)
   if (!ctx) throw new Error('useConfirmation must be used within ConfirmationProvider')
+  return ctx
+}
+
+export function useConfirmationDialogState() {
+  const ctx = useContext(ConfirmationDialogStateContext)
+  if (!ctx) throw new Error('useConfirmationDialogState must be used within ConfirmationProvider')
   return ctx
 }
 
@@ -64,24 +75,18 @@ export function ConfirmationProvider({ children }: { children: ReactNode }) {
   }, [resolveNext])
 
   const value = useMemo(() => ({ requestConfirmation }), [requestConfirmation])
+  const dialogState = useMemo(
+    () => ({
+      pending,
+      handleConfirm,
+      handleCancel,
+    }),
+    [pending, handleConfirm, handleCancel]
+  )
 
   return (
     <ConfirmationContext.Provider value={value}>
-      {children}
-      {pending &&
-        createPortal(
-          <ConfirmationDialog
-            open
-            title={pending.title}
-            message={pending.message}
-            confirmLabel={pending.confirmLabel}
-            cancelLabel={pending.cancelLabel}
-            danger={pending.danger}
-            onConfirm={handleConfirm}
-            onCancel={handleCancel}
-          />,
-          document.body
-        )}
+      <ConfirmationDialogStateContext.Provider value={dialogState}>{children}</ConfirmationDialogStateContext.Provider>
     </ConfirmationContext.Provider>
   )
 }

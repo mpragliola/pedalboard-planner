@@ -18,6 +18,7 @@ import {
 import { useCallback, useEffect, useState } from 'react'
 import { useCanvas } from '../../context/CanvasContext'
 import { useUi } from '../../context/UiContext'
+import { useRendering } from '../../context/RenderingContext'
 import { SideControl } from './SideControl'
 import { ComponentListModal } from '../componentlist/ComponentListModal'
 import './SideControls.scss'
@@ -60,11 +61,8 @@ async function exitDocumentFullscreen() {
 
 export function SideControls() {
   const { centerView } = useCanvas()
+  const { showGrid, setShowGrid, xray, setXray } = useUi()
   const {
-    showGrid,
-    setShowGrid,
-    xray,
-    setXray,
     showMini3d,
     setShowMini3d,
     showMini3dFloor,
@@ -85,7 +83,7 @@ export function SideControls() {
     setCableLayer,
     cablesVisibility,
     setCablesVisibility,
-  } = useUi()
+  } = useRendering()
   const [componentListOpen, setComponentListOpen] = useState(false)
   const [measurementExpanded, setMeasurementExpanded] = useState(false)
   const [viewExpanded, setViewExpanded] = useState(false)

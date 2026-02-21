@@ -1,7 +1,7 @@
 import type { RefObject } from "react";
 import { DEFAULT_OBJECT_COLOR } from "../constants/defaults";
 import { BASE_URL } from "../constants/runtime";
-import { getObjectDimensions } from "../lib/objectDimensions";
+import { templateService } from "../lib/templateService";
 import { normalizeRotation } from "../lib/geometry";
 import type { CanvasObjectType } from "../types";
 import "./CanvasObject.scss";
@@ -51,7 +51,7 @@ export function CanvasObject({
   onPointerDown,
   onDragEnd,
 }: CanvasObjectProps) {
-  const [width, depth] = getObjectDimensions(obj);
+  const [width, depth] = templateService.getObjectDimensions(obj);
   const rotation = normalizeRotation(obj.rotation ?? 0);
   const is90or270 = rotation === 90 || rotation === 270;
   const bboxW = is90or270 ? depth : width;

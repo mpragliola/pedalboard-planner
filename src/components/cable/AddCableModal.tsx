@@ -84,7 +84,7 @@ function ConnectorPicker({
                     setOverlayOpen(false);
                   }}
                 >
-                  <ConnectorIcon kind={opt.value} width={24} height={24} style={{ flexShrink: 0 }} />
+                  <ConnectorIcon kind={opt.value} size={24} className="add-cable-picker-overlay-icon" />
                   <span>{opt.label}</span>
                 </button>
               </li>
@@ -114,7 +114,7 @@ function ConnectorPicker({
         onClick={() => setOverlayOpen(true)}
       >
         <span className="add-cable-connector-trigger-content">
-          <ConnectorIcon kind={value} className="add-cable-connector-trigger-icon" width={24} height={24} />
+          <ConnectorIcon kind={value} className="add-cable-connector-trigger-icon" size={24} />
           <span className="add-cable-connector-trigger-label">{currentOption?.label ?? value}</span>
         </span>
         <span className="add-cable-connector-chevron" aria-hidden>▾</span>

@@ -2,27 +2,17 @@ import { useState, useCallback, useRef, useEffect, useMemo, type ReactNode } fro
 import { BOARD_TEMPLATES } from "../data/boards";
 import { DEVICE_TEMPLATES } from "../data/devices";
 import { initialObjects } from "../constants/defaults";
-import { MM_TO_PX, HISTORY_DEPTH } from "../constants/interaction";
-import { DEFAULT_PLACEMENT_FALLBACK } from "../constants/layout";
+import { HISTORY_DEPTH } from "../constants/interaction";
 import { DEFAULT_CANVAS_BACKGROUND } from "../constants/backgrounds";
-import {
-  createObjectFromTemplate,
-  createCustomObject,
-  initNextObjectIdFromObjects,
-  modeToSubtype,
-} from "../lib/templateHelpers";
-import { getObjectDimensions } from "../lib/objectDimensions";
-import { visibleViewportPlacement } from "../lib/placementStrategy";
-import { useCanvasInteractions } from "../hooks/useCanvasInteractions";
-import { useCanvasZoomPan } from "../hooks/useCanvasZoomPan";
-import { useCableDrag } from "../hooks/useCableDrag";
-import { useObjectDrag } from "../hooks/useObjectDrag";
+import { createObjectIdGenerator } from "../lib/objectIdGenerator";
 import { useBoardDeviceFilters } from "../hooks/useBoardDeviceFilters";
 import { useHistory } from "../hooks/useHistory";
-import { useCatalogDrag } from "../hooks/useCatalogDrag";
-import { getObjectAabb } from "../lib/snapToBoundingBox";
-import type { Point } from "../lib/vector";
+import { useBoardObjectActions } from "../hooks/useBoardObjectActions";
+import { useCanvasCenterView } from "../hooks/useCanvasCenterView";
+import { useCanvasInteractionOrchestrator } from "../hooks/useCanvasInteractionOrchestrator";
+import { useCatalogPlacement } from "../hooks/useCatalogPlacement";
 import type { CanvasObjectType, Cable } from "../types";
+import type { SavedState } from "../lib/stateSerialization";
 import { BoardIoProvider, type BoardIoContextValue } from "./BoardIoContext";
 import { BoardProvider, type BoardContextValue } from "./BoardContext";
 import { CableProvider, type CableContextValue } from "./CableContext";
@@ -31,16 +21,19 @@ import { CatalogProvider, type CatalogContextValue, type CatalogMode } from "./C
 import { HistoryProvider, type HistoryContextValue } from "./HistoryContext";
 import { useStorage } from "./StorageContext";
 import { UiProvider, type UiContextValue } from "./UiContext";
+import { RenderingProvider, type RenderingContextValue, usePersistentMini3dLowResourceMode } from "./RenderingContext";
 import { useBoardPersistence, type BoardState } from "./useBoardPersistence";
 import { useSelection } from "./SelectionContext";
 
-const MINI3D_LOW_RESOURCE_MODE_STORAGE_KEY = "mini3d-mobile-safe-mode-v1";
-
 export function AppProvider({ children }: { children: ReactNode }) {
   const { savedState, loadStateFromFile, saveStateToFile, persistState } = useStorage();
+  const objectIdGeneratorRef = useRef(createObjectIdGenerator());
+  const seedObjectIdsFromObjects = useCallback((nextObjects: CanvasObjectType[]) => {
+    objectIdGeneratorRef.current.seedFromObjects(nextObjects);
+  }, []);
   useEffect(() => {
-    if (savedState?.objects?.length) initNextObjectIdFromObjects(savedState.objects);
-  }, [savedState]);
+    if (savedState?.objects?.length) seedObjectIdsFromObjects(savedState.objects);
+  }, [savedState, seedObjectIdsFromObjects]);
 
   const historyInitial = useMemo(() => {
     const objs = savedState?.objects ?? initialObjects;
@@ -90,7 +83,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [setBoardState]
   );
 
-  const [imageFailedIds, setImageFailedIds] = useState<Set<string>>(new Set());
   const [showGrid, setShowGrid] = useState(false);
   const [xray, setXray] = useState(false);
   const [showMini3d, setShowMini3d] = useState(false);
@@ -98,14 +90,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [showMini3dShadows, setShowMini3dShadows] = useState(true);
   const [showMini3dSurfaceDetail, setShowMini3dSurfaceDetail] = useState(true);
   const [showMini3dSpecular, setShowMini3dSpecular] = useState(true);
-  const [mini3dLowResourceMode, setMini3dLowResourceMode] = useState(() => {
-    if (typeof window === "undefined") return false;
-    try {
-      return window.localStorage.getItem(MINI3D_LOW_RESOURCE_MODE_STORAGE_KEY) === "1";
-    } catch {
-      return false;
-    }
-  });
+  const [mini3dLowResourceMode, setMini3dLowResourceMode] = usePersistentMini3dLowResourceMode();
   const [ruler, setRuler] = useState(false);
   const [lineRuler, setLineRuler] = useState(false);
   const [cableLayer, setCableLayer] = useState(false);
@@ -114,235 +99,144 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [background, setBackground] = useState(savedState?.background ?? DEFAULT_CANVAS_BACKGROUND);
   const [catalogMode, setCatalogMode] = useState<CatalogMode>("boards");
   const { setSelectedObjectIds, clearSelection } = useSelection();
-  const interactions = useCanvasInteractions();
-  const {
-    setHandlers,
-    handleObjectPointerDown,
-    handleCanvasPointerDown: onCanvasPointerDown,
-    handleCablePointerDown,
-  } = interactions;
   const [floatingUiVisible, setFloatingUiVisible] = useState(true);
   const [panelExpanded, setPanelExpanded] = useState(false);
   const dropdownPanelRef = useRef<HTMLDivElement>(null);
 
   const {
+    draggingObjectId,
+    handleObjectPointerDown,
+    handleCablePointerDown,
+    handleCanvasPointerDown,
+    clearObjectDragState,
     zoom,
     pan,
     zoomRef,
     panRef,
     setZoom,
     setPan,
-    animating: canvasAnimating,
-    setAnimating: setCanvasAnimating,
+    canvasAnimating,
+    setCanvasAnimating,
     canvasRef,
     isPanning,
     spaceDown,
     zoomIn,
     zoomOut,
-    handleCanvasPointerDown: canvasPanPointerDown,
     tileSize,
     pausePanZoom,
-  } = useCanvasZoomPan({
+  } = useCanvasInteractionOrchestrator({
+    objects,
+    cables,
+    setObjects,
+    setCables,
     initialZoom: savedState?.zoom,
     initialPan: savedState?.pan,
-    onPinchStart: interactions.onPinchStart,
   });
 
-  const handleCanvasPointerDown = useCallback(
-    (e: React.PointerEvent) => onCanvasPointerDown(e, spaceDown),
-    [onCanvasPointerDown, spaceDown]
-  );
-
-  const { draggingObjectId, handleObjectDragStart, clearDragState: clearObjectDragState } = useObjectDrag(
+  const centerView = useCanvasCenterView({
+    canvasRef,
     objects,
-    setObjects,
     zoom,
-    spaceDown
-  );
-  const { handleCableDragStart, clearDragState: clearCableDragState } = useCableDrag(
-    cables,
-    setCables,
-    zoom,
-    spaceDown
-  );
+    setPan,
+    setCanvasAnimating,
+  });
 
-  useEffect(() => {
-    setHandlers({
-      objectDragStart: handleObjectDragStart,
-      cableDragStart: handleCableDragStart,
-      clearObjectDrag: clearObjectDragState,
-      clearCableDrag: clearCableDragState,
-      canvasPanPointerDown,
-    });
-  }, [setHandlers, handleObjectDragStart, handleCableDragStart, clearObjectDragState, clearCableDragState, canvasPanPointerDown]);
+  const {
+    imageFailedIds,
+    handleImageError,
+    handleDeleteObject,
+    handleRotateObject,
+    handleSendToBack,
+    handleBringToFront,
+  } = useBoardObjectActions({
+    setObjects,
+    setSelectedObjectIds,
+  });
 
   const filters = useBoardDeviceFilters({ boardTemplates: BOARD_TEMPLATES, deviceTemplates: DEVICE_TEMPLATES });
   const { setSelectedBoard, setSelectedDevice } = filters;
 
-  const handleImageError = useCallback((id: string) => {
-    setImageFailedIds((prev) => new Set(prev).add(id));
-  }, []);
-
-  /** Uses placement strategy so new device/board appears at center of browser viewport. */
-  const getPlacementInVisibleViewport = useCallback((): Point => {
-    const canvasEl = canvasRef.current;
-    if (!canvasEl) return DEFAULT_PLACEMENT_FALLBACK;
-    return visibleViewportPlacement({
-      canvasRect: canvasEl.getBoundingClientRect(),
-      pan,
-      zoom,
-      viewportCenter: { x: window.innerWidth / 2, y: window.innerHeight / 2 },
-    });
-  }, [pan, zoom, canvasRef]);
-
-  /** Axis-aligned bbox center of all objects. One setPan + CSS transition. */
-  const centerView = useCallback(() => {
-    const el = canvasRef.current;
-    if (!el || objects.length === 0) return;
-    let minX = Infinity;
-    let minY = Infinity;
-    let maxX = -Infinity;
-    let maxY = -Infinity;
-    for (const obj of objects) {
-      const aabb = getObjectAabb(obj, getObjectDimensions);
-      minX = Math.min(minX, aabb.left);
-      minY = Math.min(minY, aabb.top);
-      maxX = Math.max(maxX, aabb.left + aabb.width);
-      maxY = Math.max(maxY, aabb.top + aabb.height);
-    }
-    const cx = (minX + maxX) / 2;
-    const cy = (minY + maxY) / 2;
-    const rect = el.getBoundingClientRect();
-    const targetPan = {
-      x: rect.width / 2 - cx * zoom,
-      y: rect.height / 2 - cy * zoom,
-    };
-    setCanvasAnimating(true);
-    /* Defer so CSS sees old pan first, then new → transition runs */
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => setPan(targetPan));
-    });
-  }, [objects, zoom, setPan, setCanvasAnimating, canvasRef]);
-
-  /** Core function to add an object from a template at a specific position */
-  const addObjectFromTemplate = useCallback(
-    (mode: "boards" | "devices", templateId: string, canvasX: number, canvasY: number) => {
-      const id = templateId?.trim();
-      if (!id) return;
-
-      const templates = mode === "boards" ? BOARD_TEMPLATES : DEVICE_TEMPLATES;
-      const template = templates.find((t) => t.id === id);
-      if (!template) return;
-
-      const w = template.wdh[0] * MM_TO_PX;
-      const d = template.wdh[1] * MM_TO_PX;
-      const newObj = createObjectFromTemplate(modeToSubtype(mode), template, { x: canvasX - w / 2, y: canvasY - d / 2 });
-
-      setObjects((prev) => [...prev, newObj]);
-      (mode === "boards" ? setSelectedBoard : setSelectedDevice)("");
-      clearSelection();
-    },
-    [setSelectedBoard, setSelectedDevice, setObjects, clearSelection]
-  );
-
-  const handleBoardSelect = useCallback(
-    (templateId: string) => {
-      const { x, y } = getPlacementInVisibleViewport();
-      addObjectFromTemplate("boards", templateId, x, y);
-    },
-    [getPlacementInVisibleViewport, addObjectFromTemplate]
-  );
-
-  const handleDeviceSelect = useCallback(
-    (templateId: string) => {
-      const { x, y } = getPlacementInVisibleViewport();
-      addObjectFromTemplate("devices", templateId, x, y);
-    },
-    [getPlacementInVisibleViewport, addObjectFromTemplate]
-  );
-
-  const { placeFromCatalog, shouldIgnoreCatalogClick } = useCatalogDrag({
+  const {
+    handleBoardSelect,
+    handleDeviceSelect,
+    handleCustomCreate,
+    placeFromCatalog,
+    shouldIgnoreCatalogClick,
+  } = useCatalogPlacement({
     canvasRef,
-    zoomRef,
-    panRef,
-    onDropOnCanvas: addObjectFromTemplate,
-  });
-
-  const handleCustomCreate = useCallback(
-    (mode: "boards" | "devices", params: { widthMm: number; depthMm: number; color: string; name: string }) => {
-      const { x: cx, y: cy } = getPlacementInVisibleViewport();
-      const w = params.widthMm * MM_TO_PX;
-      const d = params.depthMm * MM_TO_PX;
-      const newObj = createCustomObject(modeToSubtype(mode), params, { x: cx - w / 2, y: cy - d / 2 });
-      setObjects((prev) => [...prev, newObj]);
-      (mode === "boards" ? setSelectedBoard : setSelectedDevice)("");
-      clearSelection();
-    },
-    [setSelectedBoard, setSelectedDevice, getPlacementInVisibleViewport, setObjects, clearSelection]
-  );
-
-  const handleDeleteObject = useCallback(
-    (id: string) => {
-      setObjects((prev) => prev.filter((o) => o.id !== id));
-      setSelectedObjectIds((prev) => prev.filter((sid) => sid !== id));
-    },
-    [setObjects, setSelectedObjectIds]
-  );
-
-  const handleRotateObject = useCallback(
-    (id: string) => {
-      setObjects((prev) => prev.map((o) => (o.id === id ? { ...o, rotation: ((o.rotation ?? 0) + 90) % 360 } : o)));
-    },
-    [setObjects]
-  );
-
-  const handleSendToBack = useCallback(
-    (id: string) => {
-      setObjects((prev) => {
-        const i = prev.findIndex((o) => o.id === id);
-        if (i <= 0) return prev;
-        const obj = prev[i];
-        const next = prev.slice(0, i).concat(prev.slice(i + 1));
-        return [obj, ...next];
-      });
-    },
-    [setObjects]
-  );
-
-  const handleBringToFront = useCallback(
-    (id: string) => {
-      setObjects((prev) => {
-        const i = prev.findIndex((o) => o.id === id);
-        if (i < 0 || i === prev.length - 1) return prev;
-        const obj = prev[i];
-        const next = prev.slice(0, i).concat(prev.slice(i + 1));
-        return [...next, obj];
-      });
-    },
-    [setObjects]
-  );
-
-  const { newBoard, loadBoardFromFile, saveBoardToFile } = useBoardPersistence({
-    objects,
-    cables,
-    historyPast,
-    historyFuture,
     zoom,
     pan,
-    showGrid,
-    unit,
-    background,
-    initialObjects,
-    replaceHistoryRaw,
-    setZoom,
-    setPan,
-    setShowGrid,
-    setUnit,
-    setBackground,
+    zoomRef,
+    panRef,
+    idGeneratorRef: objectIdGeneratorRef,
+    setObjects,
     clearSelection,
-    loadStateFromFile,
-    saveStateToFile,
-    persistState,
+    setSelectedBoard,
+    setSelectedDevice,
+  });
+
+  const applyLoadedState = useCallback(
+    (state: SavedState) => {
+      if (state.objects?.length) seedObjectIdsFromObjects(state.objects);
+      const loadedObjects = state.objects ?? initialObjects;
+      const loadedCables = state.cables ?? [];
+      replaceHistoryRaw(
+        { objects: loadedObjects, cables: loadedCables },
+        (state.past ?? []).map((snapshot) => ({ objects: snapshot, cables: loadedCables })),
+        (state.future ?? []).map((snapshot) => ({ objects: snapshot, cables: loadedCables }))
+      );
+      clearSelection();
+      setUnit(state.unit ?? "mm");
+      setBackground(state.background ?? DEFAULT_CANVAS_BACKGROUND);
+      setShowGrid(state.showGrid ?? false);
+      if (typeof state.zoom === "number") setZoom(state.zoom);
+      if (state.pan && typeof state.pan.x === "number" && typeof state.pan.y === "number") {
+        setPan(state.pan);
+      }
+    },
+    [
+      seedObjectIdsFromObjects,
+      replaceHistoryRaw,
+      clearSelection,
+      setUnit,
+      setBackground,
+      setShowGrid,
+      setZoom,
+      setPan,
+    ]
+  );
+
+  const resetBoardState = useCallback(() => {
+    replaceHistoryRaw({ objects: initialObjects, cables: [] }, [], []);
+    clearSelection();
+    setUnit("mm");
+    setBackground(DEFAULT_CANVAS_BACKGROUND);
+    setShowGrid(false);
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  }, [replaceHistoryRaw, clearSelection, setUnit, setBackground, setShowGrid, setZoom, setPan]);
+
+  const { newBoard, loadBoardFromFile, saveBoardToFile } = useBoardPersistence({
+    snapshot: {
+      objects,
+      cables,
+      historyPast,
+      historyFuture,
+      zoom,
+      pan,
+      showGrid,
+      unit,
+      background,
+    },
+    storage: {
+      loadStateFromFile,
+      saveStateToFile,
+      persistState,
+    },
+    actions: {
+      applyLoadedState,
+      resetBoardState,
+    },
   });
 
   useEffect(() => {
@@ -361,19 +255,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [undo, redo]);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      if (mini3dLowResourceMode) {
-        window.localStorage.setItem(MINI3D_LOW_RESOURCE_MODE_STORAGE_KEY, "1");
-      } else {
-        window.localStorage.removeItem(MINI3D_LOW_RESOURCE_MODE_STORAGE_KEY);
-      }
-    } catch {
-      /* Ignore storage failures. */
-    }
-  }, [mini3dLowResourceMode]);
-
   const addCable = useCallback(
     (cable: Cable) => {
       setCables((prev) => [...prev, cable]);
@@ -387,26 +268,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setShowGrid,
       xray,
       setXray,
-      showMini3d,
-      setShowMini3d,
-      showMini3dFloor,
-      setShowMini3dFloor,
-      showMini3dShadows,
-      setShowMini3dShadows,
-      showMini3dSurfaceDetail,
-      setShowMini3dSurfaceDetail,
-      showMini3dSpecular,
-      setShowMini3dSpecular,
-      mini3dLowResourceMode,
-      setMini3dLowResourceMode,
-      ruler,
-      setRuler,
-      lineRuler,
-      setLineRuler,
-      cableLayer,
-      setCableLayer,
-      cablesVisibility,
-      setCablesVisibility,
       floatingUiVisible,
       setFloatingUiVisible,
       panelExpanded,
@@ -421,6 +282,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setShowGrid,
       xray,
       setXray,
+      floatingUiVisible,
+      setFloatingUiVisible,
+      panelExpanded,
+      setPanelExpanded,
+      unit,
+      setUnit,
+      background,
+      setBackground,
+    ]
+  );
+
+  const renderingValue = useMemo<RenderingContextValue>(
+    () => ({
       showMini3d,
       setShowMini3d,
       showMini3dFloor,
@@ -441,14 +315,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setCableLayer,
       cablesVisibility,
       setCablesVisibility,
-      floatingUiVisible,
-      setFloatingUiVisible,
-      panelExpanded,
-      setPanelExpanded,
-      unit,
-      setUnit,
-      background,
-      setBackground,
+    }),
+    [
+      showMini3d,
+      setShowMini3d,
+      showMini3dFloor,
+      setShowMini3dFloor,
+      showMini3dShadows,
+      setShowMini3dShadows,
+      showMini3dSurfaceDetail,
+      setShowMini3dSurfaceDetail,
+      showMini3dSpecular,
+      setShowMini3dSpecular,
+      mini3dLowResourceMode,
+      setMini3dLowResourceMode,
+      ruler,
+      setRuler,
+      lineRuler,
+      setLineRuler,
+      cableLayer,
+      setCableLayer,
+      cablesVisibility,
+      setCablesVisibility,
     ]
   );
 
@@ -572,17 +460,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   return (
     <UiProvider value={uiValue}>
-      <CanvasProvider value={canvasValue}>
-        <BoardProvider value={boardValue}>
-          <CableProvider value={cableValue}>
-            <CatalogProvider value={catalogValue}>
-              <HistoryProvider value={historyValue}>
-                <BoardIoProvider value={boardIoValue}>{children}</BoardIoProvider>
-              </HistoryProvider>
-            </CatalogProvider>
-          </CableProvider>
-        </BoardProvider>
-      </CanvasProvider>
+      <RenderingProvider value={renderingValue}>
+        <CanvasProvider value={canvasValue}>
+          <BoardProvider value={boardValue}>
+            <CableProvider value={cableValue}>
+              <CatalogProvider value={catalogValue}>
+                <HistoryProvider value={historyValue}>
+                  <BoardIoProvider value={boardIoValue}>{children}</BoardIoProvider>
+                </HistoryProvider>
+              </CatalogProvider>
+            </CableProvider>
+          </BoardProvider>
+        </CanvasProvider>
+      </RenderingProvider>
     </UiProvider>
   );
 }

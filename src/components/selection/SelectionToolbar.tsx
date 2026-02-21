@@ -1,6 +1,6 @@
 import { faArrowDown, faArrowUp, faRotateRight, faTrash } from "@fortawesome/free-solid-svg-icons";
 import type { CanvasObjectType } from "../../types";
-import { getObjectDimensions } from "../../lib/objectDimensions";
+import { templateService } from "../../lib/templateService";
 import { useConfirmation } from "../../context/ConfirmationContext";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { SelectionToolbarButton } from "./SelectionToolbarButton";
@@ -29,7 +29,7 @@ function SelectionToolbar({ obj, onDelete, onRotate, onSendToBack, onBringToFron
   const { requestConfirmation } = useConfirmation();
   const scaleUp = useMediaQuery("(max-width: 600px)");
 
-  const [width, depth] = getObjectDimensions(obj);
+  const [width, depth] = templateService.getObjectDimensions(obj);
   const centerX = obj.pos.x + width / 2;
   const centerY = obj.pos.y + depth / 2;
   const left = centerX;

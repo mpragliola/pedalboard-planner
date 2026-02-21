@@ -1,5 +1,5 @@
 import { createContext, useContext, type Dispatch, type ReactNode, type RefObject, type SetStateAction } from "react";
-import type { useBoardDeviceFilters } from "../hooks/useBoardDeviceFilters";
+import type { CatalogFilters } from "../types/catalogFilters";
 
 export type CatalogMode = "boards" | "devices";
 
@@ -7,7 +7,7 @@ export interface CatalogContextValue {
   dropdownPanelRef: RefObject<HTMLDivElement>;
   catalogMode: CatalogMode;
   setCatalogMode: Dispatch<SetStateAction<CatalogMode>>;
-  filters: ReturnType<typeof useBoardDeviceFilters>;
+  filters: CatalogFilters;
   onBoardSelect: (templateId: string) => void;
   onDeviceSelect: (templateId: string) => void;
   /** Place a catalog item on the canvas (used by @dnd-kit onDragEnd). */

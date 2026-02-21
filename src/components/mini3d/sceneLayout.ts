@@ -1,7 +1,7 @@
 import { parseColor } from "../../lib/color";
 import { normalizeRotation } from "../../lib/geometry";
 import { rectsOverlap, type Rect } from "../../lib/geometry2d";
-import { getObjectDimensions, getTemplateShape } from "../../lib/objectDimensions";
+import { templateService } from "../../lib/templateService";
 import type { Shape3D } from "../../shape3d";
 import type { CanvasObjectType } from "../../types";
 import {
@@ -48,7 +48,7 @@ export function buildSceneLayout(objects: CanvasObjectType[]): SceneLayout {
   let hasBoard = false;
 
   for (const obj of sceneObjects) {
-    const [widthMm, depthMm, heightMm] = getObjectDimensions(obj);
+    const [widthMm, depthMm, heightMm] = templateService.getObjectDimensions(obj);
     if (widthMm <= 0 || depthMm <= 0) continue;
 
     const rotation = normalizeRotation(obj.rotation ?? 0);
@@ -71,7 +71,7 @@ export function buildSceneLayout(objects: CanvasObjectType[]): SceneLayout {
       boardMaxY = Math.max(boardMaxY, centerY + footprintD / 2);
     }
 
-    const shape = obj.shape ?? getTemplateShape(obj.templateId);
+    const shape = obj.shape ?? templateService.getTemplateShape(obj.templateId);
     const fallbackColor = obj.subtype === "board" ? "rgb(96, 106, 120)" : MINI3D_DEFAULT_DEVICE_COLOR;
     const parsed = parseColor(obj.color ?? fallbackColor) ?? MINI3D_PARSE_FALLBACK_COLOR;
     rawObjects.push({
