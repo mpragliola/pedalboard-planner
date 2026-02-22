@@ -1,8 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   createObjectFromTemplate,
-  createObjectFromCustomBoard,
-  createObjectFromCustomDevice,
+  createCustomObject,
   createCableFromPoints,
 } from "./templateHelpers";
 import type { BoardTemplate } from "../data/boards";
@@ -69,10 +68,12 @@ describe("ObjectIdGenerator seeding", () => {
   });
 });
 
-describe("createObjectFromCustomBoard", () => {
+// `createCustomObject` is now the single entry point; subtype selects defaults.
+describe("createCustomObject(board)", () => {
   it("creates board with custom dimensions and name", () => {
     const idGenerator = createObjectIdGenerator(() => 1738550000000);
-    const obj = createObjectFromCustomBoard(
+    const obj = createCustomObject(
+      "board",
       { widthMm: 400, depthMm: 200, color: "#abc", name: "My board" },
       { x: 10, y: 20 },
       idGenerator
@@ -87,7 +88,8 @@ describe("createObjectFromCustomBoard", () => {
 
   it("uses default name when empty", () => {
     const idGenerator = createObjectIdGenerator(() => 1738550000000);
-    const obj = createObjectFromCustomBoard(
+    const obj = createCustomObject(
+      "board",
       { widthMm: 100, depthMm: 100, color: "#000", name: "   " },
       { x: 0, y: 0 },
       idGenerator
@@ -96,10 +98,11 @@ describe("createObjectFromCustomBoard", () => {
   });
 });
 
-describe("createObjectFromCustomDevice", () => {
+describe("createCustomObject(device)", () => {
   it("creates device with custom dimensions and name", () => {
     const idGenerator = createObjectIdGenerator(() => 1738550000000);
-    const obj = createObjectFromCustomDevice(
+    const obj = createCustomObject(
+      "device",
       { widthMm: 70, depthMm: 120, color: "#f00", name: "My pedal" },
       { x: 50, y: 50 },
       idGenerator
@@ -115,7 +118,8 @@ describe("createObjectFromCustomDevice", () => {
 
   it("uses default name when empty", () => {
     const idGenerator = createObjectIdGenerator(() => 1738550000000);
-    const obj = createObjectFromCustomDevice(
+    const obj = createCustomObject(
+      "device",
       { widthMm: 50, depthMm: 50, color: "#fff", name: "" },
       { x: 0, y: 0 },
       idGenerator

@@ -59,6 +59,8 @@ export function createCustomObject(
   pos: Point,
   idGenerator: ObjectIdGenerator
 ): CanvasObjectType {
+  // Centralized config keeps "custom board" and "custom device" defaults
+  // (template id, fallback name, default height) in one place.
   const cfg = CUSTOM_DEFAULTS[subtype];
   const template: BoardTemplate | DeviceTemplate = {
     id: cfg.id,
@@ -72,19 +74,6 @@ export function createCustomObject(
   };
   return createObjectFromTemplate(subtype, template, pos, idGenerator);
 }
-
-/** @deprecated Use createCustomObject("board", ...) */
-export const createObjectFromCustomBoard = (
-  p: CustomItemParams,
-  pos: Point,
-  idGenerator: ObjectIdGenerator
-) => createCustomObject("board", p, pos, idGenerator);
-/** @deprecated Use createCustomObject("device", ...) */
-export const createObjectFromCustomDevice = (
-  p: CustomItemParams,
-  pos: Point,
-  idGenerator: ObjectIdGenerator
-) => createCustomObject("device", p, pos, idGenerator);
 
 /** Map catalog mode to object subtype. */
 export function modeToSubtype(mode: "boards" | "devices"): ObjectSubtype {
