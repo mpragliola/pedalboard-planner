@@ -14,7 +14,3 @@ export const CABLE_LAYER_LENGTH_COMPARE_EPSILON_MM = 0.01;
 export const CABLE_LAYER_LENGTH_POPUP_Y_OFFSET_PX = 6;
 export const CABLE_LAYER_DOUBLE_TAP_MS = 350;
 export const CABLE_LAYER_DOUBLE_TAP_MAX_DISTANCE_PX = 50;
-
-/** Overlay DOM selectors used for hit-testing while drawing. */
-export const CABLE_LAYER_ACTIONS_SELECTOR = ".cable-layer-actions";
-export const CABLE_LAYER_ADD_BUTTON_SELECTOR = ".cable-layer-add-btn";

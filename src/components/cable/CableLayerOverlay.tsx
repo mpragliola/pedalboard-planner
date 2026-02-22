@@ -50,6 +50,8 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
   const { setCableLayer } = useRendering();
   const { clientToCanvas, toScreen } = useCanvasCoords(canvasRef, zoom, pan);
   const finishClickRef = useRef<() => void>(() => {});
+  const actionsRef = useRef<HTMLDivElement>(null);
+  const addButtonRef = useRef<HTMLButtonElement>(null);
   /** Single source of truth for overlay pointer/pinch lifecycle state. */
   const gestureStateRef = useRef(createInitialCableLayerGestureState());
 
@@ -110,7 +112,7 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
       // Phase 1: cheap preflight blockers that should never claim the cable gesture.
-      const overActions = Boolean((e.target as HTMLElement).closest(CLO.CABLE_LAYER_ACTIONS_SELECTOR));
+      const overActions = actionsRef.current?.contains(e.target as Node) ?? false;
       if (
         !canHandleCableLayerPointerDown({
           isModalOpen,
@@ -195,7 +197,7 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
       if (isModalOpen || gestureStateRef.current.tag === "pinching") return;
       /* When pointer moves over Add cable button, release capture so the button can receive the click */
       const hit = document.elementFromPoint(e.clientX, e.clientY);
-      if (hit?.closest?.(CLO.CABLE_LAYER_ACTIONS_SELECTOR)) {
+      if (hit && actionsRef.current?.contains(hit)) {
         tryReleasePointerCapture(e.currentTarget as HTMLElement, e.pointerId);
       }
       onPointerMove(e);
@@ -223,11 +225,11 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
       // Phase 3: route by pointer-up hit target (actions area vs canvas path commit).
       // With pointer capture, `e.target` is overlay; elementFromPoint gives actual hit.
       const hit = document.elementFromPoint(e.clientX, e.clientY);
-      if (hit?.closest?.(CLO.CABLE_LAYER_ACTIONS_SELECTOR)) {
+      if (hit && actionsRef.current?.contains(hit)) {
         // Allow buttons to receive click by dropping capture when release occurs over actions.
         tryReleasePointerCapture(e.currentTarget as HTMLElement, e.pointerId);
         // Only Add button opens modal; Cancel should not.
-        if (hit?.closest?.(CLO.CABLE_LAYER_ADD_BUTTON_SELECTOR) && (hasSegments || hasPreview)) openAddCableModal();
+        if (addButtonRef.current?.contains(hit) && (hasSegments || hasPreview)) openAddCableModal();
         // Track tap for subsequent double-tap detection.
         if (isPointerUpPrimary(e.button, e.pointerType)) {
           lastTapRef.current = { time: Date.now(), x: e.clientX, y: e.clientY };
@@ -337,6 +339,8 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
         showBothLengths={showBothLengths}
         onCancelDrawing={clearDrawing}
         onAddCableModal={openAddCableModal}
+        actionsRef={actionsRef}
+        addButtonRef={addButtonRef}
       />
     </div>
   );

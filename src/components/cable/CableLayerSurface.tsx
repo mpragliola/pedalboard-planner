@@ -1,3 +1,4 @@
+import type { RefObject } from "react";
 import { CABLE_TERMINAL_END_COLOR, CABLE_TERMINAL_START_COLOR } from "../../constants/cables";
 import { formatLength } from "../../lib/rulerFormat";
 import type { Vec2 } from "../../lib/vector";
@@ -18,6 +19,8 @@ interface CableLayerSurfaceProps {
   showBothLengths: boolean;
   onCancelDrawing: () => void;
   onAddCableModal: () => void;
+  actionsRef: RefObject<HTMLDivElement | null>;
+  addButtonRef: RefObject<HTMLButtonElement | null>;
 }
 
 /**
@@ -41,6 +44,8 @@ export function CableLayerSurface({
   showBothLengths,
   onCancelDrawing,
   onAddCableModal,
+  actionsRef,
+  addButtonRef,
 }: CableLayerSurfaceProps) {
   return (
     <>
@@ -112,7 +117,7 @@ export function CableLayerSurface({
         </div>
       )}
       {(hasSegments || hasPreview) && (
-        <div className="cable-layer-actions" data-no-canvas-zoom>
+        <div ref={actionsRef} className="cable-layer-actions" data-no-canvas-zoom>
           <div className="cable-layer-buttons">
             <button
               type="button"
@@ -123,6 +128,7 @@ export function CableLayerSurface({
               Cancel
             </button>
             <button
+              ref={addButtonRef}
               type="button"
               className="cable-layer-add-btn"
               onClick={onAddCableModal}
@@ -139,4 +145,3 @@ export function CableLayerSurface({
     </>
   );
 }
-
