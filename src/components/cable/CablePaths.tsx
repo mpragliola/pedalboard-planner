@@ -23,14 +23,16 @@ import { useSelection } from "../../context/SelectionContext";
 import { useCanvasCoords } from "../../hooks/useCanvasCoords";
 import { useCablePhysics } from "../../hooks/useCablePhysics";
 import { useDragState } from "../../hooks/useDragState";
+import {
+  IDLE_CABLE_HANDLE_INTERACTION_STATE,
+  consumeCableHandlePending,
+  isCableHandlePressing,
+  startCableHandleInteraction,
+  type CableHandleInteractionState,
+} from "./cableHandleInteractionStateMachine";
 import * as CP from "../../constants/cablePaths";
 import type { Cable } from "../../types";
 import "./CablePaths.scss";
-
-type PressState = {
-  cableId: string;
-  handleIndex: number;
-};
 
 type FlashPoint = {
   cableId: string;
@@ -92,18 +94,29 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
 
   const dragRef = useRef<CableDragState | null>(null);
   const pressTimerRef = useRef<number | null>(null);
-  const [pressingHandle, setPressingHandle] = useState<PressState | null>(null);
+  const [handleInteraction, setHandleInteraction] = useState<CableHandleInteractionState>(
+    IDLE_CABLE_HANDLE_INTERACTION_STATE
+  );
+  const handleInteractionRef = useRef<CableHandleInteractionState>(IDLE_CABLE_HANDLE_INTERACTION_STATE);
   const [flashPoint, setFlashPoint] = useState<FlashPoint | null>(null);
   const flashTimerRef = useRef<number | null>(null);
-  const pendingHandleIndexRef = useRef<number | null>(null);
   const lastCableTapRef = useRef<LastCableTap | null>(null);
+
+  const commitHandleInteraction = (nextState: CableHandleInteractionState) => {
+    // Keep ref/state in lockstep:
+    // - ref for synchronous reads inside pointer/drag callbacks
+    // - state for rendering pressed-handle visual feedback
+    handleInteractionRef.current = nextState;
+    setHandleInteraction(nextState);
+  };
 
   const clearHandlePress = () => {
     if (pressTimerRef.current) {
       window.clearTimeout(pressTimerRef.current);
       pressTimerRef.current = null;
     }
-    setPressingHandle(null);
+    // Reset to explicit idle when press/drag gesture ends or is canceled.
+    commitHandleInteraction(IDLE_CABLE_HANDLE_INTERACTION_STATE);
   };
 
   useEffect(() => {
@@ -174,12 +187,12 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
     thresholdPx: CP.CABLE_PATHS_HANDLE_DRAG_THRESHOLD_PX,
     activateOnStart: false,
     getPendingPayload: (id) => {
-      const handleIndex = pendingHandleIndexRef.current;
-      pendingHandleIndexRef.current = null;
-      if (handleIndex === null) return null;
-      const cable = cableMap.get(id);
-      if (!cable || cable.segments.length < 2) return null;
-      return { points: cable.segments, handleIndex };
+      // Pending payload is one-shot per pointer-down and encoded in explicit interaction state.
+      const { nextState, payload } = consumeCableHandlePending(handleInteractionRef.current, id);
+      if (nextState !== handleInteractionRef.current) {
+        commitHandleInteraction(nextState);
+      }
+      return payload;
     },
     onDragActivated: ({ pending, event }) => {
       // Once drag is activated, the pending long-press delete timer must be canceled
@@ -271,8 +284,15 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
 
     // Long-press removal
     clearHandlePress();
+    commitHandleInteraction(
+      startCableHandleInteraction({
+        cableId,
+        handleIndex,
+        points,
+        isExtremity,
+      })
+    );
     if (!isExtremity) {
-      setPressingHandle({ cableId, handleIndex });
       pressTimerRef.current = window.setTimeout(() => {
         const nextPoints = points.filter((_, idx) => idx !== handleIndex);
         if (nextPoints.length < 2) return;
@@ -288,7 +308,6 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
       }, CP.CABLE_PATHS_HANDLE_REMOVE_PRESS_MS);
     }
 
-    pendingHandleIndexRef.current = handleIndex;
     (e.target as Element).setPointerCapture(e.pointerId);
     handleHandleDragStart(cableId, e);
   };
@@ -435,7 +454,8 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
               className={[
                 "cable-handle-dot",
                 `cable-handle-dot--${type}`,
-                pressingHandle && pressingHandle.cableId === selectedCableId && pressingHandle.handleIndex === idx
+                selectedCableId &&
+                isCableHandlePressing(handleInteraction, selectedCableId, idx)
                   ? "cable-handle-dot--pressing"
                   : "",
               ]
