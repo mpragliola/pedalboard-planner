@@ -17,6 +17,7 @@ import { useUi } from "../context/UiContext";
 import { useRendering } from "../context/RenderingContext";
 import { useSelection } from "../context/SelectionContext";
 import type { Cable } from "../types";
+import type { Point } from "../lib/vector";
 import { CANVAS_BACKGROUNDS } from "../constants/backgrounds";
 import { CANVAS_DROP_ID } from "./catalog/CatalogDndProvider";
 import "./Canvas.scss";
@@ -61,6 +62,8 @@ export function Canvas() {
   const { ruler, lineRuler, cableLayer, cablesVisibility } = useRendering();
 
   const [editingCableId, setEditingCableId] = useState<string | null>(null);
+  const [pendingNewCableSegments, setPendingNewCableSegments] = useState<Point[] | null>(null);
+  const pendingConfirmRef = useRef<(() => void) | null>(null);
   const selectedCable = useMemo(
     () => (selectedCableId ? (cables.find((c) => c.id === selectedCableId) ?? null) : null),
     [cables, selectedCableId]
@@ -78,6 +81,11 @@ export function Canvas() {
     el.addEventListener("transitionend", onEnd);
     return () => el.removeEventListener("transitionend", onEnd);
   }, [canvasAnimating, setCanvasAnimating]);
+
+  const handleFinishDrawing = useCallback((segments: Point[], onConfirmed: () => void) => {
+    setPendingNewCableSegments(segments);
+    pendingConfirmRef.current = onConfirmed;
+  }, []);
 
   const handleEditCable = useCallback((cable: Cable) => {
     setEditingCableId(cable.id);
@@ -206,9 +214,30 @@ export function Canvas() {
           onCancel={() => setEditingCableId(null)}
         />
       )}
+      {pendingNewCableSegments && (
+        <AddCableModal
+          open={true}
+          segments={pendingNewCableSegments}
+          onConfirm={(cable) => {
+            setCables((prev) => [...prev, cable]);
+            pendingConfirmRef.current?.();
+            pendingConfirmRef.current = null;
+            setPendingNewCableSegments(null);
+          }}
+          onCancel={() => {
+            pendingConfirmRef.current = null;
+            setPendingNewCableSegments(null);
+          }}
+        />
+      )}
       {ruler && <RulerOverlay />}
       {lineRuler && <LineRulerOverlay />}
-      {cableLayer && <CableLayerOverlay />}
+      {cableLayer && (
+        <CableLayerOverlay
+          onFinishDrawing={handleFinishDrawing}
+          isModalOpen={pendingNewCableSegments !== null}
+        />
+      )}
     </div>
   );
 }

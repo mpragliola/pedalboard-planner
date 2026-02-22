@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useBoard } from "../../context/BoardContext";
-import { useCable } from "../../context/CableContext";
 import { useCanvas } from "../../context/CanvasContext";
 import { useRendering } from "../../context/RenderingContext";
 import { templateService } from "../../lib/templateService";
@@ -10,20 +9,26 @@ import { vec2Add, vec2Scale, type Vec2, type Point } from "../../lib/vector";
 import { useCanvasCoords } from "../../hooks/useCanvasCoords";
 import { useCableDraw } from "../../hooks/useCableDraw";
 import { useCablePhysics } from "../../hooks/useCablePhysics";
-import { AddCableModal } from "./AddCableModal";
 import { CABLE_TERMINAL_START_COLOR, CABLE_TERMINAL_END_COLOR } from "../../constants/cables";
 import * as CLO from "../../constants/cableLayerOverlay";
-import type { Cable } from "../../types";
 import "../ruler/RulerOverlay.scss";
 import "./CableLayerOverlay.scss";
 
-export function CableLayerOverlay() {
-  const { canvasRef, zoom, pan, spaceDown } = useCanvas();
+interface CableLayerOverlayProps {
+  /** Called when the user commits a drawn path. The parent shows the add-cable modal and
+   *  must invoke onConfirmed() after the cable has been saved so the overlay can clear its
+   *  drawing state and exit cable-draw mode. On cancel, onConfirmed is not called and the
+   *  drawing remains intact so the user can continue editing. */
+  onFinishDrawing: (segments: Point[], onConfirmed: () => void) => void;
+  /** True while the parent-owned add-cable modal is open; suppresses overlay pointer events. */
+  isModalOpen: boolean;
+}
+
+export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOverlayProps) {
+  const { canvasRef, zoom, pan, spaceDown, gesture } = useCanvas();
   const { objects } = useBoard();
-  const { addCable } = useCable();
   const { setCableLayer } = useRendering();
   const { clientToCanvas, toScreen } = useCanvasCoords(canvasRef, zoom, pan);
-  const [pendingSegments, setPendingSegments] = useState<Point[] | null>(null);
   const finishClickRef = useRef<() => void>(() => {});
   /** Active pointer IDs – when >=2 we're pinch-zooming and suppress cable drawing. */
   const activePointersRef = useRef<Set<number>>(new Set());
@@ -32,6 +37,10 @@ export function CableLayerOverlay() {
   const exitMode = useCallback(() => {
     setCableLayer(() => false);
   }, [setCableLayer]);
+
+  const releaseCableGesture = useCallback(() => {
+    gesture.releaseMode("cable-draw");
+  }, [gesture]);
 
   const {
     points: cablePoints,
@@ -54,30 +63,21 @@ export function CableLayerOverlay() {
     onFinishClickRef: finishClickRef,
   });
 
-  const physicsPoints = useCablePhysics(segmentStart, currentEnd, hasPreview && pendingSegments === null);
+  const physicsPoints = useCablePhysics(segmentStart, currentEnd, hasPreview && !isModalOpen);
 
   const openAddCableModal = useCallback(() => {
     const final = getFinalPoints();
-    if (final.length > 1) setPendingSegments(final);
-  }, [getFinalPoints]);
+    if (final.length > 1) {
+      onFinishDrawing(final, () => {
+        clearDrawing();
+        exitMode();
+      });
+    }
+  }, [getFinalPoints, onFinishDrawing, clearDrawing, exitMode]);
 
   useEffect(() => {
     finishClickRef.current = openAddCableModal;
   }, [openAddCableModal]);
-
-  const handleAddCableConfirm = useCallback(
-    (cable: Cable) => {
-      addCable(cable);
-      clearDrawing();
-      setPendingSegments(null);
-      exitMode();
-    },
-    [addCable, clearDrawing, exitMode]
-  );
-
-  const handleAddCableCancel = useCallback(() => {
-    setPendingSegments(null);
-  }, []);
 
   /* Ref so ESC handler always sees current drawing state (avoids stale closure) */
   const hasDrawingRef = useRef(false);
@@ -86,13 +86,15 @@ export function CableLayerOverlay() {
   const lastTapRef = useRef<{ time: number; clientX: number; clientY: number } | null>(null);
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
-      if (pendingSegments !== null) return;
+      if (isModalOpen) return;
       if (e.button !== 0 && e.pointerType !== "touch") return;
       /* Let clicks on the action buttons through (Add cable, etc.) */
       if ((e.target as HTMLElement).closest(CLO.CABLE_LAYER_ACTIONS_SELECTOR)) return;
 
       /* Space+drag → let canvas handle panning */
       if (spaceDown) return;
+
+      if (!gesture.requestMode("cable-draw")) return;
 
       /* Track active pointers for pinch detection */
       activePointersRef.current.add(e.pointerId);
@@ -131,6 +133,7 @@ export function CableLayerOverlay() {
             /* may not have capture */
           }
         } else {
+          releaseCableGesture();
           exitMode();
         }
         return;
@@ -140,12 +143,22 @@ export function CableLayerOverlay() {
         (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
       }
     },
-    [pendingSegments, spaceDown, onPointerDown, exitMode, hasSegments, hasPreview, openAddCableModal]
+    [
+      isModalOpen,
+      spaceDown,
+      gesture,
+      onPointerDown,
+      exitMode,
+      hasSegments,
+      hasPreview,
+      openAddCableModal,
+      releaseCableGesture,
+    ]
   );
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent) => {
-      if (pendingSegments !== null || isPinchingRef.current) return;
+      if (isModalOpen || isPinchingRef.current) return;
       /* When pointer moves over Add cable button, release capture so the button can receive the click */
       const hit = document.elementFromPoint(e.clientX, e.clientY);
       if (hit?.closest?.(CLO.CABLE_LAYER_ACTIONS_SELECTOR)) {
@@ -157,7 +170,7 @@ export function CableLayerOverlay() {
       }
       onPointerMove(e);
     },
-    [pendingSegments, onPointerMove]
+    [isModalOpen, onPointerMove]
   );
 
   const handlePointerUp = useCallback(
@@ -166,9 +179,15 @@ export function CableLayerOverlay() {
       activePointersRef.current.delete(e.pointerId);
       const lastPointerReleased = activePointersRef.current.size === 0;
       if (lastPointerReleased) isPinchingRef.current = false;
-      if (pendingSegments !== null || isPinchingRef.current) return;
+      if (isModalOpen || isPinchingRef.current) {
+        releaseCableGesture();
+        return;
+      }
       /* Don't add a segment when releasing the last finger after a pinch */
-      if (lastPointerReleased && wasPinching) return;
+      if (lastPointerReleased && wasPinching) {
+        releaseCableGesture();
+        return;
+      }
       /* With pointer capture, e.target is the overlay; use elementFromPoint to see where release actually was */
       const hit = document.elementFromPoint(e.clientX, e.clientY);
       if (hit?.closest?.(CLO.CABLE_LAYER_ACTIONS_SELECTOR)) {
@@ -182,6 +201,7 @@ export function CableLayerOverlay() {
         if (e.button === 0 || e.pointerType === "touch") {
           lastTapRef.current = { time: Date.now(), clientX: e.clientX, clientY: e.clientY };
         }
+        releaseCableGesture();
         return;
       }
       onPointerUp(e);
@@ -193,16 +213,17 @@ export function CableLayerOverlay() {
       if (e.button === 0 || e.pointerType === "touch") {
         lastTapRef.current = { time: Date.now(), clientX: e.clientX, clientY: e.clientY };
       }
+      releaseCableGesture();
     },
-    [pendingSegments, onPointerUp, hasSegments, hasPreview, openAddCableModal]
+    [isModalOpen, onPointerUp, hasSegments, hasPreview, openAddCableModal, releaseCableGesture]
   );
+
+  useEffect(() => () => releaseCableGesture(), [releaseCableGesture]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (pendingSegments !== null) {
-        if (e.key === "Escape") setPendingSegments(null);
-        return;
-      }
+      /* While the parent modal is open, let it handle its own keyboard events */
+      if (isModalOpen) return;
       if (e.key === "Escape") {
         if (hasDrawingRef.current) {
           e.preventDefault();
@@ -219,7 +240,7 @@ export function CableLayerOverlay() {
     };
     window.addEventListener("keydown", handleKeyDown, true);
     return () => window.removeEventListener("keydown", handleKeyDown, true);
-  }, [exitMode, openAddCableModal, pendingSegments, clearDrawing]);
+  }, [exitMode, openAddCableModal, isModalOpen, clearDrawing]);
 
   const joinRadiusPx = DEFAULT_JOIN_RADIUS * zoom;
   const strokeWidthPx = CLO.CABLE_LAYER_STROKE_WIDTH_MM * zoom;
@@ -283,13 +304,11 @@ export function CableLayerOverlay() {
     [hasSegments, hasPreview, clearDrawing]
   );
 
-  const overlayActive = pendingSegments === null;
-
   return (
     <div
       className={`cable-layer-overlay ruler-overlay${
-        overlayActive ? " cable-layer-active" : ""
-      }${pendingSegments !== null ? " cable-layer-modal-open" : ""}`}
+        !isModalOpen ? " cable-layer-active" : ""
+      }${isModalOpen ? " cable-layer-modal-open" : ""}`}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -388,12 +407,6 @@ export function CableLayerOverlay() {
           </p>
         </div>
       )}
-      <AddCableModal
-        open={pendingSegments !== null}
-        segments={pendingSegments ?? []}
-        onConfirm={handleAddCableConfirm}
-        onCancel={handleAddCableCancel}
-      />
     </div>
   );
 }
