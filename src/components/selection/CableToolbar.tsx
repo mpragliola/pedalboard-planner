@@ -1,7 +1,6 @@
 import { faArrowDown, faArrowUp, faPen, faTrash } from "@fortawesome/free-solid-svg-icons";
 import type { Cable } from "../../types";
-import { getBoundingBoxOfPoints } from "../../lib/geometry";
-import { getBounds2DCenter } from "../../lib/bounds";
+import { getBounds2DCenter, getBounds2DOfPoints } from "../../lib/bounds";
 import { vec2Average } from "../../lib/vector";
 import { computeToolbarPosition } from "../../lib/toolbarPosition";
 import { useConfirmation } from "../../context/ConfirmationContext";
@@ -24,7 +23,7 @@ export function CableToolbar({ cable, onEdit, onDelete, onSendToBack, onBringToF
   const { requestConfirmation } = useConfirmation();
   const scaleUp = useMediaQuery(MEDIA_QUERY_MAX_MOBILE);
 
-  const bounds = getBoundingBoxOfPoints(cable.segments);
+  const bounds = getBounds2DOfPoints(cable.segments);
   const center = bounds ? getBounds2DCenter(bounds) : vec2Average(cable.segments);
   const { left, top } = computeToolbarPosition(
     center,
