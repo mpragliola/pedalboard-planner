@@ -9,6 +9,11 @@ import { vec2Add, vec2Scale, type Vec2, type Point } from "../../lib/vector";
 import { useCanvasCoords } from "../../hooks/useCanvasCoords";
 import { useCableDraw } from "../../hooks/useCableDraw";
 import { useCablePhysics } from "../../hooks/useCablePhysics";
+import {
+  canHandleCableLayerPointerDown,
+  isPrimaryCableLayerPointer,
+  resolveCableLayerPointerDownDecision,
+} from "./cableLayerPointerDown";
 import { CABLE_TERMINAL_START_COLOR, CABLE_TERMINAL_END_COLOR } from "../../constants/cables";
 import * as CLO from "../../constants/cableLayerOverlay";
 import "../ruler/RulerOverlay.scss";
@@ -86,19 +91,33 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
   const lastTapRef = useRef<{ time: number; clientX: number; clientY: number } | null>(null);
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
-      if (isModalOpen) return;
-      if (e.button !== 0 && e.pointerType !== "touch") return;
-      /* Let clicks on the action buttons through (Add cable, etc.) */
-      if ((e.target as HTMLElement).closest(CLO.CABLE_LAYER_ACTIONS_SELECTOR)) return;
-
-      /* Space+drag → let canvas handle panning */
-      if (spaceDown) return;
-
+      const overActions = Boolean((e.target as HTMLElement).closest(CLO.CABLE_LAYER_ACTIONS_SELECTOR));
+      if (
+        !canHandleCableLayerPointerDown({
+          isModalOpen,
+          isPrimaryPointer: isPrimaryCableLayerPointer(e.button, e.pointerType),
+          overActions,
+          spaceDown,
+        })
+      ) {
+        return;
+      }
       if (!gesture.requestMode("cable-draw")) return;
-
-      /* Track active pointers for pinch detection */
       activePointersRef.current.add(e.pointerId);
-      if (activePointersRef.current.size >= 2) {
+      const now = Date.now();
+      const last = lastTapRef.current;
+      const isDoubleTap =
+        Boolean(last) &&
+        now - (last?.time ?? 0) < CLO.CABLE_LAYER_DOUBLE_TAP_MS &&
+        Math.hypot(e.clientX - (last?.clientX ?? 0), e.clientY - (last?.clientY ?? 0)) <
+          CLO.CABLE_LAYER_DOUBLE_TAP_MAX_DISTANCE_PX;
+      const decision = resolveCableLayerPointerDownDecision({
+        activePointerCount: activePointersRef.current.size,
+        isPinching: isPinchingRef.current,
+        isDoubleTap,
+      });
+
+      if (decision === "begin-pinch") {
         /* Multi-touch detected → release any capture so pinch-to-zoom works */
         isPinchingRef.current = true;
         const el = e.currentTarget as HTMLElement;
@@ -112,15 +131,9 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
         return;
       }
 
-      if (isPinchingRef.current) return;
+      if (decision === "ignore") return;
 
-      const now = Date.now();
-      const last = lastTapRef.current;
-      if (
-        last &&
-        now - last.time < CLO.CABLE_LAYER_DOUBLE_TAP_MS &&
-        Math.hypot(e.clientX - last.clientX, e.clientY - last.clientY) < CLO.CABLE_LAYER_DOUBLE_TAP_MAX_DISTANCE_PX
-      ) {
+      if (decision === "double-tap") {
         lastTapRef.current = null;
         e.preventDefault();
         e.stopPropagation();
@@ -138,8 +151,12 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
         }
         return;
       }
-      onPointerDown(e);
-      if (e.button === 0 || e.pointerType === "touch") {
+
+      if (
+        decision === "draw" &&
+        (e.button === 0 || e.pointerType === "touch")
+      ) {
+        onPointerDown(e);
         (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
       }
     },
