@@ -18,6 +18,7 @@ import { useUi } from "../../context/UiContext";
 import { useMini3d } from "../../context/Mini3dContext";
 import { CANVAS_BACKGROUNDS } from "../../constants/backgrounds";
 import { clamp } from "../../lib/math";
+import { isDoubleTapWithinThreshold } from "../../lib/tapGesture";
 import { Mini3DRootScene, ShadowMapController } from "./Mini3DRootScene";
 import {
   CAMERA_DISTANCE_SCALE_DEFAULT,
@@ -395,15 +396,15 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
         activeTouchPointsRef.current.size === 0
       ) {
         const now = performance.now();
-        const lastTap = lastTouchTapRef.current;
-        if (lastTap && now - lastTap.time <= DOUBLE_TAP_TIME_WINDOW_MS) {
-          const tapDistance = Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y);
-          if (tapDistance <= DOUBLE_TAP_MAX_DISTANCE_PX) {
-            lastTouchTapRef.current = null;
-            toggleFullscreen();
-          } else {
-            lastTouchTapRef.current = { time: now, x: e.clientX, y: e.clientY };
-          }
+        // Keep candidate/movement guards local, but reuse shared threshold math.
+        const isDoubleTap = isDoubleTapWithinThreshold(
+          lastTouchTapRef.current,
+          { time: now, x: e.clientX, y: e.clientY },
+          { windowMs: DOUBLE_TAP_TIME_WINDOW_MS, maxDistancePx: DOUBLE_TAP_MAX_DISTANCE_PX }
+        );
+        if (isDoubleTap) {
+          lastTouchTapRef.current = null;
+          toggleFullscreen();
         } else {
           lastTouchTapRef.current = { time: now, x: e.clientX, y: e.clientY };
         }
