@@ -10,6 +10,7 @@ import { vec2Add, vec2Scale, type Vec2, type Point } from "../../lib/vector";
 import { useCanvasCoords } from "../../hooks/useCanvasCoords";
 import { useCableDraw } from "../../hooks/useCableDraw";
 import { useCablePhysics } from "../../hooks/useCablePhysics";
+import { useCableLayerKeyboard } from "./useCableLayerKeyboard";
 import {
   canHandleCableLayerPointerDown,
   isPrimaryCableLayerPointer,
@@ -93,9 +94,13 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
     finishClickRef.current = openAddCableModal;
   }, [openAddCableModal]);
 
-  /* Ref so ESC handler always sees current drawing state (avoids stale closure) */
-  const hasDrawingRef = useRef(false);
-  hasDrawingRef.current = !!(hasSegments || hasPreview);
+  useCableLayerKeyboard({
+    isModalOpen,
+    hasDrawing: hasSegments || hasPreview,
+    clearDrawing,
+    exitMode,
+    openAddCableModal,
+  });
 
   const lastTapRef = useRef<{ time: number; x: number; y: number } | null>(null);
   const handlePointerDown = useCallback(
@@ -261,28 +266,6 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
   );
 
   useEffect(() => () => releaseCableGesture(), [releaseCableGesture]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      /* While the parent modal is open, let it handle its own keyboard events */
-      if (isModalOpen) return;
-      if (e.key === "Escape") {
-        if (hasDrawingRef.current) {
-          e.preventDefault();
-          clearDrawing();
-        } else {
-          exitMode();
-        }
-        return;
-      }
-      if (e.key === "Enter" && hasDrawingRef.current) {
-        e.preventDefault();
-        openAddCableModal();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown, true);
-    return () => window.removeEventListener("keydown", handleKeyDown, true);
-  }, [exitMode, openAddCableModal, isModalOpen, clearDrawing]);
 
   const joinRadiusPx = DEFAULT_JOIN_RADIUS * zoom;
   const strokeWidthPx = CLO.CABLE_LAYER_STROKE_WIDTH_MM * zoom;
