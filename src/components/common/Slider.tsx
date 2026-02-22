@@ -9,7 +9,7 @@ interface SliderProps
   onValueChange: (value: string) => void;
 }
 
-export function Slider({ min, max, step = 1, value, onValueChange, ...rest }: SliderProps) {
+export function Slider({ min, max, step = 5, value, onValueChange, ...rest }: SliderProps) {
   return (
     <input
       type="range"

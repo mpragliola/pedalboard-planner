@@ -1,8 +1,8 @@
 import './SizeFilters.scss'
-import { Slider } from '../../common/Slider'
+import * as Slider from "@radix-ui/react-slider"
 
 export type SizeAxis = "width" | "depth"
-export type SizeBound = "min" | "max"
+export type SizeRange = readonly [number, number]
 
 interface SizeFiltersProps {
   unitLabel: string
@@ -12,8 +12,14 @@ interface SizeFiltersProps {
   depthRange: readonly [number, number]
   depthMin: string
   depthMax: string
-  onRangeChange: (axis: SizeAxis, bound: SizeBound, value: string) => void
+  onRangeChange: (axis: SizeAxis, range: SizeRange) => void
   formatSliderValue: (mm: number) => string
+}
+
+function normalizeSliderValues(values: number[], fallback: SizeRange): SizeRange {
+  const first = values[0] ?? fallback[0]
+  const second = values[1] ?? fallback[1]
+  return first <= second ? [first, second] : [second, first]
 }
 
 export function SizeFilters({
@@ -46,24 +52,23 @@ export function SizeFilters({
           </span>
         </div>
         <div className="size-slider-row">
-          <Slider
+          <Slider.Root
             className="size-slider"
             min={widthRange[0]}
             max={widthRange[1]}
             step={5}
-            value={widthMinVal}
-            onValueChange={(value) => onRangeChange("width", "min", value)}
-            aria-label={`Min width (${unitLabel})`}
-          />
-          <Slider
-            className="size-slider"
-            min={widthRange[0]}
-            max={widthRange[1]}
-            step={5}
-            value={widthMaxVal}
-            onValueChange={(value) => onRangeChange("width", "max", value)}
-            aria-label={`Max width (${unitLabel})`}
-          />
+            minStepsBetweenThumbs={0}
+            value={[widthMinVal, widthMaxVal]}
+            onValueChange={(values: number[]) =>
+              onRangeChange("width", normalizeSliderValues(values, [widthMinVal, widthMaxVal]))
+            }
+          >
+            <Slider.Track className="size-slider-track">
+              <Slider.Range className="size-slider-range" />
+            </Slider.Track>
+            <Slider.Thumb className="size-slider-thumb" aria-label={`Min width (${unitLabel})`} />
+            <Slider.Thumb className="size-slider-thumb" aria-label={`Max width (${unitLabel})`} />
+          </Slider.Root>
         </div>
       </div>
       <div className="size-filter-block size-filter-depth">
@@ -74,24 +79,23 @@ export function SizeFilters({
           </span>
         </div>
         <div className="size-slider-row">
-          <Slider
+          <Slider.Root
             className="size-slider"
             min={depthRange[0]}
             max={depthRange[1]}
             step={5}
-            value={depthMinVal}
-            onValueChange={(value) => onRangeChange("depth", "min", value)}
-            aria-label={`Min depth (${unitLabel})`}
-          />
-          <Slider
-            className="size-slider"
-            min={depthRange[0]}
-            max={depthRange[1]}
-            step={5}
-            value={depthMaxVal}
-            onValueChange={(value) => onRangeChange("depth", "max", value)}
-            aria-label={`Max depth (${unitLabel})`}
-          />
+            minStepsBetweenThumbs={0}
+            value={[depthMinVal, depthMaxVal]}
+            onValueChange={(values: number[]) =>
+              onRangeChange("depth", normalizeSliderValues(values, [depthMinVal, depthMaxVal]))
+            }
+          >
+            <Slider.Track className="size-slider-track">
+              <Slider.Range className="size-slider-range" />
+            </Slider.Track>
+            <Slider.Thumb className="size-slider-thumb" aria-label={`Min depth (${unitLabel})`} />
+            <Slider.Thumb className="size-slider-thumb" aria-label={`Max depth (${unitLabel})`} />
+          </Slider.Root>
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-@use "../../styles/variables" as vars;
+@use "../../../styles/variables" as vars;
 
 .size-filters {
   display: flex;
@@ -25,23 +25,52 @@
   }
 
   .size-slider-row {
-    display: flex;
-    gap: 6px;
+    display: block;
     align-items: center;
-
-    .size-slider {
-      flex: 1;
-      min-width: 0;
-    }
   }
 
   .size-slider {
+    position: relative;
+    display: flex;
+    align-items: center;
     width: 100%;
     max-width: 100%;
-    height: 6px;
+    height: 20px;
     margin: 0;
+    touch-action: none;
+    user-select: none;
+  }
+
+  .size-slider-track {
+    position: relative;
+    flex: 1;
+    height: 6px;
+    border-radius: 999px;
+    background: vars.$color-surface-strong;
+  }
+
+  .size-slider-range {
+    position: absolute;
+    height: 100%;
+    border-radius: 999px;
+    background: vars.$color-accent-soft;
+  }
+
+  .size-slider-thumb {
+    display: block;
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    border: 1px solid vars.$color-border-strong;
+    background: vars.$color-surface;
     cursor: pointer;
-    accent-color: vars.$color-accent-soft;
+    box-shadow: 0 1px 2px vars.$black-20;
+  }
+
+  .size-slider-thumb:focus-visible {
+    outline: none;
+    border-color: vars.$color-accent-soft;
+    box-shadow: 0 0 0 3px vars.$accent-soft-25;
   }
 
   @media (max-width: 768px) {

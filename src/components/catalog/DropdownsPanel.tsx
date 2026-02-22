@@ -9,32 +9,20 @@ import { CatalogModeSwitch } from "./CatalogModeSwitch";
 import { TextFilter } from "./filters/TextFilter";
 import { CatalogList, CatalogListGrouped, type CatalogViewMode } from "./CatalogList";
 import { CustomItemForm } from "./CustomItemForm";
-import { SizeFilters, type SizeAxis, type SizeBound } from "./filters/SizeFilters";
+import { SizeFilters, type SizeAxis, type SizeRange } from "./filters/SizeFilters";
 import "./DropdownsPanel.scss";
 
 export type { CatalogMode } from "./CatalogModeSwitch";
 
-/** Applies a min/max range update and auto-clamps the opposite bound when crossed. */
+/** Applies a range pair and keeps boundary values normalized as "no filter" (empty string). */
 function applyRangeUpdate(
-  type: SizeBound,
   range: readonly [number, number],
   filter: RangeFilter,
-  value: string
+  values: SizeRange
 ) {
-  const [setSelf, getOpp, setOpp] =
-    type === "min"
-      ? [filter.setMin, () => filter.max, filter.setMax] as const
-      : [filter.setMax, () => filter.min, filter.setMin] as const;
-
-  const boundary = type === "min" ? range[0] : range[1];
-  const isAtBoundary = value === String(boundary);
-  setSelf(isAtBoundary ? "" : value);
-  const num = Number(value);
-  const oppositeVal = getOpp() ? Number(getOpp()) : type === "min" ? range[1] : range[0];
-  if (!isAtBoundary) {
-    if (type === "min" && num > oppositeVal) setOpp(value);
-    if (type === "max" && num < oppositeVal) setOpp(value);
-  }
+  const [minValue, maxValue] = values;
+  filter.setMin(minValue <= range[0] ? "" : String(minValue));
+  filter.setMax(maxValue >= range[1] ? "" : String(maxValue));
 }
 
 export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel(_props, ref) {
@@ -60,20 +48,20 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
   const formatSliderValue = (mm: number) => (unit === "in" ? (mm / 25.4).toFixed(2) : String(Math.round(mm)));
   const unitLabel = unit === "in" ? "in" : "mm";
 
-  const handleBoardRangeChange = (axis: SizeAxis, bound: SizeBound, value: string) => {
+  const handleBoardRangeChange = (axis: SizeAxis, values: SizeRange) => {
     const [range, filter] =
       axis === "width"
         ? [boardWidthRange, boardWidth] as const
         : [boardDepthRange, boardDepth] as const;
-    applyRangeUpdate(bound, range, filter, value);
+    applyRangeUpdate(range, filter, values);
   };
 
-  const handleDeviceRangeChange = (axis: SizeAxis, bound: SizeBound, value: string) => {
+  const handleDeviceRangeChange = (axis: SizeAxis, values: SizeRange) => {
     const [range, filter] =
       axis === "width"
         ? [deviceWidthRange, deviceWidth] as const
         : [deviceDepthRange, deviceDepth] as const;
-    applyRangeUpdate(bound, range, filter, value);
+    applyRangeUpdate(range, filter, values);
   };
 
   const deviceGroups: {
