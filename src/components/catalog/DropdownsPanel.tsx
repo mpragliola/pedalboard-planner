@@ -9,33 +9,32 @@ import { CatalogModeSwitch } from "./CatalogModeSwitch";
 import { TextFilter } from "./filters/TextFilter";
 import { CatalogList, CatalogListGrouped, type CatalogViewMode } from "./CatalogList";
 import { CustomItemForm } from "./CustomItemForm";
-import { SizeFilters } from "./filters/SizeFilters";
+import { SizeFilters, type SizeAxis, type SizeBound } from "./filters/SizeFilters";
 import "./DropdownsPanel.scss";
 
 export type { CatalogMode } from "./CatalogModeSwitch";
 
-/** Factory for min/max range filter handlers that auto-clamp the opposite bound. */
-function createRangeHandler(
-  type: "min" | "max",
+/** Applies a min/max range update and auto-clamps the opposite bound when crossed. */
+function applyRangeUpdate(
+  type: SizeBound,
   range: readonly [number, number],
-  filter: RangeFilter
+  filter: RangeFilter,
+  value: string
 ) {
   const [setSelf, getOpp, setOpp] =
     type === "min"
       ? [filter.setMin, () => filter.max, filter.setMax] as const
       : [filter.setMax, () => filter.min, filter.setMin] as const;
 
-  return (v: string) => {
-    const boundary = type === "min" ? range[0] : range[1];
-    const isAtBoundary = v === String(boundary);
-    setSelf(isAtBoundary ? "" : v);
-    const num = Number(v);
-    const oppositeVal = getOpp() ? Number(getOpp()) : type === "min" ? range[1] : range[0];
-    if (!isAtBoundary) {
-      if (type === "min" && num > oppositeVal) setOpp(v);
-      if (type === "max" && num < oppositeVal) setOpp(v);
-    }
-  };
+  const boundary = type === "min" ? range[0] : range[1];
+  const isAtBoundary = value === String(boundary);
+  setSelf(isAtBoundary ? "" : value);
+  const num = Number(value);
+  const oppositeVal = getOpp() ? Number(getOpp()) : type === "min" ? range[1] : range[0];
+  if (!isAtBoundary) {
+    if (type === "min" && num > oppositeVal) setOpp(value);
+    if (type === "max" && num < oppositeVal) setOpp(value);
+  }
 }
 
 export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel(_props, ref) {
@@ -61,14 +60,21 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
   const formatSliderValue = (mm: number) => (unit === "in" ? (mm / 25.4).toFixed(2) : String(Math.round(mm)));
   const unitLabel = unit === "in" ? "in" : "mm";
 
-  const handleBoardWidthMin = createRangeHandler("min", boardWidthRange, boardWidth);
-  const handleBoardWidthMax = createRangeHandler("max", boardWidthRange, boardWidth);
-  const handleBoardDepthMin = createRangeHandler("min", boardDepthRange, boardDepth);
-  const handleBoardDepthMax = createRangeHandler("max", boardDepthRange, boardDepth);
-  const handleDeviceWidthMin = createRangeHandler("min", deviceWidthRange, deviceWidth);
-  const handleDeviceWidthMax = createRangeHandler("max", deviceWidthRange, deviceWidth);
-  const handleDeviceDepthMin = createRangeHandler("min", deviceDepthRange, deviceDepth);
-  const handleDeviceDepthMax = createRangeHandler("max", deviceDepthRange, deviceDepth);
+  const handleBoardRangeChange = (axis: SizeAxis, bound: SizeBound, value: string) => {
+    const [range, filter] =
+      axis === "width"
+        ? [boardWidthRange, boardWidth] as const
+        : [boardDepthRange, boardDepth] as const;
+    applyRangeUpdate(bound, range, filter, value);
+  };
+
+  const handleDeviceRangeChange = (axis: SizeAxis, bound: SizeBound, value: string) => {
+    const [range, filter] =
+      axis === "width"
+        ? [deviceWidthRange, deviceWidth] as const
+        : [deviceDepthRange, deviceDepth] as const;
+    applyRangeUpdate(bound, range, filter, value);
+  };
 
   const deviceGroups: {
     deviceType: DeviceType;
@@ -146,13 +152,10 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
                   widthRange={boardWidthRange}
                   widthMin={boardWidth.min}
                   widthMax={boardWidth.max}
-                  onWidthMinChange={handleBoardWidthMin}
-                  onWidthMaxChange={handleBoardWidthMax}
                   depthRange={boardDepthRange}
                   depthMin={boardDepth.min}
                   depthMax={boardDepth.max}
-                  onDepthMinChange={handleBoardDepthMin}
-                  onDepthMaxChange={handleBoardDepthMax}
+                  onRangeChange={handleBoardRangeChange}
                   formatSliderValue={formatSliderValue}
                 />
                 <button
@@ -284,13 +287,10 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
                   widthRange={deviceWidthRange}
                   widthMin={deviceWidth.min}
                   widthMax={deviceWidth.max}
-                  onWidthMinChange={handleDeviceWidthMin}
-                  onWidthMaxChange={handleDeviceWidthMax}
                   depthRange={deviceDepthRange}
                   depthMin={deviceDepth.min}
                   depthMax={deviceDepth.max}
-                  onDepthMinChange={handleDeviceDepthMin}
-                  onDepthMaxChange={handleDeviceDepthMax}
+                  onRangeChange={handleDeviceRangeChange}
                   formatSliderValue={formatSliderValue}
                 />
                 <button

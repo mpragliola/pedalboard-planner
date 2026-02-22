@@ -1,18 +1,18 @@
 import './SizeFilters.scss'
 import { Slider } from '../../common/Slider'
 
+export type SizeAxis = "width" | "depth"
+export type SizeBound = "min" | "max"
+
 interface SizeFiltersProps {
   unitLabel: string
   widthRange: readonly [number, number]
   widthMin: string
   widthMax: string
-  onWidthMinChange: (value: string) => void
-  onWidthMaxChange: (value: string) => void
   depthRange: readonly [number, number]
   depthMin: string
   depthMax: string
-  onDepthMinChange: (value: string) => void
-  onDepthMaxChange: (value: string) => void
+  onRangeChange: (axis: SizeAxis, bound: SizeBound, value: string) => void
   formatSliderValue: (mm: number) => string
 }
 
@@ -21,13 +21,10 @@ export function SizeFilters({
   widthRange,
   widthMin,
   widthMax,
-  onWidthMinChange,
-  onWidthMaxChange,
   depthRange,
   depthMin,
   depthMax,
-  onDepthMinChange,
-  onDepthMaxChange,
+  onRangeChange,
   formatSliderValue,
 }: SizeFiltersProps) {
   const [widthMinVal, widthMaxVal] = [
@@ -49,13 +46,13 @@ export function SizeFilters({
           </span>
         </div>
         <div className="size-slider-row">
-           <Slider
+          <Slider
             className="size-slider"
             min={widthRange[0]}
             max={widthRange[1]}
             step={5}
             value={widthMinVal}
-            onValueChange={onWidthMinChange}
+            onValueChange={(value) => onRangeChange("width", "min", value)}
             aria-label={`Min width (${unitLabel})`}
           />
           <Slider
@@ -64,7 +61,7 @@ export function SizeFilters({
             max={widthRange[1]}
             step={5}
             value={widthMaxVal}
-            onValueChange={onWidthMaxChange}
+            onValueChange={(value) => onRangeChange("width", "max", value)}
             aria-label={`Max width (${unitLabel})`}
           />
         </div>
@@ -83,7 +80,7 @@ export function SizeFilters({
             max={depthRange[1]}
             step={5}
             value={depthMinVal}
-            onValueChange={onDepthMinChange}
+            onValueChange={(value) => onRangeChange("depth", "min", value)}
             aria-label={`Min depth (${unitLabel})`}
           />
           <Slider
@@ -92,7 +89,7 @@ export function SizeFilters({
             max={depthRange[1]}
             step={5}
             value={depthMaxVal}
-            onValueChange={onDepthMaxChange}
+            onValueChange={(value) => onRangeChange("depth", "max", value)}
             aria-label={`Max depth (${unitLabel})`}
           />
         </div>
