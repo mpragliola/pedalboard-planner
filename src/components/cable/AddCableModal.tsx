@@ -425,84 +425,109 @@ export interface AddCableModalProps {
   initialCable?: Cable | null;
 }
 
+interface CableFormDraft {
+  color: string;
+  connectorA: ConnectorKind;
+  connectorB: ConnectorKind;
+  selectedTemplateName: string;
+  connectorAName: string;
+  connectorBName: string;
+}
+
+export function createInitialCableFormDraft(initialCable?: Cable | null): CableFormDraft {
+  // Centralized form init keeps modal open/reset behavior in one place.
+  // Edit mode pulls values from initial cable; create mode uses defaults.
+  if (initialCable) {
+    return {
+      color: CABLE_COLOR_OPTIONS.includes(initialCable.color) ? initialCable.color : CABLE_COLOR_OPTIONS[0],
+      connectorA: initialCable.connectorA,
+      connectorB: initialCable.connectorB,
+      selectedTemplateName: findTemplateName(initialCable.connectorA, initialCable.connectorB),
+      connectorAName: initialCable.connectorAName ?? "",
+      connectorBName: initialCable.connectorBName ?? "",
+    };
+  }
+  return {
+    color: DEFAULT_COLOR,
+    connectorA: DEFAULT_CONNECTOR,
+    connectorB: DEFAULT_CONNECTOR,
+    selectedTemplateName: "",
+    connectorAName: "",
+    connectorBName: "",
+  };
+}
+
 export function AddCableModal({ open, segments, onConfirm, onCancel, initialCable }: AddCableModalProps) {
   const isEdit = Boolean(initialCable);
-  const [color, setColor] = useState(DEFAULT_COLOR);
-  const [connectorA, setConnectorA] = useState<ConnectorKind>(DEFAULT_CONNECTOR);
-  const [connectorB, setConnectorB] = useState<ConnectorKind>(DEFAULT_CONNECTOR);
-  const [selectedTemplateName, setSelectedTemplateName] = useState("");
-  const [connectorAName, setConnectorAName] = useState("");
-  const [connectorBName, setConnectorBName] = useState("");
-  const prevOpenRef = useRef(false);
+  // Single draft object replaces multiple parallel state setters.
+  // This avoids "first-open" refs and makes initialization atomic.
+  const [draft, setDraft] = useState<CableFormDraft>(() => createInitialCableFormDraft(initialCable));
+  // "Editing identity" is the minimal signal for when form defaults should reset.
+  // For create mode this stays "new"; for edit mode it tracks the cable being edited.
+  const editingIdentity = initialCable?.id ?? "new";
 
   useEffect(() => {
-    if (open && !prevOpenRef.current) {
-      prevOpenRef.current = true;
-      if (initialCable) {
-        setColor(
-          CABLE_COLOR_OPTIONS.includes(initialCable.color) ? initialCable.color : CABLE_COLOR_OPTIONS[0]
-        );
-        setConnectorA(initialCable.connectorA);
-        setConnectorB(initialCable.connectorB);
-        setSelectedTemplateName(findTemplateName(initialCable.connectorA, initialCable.connectorB));
-        setConnectorAName(initialCable.connectorAName ?? "");
-        setConnectorBName(initialCable.connectorBName ?? "");
-      } else {
-        setColor(DEFAULT_COLOR);
-        setConnectorA(DEFAULT_CONNECTOR);
-        setConnectorB(DEFAULT_CONNECTOR);
-        setSelectedTemplateName("");
-        setConnectorAName("");
-        setConnectorBName("");
-      }
-    }
-    if (!open) prevOpenRef.current = false;
-  }, [open, initialCable]);
+    // Reinitialize form whenever modal opens, or when edit identity changes.
+    // `editingIdentity` keeps this stable and avoids resetting while typing.
+    if (!open) return;
+    setDraft(createInitialCableFormDraft(initialCable));
+  }, [open, editingIdentity, initialCable]);
 
   const handleConfirm = () => {
+    // Edit mode preserves the cable's existing geometry; create mode consumes fresh drawn segments.
     const segs = isEdit && initialCable ? initialCable.segments : segments;
     if (segs.length < 2) return;
     const cable: Cable = {
       id: isEdit && initialCable ? initialCable.id : nextCableId(),
       segments: segs,
-      color,
-      connectorA,
-      connectorB,
-      ...(connectorAName.trim() && { connectorAName: connectorAName.trim() }),
-      ...(connectorBName.trim() && { connectorBName: connectorBName.trim() }),
+      color: draft.color,
+      connectorA: draft.connectorA,
+      connectorB: draft.connectorB,
+      ...(draft.connectorAName.trim() && { connectorAName: draft.connectorAName.trim() }),
+      ...(draft.connectorBName.trim() && { connectorBName: draft.connectorBName.trim() }),
     };
     onConfirm(cable);
   };
 
   const handleSwapConnectors = () => {
-    const nextConnectorA = connectorB;
-    const nextConnectorB = connectorA;
-    const nextConnectorAName = connectorBName;
-    const nextConnectorBName = connectorAName;
-    setConnectorA(nextConnectorA);
-    setConnectorB(nextConnectorB);
-    setSelectedTemplateName(findTemplateName(nextConnectorA, nextConnectorB));
-    setConnectorAName(nextConnectorAName);
-    setConnectorBName(nextConnectorBName);
+    setDraft((prev) => {
+      // Swap is semantic (terminal A/B), so labels are swapped with connector kinds as well.
+      const nextConnectorA = prev.connectorB;
+      const nextConnectorB = prev.connectorA;
+      return {
+        ...prev,
+        connectorA: nextConnectorA,
+        connectorB: nextConnectorB,
+        connectorAName: prev.connectorBName,
+        connectorBName: prev.connectorAName,
+        selectedTemplateName: findTemplateName(nextConnectorA, nextConnectorB),
+      };
+    });
   };
 
   const handleConnectorAChange = (nextConnector: ConnectorKind) => {
-    setConnectorA(nextConnector);
-    setSelectedTemplateName("");
+    // Manual connector edits clear template selection because we are now off-template.
+    setDraft((prev) => ({ ...prev, connectorA: nextConnector, selectedTemplateName: "" }));
   };
 
   const handleConnectorBChange = (nextConnector: ConnectorKind) => {
-    setConnectorB(nextConnector);
-    setSelectedTemplateName("");
+    // Keep behavior symmetrical with connector A changes.
+    setDraft((prev) => ({ ...prev, connectorB: nextConnector, selectedTemplateName: "" }));
   };
 
   const handleTemplateChange = (templateName: string) => {
-    setSelectedTemplateName(templateName);
-    if (!templateName) return;
     const template = CABLE_CONNECTOR_TEMPLATES.find((item) => item.name === templateName);
-    if (!template) return;
-    setConnectorA(template.connectorA);
-    setConnectorB(template.connectorB);
+    setDraft((prev) => {
+      // Empty selection means "no template", preserving current connector picks.
+      if (!templateName || !template) return { ...prev, selectedTemplateName: templateName };
+      // Template selection writes both endpoint kinds in one atomic update.
+      return {
+        ...prev,
+        selectedTemplateName: templateName,
+        connectorA: template.connectorA,
+        connectorB: template.connectorB,
+      };
+    });
   };
 
   if (!open) return null;
@@ -517,19 +542,19 @@ export function AddCableModal({ open, segments, onConfirm, onCancel, initialCabl
       ignoreBackdropClickForMs={200}
     >
       <div className="add-cable-form">
-        <CableColorSection selectedColor={color} onColorChange={setColor} />
+        <CableColorSection selectedColor={draft.color} onColorChange={(nextColor) => setDraft((prev) => ({ ...prev, color: nextColor }))} />
         <CableEndpointsSection
-          selectedTemplateName={selectedTemplateName}
+          selectedTemplateName={draft.selectedTemplateName}
           onTemplateChange={handleTemplateChange}
           onSwapConnectors={handleSwapConnectors}
-          connectorA={connectorA}
+          connectorA={draft.connectorA}
           onConnectorAChange={handleConnectorAChange}
-          connectorAName={connectorAName}
-          onConnectorANameChange={setConnectorAName}
-          connectorB={connectorB}
+          connectorAName={draft.connectorAName}
+          onConnectorANameChange={(nextName) => setDraft((prev) => ({ ...prev, connectorAName: nextName }))}
+          connectorB={draft.connectorB}
           onConnectorBChange={handleConnectorBChange}
-          connectorBName={connectorBName}
-          onConnectorBNameChange={setConnectorBName}
+          connectorBName={draft.connectorBName}
+          onConnectorBNameChange={(nextName) => setDraft((prev) => ({ ...prev, connectorBName: nextName }))}
         />
         <CableFormActions isEdit={isEdit} onCancel={onCancel} onConfirm={handleConfirm} />
       </div>

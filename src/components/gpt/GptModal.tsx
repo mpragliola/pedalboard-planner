@@ -29,11 +29,9 @@ export function GptModal({ open, onClose }: GptModalProps) {
   const [locationLoading, setLocationLoading] = useState(false)
   const [locationError, setLocationError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
-  /** Pending location from "Load from browser"; applied to location in effect so input updates. */
-  const [loadedPlacePending, setLoadedPlacePending] = useState<string | null>(null)
-  const [locationInputKey, setLocationInputKey] = useState(0)
 
   const builtPrompt = useMemo(() => {
+    // Prompt is derived from board + modal options; memo avoids rebuilding on unrelated renders.
     const promptBuilder = new PromptBuilder(objects, {
       includeMaterials,
       includeCommentsAndTips,
@@ -59,21 +57,16 @@ export function GptModal({ open, onClose }: GptModalProps) {
     if (open) setPromptText(builtPrompt)
   }, [open, builtPrompt])
 
-  // Apply loaded location in effect so the input re-renders with new value (state, not ref, so React commits it)
-  useEffect(() => {
-    if (!locationLoading && loadedPlacePending !== null) {
-      setLocation(loadedPlacePending)
-      setLocationInputKey((k) => k + 1)
-      setLoadedPlacePending(null)
-    }
-  }, [locationLoading, loadedPlacePending])
-
   const loadLocationFromBrowser = useCallback(async () => {
+    // Single-state location flow:
+    // when geolocation resolves, write directly to `location` input state.
+    // This removes extra "pending + rerender key" coordination state.
     setLocationLoading(true)
     setLocationError(null)
     try {
       const place = await locationLoader.loadFromBrowser({ timeout: 10000 })
-      setLoadedPlacePending(place)
+      // Directly storing the loaded place keeps location flow single-state.
+      setLocation(place)
     } catch (err) {
       setLocationError(err instanceof Error ? err.message : 'Could not get location.')
     } finally {
@@ -131,7 +124,6 @@ export function GptModal({ open, onClose }: GptModalProps) {
         {includeLocation && (
           <div className="gpt-modal-location-row">
             <input
-              key={`location-${locationInputKey}`}
               type="text"
               className="gpt-modal-location-input"
               placeholder="e.g. Rome, Italy"

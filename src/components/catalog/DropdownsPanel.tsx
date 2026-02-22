@@ -1,7 +1,6 @@
 import { forwardRef, useState } from "react";
 import { DEVICE_TYPE_ORDER, DEVICE_TYPE_LABEL } from "../../constants";
 import type { DeviceType } from "../../data/devices";
-import type { RangeFilter } from "../../hooks/useFilterState";
 import { useCatalog } from "../../context/CatalogContext";
 import { useUi } from "../../context/UiContext";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
@@ -10,20 +9,10 @@ import { TextFilter } from "./filters/TextFilter";
 import { CatalogList, CatalogListGrouped, type CatalogViewMode } from "./CatalogList";
 import { CustomItemForm } from "./CustomItemForm";
 import { SizeFilters, type SizeAxis, type SizeRange } from "./filters/SizeFilters";
+import { applyRangeUpdate, clampToValidRange } from "./rangeFilterUtils";
 import "./DropdownsPanel.scss";
 
 export type { CatalogMode } from "./CatalogModeSwitch";
-
-/** Applies a range pair and keeps boundary values normalized as "no filter" (empty string). */
-function applyRangeUpdate(
-  range: readonly [number, number],
-  filter: RangeFilter,
-  values: SizeRange
-) {
-  const [minValue, maxValue] = values;
-  filter.setMin(minValue <= range[0] ? "" : String(minValue));
-  filter.setMax(maxValue >= range[1] ? "" : String(maxValue));
-}
 
 export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel(_props, ref) {
   const { catalogMode, setCatalogMode, filters, onCustomCreate } = useCatalog();
@@ -49,19 +38,23 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
   const unitLabel = unit === "in" ? "in" : "mm";
 
   const handleBoardRangeChange = (axis: SizeAxis, values: SizeRange) => {
+    // Axis decides which filter pair (width/depth) and bounds tuple is active.
     const [range, filter] =
       axis === "width"
         ? [boardWidthRange, boardWidth] as const
         : [boardDepthRange, boardDepth] as const;
-    applyRangeUpdate(range, filter, values);
+    // Always enforce invariant first, then normalize full-boundary values as "no filter".
+    applyRangeUpdate(range, filter, clampToValidRange(values, range));
   };
 
   const handleDeviceRangeChange = (axis: SizeAxis, values: SizeRange) => {
+    // Device range handling mirrors board logic so behavior stays predictable.
     const [range, filter] =
       axis === "width"
         ? [deviceWidthRange, deviceWidth] as const
         : [deviceDepthRange, deviceDepth] as const;
-    applyRangeUpdate(range, filter, values);
+    // Explicit clamp makes min<=max and in-bounds guarantees visible at callsite.
+    applyRangeUpdate(range, filter, clampToValidRange(values, range));
   };
 
   const deviceGroups: {

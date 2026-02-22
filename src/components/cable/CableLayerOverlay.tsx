@@ -14,6 +14,11 @@ import {
   isPrimaryCableLayerPointer,
   resolveCableLayerPointerDownDecision,
 } from "./cableLayerPointerDown";
+import {
+  derivePinchAfterPointerUp,
+  isPointerUpPrimary,
+  resolveCableLayerPointerUpPreflight,
+} from "./cableLayerPointerUp";
 import { CABLE_TERMINAL_START_COLOR, CABLE_TERMINAL_END_COLOR } from "../../constants/cables";
 import * as CLO from "../../constants/cableLayerOverlay";
 import "../ruler/RulerOverlay.scss";
@@ -199,42 +204,53 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
 
   const handlePointerUp = useCallback(
     (e: React.PointerEvent) => {
-      const wasPinching = isPinchingRef.current;
+      // Phase 1: settle pinch bookkeeping first so downstream logic can be pure decisions.
       activePointersRef.current.delete(e.pointerId);
-      const lastPointerReleased = activePointersRef.current.size === 0;
-      if (lastPointerReleased) isPinchingRef.current = false;
-      if (isModalOpen || isPinchingRef.current) {
+      const pinchState = derivePinchAfterPointerUp({
+        wasPinching: isPinchingRef.current,
+        remainingActivePointers: activePointersRef.current.size,
+      });
+      isPinchingRef.current = pinchState.isPinching;
+
+      // Phase 2: early suppression branches (modal open, active pinch, or post-pinch final release).
+      const preflightDecision = resolveCableLayerPointerUpPreflight({
+        isModalOpen,
+        isPinching: pinchState.isPinching,
+        suppressBecausePinchEnded: pinchState.suppressBecausePinchEnded,
+      });
+      if (preflightDecision !== "process") {
         releaseCableGesture();
         return;
       }
-      /* Don't add a segment when releasing the last finger after a pinch */
-      if (lastPointerReleased && wasPinching) {
-        releaseCableGesture();
-        return;
-      }
-      /* With pointer capture, e.target is the overlay; use elementFromPoint to see where release actually was */
+
+      // Phase 3: route by pointer-up hit target (actions area vs canvas path commit).
+      // With pointer capture, `e.target` is overlay; elementFromPoint gives actual hit.
       const hit = document.elementFromPoint(e.clientX, e.clientY);
       if (hit?.closest?.(CLO.CABLE_LAYER_ACTIONS_SELECTOR)) {
+        // Allow buttons to receive click by dropping capture when release occurs over actions.
         try {
           (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
         } catch {
           /* ok */
         }
-        /* Only open modal when release was over Add cable button, not Cancel */
+        // Only Add button opens modal; Cancel should not.
         if (hit?.closest?.(CLO.CABLE_LAYER_ADD_BUTTON_SELECTOR) && (hasSegments || hasPreview)) openAddCableModal();
-        if (e.button === 0 || e.pointerType === "touch") {
+        // Track tap for subsequent double-tap detection.
+        if (isPointerUpPrimary(e.button, e.pointerType)) {
           lastTapRef.current = { time: Date.now(), clientX: e.clientX, clientY: e.clientY };
         }
         releaseCableGesture();
         return;
       }
+
+      // Phase 4: normal draw pointer-up path delegates to draw hook.
       onPointerUp(e);
       try {
         (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
       } catch {
         /* may not have capture */
       }
-      if (e.button === 0 || e.pointerType === "touch") {
+      if (isPointerUpPrimary(e.button, e.pointerType)) {
         lastTapRef.current = { time: Date.now(), clientX: e.clientX, clientY: e.clientY };
       }
       releaseCableGesture();
