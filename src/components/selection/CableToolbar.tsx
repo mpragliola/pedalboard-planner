@@ -6,10 +6,8 @@ import { vec2Average } from "../../lib/vector";
 import { useConfirmation } from "../../context/ConfirmationContext";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { SelectionToolbarButton } from "./SelectionToolbarButton";
+import { TOOLBAR_GAP_PX, TOOLBAR_HEIGHT_PX } from "../../constants/layout";
 import "./SelectionToolbar.scss";
-
-const TOOLBAR_GAP = 12;
-const TOOLBAR_HEIGHT = 40;
 const TOUCH_TOOLBAR_SCALE = 1.25;
 
 interface CableToolbarProps {
@@ -29,10 +27,10 @@ export function CableToolbar({ cable, onEdit, onDelete, onSendToBack, onBringToF
   const { x: centerX, y: centerY } = center;
   const left = centerX;
   // Prefer above the cable bounds to keep the path clear; flip below if near the top edge.
-  let top = (bounds ? bounds.minY : centerY) - TOOLBAR_GAP - TOOLBAR_HEIGHT;
+  let top = (bounds ? bounds.minY : centerY) - TOOLBAR_GAP_PX - TOOLBAR_HEIGHT_PX;
   let translateY = "translate(-50%, 0)";
-  if (top < TOOLBAR_HEIGHT) {
-    top = (bounds ? bounds.maxY : centerY) + TOOLBAR_GAP;
+  if (top < TOOLBAR_HEIGHT_PX) {
+    top = (bounds ? bounds.maxY : centerY) + TOOLBAR_GAP_PX;
   }
 
   const handleEdit = (e: React.MouseEvent) => {
