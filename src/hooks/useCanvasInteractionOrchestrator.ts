@@ -2,6 +2,7 @@ import { useCallback, useEffect, type PointerEvent as ReactPointerEvent } from "
 import { useCableDrag } from "./useCableDrag";
 import { useCanvasInteractions } from "./useCanvasInteractions";
 import { useCanvasZoomPan } from "./useCanvasZoomPan";
+import { useCanvasGestureCoordinator } from "./useCanvasGestureCoordinator";
 import { useObjectDrag } from "./useObjectDrag";
 import type { Offset } from "../lib/vector";
 import type { Cable, CanvasObjectType } from "../types";
@@ -34,6 +35,7 @@ export function useCanvasInteractionOrchestrator({
   initialZoom,
   initialPan,
 }: UseCanvasInteractionOrchestratorOptions) {
+  const gesture = useCanvasGestureCoordinator();
   const interactions = useCanvasInteractions();
   const {
     setHandlers,
@@ -63,6 +65,7 @@ export function useCanvasInteractionOrchestrator({
     initialZoom,
     initialPan,
     onPinchStart: interactions.onPinchStart,
+    gesture,
   });
 
   const handleCanvasPointerDown = useCallback(
@@ -109,5 +112,6 @@ export function useCanvasInteractionOrchestrator({
     zoomOut,
     tileSize,
     pausePanZoom,
+    gesture,
   };
 }

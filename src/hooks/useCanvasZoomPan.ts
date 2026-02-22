@@ -7,23 +7,25 @@ import { useTouchCanvasGestures } from "./canvasZoomPan/useTouchCanvasGestures";
 import { useWheelCanvasZoom } from "./canvasZoomPan/useWheelCanvasZoom";
 import { useZoomButtons } from "./canvasZoomPan/useZoomButtons";
 import { useZoomPanCore } from "./canvasZoomPan/useZoomPanCore";
+import type { CanvasGestureCoordinator } from "./useCanvasGestureCoordinator";
 
 export interface UseCanvasZoomPanOptions {
   initialZoom?: number;
   initialPan?: Offset;
   /** Called when pinch starts (2 fingers); use to cancel object drag so pinch and drag are mutually exclusive. */
   onPinchStart?: () => void;
+  gesture: CanvasGestureCoordinator;
 }
 
-export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
+export function useCanvasZoomPan(options: UseCanvasZoomPanOptions) {
   const pauseRef = useRef(false);
   const canvasRef = useRef<HTMLDivElement>(null);
   const [animating, setAnimating] = useState(false);
   const [spaceDown, setSpaceDown] = useState(false);
 
   const { zoom, pan, setZoom, setPan, zoomRef, panRef, zoomToward } = useZoomPanCore({
-    initialZoom: options?.initialZoom,
-    initialPan: options?.initialPan,
+    initialZoom: options.initialZoom,
+    initialPan: options.initialPan,
     pauseRef,
   });
 
@@ -33,6 +35,7 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
     setAnimating,
     pauseRef,
     spaceDown,
+    gesture: options.gesture,
   });
 
   useSpacePanMode({
@@ -56,8 +59,9 @@ export function useCanvasZoomPan(options?: UseCanvasZoomPanOptions) {
     setPan,
     zoomToward,
     pauseRef,
-    onPinchStart: options?.onPinchStart,
+    onPinchStart: options.onPinchStart,
     stopPanning,
+    gesture: options.gesture,
   });
 
   const { zoomIn, zoomOut } = useZoomButtons({

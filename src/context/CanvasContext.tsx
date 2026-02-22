@@ -6,6 +6,7 @@ import {
   type RefObject,
 } from "react";
 import { Offset } from "../lib/vector";
+import type { CanvasGestureCoordinator } from "../hooks/useCanvasGestureCoordinator";
 
 export interface CanvasContextValue {
   canvasRef: RefObject<HTMLDivElement>;
@@ -21,6 +22,7 @@ export interface CanvasContextValue {
   setCanvasAnimating: (v: boolean) => void;
   handleCanvasPointerDown: (e: ReactPointerEvent) => void;
   pausePanZoom?: (v: boolean) => void;
+  gesture: CanvasGestureCoordinator;
 }
 
 const CanvasContext = createContext<CanvasContextValue | null>(null);

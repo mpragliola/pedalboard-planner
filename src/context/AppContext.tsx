@@ -124,6 +124,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     zoomOut,
     tileSize,
     pausePanZoom,
+    gesture,
   } = useCanvasInteractionOrchestrator({
     objects,
     cables,
@@ -355,6 +356,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setCanvasAnimating,
       handleCanvasPointerDown,
       pausePanZoom,
+      gesture,
     }),
     [
       canvasRef,
@@ -370,6 +372,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setCanvasAnimating,
       handleCanvasPointerDown,
       pausePanZoom,
+      gesture,
     ]
   );
 

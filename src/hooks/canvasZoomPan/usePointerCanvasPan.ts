@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from "react";
 import { addGlobalPointerListeners } from "../../lib/pointerEvents";
 import type { Offset } from "../../lib/vector";
+import type { CanvasGestureCoordinator } from "../useCanvasGestureCoordinator";
 
 interface UsePointerCanvasPanOptions {
   panRef: MutableRefObject<Offset>;
@@ -8,6 +9,7 @@ interface UsePointerCanvasPanOptions {
   setAnimating: (value: boolean) => void;
   pauseRef: MutableRefObject<boolean>;
   spaceDown: boolean;
+  gesture: CanvasGestureCoordinator;
 }
 
 export function usePointerCanvasPan({
@@ -16,6 +18,7 @@ export function usePointerCanvasPan({
   setAnimating,
   pauseRef,
   spaceDown,
+  gesture,
 }: UsePointerCanvasPanOptions) {
   const [isPanning, setIsPanning] = useState(false);
   const panStartRef = useRef<{ mouseX: number; mouseY: number; panX: number; panY: number; pointerId: number } | null>(
@@ -25,7 +28,8 @@ export function usePointerCanvasPan({
   const stopPanning = useCallback(() => {
     setIsPanning(false);
     panStartRef.current = null;
-  }, []);
+    gesture.releaseMode("pointer-pan");
+  }, [gesture]);
 
   useEffect(() => {
     if (!isPanning) return;
@@ -58,6 +62,7 @@ export function usePointerCanvasPan({
         (!onObject && e.button === 0);
 
       if (!startPan) return;
+      if (!gesture.requestMode("pointer-pan")) return;
       e.preventDefault();
       setAnimating(false);
       setIsPanning(true);
@@ -69,7 +74,7 @@ export function usePointerCanvasPan({
         pointerId: e.pointerId,
       };
     },
-    [pauseRef, spaceDown, setAnimating, panRef]
+    [pauseRef, spaceDown, setAnimating, panRef, gesture]
   );
 
   return {
