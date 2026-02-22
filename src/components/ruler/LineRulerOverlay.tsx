@@ -5,6 +5,7 @@ import { useRendering } from '../../context/RenderingContext'
 import { buildRoundedPathD, DEFAULT_JOIN_RADIUS } from '../../lib/polylinePath'
 import { vec2Add, vec2Average, vec2Scale } from '../../lib/vector'
 import { formatLength } from '../../lib/rulerFormat'
+import { isDoubleTapWithinThreshold } from '../../lib/tapGesture'
 import { useCanvasCoords } from '../../hooks/useCanvasCoords'
 import { usePolylineDraw } from '../../hooks/usePolylineDraw'
 import './RulerOverlay.scss'
@@ -33,19 +34,20 @@ export function LineRulerOverlay() {
     hasPreview,
   } = usePolylineDraw({ clientToCanvas, onDoubleClickExit: exitMode })
 
-  const lastTapRef = useRef<{ time: number; clientX: number; clientY: number } | null>(null)
+  const lastTapRef = useRef<{ time: number; x: number; y: number } | null>(null)
   const DOUBLE_TAP_MS = 350
   const DOUBLE_TAP_PX = 50
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
       if (e.button !== 0 && e.pointerType !== 'touch') return
-      const now = Date.now()
-      const last = lastTapRef.current
       if (
-        last &&
-        now - last.time < DOUBLE_TAP_MS &&
-        Math.hypot(e.clientX - last.clientX, e.clientY - last.clientY) < DOUBLE_TAP_PX
+        // Share the same tested time+distance threshold logic used by other pointer overlays.
+        isDoubleTapWithinThreshold(
+          lastTapRef.current,
+          { time: Date.now(), x: e.clientX, y: e.clientY },
+          { windowMs: DOUBLE_TAP_MS, maxDistancePx: DOUBLE_TAP_PX }
+        )
       ) {
         lastTapRef.current = null
         e.preventDefault()
@@ -65,7 +67,7 @@ export function LineRulerOverlay() {
     (e: React.PointerEvent) => {
       onPointerUp(e)
       if (e.button === 0 || e.pointerType === 'touch') {
-        lastTapRef.current = { time: Date.now(), clientX: e.clientX, clientY: e.clientY }
+        lastTapRef.current = { time: Date.now(), x: e.clientX, y: e.clientY }
       }
     },
     [onPointerUp]
