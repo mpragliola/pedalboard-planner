@@ -1,6 +1,9 @@
 import { faArrowDown, faArrowUp, faRotateRight, faTrash } from "@fortawesome/free-solid-svg-icons";
 import type { CanvasObjectType } from "../../types";
 import { templateService } from "../../lib/templateService";
+import { getObjectAabb } from "../../lib/snapToBoundingBox";
+import { getBounds2DCenter } from "../../lib/bounds";
+import { computeToolbarPosition } from "../../lib/toolbarPosition";
 import { useConfirmation } from "../../context/ConfirmationContext";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { SelectionToolbarButton } from "./SelectionToolbarButton";
@@ -28,11 +31,19 @@ function SelectionToolbar({ obj, onDelete, onRotate, onSendToBack, onBringToFron
   const { requestConfirmation } = useConfirmation();
   const scaleUp = useMediaQuery("(max-width: 600px)");
 
-  const [width, depth] = templateService.getObjectDimensions(obj);
-  const centerX = obj.pos.x + width / 2;
-  const centerY = obj.pos.y + depth / 2;
-  const left = centerX;
-  const top = centerY - TOOLBAR_GAP_PX - TOOLBAR_HEIGHT_PX;
+  const objectBounds = getObjectAabb(obj, templateService.getObjectDimensions);
+  const center = getBounds2DCenter({
+    minX: objectBounds.left,
+    maxX: objectBounds.left + objectBounds.width,
+    minY: objectBounds.top,
+    maxY: objectBounds.top + objectBounds.height,
+  });
+  // Shared toolbar placement utility keeps object/cable toolbars behavior consistent.
+  const { left, top } = computeToolbarPosition(
+    center,
+    { minY: objectBounds.top, maxY: objectBounds.top + objectBounds.height },
+    { gapPx: TOOLBAR_GAP_PX, toolbarHeightPx: TOOLBAR_HEIGHT_PX }
+  );
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation();

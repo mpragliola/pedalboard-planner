@@ -3,6 +3,7 @@ import type { Cable } from "../../types";
 import { getBoundingBoxOfPoints } from "../../lib/geometry";
 import { getBounds2DCenter } from "../../lib/bounds";
 import { vec2Average } from "../../lib/vector";
+import { computeToolbarPosition } from "../../lib/toolbarPosition";
 import { useConfirmation } from "../../context/ConfirmationContext";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { SelectionToolbarButton } from "./SelectionToolbarButton";
@@ -24,14 +25,11 @@ export function CableToolbar({ cable, onEdit, onDelete, onSendToBack, onBringToF
 
   const bounds = getBoundingBoxOfPoints(cable.segments);
   const center = bounds ? getBounds2DCenter(bounds) : vec2Average(cable.segments);
-  const { x: centerX, y: centerY } = center;
-  const left = centerX;
-  // Prefer above the cable bounds to keep the path clear; flip below if near the top edge.
-  let top = (bounds ? bounds.minY : centerY) - TOOLBAR_GAP_PX - TOOLBAR_HEIGHT_PX;
-  let translateY = "translate(-50%, 0)";
-  if (top < TOOLBAR_HEIGHT_PX) {
-    top = (bounds ? bounds.maxY : centerY) + TOOLBAR_GAP_PX;
-  }
+  const { left, top } = computeToolbarPosition(
+    center,
+    bounds ? { minY: bounds.minY, maxY: bounds.maxY } : null,
+    { gapPx: TOOLBAR_GAP_PX, toolbarHeightPx: TOOLBAR_HEIGHT_PX }
+  );
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -71,7 +69,7 @@ export function CableToolbar({ cable, onEdit, onDelete, onSendToBack, onBringToF
       style={{
         left: `${left}px`,
         top: `${top}px`,
-        transform: scaleUp ? `${translateY} scale(${TOUCH_TOOLBAR_SCALE})` : translateY,
+        transform: scaleUp ? `translate(-50%, 0) scale(${TOUCH_TOOLBAR_SCALE})` : "translate(-50%, 0)",
         transformOrigin: "center center",
       }}
       onPointerDown={(e) => e.stopPropagation()}
