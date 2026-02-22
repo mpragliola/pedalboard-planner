@@ -5,9 +5,7 @@ import { useRendering } from "../../context/RenderingContext";
 import { useTemplateService } from "../../context/TemplateServiceContext";
 import { buildRoundedPathD, buildSmoothPathD, DEFAULT_JOIN_RADIUS } from "../../lib/polylinePath";
 import {
-  tryReleasePointerCapture,
-  tryReleasePointerCaptures,
-  trySetPointerCapture,
+  createPointerCaptureManager,
 } from "../../lib/pointerCapture";
 import { isDoubleTapWithinThreshold } from "../../lib/tapGesture";
 import { vec2Add, vec2Scale, type Vec2, type Point } from "../../lib/vector";
@@ -51,8 +49,10 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
   const { setCableLayer } = useRendering();
   const { clientToCanvas, toScreen } = useCanvasCoords(canvasRef, zoom, pan);
   const finishClickRef = useRef<() => void>(() => {});
+  const doubleTapRafRef = useRef<number | null>(null);
   const actionsRef = useRef<HTMLDivElement>(null);
   const addButtonRef = useRef<HTMLButtonElement>(null);
+  const pointerCaptureManagerRef = useRef(createPointerCaptureManager());
   /** Single source of truth for overlay pointer/pinch lifecycle state. */
   const gestureStateRef = useRef(createInitialCableLayerGestureState());
 
@@ -100,6 +100,10 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
   useEffect(() => {
     finishClickRef.current = openAddCableModal;
   }, [openAddCableModal]);
+
+  useEffect(() => () => {
+    if (doubleTapRafRef.current !== null) cancelAnimationFrame(doubleTapRafRef.current);
+  }, []);
 
   useCableLayerKeyboard({
     isModalOpen,
@@ -149,7 +153,7 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
       if (decision === "begin-pinch") {
         /* Multi-touch detected -> release any capture so pinch-to-zoom works. */
         const el = e.currentTarget as HTMLElement;
-        tryReleasePointerCaptures(el, gestureState.activePointerIds);
+        pointerCaptureManagerRef.current.releaseMany(gestureState.activePointerIds, el);
         return;
       }
 
@@ -162,8 +166,9 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
         e.stopPropagation();
         if (hasSegments || hasPreview) {
           /* Defer one frame so the upcoming pointerup/click is delivered to the overlay first. */
-          requestAnimationFrame(() => openAddCableModal());
-          tryReleasePointerCapture(e.currentTarget as HTMLElement, e.pointerId);
+          if (doubleTapRafRef.current !== null) cancelAnimationFrame(doubleTapRafRef.current);
+          doubleTapRafRef.current = requestAnimationFrame(() => openAddCableModal());
+          pointerCaptureManagerRef.current.release(e.pointerId, e.currentTarget as HTMLElement);
         } else {
           releaseCableGesture();
           exitMode();
@@ -177,7 +182,7 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
       ) {
         // Normal draw path: delegate to draw hook, then capture this pointer id.
         onPointerDown(e);
-        trySetPointerCapture(e.currentTarget as HTMLElement, e.pointerId);
+        pointerCaptureManagerRef.current.capture(e.currentTarget as HTMLElement, e.pointerId);
       }
     },
     [
@@ -199,7 +204,7 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
       /* When pointer moves over Add cable button, release capture so the button can receive the click */
       const hit = document.elementFromPoint(e.clientX, e.clientY);
       if (hit && actionsRef.current?.contains(hit)) {
-        tryReleasePointerCapture(e.currentTarget as HTMLElement, e.pointerId);
+        pointerCaptureManagerRef.current.release(e.pointerId, e.currentTarget as HTMLElement);
       }
       onPointerMove(e);
     },
@@ -228,7 +233,7 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
       const hit = document.elementFromPoint(e.clientX, e.clientY);
       if (hit && actionsRef.current?.contains(hit)) {
         // Allow buttons to receive click by dropping capture when release occurs over actions.
-        tryReleasePointerCapture(e.currentTarget as HTMLElement, e.pointerId);
+        pointerCaptureManagerRef.current.release(e.pointerId, e.currentTarget as HTMLElement);
         // Only Add button opens modal; Cancel should not.
         if (addButtonRef.current?.contains(hit) && (hasSegments || hasPreview)) openAddCableModal();
         // Track tap for subsequent double-tap detection.
@@ -241,7 +246,7 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
 
       // Phase 4: normal draw pointer-up path delegates to draw hook.
       onPointerUp(e);
-      tryReleasePointerCapture(e.currentTarget as HTMLElement, e.pointerId);
+      pointerCaptureManagerRef.current.release(e.pointerId, e.currentTarget as HTMLElement);
       if (isPointerUpPrimary(e.button, e.pointerType)) {
         lastTapRef.current = { time: Date.now(), x: e.clientX, y: e.clientY };
       }
@@ -250,7 +255,13 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
     [isModalOpen, onPointerUp, hasSegments, hasPreview, openAddCableModal, releaseCableGesture]
   );
 
-  useEffect(() => () => releaseCableGesture(), [releaseCableGesture]);
+  useEffect(
+    () => () => {
+      pointerCaptureManagerRef.current.releaseAll();
+      releaseCableGesture();
+    },
+    [releaseCableGesture]
+  );
 
   const joinRadiusPx = DEFAULT_JOIN_RADIUS * zoom;
   const strokeWidthPx = CLO.CABLE_LAYER_STROKE_WIDTH_MM * zoom;

@@ -49,3 +49,70 @@ export function tryReleasePointerCaptures(
   return releasedCount;
 }
 
+/**
+ * Stateful pointer-capture coordinator for one interaction surface.
+ *
+ * Responsibilities:
+ * 1) remember which target currently owns capture for each pointer id
+ * 2) release previous owner before re-capturing the same pointer id elsewhere
+ * 3) provide one-shot cleanup (`releaseAll`) on gesture abort/unmount
+ */
+export interface PointerCaptureManager {
+  capture: (target: PointerCaptureTarget | null, pointerId: number) => boolean;
+  release: (pointerId: number, fallbackTarget?: PointerCaptureTarget | null) => boolean;
+  releaseMany: (pointerIds: Iterable<number>, fallbackTarget?: PointerCaptureTarget | null) => number;
+  releaseAll: () => number;
+}
+
+export function createPointerCaptureManager(): PointerCaptureManager {
+  // Tracks current capture owner per pointer id.
+  const ownersByPointerId = new Map<number, PointerCaptureTarget>();
+
+  const release = (pointerId: number, fallbackTarget?: PointerCaptureTarget | null): boolean => {
+    const owner = ownersByPointerId.get(pointerId) ?? fallbackTarget ?? null;
+    const didRelease = tryReleasePointerCapture(owner, pointerId);
+    // Always clear local bookkeeping so stale ownership does not leak across
+    // canceled/lost pointers (browser state is authoritative).
+    ownersByPointerId.delete(pointerId);
+    return didRelease;
+  };
+
+  const capture = (target: PointerCaptureTarget | null, pointerId: number): boolean => {
+    if (!target) return false;
+
+    const previousOwner = ownersByPointerId.get(pointerId);
+    if (previousOwner && previousOwner !== target) {
+      // Move ownership from previous target to next target deterministically.
+      tryReleasePointerCapture(previousOwner, pointerId);
+      ownersByPointerId.delete(pointerId);
+    }
+
+    const didCapture = trySetPointerCapture(target, pointerId);
+    if (didCapture) ownersByPointerId.set(pointerId, target);
+    return didCapture;
+  };
+
+  const releaseMany = (pointerIds: Iterable<number>, fallbackTarget?: PointerCaptureTarget | null): number => {
+    let releasedCount = 0;
+    for (const pointerId of pointerIds) {
+      if (release(pointerId, fallbackTarget)) releasedCount += 1;
+    }
+    return releasedCount;
+  };
+
+  const releaseAll = (): number => {
+    let releasedCount = 0;
+    for (const [pointerId, owner] of ownersByPointerId) {
+      if (tryReleasePointerCapture(owner, pointerId)) releasedCount += 1;
+      ownersByPointerId.delete(pointerId);
+    }
+    return releasedCount;
+  };
+
+  return {
+    capture,
+    release,
+    releaseMany,
+    releaseAll,
+  };
+}
