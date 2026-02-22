@@ -15,7 +15,7 @@ import { Canvas } from "@react-three/fiber";
 import { PerspectiveCamera } from "@react-three/drei";
 import { useBoard } from "../../context/BoardContext";
 import { useUi } from "../../context/UiContext";
-import { useRendering } from "../../context/RenderingContext";
+import { useMini3d } from "../../context/Mini3dContext";
 import { CANVAS_BACKGROUNDS } from "../../constants/backgrounds";
 import { clamp } from "../../lib/math";
 import { Mini3DRootScene, ShadowMapController } from "./Mini3DRootScene";
@@ -103,7 +103,7 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
     showMini3dSpecular,
     mini3dLowResourceMode,
     setMini3dLowResourceMode,
-  } = useRendering();
+  } = useMini3d();
 
   const containerRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<DragState | null>(null);

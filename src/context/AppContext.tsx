@@ -6,7 +6,7 @@ import { HISTORY_DEPTH } from "../constants/interaction";
 import { DEFAULT_CANVAS_BACKGROUND } from "../constants/backgrounds";
 import { createObjectIdGenerator } from "../lib/objectIdGenerator";
 import { useBoardDeviceFilters } from "../hooks/useBoardDeviceFilters";
-import { useHistory } from "../hooks/useHistory";
+import { useHistory, type HistoryCommand } from "../hooks/useHistory";
 import { useBoardObjectActions } from "../hooks/useBoardObjectActions";
 import { useCanvasCenterView } from "../hooks/useCanvasCenterView";
 import { useCanvasInteractionOrchestrator } from "../hooks/useCanvasInteractionOrchestrator";
@@ -21,9 +21,17 @@ import { CatalogProvider, type CatalogContextValue, type CatalogMode } from "./C
 import { HistoryProvider, type HistoryContextValue } from "./HistoryContext";
 import { useStorage } from "./StorageContext";
 import { UiProvider, type UiContextValue } from "./UiContext";
-import { RenderingProvider, type RenderingContextValue, usePersistentMini3dLowResourceMode } from "./RenderingContext";
+import { RenderingProvider, type RenderingContextValue } from "./RenderingContext";
+import { Mini3dProvider, type Mini3dContextValue, usePersistentMini3dLowResourceMode } from "./Mini3dContext";
 import { useBoardPersistence, type BoardState } from "./useBoardPersistence";
 import { useSelection } from "./SelectionContext";
+import {
+  createAddCableCommand,
+  createBringCableToFrontCommand,
+  createDeleteCableCommand,
+  createSendCableToBackCommand,
+  createUpsertCableCommand,
+} from "./boardStateCommands";
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const { savedState, loadStateFromFile, saveStateToFile, persistState } = useStorage();
@@ -48,6 +56,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const {
     state: boardState,
     setState: setBoardState,
+    executeCommand,
     replace: replaceHistoryRaw,
     undo,
     redo,
@@ -62,6 +71,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const objects = boardState.objects;
   const cables = boardState.cables;
+
+  const executeBoardCommand = useCallback(
+    (command: HistoryCommand<BoardState>) => {
+      // Commands are reversible operations that avoid full-state snapshots in history.
+      executeCommand(command);
+    },
+    [executeCommand]
+  );
 
   const setObjects = useCallback(
     (action: CanvasObjectType[] | ((prev: CanvasObjectType[]) => CanvasObjectType[]), saveToHistory = true) => {
@@ -150,7 +167,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     handleSendToBack,
     handleBringToFront,
   } = useBoardObjectActions({
-    setObjects,
+    executeBoardCommand,
     setSelectedObjectIds,
   });
 
@@ -258,9 +275,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const addCable = useCallback(
     (cable: Cable) => {
-      setCables((prev) => [...prev, cable]);
+      executeBoardCommand(createAddCableCommand(cable));
     },
-    [setCables]
+    [executeBoardCommand]
+  );
+
+  const upsertCable = useCallback(
+    (cable: Cable) => {
+      executeBoardCommand(createUpsertCableCommand(cable));
+    },
+    [executeBoardCommand]
+  );
+
+  const deleteCable = useCallback(
+    (id: string) => {
+      executeBoardCommand(createDeleteCableCommand(id));
+    },
+    [executeBoardCommand]
+  );
+
+  const sendCableToBack = useCallback(
+    (id: string) => {
+      executeBoardCommand(createSendCableToBackCommand(id));
+    },
+    [executeBoardCommand]
+  );
+
+  const bringCableToFront = useCallback(
+    (id: string) => {
+      executeBoardCommand(createBringCableToFrontCommand(id));
+    },
+    [executeBoardCommand]
   );
 
   const uiValue = useMemo<UiContextValue>(
@@ -294,7 +339,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     ]
   );
 
-  const renderingValue = useMemo<RenderingContextValue>(
+  const mini3dValue = useMemo<Mini3dContextValue>(
     () => ({
       showMini3d,
       setShowMini3d,
@@ -308,14 +353,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setShowMini3dSpecular,
       mini3dLowResourceMode,
       setMini3dLowResourceMode,
-      ruler,
-      setRuler,
-      lineRuler,
-      setLineRuler,
-      cableLayer,
-      setCableLayer,
-      cablesVisibility,
-      setCablesVisibility,
     }),
     [
       showMini3d,
@@ -330,15 +367,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setShowMini3dSpecular,
       mini3dLowResourceMode,
       setMini3dLowResourceMode,
-      ruler,
-      setRuler,
-      lineRuler,
-      setLineRuler,
-      cableLayer,
-      setCableLayer,
-      cablesVisibility,
-      setCablesVisibility,
     ]
+  );
+
+  const renderingValue = useMemo<RenderingContextValue>(
+    () => ({ ruler, setRuler, lineRuler, setLineRuler, cableLayer, setCableLayer, cablesVisibility, setCablesVisibility }),
+    [ruler, setRuler, lineRuler, setLineRuler, cableLayer, setCableLayer, cablesVisibility, setCablesVisibility]
   );
 
   const canvasValue = useMemo<CanvasContextValue>(
@@ -410,9 +444,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
       cables,
       setCables,
       addCable,
+      upsertCable,
+      deleteCable,
+      sendCableToBack,
+      bringCableToFront,
       onCablePointerDown: handleCablePointerDown,
     }),
-    [cables, setCables, addCable, handleCablePointerDown]
+    [
+      cables,
+      setCables,
+      addCable,
+      upsertCable,
+      deleteCable,
+      sendCableToBack,
+      bringCableToFront,
+      handleCablePointerDown,
+    ]
   );
 
   const catalogValue = useMemo<CatalogContextValue>(
@@ -463,6 +510,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   return (
     <UiProvider value={uiValue}>
+      <Mini3dProvider value={mini3dValue}>
       <RenderingProvider value={renderingValue}>
         <CanvasProvider value={canvasValue}>
           <BoardProvider value={boardValue}>
@@ -476,6 +524,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           </BoardProvider>
         </CanvasProvider>
       </RenderingProvider>
+      </Mini3dProvider>
     </UiProvider>
   );
 }

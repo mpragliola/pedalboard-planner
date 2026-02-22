@@ -19,6 +19,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useCanvas } from '../../context/CanvasContext'
 import { useUi } from '../../context/UiContext'
 import { useRendering } from '../../context/RenderingContext'
+import { useMini3d } from '../../context/Mini3dContext'
 import { SideControl } from './SideControl'
 import { ComponentListModal } from '../componentlist/ComponentListModal'
 import './SideControls.scss'
@@ -75,15 +76,9 @@ export function SideControls() {
     setShowMini3dSpecular,
     mini3dLowResourceMode,
     setMini3dLowResourceMode,
-    ruler,
-    setRuler,
-    lineRuler,
-    setLineRuler,
-    cableLayer,
-    setCableLayer,
-    cablesVisibility,
-    setCablesVisibility,
-  } = useRendering()
+  } = useMini3d()
+  const { ruler, setRuler, lineRuler, setLineRuler, cableLayer, setCableLayer, cablesVisibility, setCablesVisibility } =
+    useRendering()
   const [componentListOpen, setComponentListOpen] = useState(false)
   const [measurementExpanded, setMeasurementExpanded] = useState(false)
   const [viewExpanded, setViewExpanded] = useState(false)
