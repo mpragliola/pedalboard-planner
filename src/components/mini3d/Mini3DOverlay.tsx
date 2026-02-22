@@ -14,6 +14,7 @@ import * as THREE from "three";
 import { Canvas } from "@react-three/fiber";
 import { PerspectiveCamera } from "@react-three/drei";
 import { useBoard } from "../../context/BoardContext";
+import { useTemplateService } from "../../context/TemplateServiceContext";
 import { useUi } from "../../context/UiContext";
 import { useMini3d } from "../../context/Mini3dContext";
 import { CANVAS_BACKGROUNDS } from "../../constants/backgrounds";
@@ -96,6 +97,7 @@ function getDistanceBetweenTouches(points: TouchPoint[]): number {
 
 export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
   const { objects, draggingObjectId } = useBoard();
+  const templateService = useTemplateService();
   const { background } = useUi();
   const {
     showMini3d,
@@ -141,7 +143,9 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
     [draggingObjectId, objects]
   );
 
-  const sceneLayout = useMemo(() => buildSceneLayout(objects), [objects]);
+  // Scene layout depends on template metadata (dimensions/shapes), so keep the
+  // dependency explicit and injectable via TemplateServiceContext.
+  const sceneLayout = useMemo(() => buildSceneLayout(objects, templateService), [objects, templateService]);
   const isPhone = useMemo(() => {
     if (typeof window === "undefined") return false;
     return window.matchMedia("(max-width: 768px) and (pointer: coarse)").matches;

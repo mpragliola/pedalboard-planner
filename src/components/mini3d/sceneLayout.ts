@@ -1,7 +1,6 @@
 import { parseColor } from "../../lib/color";
 import { normalizeRotation } from "../../lib/geometry";
 import { rectsOverlap, type Rect } from "../../lib/geometry2d";
-import { templateService } from "../../lib/templateService";
 import type { Shape3D } from "../../shape3d";
 import type { CanvasObjectType } from "../../types";
 import {
@@ -15,7 +14,16 @@ import {
 import type { SceneLayout } from "./mini3dTypes";
 import { resolveImageSrc } from "./mini3dUtils";
 
-export function buildSceneLayout(objects: CanvasObjectType[]): SceneLayout {
+/**
+ * Template-derived lookups are injected instead of imported as singletons.
+ * This keeps scene-layout computation pure and directly unit-testable.
+ */
+export interface SceneLayoutTemplateLookup {
+  getObjectDimensions: (obj: CanvasObjectType) => [number, number, number];
+  getTemplateShape: (templateId: string) => Shape3D | undefined;
+}
+
+export function buildSceneLayout(objects: CanvasObjectType[], templates: SceneLayoutTemplateLookup): SceneLayout {
   const sceneObjects = objects.filter((obj) => obj.subtype === "board" || obj.subtype === "device");
   if (sceneObjects.length === 0) {
     return { boxes: [], orbitDistance: MIN_ORBIT_DISTANCE, targetY: GROUND_Y + 1 };
@@ -48,7 +56,9 @@ export function buildSceneLayout(objects: CanvasObjectType[]): SceneLayout {
   let hasBoard = false;
 
   for (const obj of sceneObjects) {
-    const [widthMm, depthMm, heightMm] = templateService.getObjectDimensions(obj);
+    // Resolve dimensions through injected lookup so callers control where
+    // template metadata comes from (production service, test double, etc.).
+    const [widthMm, depthMm, heightMm] = templates.getObjectDimensions(obj);
     if (widthMm <= 0 || depthMm <= 0) continue;
 
     const rotation = normalizeRotation(obj.rotation ?? 0);
@@ -71,7 +81,7 @@ export function buildSceneLayout(objects: CanvasObjectType[]): SceneLayout {
       boardMaxY = Math.max(boardMaxY, centerY + footprintD / 2);
     }
 
-    const shape = obj.shape ?? templateService.getTemplateShape(obj.templateId);
+    const shape = obj.shape ?? templates.getTemplateShape(obj.templateId);
     const fallbackColor = obj.subtype === "board" ? "rgb(96, 106, 120)" : MINI3D_DEFAULT_DEVICE_COLOR;
     const parsed = parseColor(obj.color ?? fallbackColor) ?? MINI3D_PARSE_FALLBACK_COLOR;
     rawObjects.push({
