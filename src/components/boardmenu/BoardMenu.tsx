@@ -40,9 +40,7 @@ export function BoardMenu() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLoadingFile, setIsLoadingFile] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [isGptOpen, setIsGptOpen] = useState(false);
-  const [isInfoOpen, setIsInfoOpen] = useState(false);
-  const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [openModal, setOpenModal] = useState<"gpt" | "info" | "help" | null>(null);
 
   const handleNewBoard = async () => {
     const confirmed = await requestConfirmation({
@@ -105,21 +103,21 @@ export function BoardMenu() {
       title: "Build price estimate prompt for LLM",
       ariaLabel: "Build price estimate prompt for LLM",
       icon: faWandMagicSparkles,
-      onClick: () => setIsGptOpen(true),
+      onClick: () => setOpenModal("gpt"),
     },
     {
       key: "info",
       title: "About PedalboardFactory",
       ariaLabel: "About PedalboardFactory",
       icon: faCircleInfo,
-      onClick: () => setIsInfoOpen(true),
+      onClick: () => setOpenModal("info"),
     },
     {
       key: "help",
       title: "Help and manual",
       ariaLabel: "Help and manual",
       icon: faCircleQuestion,
-      onClick: () => setIsHelpOpen(true),
+      onClick: () => setOpenModal("help"),
     },
     {
       key: "settings",
@@ -154,9 +152,9 @@ export function BoardMenu() {
         tabIndex={-1}
         onChange={handleFileChange}
       />
-      <GptModal open={isGptOpen} onClose={() => setIsGptOpen(false)} />
-      <InfoModal open={isInfoOpen} onClose={() => setIsInfoOpen(false)} />
-      <HelpModal open={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
+      <GptModal open={openModal === "gpt"} onClose={() => setOpenModal(null)} />
+      <InfoModal open={openModal === "info"} onClose={() => setOpenModal(null)} />
+      <HelpModal open={openModal === "help"} onClose={() => setOpenModal(null)} />
       {loadError ? (
         <p className="board-menu-error" role="alert">
           {loadError}
