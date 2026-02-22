@@ -8,6 +8,7 @@ import {
 describe("cableLayerPointerDown", () => {
   describe("canHandleCableLayerPointerDown", () => {
     it("returns true only for eligible pointer-down preflight state", () => {
+      // Baseline happy path: all blockers are off.
       expect(
         canHandleCableLayerPointerDown({
           isModalOpen: false,
@@ -19,6 +20,7 @@ describe("cableLayerPointerDown", () => {
     });
 
     it("returns false when any preflight blocker is active", () => {
+      // Each blocker is tested independently so regressions in preflight precedence are obvious.
       expect(
         canHandleCableLayerPointerDown({
           isModalOpen: true,
@@ -56,6 +58,7 @@ describe("cableLayerPointerDown", () => {
 
   describe("resolveCableLayerPointerDownDecision", () => {
     it("prioritizes pinch transition when two pointers are active", () => {
+      // activePointerCount takes precedence over other states.
       expect(
         resolveCableLayerPointerDownDecision({
           activePointerCount: 2,
@@ -66,6 +69,7 @@ describe("cableLayerPointerDown", () => {
     });
 
     it("ignores draw when pinching is already active", () => {
+      // While pinching, pointer-down cannot become draw input.
       expect(
         resolveCableLayerPointerDownDecision({
           activePointerCount: 1,
@@ -76,6 +80,7 @@ describe("cableLayerPointerDown", () => {
     });
 
     it("routes double tap to finish/exit path", () => {
+      // Double tap remains a first-class interaction even after guard extraction.
       expect(
         resolveCableLayerPointerDownDecision({
           activePointerCount: 1,
@@ -86,6 +91,7 @@ describe("cableLayerPointerDown", () => {
     });
 
     it("starts normal draw when no guard condition applies", () => {
+      // Default decision is draw.
       expect(
         resolveCableLayerPointerDownDecision({
           activePointerCount: 1,

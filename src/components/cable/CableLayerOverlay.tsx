@@ -91,6 +91,7 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
   const lastTapRef = useRef<{ time: number; clientX: number; clientY: number } | null>(null);
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
+      // Phase 1: cheap preflight blockers that should never claim the cable gesture.
       const overActions = Boolean((e.target as HTMLElement).closest(CLO.CABLE_LAYER_ACTIONS_SELECTOR));
       if (
         !canHandleCableLayerPointerDown({
@@ -102,7 +103,11 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
       ) {
         return;
       }
+      // Phase 2: claim cable-draw ownership in the shared gesture coordinator.
+      // If another mode owns the pointer stream, we intentionally noop.
       if (!gesture.requestMode("cable-draw")) return;
+
+      // Phase 3: update local pointer tracking and resolve a single decision token.
       activePointersRef.current.add(e.pointerId);
       const now = Date.now();
       const last = lastTapRef.current;
@@ -118,7 +123,7 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
       });
 
       if (decision === "begin-pinch") {
-        /* Multi-touch detected → release any capture so pinch-to-zoom works */
+        /* Multi-touch detected -> release any capture so pinch-to-zoom works. */
         isPinchingRef.current = true;
         const el = e.currentTarget as HTMLElement;
         for (const pid of activePointersRef.current) {
@@ -134,11 +139,12 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
       if (decision === "ignore") return;
 
       if (decision === "double-tap") {
+        // Double tap is a mode-level action: either finish current cable or exit draw mode.
         lastTapRef.current = null;
         e.preventDefault();
         e.stopPropagation();
         if (hasSegments || hasPreview) {
-          /* Defer one frame so the upcoming pointerup/click is delivered to the overlay first */
+          /* Defer one frame so the upcoming pointerup/click is delivered to the overlay first. */
           requestAnimationFrame(() => openAddCableModal());
           try {
             (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
@@ -156,6 +162,7 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
         decision === "draw" &&
         (e.button === 0 || e.pointerType === "touch")
       ) {
+        // Normal draw path: delegate to draw hook, then capture this pointer id.
         onPointerDown(e);
         (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
       }

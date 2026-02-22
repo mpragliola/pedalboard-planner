@@ -36,6 +36,8 @@ export function useCanvasInteractionOrchestrator({
   initialPan,
 }: UseCanvasInteractionOrchestratorOptions) {
   const gesture = useCanvasGestureCoordinator();
+  // Pinch-start callback is registered before drag hooks are created (via useCanvasZoomPan),
+  // so we keep the latest drag clear handlers in refs that pinch can always call.
   const clearObjectDragRef = useRef<() => void>(() => {});
   const clearCableDragRef = useRef<() => void>(() => {});
   const handlePinchStart = useCallback(() => {
@@ -74,9 +76,11 @@ export function useCanvasInteractionOrchestrator({
     spaceDown
   );
   const { handleCableDragStart, clearDragState: clearCableDragState } = useCableDrag(cables, setCables, zoom, spaceDown);
+  // Keep refs synchronized every render so pinch-start always clears current drag handlers.
   clearObjectDragRef.current = clearObjectDragState;
   clearCableDragRef.current = clearCableDragState;
 
+  // Inject explicit handler dependencies (no late-bound setHandlers/hRef path).
   const { handleObjectPointerDown, handleCanvasPointerDown: onCanvasPointerDown, handleCablePointerDown } =
     useCanvasInteractions({
       objectDragStart: handleObjectDragStart,
@@ -85,6 +89,7 @@ export function useCanvasInteractionOrchestrator({
     });
 
   const handleCanvasPointerDown = useCallback(
+    // Keep spaceDown check at the orchestration boundary so mediator stays stateless.
     (e: ReactPointerEvent) => onCanvasPointerDown(e, spaceDown),
     [onCanvasPointerDown, spaceDown]
   );
