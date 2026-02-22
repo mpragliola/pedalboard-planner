@@ -154,6 +154,10 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
       return { points: cable.segments, handleIndex };
     },
     onDragActivated: ({ pending, event }) => {
+      // Once drag is activated, the pending long-press delete timer must be canceled
+      // immediately. Waiting until onDragMove can still allow timeout firing during drag.
+      // This closes the race where "press-to-delete" could remove a node after drag start.
+      clearHandlePress();
       dragRef.current = { cableId: pending.id, points: pending.payload.points, handleIndex: pending.payload.handleIndex };
       return {
         mouse: { x: event.clientX, y: event.clientY },
