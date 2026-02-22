@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { CONNECTOR_ICON_MAP } from "../../constants";
 import { CABLE_TERMINAL_START_COLOR, CABLE_TERMINAL_END_COLOR } from "../../constants/cables";
 import { DEFAULT_JOIN_RADIUS } from "../../lib/polylinePath";
+import { isDoubleTapWithinThreshold } from "../../lib/tapGesture";
 import type { Point } from "../../lib/vector";
 import { templateService } from "../../lib/templateService";
 import { connectorLabelsForCable, type ConnectorLabel } from "../../lib/cableConnectorLabels";
@@ -238,11 +239,21 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
   const handleTouchSegmentTap = (cableId: string, e: React.PointerEvent): boolean => {
     const now = performance.now();
     const prevTap = lastCableTapRef.current;
+    // Double-tap insertion is cable-local: two taps on different cables should not pair.
+    const isSameCable = prevTap?.cableId === cableId;
+    const isDoubleTapOnCable =
+      isSameCable &&
+      // Shared detector centralizes threshold math; this component only supplies policy values.
+      isDoubleTapWithinThreshold(
+        prevTap ? { time: prevTap.time, x: prevTap.x, y: prevTap.y } : null,
+        { time: now, x: e.clientX, y: e.clientY },
+        {
+          windowMs: CP.CABLE_PATHS_DOUBLE_TAP_TIME_WINDOW_MS,
+          maxDistancePx: CP.CABLE_PATHS_DOUBLE_TAP_MAX_DISTANCE_PX,
+        }
+      );
     if (
-      prevTap &&
-      prevTap.cableId === cableId &&
-      now - prevTap.time <= CP.CABLE_PATHS_DOUBLE_TAP_TIME_WINDOW_MS &&
-      Math.hypot(e.clientX - prevTap.x, e.clientY - prevTap.y) <= CP.CABLE_PATHS_DOUBLE_TAP_MAX_DISTANCE_PX
+      isDoubleTapOnCable
     ) {
       lastCableTapRef.current = null;
       return handleSegmentDoubleClick(cableId, e);

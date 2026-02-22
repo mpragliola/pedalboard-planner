@@ -5,6 +5,7 @@ import { useRendering } from "../../context/RenderingContext";
 import { templateService } from "../../lib/templateService";
 import { buildRoundedPathD, buildSmoothPathD, DEFAULT_JOIN_RADIUS } from "../../lib/polylinePath";
 import { formatLength } from "../../lib/rulerFormat";
+import { isDoubleTapWithinThreshold } from "../../lib/tapGesture";
 import { vec2Add, vec2Scale, type Vec2, type Point } from "../../lib/vector";
 import { useCanvasCoords } from "../../hooks/useCanvasCoords";
 import { useCableDraw } from "../../hooks/useCableDraw";
@@ -96,7 +97,7 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
   const hasDrawingRef = useRef(false);
   hasDrawingRef.current = !!(hasSegments || hasPreview);
 
-  const lastTapRef = useRef<{ time: number; clientX: number; clientY: number } | null>(null);
+  const lastTapRef = useRef<{ time: number; x: number; y: number } | null>(null);
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
       // Phase 1: cheap preflight blockers that should never claim the cable gesture.
@@ -118,13 +119,15 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
       // Phase 3: machine transition + decision resolution.
       gestureStateRef.current = applyCableLayerPointerDown(gestureStateRef.current, e.pointerId);
       const gestureState = gestureStateRef.current;
-      const now = Date.now();
-      const last = lastTapRef.current;
-      const isDoubleTap =
-        Boolean(last) &&
-        now - (last?.time ?? 0) < CLO.CABLE_LAYER_DOUBLE_TAP_MS &&
-        Math.hypot(e.clientX - (last?.clientX ?? 0), e.clientY - (last?.clientY ?? 0)) <
-          CLO.CABLE_LAYER_DOUBLE_TAP_MAX_DISTANCE_PX;
+      // Use shared threshold helper so time+distance logic stays consistent across components.
+      const isDoubleTap = isDoubleTapWithinThreshold(
+        lastTapRef.current,
+        { time: Date.now(), x: e.clientX, y: e.clientY },
+        {
+          windowMs: CLO.CABLE_LAYER_DOUBLE_TAP_MS,
+          maxDistancePx: CLO.CABLE_LAYER_DOUBLE_TAP_MAX_DISTANCE_PX,
+        }
+      );
       const decision = resolveCableLayerPointerDownDecision({
         activePointerCount: gestureState.activePointerIds.size,
         isPinching: gestureState.tag === "pinching",
@@ -236,7 +239,7 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
         if (hit?.closest?.(CLO.CABLE_LAYER_ADD_BUTTON_SELECTOR) && (hasSegments || hasPreview)) openAddCableModal();
         // Track tap for subsequent double-tap detection.
         if (isPointerUpPrimary(e.button, e.pointerType)) {
-          lastTapRef.current = { time: Date.now(), clientX: e.clientX, clientY: e.clientY };
+          lastTapRef.current = { time: Date.now(), x: e.clientX, y: e.clientY };
         }
         releaseCableGesture();
         return;
@@ -250,7 +253,7 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
         /* may not have capture */
       }
       if (isPointerUpPrimary(e.button, e.pointerType)) {
-        lastTapRef.current = { time: Date.now(), clientX: e.clientX, clientY: e.clientY };
+        lastTapRef.current = { time: Date.now(), x: e.clientX, y: e.clientY };
       }
       releaseCableGesture();
     },
