@@ -15,7 +15,11 @@ import {
   resolveCableLayerPointerDownDecision,
 } from "./cableLayerPointerDown";
 import {
-  derivePinchAfterPointerUp,
+  applyCableLayerPointerDown,
+  applyCableLayerPointerUp,
+  createInitialCableLayerGestureState,
+} from "./cableLayerGestureStateMachine";
+import {
   isPointerUpPrimary,
   resolveCableLayerPointerUpPreflight,
 } from "./cableLayerPointerUp";
@@ -40,9 +44,8 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
   const { setCableLayer } = useRendering();
   const { clientToCanvas, toScreen } = useCanvasCoords(canvasRef, zoom, pan);
   const finishClickRef = useRef<() => void>(() => {});
-  /** Active pointer IDs – when >=2 we're pinch-zooming and suppress cable drawing. */
-  const activePointersRef = useRef<Set<number>>(new Set());
-  const isPinchingRef = useRef(false);
+  /** Single source of truth for overlay pointer/pinch lifecycle state. */
+  const gestureStateRef = useRef(createInitialCableLayerGestureState());
 
   const exitMode = useCallback(() => {
     setCableLayer(() => false);
@@ -112,8 +115,9 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
       // If another mode owns the pointer stream, we intentionally noop.
       if (!gesture.requestMode("cable-draw")) return;
 
-      // Phase 3: update local pointer tracking and resolve a single decision token.
-      activePointersRef.current.add(e.pointerId);
+      // Phase 3: machine transition + decision resolution.
+      gestureStateRef.current = applyCableLayerPointerDown(gestureStateRef.current, e.pointerId);
+      const gestureState = gestureStateRef.current;
       const now = Date.now();
       const last = lastTapRef.current;
       const isDoubleTap =
@@ -122,16 +126,15 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
         Math.hypot(e.clientX - (last?.clientX ?? 0), e.clientY - (last?.clientY ?? 0)) <
           CLO.CABLE_LAYER_DOUBLE_TAP_MAX_DISTANCE_PX;
       const decision = resolveCableLayerPointerDownDecision({
-        activePointerCount: activePointersRef.current.size,
-        isPinching: isPinchingRef.current,
+        activePointerCount: gestureState.activePointerIds.size,
+        isPinching: gestureState.tag === "pinching",
         isDoubleTap,
       });
 
       if (decision === "begin-pinch") {
         /* Multi-touch detected -> release any capture so pinch-to-zoom works. */
-        isPinchingRef.current = true;
         const el = e.currentTarget as HTMLElement;
-        for (const pid of activePointersRef.current) {
+        for (const pid of gestureState.activePointerIds) {
           try {
             el.releasePointerCapture(pid);
           } catch {
@@ -187,7 +190,7 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent) => {
-      if (isModalOpen || isPinchingRef.current) return;
+      if (isModalOpen || gestureStateRef.current.tag === "pinching") return;
       /* When pointer moves over Add cable button, release capture so the button can receive the click */
       const hit = document.elementFromPoint(e.clientX, e.clientY);
       if (hit?.closest?.(CLO.CABLE_LAYER_ACTIONS_SELECTOR)) {
@@ -204,19 +207,15 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
 
   const handlePointerUp = useCallback(
     (e: React.PointerEvent) => {
-      // Phase 1: settle pinch bookkeeping first so downstream logic can be pure decisions.
-      activePointersRef.current.delete(e.pointerId);
-      const pinchState = derivePinchAfterPointerUp({
-        wasPinching: isPinchingRef.current,
-        remainingActivePointers: activePointersRef.current.size,
-      });
-      isPinchingRef.current = pinchState.isPinching;
+      // Phase 1: advance the explicit machine first, then branch from transition phase.
+      const pointerUpTransition = applyCableLayerPointerUp(gestureStateRef.current, e.pointerId);
+      gestureStateRef.current = pointerUpTransition.nextState;
 
       // Phase 2: early suppression branches (modal open, active pinch, or post-pinch final release).
       const preflightDecision = resolveCableLayerPointerUpPreflight({
         isModalOpen,
-        isPinching: pinchState.isPinching,
-        suppressBecausePinchEnded: pinchState.suppressBecausePinchEnded,
+        isPinching: pointerUpTransition.phase === "still-pinching",
+        suppressBecausePinchEnded: pointerUpTransition.phase === "pinch-ended",
       });
       if (preflightDecision !== "process") {
         releaseCableGesture();
