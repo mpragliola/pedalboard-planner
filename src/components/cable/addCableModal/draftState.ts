@@ -21,11 +21,6 @@ export interface CableFormDraft {
 const DEFAULT_COLOR = CABLE_COLORS[0].hex;
 const DEFAULT_CONNECTOR: ConnectorKind = "mono jack (TS)";
 
-/** Stable id generator used for newly created cables. */
-export function nextCableId(): string {
-  return `cable-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-}
-
 /** Resolves template name from explicit connector pair; empty when no template matches. */
 export function findTemplateName(connectorA: ConnectorKind, connectorB: ConnectorKind): string {
   return (

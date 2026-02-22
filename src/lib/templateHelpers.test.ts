@@ -3,6 +3,7 @@ import {
   createObjectFromTemplate,
   createObjectFromCustomBoard,
   createObjectFromCustomDevice,
+  createCableFromPoints,
 } from "./templateHelpers";
 import type { BoardTemplate } from "../data/boards";
 import { createObjectIdGenerator } from "./objectIdGenerator";
@@ -120,5 +121,45 @@ describe("createObjectFromCustomDevice", () => {
       idGenerator
     );
     expect(obj.name).toBe("Custom device");
+  });
+});
+
+describe("createCableFromPoints", () => {
+  it("throws when fewer than two points are provided", () => {
+    expect(() =>
+      createCableFromPoints([{ x: 0, y: 0 }], {
+        color: "#FFFFFF",
+        connectorA: "mono jack (TS)",
+        connectorB: "mono jack (TS)",
+      })
+    ).toThrow("Cable must contain at least two points.");
+  });
+
+  it("creates a new cable with generated id and copied segments", () => {
+    const sourceSegments = [{ x: 0, y: 0 }, { x: 10, y: 20 }];
+    const cable = createCableFromPoints(sourceSegments, {
+      color: "#FFFFFF",
+      connectorA: "mono jack (TS)",
+      connectorB: "mono jack (TS)",
+    });
+
+    expect(cable.id).toMatch(/^cable-\d+-[a-z0-9]+$/);
+    expect(cable.segments).toEqual(sourceSegments);
+    expect(cable.segments).not.toBe(sourceSegments);
+  });
+
+  it("uses provided id and trims optional connector labels", () => {
+    const cable = createCableFromPoints([{ x: 0, y: 0 }, { x: 5, y: 5 }], {
+      id: "c-1",
+      color: "#000000",
+      connectorA: "XLR male",
+      connectorB: "XLR female",
+      connectorAName: "  Out  ",
+      connectorBName: "   ",
+    });
+
+    expect(cable.id).toBe("c-1");
+    expect(cable.connectorAName).toBe("Out");
+    expect(cable).not.toHaveProperty("connectorBName");
   });
 });

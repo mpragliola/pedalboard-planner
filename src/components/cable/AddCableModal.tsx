@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Modal } from "../common/Modal";
 import { CABLE_CONNECTOR_TEMPLATES } from "../../constants/cables";
 import type { Cable, ConnectorKind } from "../../types";
+import { createCableFromPoints } from "../../lib/templateHelpers";
 import type { Point } from "../../lib/vector";
 import { CableColorSection } from "./addCableModal/CableColorSection";
 import { CableEndpointsSection } from "./addCableModal/CableEndpointsSection";
@@ -9,7 +10,6 @@ import { CableFormActions } from "./addCableModal/CableFormActions";
 import {
   createInitialCableFormDraft,
   findTemplateName,
-  nextCableId,
   type CableFormDraft,
 } from "./addCableModal/draftState";
 import "./AddCableModal.scss";
@@ -54,16 +54,16 @@ export function AddCableModal({ open, segments, onConfirm, onCancel, initialCabl
     // Edit mode keeps original geometry; create mode consumes incoming drawn segments.
     const segs = isEdit && initialCable ? initialCable.segments : segments;
     if (segs.length < 2) return;
-
-    const cable: Cable = {
-      id: isEdit && initialCable ? initialCable.id : nextCableId(),
-      segments: segs,
+    // Delegate record construction to the shared factory so both create/edit
+    // flows use exactly the same normalization (id handling + label trimming).
+    const cable: Cable = createCableFromPoints(segs, {
+      id: isEdit && initialCable ? initialCable.id : undefined,
       color: draft.color,
       connectorA: draft.connectorA,
       connectorB: draft.connectorB,
-      ...(draft.connectorAName.trim() && { connectorAName: draft.connectorAName.trim() }),
-      ...(draft.connectorBName.trim() && { connectorBName: draft.connectorBName.trim() }),
-    };
+      connectorAName: draft.connectorAName,
+      connectorBName: draft.connectorBName,
+    });
     onConfirm(cable);
   };
 
