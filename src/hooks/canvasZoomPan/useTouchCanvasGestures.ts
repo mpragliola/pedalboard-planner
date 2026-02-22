@@ -3,6 +3,11 @@ import type { Offset } from "../../lib/vector";
 import { PINCH_DETECTION_THRESHOLD, ZOOM_MAX, ZOOM_MIN } from "../../constants/interaction";
 import type { CanvasGestureCoordinator } from "../useCanvasGestureCoordinator";
 import {
+  createInitialPinchLifecycleState,
+  STRICT_TWO_POINTER_PINCH_POLICY,
+  syncPinchLifecycle,
+} from "../../lib/pinchLifecycle";
+import {
   IDLE_TOUCH_GESTURE_STATE,
   resolvePinchMove,
   startPinchGesture,
@@ -30,15 +35,34 @@ export function useTouchCanvasGestures({
   stopPanning,
   gesture,
 }: UseTouchCanvasGesturesOptions) {
+  // Shared pinch lifecycle state (active identifiers + start/end transitions).
+  // This keeps touch pinch behavior aligned with other pinch-aware modules.
+  const pinchLifecycleRef = useRef(createInitialPinchLifecycleState());
   /**
    * Explicit gesture state machine stored in a ref so event listeners always
    * see the latest state without re-registering DOM handlers.
    */
   const touchGestureRef = useRef<TouchGestureState>(IDLE_TOUCH_GESTURE_STATE);
 
+  const syncTouchLifecycle = useCallback((touches: TouchList) => {
+    const activeTouchIds = new Set<number>();
+    for (let i = 0; i < touches.length; i += 1) {
+      const touch = touches.item(i);
+      if (touch) activeTouchIds.add(touch.identifier);
+    }
+    const transition = syncPinchLifecycle(
+      pinchLifecycleRef.current,
+      activeTouchIds,
+      STRICT_TWO_POINTER_PINCH_POLICY
+    );
+    pinchLifecycleRef.current = transition.nextState;
+    return transition;
+  }, []);
+
   const endPinch = useCallback(() => {
     const hadPinch = touchGestureRef.current.tag === "pinching";
     touchGestureRef.current = IDLE_TOUCH_GESTURE_STATE;
+    pinchLifecycleRef.current = createInitialPinchLifecycleState();
     gesture.releaseMode("pinch-pan");
     if (hadPinch) gesture.publish({ type: "pinch-end" });
   }, [gesture]);
@@ -52,7 +76,9 @@ export function useTouchCanvasGestures({
     if (!el) return;
 
     const handleTouchStart = (e: TouchEvent) => {
-      if (pauseRef.current || e.touches.length !== 2) return;
+      if (pauseRef.current) return;
+      const transition = syncTouchLifecycle(e.touches);
+      if (!transition.pinchStarted || e.touches.length < 2) return;
       e.preventDefault();
       stopPanning();
       gesture.forceMode("pinch-pan");
@@ -63,8 +89,13 @@ export function useTouchCanvasGestures({
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (pauseRef.current || e.touches.length !== 2) return;
-      if (touchGestureRef.current.tag !== "pinching") return;
+      if (pauseRef.current) return;
+      const transition = syncTouchLifecycle(e.touches);
+      if (transition.pinchEnded) {
+        endPinch();
+        return;
+      }
+      if (e.touches.length !== 2 || !transition.nextState.isPinching || touchGestureRef.current.tag !== "pinching") return;
       e.preventDefault();
 
       const decision = resolvePinchMove(touchGestureRef.current, e.touches[0], e.touches[1], PINCH_DETECTION_THRESHOLD);
@@ -85,7 +116,8 @@ export function useTouchCanvasGestures({
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
-      if (e.touches.length < 2) {
+      const transition = syncTouchLifecycle(e.touches);
+      if (transition.pinchEnded) {
         endPinch();
       }
     };
@@ -102,7 +134,7 @@ export function useTouchCanvasGestures({
       el.removeEventListener("touchcancel", handleTouchEnd);
       endPinch();
     };
-  }, [canvasRef, panRef, pauseRef, setPan, stopPanning, zoomRef, zoomToward, gesture, endPinch]);
+  }, [canvasRef, panRef, pauseRef, setPan, stopPanning, zoomRef, zoomToward, gesture, endPinch, syncTouchLifecycle]);
 
   return {
     resetTouchGestures,
