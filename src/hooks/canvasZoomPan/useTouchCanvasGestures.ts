@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useRef, type MutableRefObject, type RefObject } from "react";
 import type { Offset } from "../../lib/vector";
 import { PINCH_DETECTION_THRESHOLD, ZOOM_MAX, ZOOM_MIN } from "../../constants/interaction";
-import { center, dist } from "./utils";
 import type { CanvasGestureCoordinator } from "../useCanvasGestureCoordinator";
+import {
+  IDLE_TOUCH_GESTURE_STATE,
+  resolvePinchMove,
+  startPinchGesture,
+  type TouchGestureState,
+} from "./touchGestureStateMachine";
 
 interface UseTouchCanvasGesturesOptions {
   canvasRef: RefObject<HTMLDivElement>;
@@ -15,15 +20,6 @@ interface UseTouchCanvasGesturesOptions {
   gesture: CanvasGestureCoordinator;
 }
 
-type PinchState = {
-  initialDistance: number;
-  initialZoom: number;
-  centerX: number;
-  centerY: number;
-  prevCenterX: number;
-  prevCenterY: number;
-};
-
 export function useTouchCanvasGestures({
   canvasRef,
   zoomRef,
@@ -34,11 +30,15 @@ export function useTouchCanvasGestures({
   stopPanning,
   gesture,
 }: UseTouchCanvasGesturesOptions) {
-  const pinchRef = useRef<PinchState | null>(null);
+  /**
+   * Explicit gesture state machine stored in a ref so event listeners always
+   * see the latest state without re-registering DOM handlers.
+   */
+  const touchGestureRef = useRef<TouchGestureState>(IDLE_TOUCH_GESTURE_STATE);
 
   const endPinch = useCallback(() => {
-    const hadPinch = pinchRef.current !== null;
-    pinchRef.current = null;
+    const hadPinch = touchGestureRef.current.tag === "pinching";
+    touchGestureRef.current = IDLE_TOUCH_GESTURE_STATE;
     gesture.releaseMode("pinch-pan");
     if (hadPinch) gesture.publish({ type: "pinch-end" });
   }, [gesture]);
@@ -59,39 +59,29 @@ export function useTouchCanvasGestures({
       // Pinch lifecycle is broadcast via observer bus so competing gestures can react
       // without direct callback plumbing between hooks.
       gesture.publish({ type: "pinch-start" });
-      const pinchCenter = center(e.touches[0], e.touches[1]);
-      pinchRef.current = {
-        initialDistance: dist(e.touches[0], e.touches[1]),
-        initialZoom: zoomRef.current,
-        centerX: pinchCenter.x,
-        centerY: pinchCenter.y,
-        prevCenterX: pinchCenter.x,
-        prevCenterY: pinchCenter.y,
-      };
+      touchGestureRef.current = startPinchGesture(e.touches[0], e.touches[1], zoomRef.current);
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (pauseRef.current || e.touches.length !== 2 || !pinchRef.current) return;
+      if (pauseRef.current || e.touches.length !== 2) return;
+      if (touchGestureRef.current.tag !== "pinching") return;
       e.preventDefault();
 
-      const d = dist(e.touches[0], e.touches[1]);
-      const scale = d / pinchRef.current.initialDistance;
-      const pinchCenter = center(e.touches[0], e.touches[1]);
+      const decision = resolvePinchMove(touchGestureRef.current, e.touches[0], e.touches[1], PINCH_DETECTION_THRESHOLD);
+      touchGestureRef.current = decision.nextState;
 
-      if (scale < PINCH_DETECTION_THRESHOLD || scale > 1 / PINCH_DETECTION_THRESHOLD) {
-        const newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, pinchRef.current.initialZoom * scale));
-        zoomToward(newZoom, pinchRef.current.centerX, pinchRef.current.centerY);
+      if (decision.tag === "zoom") {
+        const newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, decision.nextState.initialZoom * decision.scale));
+        zoomToward(newZoom, decision.pivotX, decision.pivotY);
         return;
       }
 
-      const dx = pinchCenter.x - pinchRef.current.prevCenterX;
-      const dy = pinchCenter.y - pinchRef.current.prevCenterY;
+      if (decision.tag !== "pan") return;
+
       setPan({
-        x: panRef.current.x + dx,
-        y: panRef.current.y + dy,
+        x: panRef.current.x + decision.deltaX,
+        y: panRef.current.y + decision.deltaY,
       });
-      pinchRef.current.prevCenterX = pinchCenter.x;
-      pinchRef.current.prevCenterY = pinchCenter.y;
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
