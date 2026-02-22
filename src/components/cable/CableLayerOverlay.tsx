@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { useBoard } from "../../context/BoardContext";
 import { useCanvas } from "../../context/CanvasContext";
 import { useRendering } from "../../context/RenderingContext";
-import { templateService } from "../../lib/templateService";
+import { useTemplateService } from "../../context/TemplateServiceContext";
 import { buildRoundedPathD, buildSmoothPathD, DEFAULT_JOIN_RADIUS } from "../../lib/polylinePath";
 import {
   tryReleasePointerCapture,
@@ -47,6 +47,7 @@ interface CableLayerOverlayProps {
 export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOverlayProps) {
   const { canvasRef, zoom, pan, spaceDown, gesture } = useCanvas();
   const { objects } = useBoard();
+  const templateService = useTemplateService();
   const { setCableLayer } = useRendering();
   const { clientToCanvas, toScreen } = useCanvasCoords(canvasRef, zoom, pan);
   const finishClickRef = useRef<() => void>(() => {});

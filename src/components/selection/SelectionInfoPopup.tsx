@@ -2,8 +2,8 @@ import { useEffect, useMemo } from "react";
 import { useBoard } from "../../context/BoardContext";
 import { useCable } from "../../context/CableContext";
 import { useSelection } from "../../context/SelectionContext";
+import { useTemplateService } from "../../context/TemplateServiceContext";
 import { useUi } from "../../context/UiContext";
-import { templateService } from "../../lib/templateService";
 import { formatDimension, formatLengthCm } from "../../lib/rulerFormat";
 import type { Point } from "../../lib/vector";
 import { InfoLine } from "./InfoLine";
@@ -23,6 +23,7 @@ function cableLengthMm(points: Point[]): number {
 export function SelectionInfoPopup() {
   const { objects } = useBoard();
   const { cables } = useCable();
+  const templateService = useTemplateService();
   const { selectedObjectIds, selectedCableId, setSelectedCableId } = useSelection();
   const { unit } = useUi();
 

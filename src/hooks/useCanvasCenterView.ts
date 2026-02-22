@@ -1,6 +1,6 @@
 import { useCallback, type RefObject } from "react";
+import { useTemplateService } from "../context/TemplateServiceContext";
 import { getObjectAabb } from "../lib/snapToBoundingBox";
-import { templateService } from "../lib/templateService";
 import type { Offset } from "../lib/vector";
 import type { CanvasObjectType } from "../types";
 
@@ -20,6 +20,8 @@ export function useCanvasCenterView({
   setPan,
   setCanvasAnimating,
 }: UseCanvasCenterViewOptions) {
+  const templateService = useTemplateService();
+
   return useCallback(() => {
     const el = canvasRef.current;
     if (!el || objects.length === 0) return;

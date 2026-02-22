@@ -19,6 +19,7 @@ import { CableProvider, type CableContextValue } from "./CableContext";
 import { CanvasProvider, type CanvasContextValue } from "./CanvasContext";
 import { CatalogProvider, type CatalogContextValue, type CatalogMode } from "./CatalogContext";
 import { HistoryProvider, type HistoryContextValue } from "./HistoryContext";
+import { TemplateServiceProvider } from "./TemplateServiceContext";
 import { useStorage } from "./StorageContext";
 import { UiProvider, type UiContextValue } from "./UiContext";
 import { RenderingProvider, type RenderingContextValue } from "./RenderingContext";
@@ -565,23 +566,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [newBoard, loadBoardFromFile, saveBoardToFile]
   );
 
+  // Provide TemplateService once at the app boundary so React consumers use DI
+  // instead of importing module-level singletons.
   return (
-    <UiProvider value={uiValue}>
-      <Mini3dProvider value={mini3dValue}>
-      <RenderingProvider value={renderingValue}>
-        <CanvasProvider value={canvasValue}>
-          <BoardProvider value={boardValue}>
-            <CableProvider value={cableValue}>
-              <CatalogProvider value={catalogValue}>
-                <HistoryProvider value={historyValue}>
-                  <BoardIoProvider value={boardIoValue}>{children}</BoardIoProvider>
-                </HistoryProvider>
-              </CatalogProvider>
-            </CableProvider>
-          </BoardProvider>
-        </CanvasProvider>
-      </RenderingProvider>
-      </Mini3dProvider>
-    </UiProvider>
+    <TemplateServiceProvider>
+      <UiProvider value={uiValue}>
+        <Mini3dProvider value={mini3dValue}>
+          <RenderingProvider value={renderingValue}>
+            <CanvasProvider value={canvasValue}>
+              <BoardProvider value={boardValue}>
+                <CableProvider value={cableValue}>
+                  <CatalogProvider value={catalogValue}>
+                    <HistoryProvider value={historyValue}>
+                      <BoardIoProvider value={boardIoValue}>{children}</BoardIoProvider>
+                    </HistoryProvider>
+                  </CatalogProvider>
+                </CableProvider>
+              </BoardProvider>
+            </CanvasProvider>
+          </RenderingProvider>
+        </Mini3dProvider>
+      </UiProvider>
+    </TemplateServiceProvider>
   );
 }

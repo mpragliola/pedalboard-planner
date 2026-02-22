@@ -1,8 +1,8 @@
 import type { RefObject } from "react";
 import { DEFAULT_OBJECT_COLOR } from "../constants/defaults";
 import { BASE_URL } from "../constants/runtime";
+import { useTemplateService } from "../context/TemplateServiceContext";
 import { trySetPointerCapture } from "../lib/pointerCapture";
-import { templateService } from "../lib/templateService";
 import { normalizeRotation } from "../lib/geometry";
 import type { CanvasObjectType } from "../types";
 import "./CanvasObject.scss";
@@ -52,6 +52,7 @@ export function CanvasObject({
   onPointerDown,
   onDragEnd,
 }: CanvasObjectProps) {
+  const templateService = useTemplateService();
   const [width, depth] = templateService.getObjectDimensions(obj);
   const rotation = normalizeRotation(obj.rotation ?? 0);
   const is90or270 = rotation === 90 || rotation === 270;

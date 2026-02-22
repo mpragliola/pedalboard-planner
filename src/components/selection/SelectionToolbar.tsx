@@ -1,6 +1,6 @@
 import { faArrowDown, faArrowUp, faRotateRight, faTrash } from "@fortawesome/free-solid-svg-icons";
 import type { CanvasObjectType } from "../../types";
-import { templateService } from "../../lib/templateService";
+import { useTemplateService } from "../../context/TemplateServiceContext";
 import { getObjectAabb } from "../../lib/snapToBoundingBox";
 import { getBounds2DCenter } from "../../lib/bounds";
 import { computeToolbarPosition } from "../../lib/toolbarPosition";
@@ -30,6 +30,7 @@ interface SelectionToolbarProps {
 
 function SelectionToolbar({ obj, onDelete, onRotate, onSendToBack, onBringToFront }: SelectionToolbarProps) {
   const { requestConfirmation } = useConfirmation();
+  const templateService = useTemplateService();
   const scaleUp = useMediaQuery(MEDIA_QUERY_MAX_MOBILE);
 
   const objectBounds = getObjectAabb(obj, templateService.getObjectDimensions);
