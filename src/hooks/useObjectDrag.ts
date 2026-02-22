@@ -5,9 +5,11 @@ import { useDragState } from "./useDragState";
 
 export function useObjectDrag(
   objects: CanvasObjectType[],
-  setObjects: (
-    action: CanvasObjectType[] | ((prev: CanvasObjectType[]) => CanvasObjectType[]),
-    saveToHistory?: boolean
+  setObjectsWithHistory: (
+    action: CanvasObjectType[] | ((prev: CanvasObjectType[]) => CanvasObjectType[])
+  ) => void,
+  setObjectsSilent: (
+    action: CanvasObjectType[] | ((prev: CanvasObjectType[]) => CanvasObjectType[])
   ) => void,
   zoom: number,
   spaceDown: boolean
@@ -20,24 +22,34 @@ export function useObjectDrag(
   }, []);
 
   const handleObjectPositionUpdate = useCallback(
-    (id: string, pos: Point, saveToHistory = false) => {
-      setObjects((prev) => prev.map((o) => (o.id === id ? { ...o, pos } : o)), saveToHistory);
+    (id: string, pos: Point, shouldSaveToHistory = false) => {
+      const action = (prev: CanvasObjectType[]) => prev.map((o) => (o.id === id ? { ...o, pos } : o));
+      if (shouldSaveToHistory) {
+        setObjectsWithHistory(action);
+      } else {
+        setObjectsSilent(action);
+      }
     },
-    [setObjects]
+    [setObjectsWithHistory, setObjectsSilent]
   );
 
   const handleObjectsPositionUpdate = useCallback(
-    (updates: Array<{ id: string; pos: Point }>, saveToHistory = false) => {
+    (updates: Array<{ id: string; pos: Point }>, shouldSaveToHistory = false) => {
       if (updates.length === 0) return;
-      setObjects((prev) => {
+      const action = (prev: CanvasObjectType[]) => {
         const byId = new Map(updates.map((u) => [u.id, u]));
         return prev.map((o) => {
           const u = byId.get(o.id);
           return u ? { ...o, pos: u.pos } : o;
         });
-      }, saveToHistory);
+      };
+      if (shouldSaveToHistory) {
+        setObjectsWithHistory(action);
+      } else {
+        setObjectsSilent(action);
+      }
     },
-    [setObjects]
+    [setObjectsWithHistory, setObjectsSilent]
   );
 
   const { draggingId: draggingObjectId, handleDragStart, clearDragState } = useDragState<{ objPos: Point }>({

@@ -19,10 +19,7 @@ interface UseCatalogPlacementOptions {
   zoomRef: RefObject<number>;
   panRef: RefObject<Offset>;
   idGeneratorRef: MutableRefObject<ObjectIdGenerator>;
-  setObjects: (
-    action: CanvasObjectType[] | ((prev: CanvasObjectType[]) => CanvasObjectType[]),
-    saveToHistory?: boolean
-  ) => void;
+  setObjectsWithHistory: (action: CanvasObjectType[] | ((prev: CanvasObjectType[]) => CanvasObjectType[])) => void;
   clearSelection: () => void;
   setSelectedBoard: (value: string) => void;
   setSelectedDevice: (value: string) => void;
@@ -39,7 +36,7 @@ export function useCatalogPlacement({
   zoomRef,
   panRef,
   idGeneratorRef,
-  setObjects,
+  setObjectsWithHistory,
   clearSelection,
   setSelectedBoard,
   setSelectedDevice,
@@ -73,11 +70,11 @@ export function useCatalogPlacement({
         idGeneratorRef.current
       );
 
-      setObjects((prev) => [...prev, newObj]);
+      setObjectsWithHistory((prev) => [...prev, newObj]);
       clearModeSelection(mode, setSelectedBoard, setSelectedDevice);
       clearSelection();
     },
-    [idGeneratorRef, setObjects, setSelectedBoard, setSelectedDevice, clearSelection]
+    [idGeneratorRef, setObjectsWithHistory, setSelectedBoard, setSelectedDevice, clearSelection]
   );
 
   const handleBoardSelect = useCallback(
@@ -107,11 +104,11 @@ export function useCatalogPlacement({
         { x: cx - w / 2, y: cy - d / 2 },
         idGeneratorRef.current
       );
-      setObjects((prev) => [...prev, newObj]);
+      setObjectsWithHistory((prev) => [...prev, newObj]);
       clearModeSelection(mode, setSelectedBoard, setSelectedDevice);
       clearSelection();
     },
-    [idGeneratorRef, getPlacementInVisibleViewport, setObjects, setSelectedBoard, setSelectedDevice, clearSelection]
+    [idGeneratorRef, getPlacementInVisibleViewport, setObjectsWithHistory, setSelectedBoard, setSelectedDevice, clearSelection]
   );
 
   const { placeFromCatalog, shouldIgnoreCatalogClick } = useCatalogDrag({

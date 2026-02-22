@@ -6,12 +6,19 @@ import {
 } from "react";
 import type { CanvasObjectType } from "../types";
 
+type ObjectsUpdateAction = CanvasObjectType[] | ((prev: CanvasObjectType[]) => CanvasObjectType[]);
+
 export interface BoardContextValue {
   objects: CanvasObjectType[];
+  /** @deprecated Prefer `setObjectsWithHistory` / `setObjectsSilent` for explicit intent. */
   setObjects: (
-    action: CanvasObjectType[] | ((prev: CanvasObjectType[]) => CanvasObjectType[]),
+    action: ObjectsUpdateAction,
     saveToHistory?: boolean
   ) => void;
+  /** Applies update and records it in undo/redo history. */
+  setObjectsWithHistory: (action: ObjectsUpdateAction) => void;
+  /** Applies update without creating a history snapshot. */
+  setObjectsSilent: (action: ObjectsUpdateAction) => void;
   imageFailedIds: Set<string>;
   draggingObjectId: string | null;
   onImageError: (id: string) => void;

@@ -9,15 +9,21 @@ function offsetPoints(points: Point[], offset: Point): Point[] {
 
 export function useCableDrag(
   cables: Cable[],
-  setCables: (action: Cable[] | ((prev: Cable[]) => Cable[]), saveToHistory?: boolean) => void,
+  setCablesWithHistory: (action: Cable[] | ((prev: Cable[]) => Cable[])) => void,
+  setCablesSilent: (action: Cable[] | ((prev: Cable[]) => Cable[])) => void,
   zoom: number,
   spaceDown: boolean
 ) {
   const handleCableSegmentsUpdate = useCallback(
-    (id: string, segments: Point[], saveToHistory = false) => {
-      setCables((prev) => prev.map((c) => (c.id === id ? { ...c, segments } : c)), saveToHistory);
+    (id: string, segments: Point[], shouldSaveToHistory = false) => {
+      const action = (prev: Cable[]) => prev.map((c) => (c.id === id ? { ...c, segments } : c));
+      if (shouldSaveToHistory) {
+        setCablesWithHistory(action);
+      } else {
+        setCablesSilent(action);
+      }
     },
-    [setCables]
+    [setCablesWithHistory, setCablesSilent]
   );
 
   const { draggingId: draggingCableId, handleDragStart, clearDragState } = useDragState<{ segments: Point[] }>({

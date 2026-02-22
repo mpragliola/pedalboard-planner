@@ -69,7 +69,7 @@ type CablePathsSnapContext = ModifierSnapContext & ObjectSnapContext;
  */
 export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCablePointerDown }: CablePathsProps) {
   const { objects } = useBoard();
-  const { setCables } = useCable();
+  const { setCablesWithHistory, setCablesSilent } = useCable();
   const { setSelectedCableId } = useSelection();
   const { canvasRef, zoom, pan, pausePanZoom, spaceDown } = useCanvas();
   const { clientToCanvas } = useCanvasCoords(canvasRef, zoom, pan);
@@ -216,7 +216,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
       const nextPoints = drag.points.slice();
       nextPoints[drag.handleIndex] = snapped;
       dragRef.current = { ...drag, points: nextPoints };
-      setCables((prev) => prev.map((c) => (c.id === drag.cableId ? { ...c, segments: nextPoints } : c)), false);
+      setCablesSilent((prev) => prev.map((c) => (c.id === drag.cableId ? { ...c, segments: nextPoints } : c)));
     },
     onDragEnd: () => {
       clearHandlePress();
@@ -225,7 +225,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
       if (!drag) return;
       const finalPoints = drag.points;
       dragRef.current = null;
-      setCables((prev) => prev.map((c) => (c.id === drag.cableId ? { ...c, segments: finalPoints } : c)), true);
+      setCablesWithHistory((prev) => prev.map((c) => (c.id === drag.cableId ? { ...c, segments: finalPoints } : c)));
     },
   });
 
@@ -246,7 +246,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
       CP.CABLE_PATHS_INSERT_FLASH_DURATION_MS
     );
     const nextPoints = [...points.slice(0, segIndex + 1), snapped, ...points.slice(segIndex + 1)];
-    setCables((prev) => prev.map((c) => (c.id === cableId ? { ...c, segments: nextPoints } : c)), true);
+    setCablesWithHistory((prev) => prev.map((c) => (c.id === cableId ? { ...c, segments: nextPoints } : c)));
     return true;
   };
 
@@ -300,7 +300,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
         dragRef.current = null;
         clearHandleDragState();
         clearHandlePress();
-        setCables((prev) => prev.map((c) => (c.id === cableId ? { ...c, segments: nextPoints } : c)), true);
+        setCablesWithHistory((prev) => prev.map((c) => (c.id === cableId ? { ...c, segments: nextPoints } : c)));
         tryReleasePointerCapture(e.target as Element, e.pointerId);
       }, CP.CABLE_PATHS_HANDLE_REMOVE_PRESS_MS);
     }

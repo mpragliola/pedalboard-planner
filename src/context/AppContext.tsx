@@ -80,8 +80,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [executeCommand]
   );
 
-  const setObjects = useCallback(
-    (action: CanvasObjectType[] | ((prev: CanvasObjectType[]) => CanvasObjectType[]), saveToHistory = true) => {
+  const applyObjects = useCallback(
+    (
+      action: CanvasObjectType[] | ((prev: CanvasObjectType[]) => CanvasObjectType[]),
+      saveToHistory: boolean
+    ) => {
       setBoardState((prev) => {
         const newObjects = typeof action === "function" ? action(prev.objects) : action;
         return newObjects === prev.objects ? prev : { ...prev, objects: newObjects };
@@ -90,14 +93,58 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [setBoardState]
   );
 
-  const setCables = useCallback(
-    (action: Cable[] | ((prev: Cable[]) => Cable[]), saveToHistory = true) => {
+  const setObjectsWithHistory = useCallback(
+    (action: CanvasObjectType[] | ((prev: CanvasObjectType[]) => CanvasObjectType[])) => {
+      applyObjects(action, true);
+    },
+    [applyObjects]
+  );
+
+  const setObjectsSilent = useCallback(
+    (action: CanvasObjectType[] | ((prev: CanvasObjectType[]) => CanvasObjectType[])) => {
+      applyObjects(action, false);
+    },
+    [applyObjects]
+  );
+
+  // Backward-compatible shim while call sites migrate to explicit methods.
+  const setObjects = useCallback(
+    (action: CanvasObjectType[] | ((prev: CanvasObjectType[]) => CanvasObjectType[]), saveToHistory = true) => {
+      applyObjects(action, saveToHistory);
+    },
+    [applyObjects]
+  );
+
+  const applyCables = useCallback(
+    (action: Cable[] | ((prev: Cable[]) => Cable[]), saveToHistory: boolean) => {
       setBoardState((prev) => {
         const newCables = typeof action === "function" ? action(prev.cables) : action;
         return newCables === prev.cables ? prev : { ...prev, cables: newCables };
       }, saveToHistory);
     },
     [setBoardState]
+  );
+
+  const setCablesWithHistory = useCallback(
+    (action: Cable[] | ((prev: Cable[]) => Cable[])) => {
+      applyCables(action, true);
+    },
+    [applyCables]
+  );
+
+  const setCablesSilent = useCallback(
+    (action: Cable[] | ((prev: Cable[]) => Cable[])) => {
+      applyCables(action, false);
+    },
+    [applyCables]
+  );
+
+  // Backward-compatible shim while call sites migrate to explicit methods.
+  const setCables = useCallback(
+    (action: Cable[] | ((prev: Cable[]) => Cable[]), saveToHistory = true) => {
+      applyCables(action, saveToHistory);
+    },
+    [applyCables]
   );
 
   const [showGrid, setShowGrid] = useState(false);
@@ -145,8 +192,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   } = useCanvasInteractionOrchestrator({
     objects,
     cables,
-    setObjects,
-    setCables,
+    setObjectsWithHistory,
+    setObjectsSilent,
+    setCablesWithHistory,
+    setCablesSilent,
     initialZoom: savedState?.zoom,
     initialPan: savedState?.pan,
   });
@@ -187,7 +236,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     zoomRef,
     panRef,
     idGeneratorRef: objectIdGeneratorRef,
-    setObjects,
+    setObjectsWithHistory,
     clearSelection,
     setSelectedBoard,
     setSelectedDevice,
@@ -414,6 +463,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     () => ({
       objects,
       setObjects,
+      setObjectsWithHistory,
+      setObjectsSilent,
       imageFailedIds,
       draggingObjectId,
       onImageError: handleImageError,
@@ -427,6 +478,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [
       objects,
       setObjects,
+      setObjectsWithHistory,
+      setObjectsSilent,
       imageFailedIds,
       draggingObjectId,
       handleImageError,
@@ -443,6 +496,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     () => ({
       cables,
       setCables,
+      setCablesWithHistory,
+      setCablesSilent,
       addCable,
       upsertCable,
       deleteCable,
@@ -453,6 +508,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [
       cables,
       setCables,
+      setCablesWithHistory,
+      setCablesSilent,
       addCable,
       upsertCable,
       deleteCable,

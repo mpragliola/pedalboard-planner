@@ -7,18 +7,16 @@ import { useObjectDrag } from "./useObjectDrag";
 import type { Offset } from "../lib/vector";
 import type { Cable, CanvasObjectType } from "../types";
 
-type SetObjects = (
-  action: CanvasObjectType[] | ((prev: CanvasObjectType[]) => CanvasObjectType[]),
-  saveToHistory?: boolean
-) => void;
-
-type SetCables = (action: Cable[] | ((prev: Cable[]) => Cable[]), saveToHistory?: boolean) => void;
+type ObjectsUpdateAction = CanvasObjectType[] | ((prev: CanvasObjectType[]) => CanvasObjectType[]);
+type CablesUpdateAction = Cable[] | ((prev: Cable[]) => Cable[]);
 
 interface UseCanvasInteractionOrchestratorOptions {
   objects: CanvasObjectType[];
   cables: Cable[];
-  setObjects: SetObjects;
-  setCables: SetCables;
+  setObjectsWithHistory: (action: ObjectsUpdateAction) => void;
+  setObjectsSilent: (action: ObjectsUpdateAction) => void;
+  setCablesWithHistory: (action: CablesUpdateAction) => void;
+  setCablesSilent: (action: CablesUpdateAction) => void;
   initialZoom?: number;
   initialPan?: Offset;
 }
@@ -30,8 +28,10 @@ interface UseCanvasInteractionOrchestratorOptions {
 export function useCanvasInteractionOrchestrator({
   objects,
   cables,
-  setObjects,
-  setCables,
+  setObjectsWithHistory,
+  setObjectsSilent,
+  setCablesWithHistory,
+  setCablesSilent,
   initialZoom,
   initialPan,
 }: UseCanvasInteractionOrchestratorOptions) {
@@ -66,11 +66,18 @@ export function useCanvasInteractionOrchestrator({
 
   const { draggingObjectId, handleObjectDragStart, clearDragState: clearObjectDragState } = useObjectDrag(
     objects,
-    setObjects,
+    setObjectsWithHistory,
+    setObjectsSilent,
     zoom,
     spaceDown
   );
-  const { handleCableDragStart, clearDragState: clearCableDragState } = useCableDrag(cables, setCables, zoom, spaceDown);
+  const { handleCableDragStart, clearDragState: clearCableDragState } = useCableDrag(
+    cables,
+    setCablesWithHistory,
+    setCablesSilent,
+    zoom,
+    spaceDown
+  );
   // Keep refs synchronized every render so pinch-start always clears current drag handlers.
   clearObjectDragRef.current = clearObjectDragState;
   clearCableDragRef.current = clearCableDragState;

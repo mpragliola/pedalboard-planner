@@ -1,9 +1,16 @@
 import { createContext, useContext, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import type { Cable } from "../types";
 
+type CablesUpdateAction = Cable[] | ((prev: Cable[]) => Cable[]);
+
 export interface CableContextValue {
   cables: Cable[];
-  setCables: (action: Cable[] | ((prev: Cable[]) => Cable[]), saveToHistory?: boolean) => void;
+  /** @deprecated Prefer `setCablesWithHistory` / `setCablesSilent` for explicit intent. */
+  setCables: (action: CablesUpdateAction, saveToHistory?: boolean) => void;
+  /** Applies update and records it in undo/redo history. */
+  setCablesWithHistory: (action: CablesUpdateAction) => void;
+  /** Applies update without creating a history snapshot. */
+  setCablesSilent: (action: CablesUpdateAction) => void;
   /** Add a cable to board state. Persistence is handled by the persistence layer. */
   addCable: (cable: Cable) => void;
   /** Insert or replace a cable by id with command-backed undo/redo support. */
