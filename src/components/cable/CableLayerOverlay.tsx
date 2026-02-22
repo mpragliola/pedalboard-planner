@@ -4,6 +4,11 @@ import { useCanvas } from "../../context/CanvasContext";
 import { useRendering } from "../../context/RenderingContext";
 import { templateService } from "../../lib/templateService";
 import { buildRoundedPathD, buildSmoothPathD, DEFAULT_JOIN_RADIUS } from "../../lib/polylinePath";
+import {
+  tryReleasePointerCapture,
+  tryReleasePointerCaptures,
+  trySetPointerCapture,
+} from "../../lib/pointerCapture";
 import { isDoubleTapWithinThreshold } from "../../lib/tapGesture";
 import { vec2Add, vec2Scale, type Vec2, type Point } from "../../lib/vector";
 import { useCanvasCoords } from "../../hooks/useCanvasCoords";
@@ -141,13 +146,7 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
       if (decision === "begin-pinch") {
         /* Multi-touch detected -> release any capture so pinch-to-zoom works. */
         const el = e.currentTarget as HTMLElement;
-        for (const pid of gestureState.activePointerIds) {
-          try {
-            el.releasePointerCapture(pid);
-          } catch {
-            /* ok */
-          }
-        }
+        tryReleasePointerCaptures(el, gestureState.activePointerIds);
         return;
       }
 
@@ -161,11 +160,7 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
         if (hasSegments || hasPreview) {
           /* Defer one frame so the upcoming pointerup/click is delivered to the overlay first. */
           requestAnimationFrame(() => openAddCableModal());
-          try {
-            (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-          } catch {
-            /* may not have capture */
-          }
+          tryReleasePointerCapture(e.currentTarget as HTMLElement, e.pointerId);
         } else {
           releaseCableGesture();
           exitMode();
@@ -179,7 +174,7 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
       ) {
         // Normal draw path: delegate to draw hook, then capture this pointer id.
         onPointerDown(e);
-        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+        trySetPointerCapture(e.currentTarget as HTMLElement, e.pointerId);
       }
     },
     [
@@ -201,11 +196,7 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
       /* When pointer moves over Add cable button, release capture so the button can receive the click */
       const hit = document.elementFromPoint(e.clientX, e.clientY);
       if (hit?.closest?.(CLO.CABLE_LAYER_ACTIONS_SELECTOR)) {
-        try {
-          (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-        } catch {
-          /* ok */
-        }
+        tryReleasePointerCapture(e.currentTarget as HTMLElement, e.pointerId);
       }
       onPointerMove(e);
     },
@@ -234,11 +225,7 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
       const hit = document.elementFromPoint(e.clientX, e.clientY);
       if (hit?.closest?.(CLO.CABLE_LAYER_ACTIONS_SELECTOR)) {
         // Allow buttons to receive click by dropping capture when release occurs over actions.
-        try {
-          (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-        } catch {
-          /* ok */
-        }
+        tryReleasePointerCapture(e.currentTarget as HTMLElement, e.pointerId);
         // Only Add button opens modal; Cancel should not.
         if (hit?.closest?.(CLO.CABLE_LAYER_ADD_BUTTON_SELECTOR) && (hasSegments || hasPreview)) openAddCableModal();
         // Track tap for subsequent double-tap detection.
@@ -251,11 +238,7 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
 
       // Phase 4: normal draw pointer-up path delegates to draw hook.
       onPointerUp(e);
-      try {
-        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-      } catch {
-        /* may not have capture */
-      }
+      tryReleasePointerCapture(e.currentTarget as HTMLElement, e.pointerId);
       if (isPointerUpPrimary(e.button, e.pointerType)) {
         lastTapRef.current = { time: Date.now(), x: e.clientX, y: e.clientY };
       }

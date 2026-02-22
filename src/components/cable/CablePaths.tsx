@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { CONNECTOR_ICON_MAP } from "../../constants";
 import { CABLE_TERMINAL_START_COLOR, CABLE_TERMINAL_END_COLOR } from "../../constants/cables";
 import { DEFAULT_JOIN_RADIUS } from "../../lib/polylinePath";
+import { tryReleasePointerCapture, trySetPointerCapture } from "../../lib/pointerCapture";
 import { isDoubleTapWithinThreshold } from "../../lib/tapGesture";
 import type { Point } from "../../lib/vector";
 import { templateService } from "../../lib/templateService";
@@ -300,26 +301,18 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
         clearHandleDragState();
         clearHandlePress();
         setCables((prev) => prev.map((c) => (c.id === cableId ? { ...c, segments: nextPoints } : c)), true);
-        try {
-          (e.target as Element).releasePointerCapture(e.pointerId);
-        } catch {
-          /* ignore */
-        }
+        tryReleasePointerCapture(e.target as Element, e.pointerId);
       }, CP.CABLE_PATHS_HANDLE_REMOVE_PRESS_MS);
     }
 
-    (e.target as Element).setPointerCapture(e.pointerId);
+    trySetPointerCapture(e.target as Element, e.pointerId);
     handleHandleDragStart(cableId, e);
   };
 
   const handleHandlePointerRelease = (e: React.PointerEvent) => {
     e.stopPropagation();
     clearHandlePress();
-    try {
-      (e.currentTarget as Element).releasePointerCapture(e.pointerId);
-    } catch {
-      /* ignore */
-    }
+    tryReleasePointerCapture(e.currentTarget as Element, e.pointerId);
   };
 
   if (!visible || cables.length === 0) return null;
