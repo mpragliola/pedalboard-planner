@@ -4,13 +4,13 @@ import { useCanvas } from "../../context/CanvasContext";
 import { useRendering } from "../../context/RenderingContext";
 import { templateService } from "../../lib/templateService";
 import { buildRoundedPathD, buildSmoothPathD, DEFAULT_JOIN_RADIUS } from "../../lib/polylinePath";
-import { formatLength } from "../../lib/rulerFormat";
 import { isDoubleTapWithinThreshold } from "../../lib/tapGesture";
 import { vec2Add, vec2Scale, type Vec2, type Point } from "../../lib/vector";
 import { useCanvasCoords } from "../../hooks/useCanvasCoords";
 import { useCableDraw } from "../../hooks/useCableDraw";
 import { useCablePhysics } from "../../hooks/useCablePhysics";
 import { useCableLayerKeyboard } from "./useCableLayerKeyboard";
+import { CableLayerSurface } from "./CableLayerSurface";
 import {
   canHandleCableLayerPointerDown,
   isPrimaryCableLayerPointer,
@@ -25,7 +25,6 @@ import {
   isPointerUpPrimary,
   resolveCableLayerPointerUpPreflight,
 } from "./cableLayerPointerUp";
-import { CABLE_TERMINAL_START_COLOR, CABLE_TERMINAL_END_COLOR } from "../../constants/cables";
 import * as CLO from "../../constants/cableLayerOverlay";
 import "../ruler/RulerOverlay.scss";
 import "./CableLayerOverlay.scss";
@@ -340,98 +339,22 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
       onPointerCancel={handlePointerUp}
       onContextMenu={handleContextMenu}
     >
-      <svg className="cable-layer-svg ruler-diagonal" style={{ left: 0, top: 0 }}>
-        {committedPathD && (
-          <path
-            d={committedPathD}
-            fill="none"
-            stroke={CLO.CABLE_LAYER_CURRENT_CABLE_STROKE}
-            strokeWidth={strokeWidthPx}
-            strokeOpacity={CLO.CABLE_LAYER_CURRENT_CABLE_OPACITY}
-            strokeDasharray={currentCableStrokeDasharray}
-            strokeLinejoin="round"
-            strokeLinecap="round"
-          />
-        )}
-        {previewPathD && (
-          <path
-            d={previewPathD}
-            fill="none"
-            stroke={CLO.CABLE_LAYER_CURRENT_CABLE_STROKE}
-            strokeWidth={strokeWidthPx}
-            strokeOpacity={CLO.CABLE_LAYER_CURRENT_CABLE_OPACITY}
-            strokeDasharray={currentCableStrokeDasharray}
-            strokeLinecap="round"
-          />
-        )}
-        {firstPoint && (
-          <circle
-            cx={firstPoint.x}
-            cy={firstPoint.y}
-            r={CLO.CABLE_LAYER_ENDPOINT_DOT_RADIUS_PX}
-            className="cable-endpoint-dot"
-            fill={CABLE_TERMINAL_START_COLOR}
-            stroke={CLO.CABLE_LAYER_ENDPOINT_DOT_STROKE}
-            strokeWidth={CLO.CABLE_LAYER_ENDPOINT_DOT_STROKE_WIDTH_PX}
-          />
-        )}
-        {lastPoint && (
-          <circle
-            cx={lastPoint.x}
-            cy={lastPoint.y}
-            r={CLO.CABLE_LAYER_ENDPOINT_DOT_RADIUS_PX}
-            className="cable-endpoint-dot"
-            fill={CABLE_TERMINAL_END_COLOR}
-            stroke={CLO.CABLE_LAYER_ENDPOINT_DOT_STROKE}
-            strokeWidth={CLO.CABLE_LAYER_ENDPOINT_DOT_STROKE_WIDTH_PX}
-          />
-        )}
-      </svg>
-      {(hasSegments || hasPreview) && popupCenter && totalLength > 0 && (
-        <div
-          className="ruler-popup"
-          data-no-canvas-zoom
-          style={{
-            left: popupCenter.x,
-            top: popupCenter.y - CLO.CABLE_LAYER_LENGTH_POPUP_Y_OFFSET_PX,
-            transform: "translate(-50%, -100%)",
-          }}
-        >
-          <div className="ruler-popup-row">
-            <span>Length</span>
-            <span>
-              {showBothLengths
-                ? `${formatLength(committedLength, "mm")} (${formatLength(totalLength, "mm")})`
-                : formatLength(totalLength, "mm")}
-            </span>
-          </div>
-        </div>
-      )}
-      {(hasSegments || hasPreview) && (
-        <div className="cable-layer-actions" data-no-canvas-zoom>
-          <div className="cable-layer-buttons">
-            <button
-              type="button"
-              className="cable-layer-cancel-btn"
-              onClick={clearDrawing}
-              title="Cancel current cable (Esc or right-click). Start drawing again."
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              className="cable-layer-add-btn"
-              onClick={openAddCableModal}
-              title="Add cable (Enter). Finish drawing and exit Add cable mode."
-            >
-              Add cable
-            </button>
-          </div>
-          <p className="cable-layer-hint" aria-hidden>
-            Finish or press Esc to cancel
-          </p>
-        </div>
-      )}
+      <CableLayerSurface
+        committedPathD={committedPathD}
+        previewPathD={previewPathD}
+        strokeWidthPx={strokeWidthPx}
+        currentCableStrokeDasharray={currentCableStrokeDasharray}
+        firstPoint={firstPoint}
+        lastPoint={lastPoint}
+        hasSegments={hasSegments}
+        hasPreview={hasPreview}
+        popupCenter={popupCenter}
+        totalLength={totalLength}
+        committedLength={committedLength}
+        showBothLengths={showBothLengths}
+        onCancelDrawing={clearDrawing}
+        onAddCableModal={openAddCableModal}
+      />
     </div>
   );
 }
