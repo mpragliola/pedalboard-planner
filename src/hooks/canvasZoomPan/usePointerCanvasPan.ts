@@ -2,6 +2,13 @@ import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 
 import { addGlobalPointerListeners } from "../../lib/pointerEvents";
 import type { Offset } from "../../lib/vector";
 import type { CanvasGestureCoordinator } from "../useCanvasGestureCoordinator";
+import {
+  IDLE_POINTER_PAN_STATE,
+  resolvePointerPanMove,
+  shouldEndPointerPan,
+  startPointerPan,
+  type PointerPanState,
+} from "./pointerPanStateMachine";
 
 interface UsePointerCanvasPanOptions {
   panRef: MutableRefObject<Offset>;
@@ -20,14 +27,17 @@ export function usePointerCanvasPan({
   spaceDown,
   gesture,
 }: UsePointerCanvasPanOptions) {
-  const [isPanning, setIsPanning] = useState(false);
-  const panStartRef = useRef<{ mouseX: number; mouseY: number; panX: number; panY: number; pointerId: number } | null>(
-    null
-  );
+  // Single explicit pan phase:
+  // - `idle`: no active pointer-owned canvas pan
+  // - `panning`: one pointer owns pan deltas until matching pointer-up
+  const panStateRef = useRef<PointerPanState>(IDLE_POINTER_PAN_STATE);
+  // Render-level mirror for effects/consumers; imperative reads use panStateRef.
+  const [panStateTag, setPanStateTag] = useState<PointerPanState["tag"]>("idle");
+  const isPanning = panStateTag === "panning";
 
   const stopPanning = useCallback(() => {
-    setIsPanning(false);
-    panStartRef.current = null;
+    panStateRef.current = IDLE_POINTER_PAN_STATE;
+    setPanStateTag("idle");
     gesture.releaseMode("pointer-pan");
   }, [gesture]);
 
@@ -35,17 +45,13 @@ export function usePointerCanvasPan({
     if (!isPanning) return;
 
     const handlePointerMove = (e: PointerEvent) => {
-      if (!panStartRef.current || e.pointerId !== panStartRef.current.pointerId) return;
-      const dx = e.clientX - panStartRef.current.mouseX;
-      const dy = e.clientY - panStartRef.current.mouseY;
-      setPan({
-        x: panStartRef.current.panX + dx,
-        y: panStartRef.current.panY + dy,
-      });
+      const nextPan = resolvePointerPanMove(panStateRef.current, e.pointerId, e.clientX, e.clientY);
+      if (!nextPan) return;
+      setPan(nextPan);
     };
 
     const handlePointerUp = (e: PointerEvent) => {
-      if (!panStartRef.current || e.pointerId !== panStartRef.current.pointerId) return;
+      if (!shouldEndPointerPan(panStateRef.current, e.pointerId)) return;
       stopPanning();
     };
 
@@ -65,14 +71,14 @@ export function usePointerCanvasPan({
       if (!gesture.requestMode("pointer-pan")) return;
       e.preventDefault();
       setAnimating(false);
-      setIsPanning(true);
-      panStartRef.current = {
+      panStateRef.current = startPointerPan({
+        pointerId: e.pointerId,
         mouseX: e.clientX,
         mouseY: e.clientY,
         panX: panRef.current.x,
         panY: panRef.current.y,
-        pointerId: e.pointerId,
-      };
+      });
+      setPanStateTag("panning");
     },
     [pauseRef, spaceDown, setAnimating, panRef, gesture]
   );
