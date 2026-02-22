@@ -1,6 +1,7 @@
 import type { RefObject } from "react";
 import { DEFAULT_OBJECT_COLOR } from "../constants/defaults";
 import { BASE_URL } from "../constants/runtime";
+import { trySetPointerCapture } from "../lib/pointerCapture";
 import { templateService } from "../lib/templateService";
 import { normalizeRotation } from "../lib/geometry";
 import type { CanvasObjectType } from "../types";
@@ -67,7 +68,7 @@ export function CanvasObject({
     if (e.button !== 0) return;
     e.preventDefault(); /* prevent scroll/zoom on touch so drag works */
     /* Capture on canvas container so it isn't lost when the object moves (fixes drag on real phones) */
-    canvasRef.current?.setPointerCapture(e.pointerId);
+    trySetPointerCapture(canvasRef.current, e.pointerId);
     onPointerDown(e);
   };
   const handlePointerUp = (e: React.PointerEvent) => {

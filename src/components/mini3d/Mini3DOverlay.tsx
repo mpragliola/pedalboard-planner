@@ -18,6 +18,7 @@ import { useUi } from "../../context/UiContext";
 import { useMini3d } from "../../context/Mini3dContext";
 import { CANVAS_BACKGROUNDS } from "../../constants/backgrounds";
 import { clamp } from "../../lib/math";
+import { tryReleasePointerCapture, trySetPointerCapture } from "../../lib/pointerCapture";
 import { isDoubleTapWithinThreshold } from "../../lib/tapGesture";
 import { Mini3DRootScene, ShadowMapController } from "./Mini3DRootScene";
 import {
@@ -315,11 +316,7 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
 
     invalidateRef.current?.();
 
-    try {
-      containerRef.current?.setPointerCapture(e.pointerId);
-    } catch {
-      /* Pointer capture can fail on some platforms. */
-    }
+    trySetPointerCapture(containerRef.current, e.pointerId);
   }, []);
 
   const handlePointerMove = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
@@ -416,11 +413,7 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
       dragRef.current = null;
     }
 
-    try {
-      containerRef.current?.releasePointerCapture(e.pointerId);
-    } catch {
-      /* Pointer may already be released. */
-    }
+    tryReleasePointerCapture(containerRef.current, e.pointerId);
   }, [toggleFullscreen]);
 
   if (!isVisible) return null;

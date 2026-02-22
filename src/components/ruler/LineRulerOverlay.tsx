@@ -5,6 +5,7 @@ import { useRendering } from '../../context/RenderingContext'
 import { buildRoundedPathD, DEFAULT_JOIN_RADIUS } from '../../lib/polylinePath'
 import { vec2Add, vec2Average, vec2Scale } from '../../lib/vector'
 import { formatLength } from '../../lib/rulerFormat'
+import { trySetPointerCapture } from '../../lib/pointerCapture'
 import { isDoubleTapWithinThreshold } from '../../lib/tapGesture'
 import { useCanvasCoords } from '../../hooks/useCanvasCoords'
 import { usePolylineDraw } from '../../hooks/usePolylineDraw'
@@ -57,7 +58,7 @@ export function LineRulerOverlay() {
       }
       onPointerDown(e)
       if (e.button === 0 || e.pointerType === 'touch') {
-        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+        trySetPointerCapture(e.currentTarget as HTMLElement, e.pointerId)
       }
     },
     [onPointerDown, exitMode]

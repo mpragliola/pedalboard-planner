@@ -4,6 +4,7 @@ import { useCanvas } from "../../context/CanvasContext";
 import { useUi } from "../../context/UiContext";
 import { useRendering } from "../../context/RenderingContext";
 import { useCanvasCoords } from "../../hooks/useCanvasCoords";
+import { tryReleasePointerCapture, trySetPointerCapture } from "../../lib/pointerCapture";
 import { formatLength } from "../../lib/rulerFormat";
 import "./RulerOverlay.scss";
 
@@ -36,13 +37,13 @@ export function RulerOverlay() {
         hasMovedRef.current = false;
         setIsDragging(true);
         setIsDraggingRect(true);
-        overlayRef.current?.setPointerCapture(e.pointerId);
+        trySetPointerCapture(overlayRef.current, e.pointerId);
         return;
       }
       dragStartRef.current = { clientX: e.clientX, clientY: e.clientY, x, y };
       setIsDragging(true);
       setRect({ x1: x, y1: y, x2: x, y2: y });
-      overlayRef.current?.setPointerCapture(e.pointerId);
+      trySetPointerCapture(overlayRef.current, e.pointerId);
     },
     [clientToCanvas, rect, isDragging, setRuler]
   );
@@ -79,7 +80,7 @@ export function RulerOverlay() {
   const handlePointerUp = useCallback(
     (e: React.PointerEvent) => {
       if (e.button !== 0) return;
-      overlayRef.current?.releasePointerCapture(e.pointerId);
+      tryReleasePointerCapture(overlayRef.current, e.pointerId);
       const wasMovingRect = dragStartRef.current?.rect != null;
       const didMove = hasMovedRef.current;
       dragStartRef.current = null;
