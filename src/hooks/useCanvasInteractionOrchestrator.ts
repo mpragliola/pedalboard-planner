@@ -1,4 +1,4 @@
-import { useCallback, useRef, type PointerEvent as ReactPointerEvent } from "react";
+import { useCallback, useEffect, useRef, type PointerEvent as ReactPointerEvent } from "react";
 import { useCableDrag } from "./useCableDrag";
 import { useCanvasInteractions } from "./useCanvasInteractions";
 import { useCanvasZoomPan } from "./useCanvasZoomPan";
@@ -36,14 +36,10 @@ export function useCanvasInteractionOrchestrator({
   initialPan,
 }: UseCanvasInteractionOrchestratorOptions) {
   const gesture = useCanvasGestureCoordinator();
-  // Pinch-start callback is registered before drag hooks are created (via useCanvasZoomPan),
-  // so we keep the latest drag clear handlers in refs that pinch can always call.
+  // Gesture subscribers may be registered before drag hooks are created,
+  // so refs always point to the latest clear handlers.
   const clearObjectDragRef = useRef<() => void>(() => {});
   const clearCableDragRef = useRef<() => void>(() => {});
-  const handlePinchStart = useCallback(() => {
-    clearObjectDragRef.current();
-    clearCableDragRef.current();
-  }, []);
 
   const {
     zoom,
@@ -65,7 +61,6 @@ export function useCanvasInteractionOrchestrator({
   } = useCanvasZoomPan({
     initialZoom,
     initialPan,
-    onPinchStart: handlePinchStart,
     gesture,
   });
 
@@ -79,6 +74,16 @@ export function useCanvasInteractionOrchestrator({
   // Keep refs synchronized every render so pinch-start always clears current drag handlers.
   clearObjectDragRef.current = clearObjectDragState;
   clearCableDragRef.current = clearCableDragState;
+
+  useEffect(() => {
+    // Observer-style gesture coordination:
+    // pinch start broadcasts once, and interested interactions react independently.
+    const unsubscribe = gesture.subscribeType("pinch-start", () => {
+      clearObjectDragRef.current();
+      clearCableDragRef.current();
+    });
+    return unsubscribe;
+  }, [gesture]);
 
   // Inject explicit handler dependencies (no late-bound setHandlers/hRef path).
   const { handleObjectPointerDown, handleCanvasPointerDown: onCanvasPointerDown, handleCablePointerDown } =

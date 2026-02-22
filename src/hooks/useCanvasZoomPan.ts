@@ -12,8 +12,6 @@ import type { CanvasGestureCoordinator } from "./useCanvasGestureCoordinator";
 export interface UseCanvasZoomPanOptions {
   initialZoom?: number;
   initialPan?: Offset;
-  /** Called when pinch starts (2 fingers); use to cancel object drag so pinch and drag are mutually exclusive. */
-  onPinchStart?: () => void;
   gesture: CanvasGestureCoordinator;
 }
 
@@ -59,7 +57,6 @@ export function useCanvasZoomPan(options: UseCanvasZoomPanOptions) {
     setPan,
     zoomToward,
     pauseRef,
-    onPinchStart: options.onPinchStart,
     stopPanning,
     gesture: options.gesture,
   });

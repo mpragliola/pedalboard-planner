@@ -11,7 +11,6 @@ interface UseTouchCanvasGesturesOptions {
   setPan: (pan: Offset) => void;
   zoomToward: (newZoom: number, pivotX: number, pivotY: number) => void;
   pauseRef: MutableRefObject<boolean>;
-  onPinchStart?: () => void;
   stopPanning: () => void;
   gesture: CanvasGestureCoordinator;
 }
@@ -32,16 +31,21 @@ export function useTouchCanvasGestures({
   setPan,
   zoomToward,
   pauseRef,
-  onPinchStart,
   stopPanning,
   gesture,
 }: UseTouchCanvasGesturesOptions) {
   const pinchRef = useRef<PinchState | null>(null);
 
-  const resetTouchGestures = useCallback(() => {
+  const endPinch = useCallback(() => {
+    const hadPinch = pinchRef.current !== null;
     pinchRef.current = null;
     gesture.releaseMode("pinch-pan");
+    if (hadPinch) gesture.publish({ type: "pinch-end" });
   }, [gesture]);
+
+  const resetTouchGestures = useCallback(() => {
+    endPinch();
+  }, [endPinch]);
 
   useEffect(() => {
     const el = canvasRef.current;
@@ -50,9 +54,11 @@ export function useTouchCanvasGestures({
     const handleTouchStart = (e: TouchEvent) => {
       if (pauseRef.current || e.touches.length !== 2) return;
       e.preventDefault();
-      onPinchStart?.();
       stopPanning();
       gesture.forceMode("pinch-pan");
+      // Pinch lifecycle is broadcast via observer bus so competing gestures can react
+      // without direct callback plumbing between hooks.
+      gesture.publish({ type: "pinch-start" });
       const pinchCenter = center(e.touches[0], e.touches[1]);
       pinchRef.current = {
         initialDistance: dist(e.touches[0], e.touches[1]),
@@ -90,8 +96,7 @@ export function useTouchCanvasGestures({
 
     const handleTouchEnd = (e: TouchEvent) => {
       if (e.touches.length < 2) {
-        pinchRef.current = null;
-        gesture.releaseMode("pinch-pan");
+        endPinch();
       }
     };
 
@@ -105,9 +110,9 @@ export function useTouchCanvasGestures({
       el.removeEventListener("touchmove", handleTouchMove);
       el.removeEventListener("touchend", handleTouchEnd);
       el.removeEventListener("touchcancel", handleTouchEnd);
-      gesture.releaseMode("pinch-pan");
+      endPinch();
     };
-  }, [canvasRef, panRef, pauseRef, setPan, stopPanning, onPinchStart, zoomRef, zoomToward, gesture]);
+  }, [canvasRef, panRef, pauseRef, setPan, stopPanning, zoomRef, zoomToward, gesture, endPinch]);
 
   return {
     resetTouchGestures,
