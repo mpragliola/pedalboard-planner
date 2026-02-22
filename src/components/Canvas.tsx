@@ -55,7 +55,15 @@ export function Canvas() {
     onSendToBack,
     onBringToFront,
   } = useBoard();
-  const { cables, onCablePointerDown, setCables } = useCable();
+  const {
+    cables,
+    onCablePointerDown,
+    addCable,
+    upsertCable,
+    deleteCable,
+    sendCableToBack,
+    bringCableToFront,
+  } = useCable();
   const { selectedObjectIds, selectedCableId, setSelectedCableId } = useSelection();
   const { shouldIgnoreCatalogClick } = useCatalog();
   const { showGrid, xray, setFloatingUiVisible, unit, background } = useUi();
@@ -93,34 +101,21 @@ export function Canvas() {
 
   const handleDeleteCable = useCallback(
     (id: string) => {
-      setCables((prev) => prev.filter((c) => c.id !== id));
+      // Deletion now goes through command-backed cable API so undo restores cable data + order.
+      deleteCable(id);
       setSelectedCableId(null);
     },
-    [setCables, setSelectedCableId]
+    [deleteCable, setSelectedCableId]
   );
 
   const handleCableSendToBack = useCallback(
-    (id: string) =>
-      setCables((prev) => {
-        const idx = prev.findIndex((c) => c.id === id);
-        if (idx <= 0) return prev;
-        const cable = prev[idx];
-        const rest = prev.slice(0, idx).concat(prev.slice(idx + 1));
-        return [cable, ...rest];
-      }),
-    [setCables]
+    (id: string) => sendCableToBack(id),
+    [sendCableToBack]
   );
 
   const handleCableBringToFront = useCallback(
-    (id: string) =>
-      setCables((prev) => {
-        const idx = prev.findIndex((c) => c.id === id);
-        if (idx === -1 || idx === prev.length - 1) return prev;
-        const cable = prev[idx];
-        const rest = prev.slice(0, idx).concat(prev.slice(idx + 1));
-        return [...rest, cable];
-      }),
-    [setCables]
+    (id: string) => bringCableToFront(id),
+    [bringCableToFront]
   );
 
   const selectedIdSet = useMemo(() => new Set(selectedObjectIds), [selectedObjectIds]);
@@ -207,7 +202,8 @@ export function Canvas() {
           segments={editingCable.segments}
           initialCable={editingCable}
           onConfirm={(updated) => {
-            setCables((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+            // Edit path is a command-backed upsert (replace existing cable by id).
+            upsertCable(updated);
             setEditingCableId(null);
             setSelectedCableId(null);
           }}
@@ -219,7 +215,8 @@ export function Canvas() {
           open={true}
           segments={pendingNewCableSegments}
           onConfirm={(cable) => {
-            setCables((prev) => [...prev, cable]);
+            // Create path is command-backed add so undo removes only this cable operation.
+            addCable(cable);
             pendingConfirmRef.current?.();
             pendingConfirmRef.current = null;
             setPendingNewCableSegments(null);

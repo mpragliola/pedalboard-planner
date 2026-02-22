@@ -105,7 +105,7 @@ function downloadCsv(content: string, filename: string) {
 
 export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
   const { objects, onDeleteObject } = useBoard();
-  const { cables, setCables } = useCable();
+  const { cables, deleteCable } = useCable();
   const { setSelectedObjectIds, setSelectedCableId } = useSelection();
   const { requestConfirmation } = useConfirmation();
 
@@ -154,9 +154,10 @@ export function ComponentListModal({ open, onClose }: ComponentListModalProps) {
 
   const removeCable = useCallback(
     (id: string) => {
-      setCables((prev) => prev.filter((c) => c.id !== id));
+      // Use command-backed delete to keep list action consistent with canvas undo/redo semantics.
+      deleteCable(id);
     },
-    [setCables]
+    [deleteCable]
   );
 
   if (!open) return null;

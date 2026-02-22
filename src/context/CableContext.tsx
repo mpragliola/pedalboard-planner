@@ -6,6 +6,14 @@ export interface CableContextValue {
   setCables: (action: Cable[] | ((prev: Cable[]) => Cable[]), saveToHistory?: boolean) => void;
   /** Add a cable to board state. Persistence is handled by the persistence layer. */
   addCable: (cable: Cable) => void;
+  /** Insert or replace a cable by id with command-backed undo/redo support. */
+  upsertCable: (cable: Cable) => void;
+  /** Remove one cable by id with reversible command semantics. */
+  deleteCable: (id: string) => void;
+  /** Move cable to z-order back (first rendered). */
+  sendCableToBack: (id: string) => void;
+  /** Move cable to z-order front (last rendered). */
+  bringCableToFront: (id: string) => void;
   onCablePointerDown: (id: string, e: ReactPointerEvent) => void;
 }
 

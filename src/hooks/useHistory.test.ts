@@ -100,4 +100,57 @@ describe("useHistory", () => {
     expect(result.current.canUndo).toBe(true);
     expect(result.current.canRedo).toBe(true);
   });
+
+  it("executes command entries and undoes/redoes through command callbacks", () => {
+    const { result } = renderHook(() => useHistory<number>(10));
+
+    act(() => {
+      result.current.executeCommand({
+        label: "add-five",
+        redo: (state) => state + 5,
+        undo: (state) => state - 5,
+      });
+    });
+
+    expect(result.current.state).toBe(15);
+    // Command entries do not persist full snapshots in `past`.
+    expect(result.current.past).toEqual([]);
+    expect(result.current.canUndo).toBe(true);
+
+    act(() => {
+      result.current.undo();
+    });
+    expect(result.current.state).toBe(10);
+    expect(result.current.canRedo).toBe(true);
+
+    act(() => {
+      result.current.redo();
+    });
+    expect(result.current.state).toBe(15);
+  });
+
+  it("supports mixed snapshot and command history entries", () => {
+    const { result } = renderHook(() => useHistory<number>(1));
+
+    act(() => {
+      result.current.setState(2, true); // snapshot entry
+      result.current.executeCommand({
+        label: "times-three",
+        redo: (state) => state * 3,
+        undo: (state) => Math.floor(state / 3),
+      });
+    });
+    expect(result.current.state).toBe(6);
+    expect(result.current.past).toEqual([1]);
+
+    act(() => {
+      result.current.undo();
+    });
+    expect(result.current.state).toBe(2);
+
+    act(() => {
+      result.current.undo();
+    });
+    expect(result.current.state).toBe(1);
+  });
 });
