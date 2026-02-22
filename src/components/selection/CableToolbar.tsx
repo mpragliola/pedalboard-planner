@@ -8,6 +8,7 @@ import { useConfirmation } from "../../context/ConfirmationContext";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { SelectionToolbarButton } from "./SelectionToolbarButton";
 import { TOOLBAR_GAP_PX, TOOLBAR_HEIGHT_PX } from "../../constants/layout";
+import { MEDIA_QUERY_MAX_MOBILE } from "../../constants/breakpoints";
 import "./SelectionToolbar.scss";
 const TOUCH_TOOLBAR_SCALE = 1.25;
 
@@ -21,7 +22,7 @@ interface CableToolbarProps {
 
 export function CableToolbar({ cable, onEdit, onDelete, onSendToBack, onBringToFront }: CableToolbarProps) {
   const { requestConfirmation } = useConfirmation();
-  const scaleUp = useMediaQuery("(max-width: 600px)");
+  const scaleUp = useMediaQuery(MEDIA_QUERY_MAX_MOBILE);
 
   const bounds = getBoundingBoxOfPoints(cable.segments);
   const center = bounds ? getBounds2DCenter(bounds) : vec2Average(cable.segments);
@@ -92,4 +93,3 @@ export function CableToolbar({ cable, onEdit, onDelete, onSendToBack, onBringToF
     </div>
   );
 }
-

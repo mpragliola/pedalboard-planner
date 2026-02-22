@@ -4,6 +4,7 @@ import type { DeviceType } from "../../data/devices";
 import { useCatalog } from "../../context/CatalogContext";
 import { useUi } from "../../context/UiContext";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
+import { MEDIA_QUERY_MAX_TABLET } from "../../constants/breakpoints";
 import { CatalogModeSwitch } from "./CatalogModeSwitch";
 import { TextFilter } from "./filters/TextFilter";
 import { CatalogList, CatalogListGrouped, type CatalogViewMode } from "./CatalogList";
@@ -27,7 +28,7 @@ export const DropdownsPanel = forwardRef<HTMLDivElement>(function DropdownsPanel
     hasDeviceFilters, resetDeviceFilters,
   } = filters;
 
-  const isPhone = useMediaQuery("(max-width: 767px)");
+  const isPhone = useMediaQuery(MEDIA_QUERY_MAX_TABLET);
   const listSize = isPhone ? 1 : 5;
 
   const [filtersExpanded, setFiltersExpanded] = useState(false);

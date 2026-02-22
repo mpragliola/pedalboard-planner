@@ -8,6 +8,7 @@ import { useConfirmation } from "../../context/ConfirmationContext";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { SelectionToolbarButton } from "./SelectionToolbarButton";
 import { TOOLBAR_GAP_PX, TOOLBAR_HEIGHT_PX } from "../../constants/layout";
+import { MEDIA_QUERY_MAX_MOBILE } from "../../constants/breakpoints";
 import "./SelectionToolbar.scss";
 
 const TOUCH_TOOLBAR_SCALE = 1.25;
@@ -29,7 +30,7 @@ interface SelectionToolbarProps {
 
 function SelectionToolbar({ obj, onDelete, onRotate, onSendToBack, onBringToFront }: SelectionToolbarProps) {
   const { requestConfirmation } = useConfirmation();
-  const scaleUp = useMediaQuery("(max-width: 600px)");
+  const scaleUp = useMediaQuery(MEDIA_QUERY_MAX_MOBILE);
 
   const objectBounds = getObjectAabb(obj, templateService.getObjectDimensions);
   const center = getBounds2DCenter({
