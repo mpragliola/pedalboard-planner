@@ -9,6 +9,7 @@ import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { SelectionToolbarButton } from "./SelectionToolbarButton";
 import { TOOLBAR_GAP_PX, TOOLBAR_HEIGHT_PX } from "../../constants/layout";
 import { MEDIA_QUERY_MAX_MOBILE } from "../../constants/breakpoints";
+import { wrapToolbarMouseAction } from "./toolbarEvent";
 import "./SelectionToolbar.scss";
 
 const TOUCH_TOOLBAR_SCALE = 1.25;
@@ -47,9 +48,7 @@ function SelectionToolbar({ obj, onDelete, onRotate, onSendToBack, onBringToFron
     { gapPx: TOOLBAR_GAP_PX, toolbarHeightPx: TOOLBAR_HEIGHT_PX }
   );
 
-  const handleDelete = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
+  const handleDelete = wrapToolbarMouseAction(async () => {
     const confirmed = await requestConfirmation({
       title: "Delete item",
       message: `Delete "${obj.name}"? This cannot be undone.`,
@@ -58,22 +57,16 @@ function SelectionToolbar({ obj, onDelete, onRotate, onSendToBack, onBringToFron
       danger: true,
     });
     if (confirmed) onDelete(obj.id);
-  };
-  const handleRotate = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
+  });
+  const handleRotate = wrapToolbarMouseAction(() => {
     onRotate(obj.id);
-  };
-  const handleSendToBack = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
+  });
+  const handleSendToBack = wrapToolbarMouseAction(() => {
     onSendToBack(obj.id);
-  };
-  const handleBringToFront = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
+  });
+  const handleBringToFront = wrapToolbarMouseAction(() => {
     onBringToFront(obj.id);
-  };
+  });
 
   return (
     <div

@@ -8,6 +8,7 @@ import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { SelectionToolbarButton } from "./SelectionToolbarButton";
 import { TOOLBAR_GAP_PX, TOOLBAR_HEIGHT_PX } from "../../constants/layout";
 import { MEDIA_QUERY_MAX_MOBILE } from "../../constants/breakpoints";
+import { wrapToolbarMouseAction } from "./toolbarEvent";
 import "./SelectionToolbar.scss";
 const TOUCH_TOOLBAR_SCALE = 1.25;
 
@@ -31,15 +32,11 @@ export function CableToolbar({ cable, onEdit, onDelete, onSendToBack, onBringToF
     { gapPx: TOOLBAR_GAP_PX, toolbarHeightPx: TOOLBAR_HEIGHT_PX }
   );
 
-  const handleEdit = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
+  const handleEdit = wrapToolbarMouseAction(() => {
     onEdit(cable);
-  };
+  });
 
-  const handleDelete = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
+  const handleDelete = wrapToolbarMouseAction(async () => {
     const confirmed = await requestConfirmation({
       title: "Delete cable",
       message: "Delete this cable? This cannot be undone.",
@@ -48,19 +45,15 @@ export function CableToolbar({ cable, onEdit, onDelete, onSendToBack, onBringToF
       danger: true,
     });
     if (confirmed) onDelete(cable.id);
-  };
+  });
 
-  const handleSendToBack = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
+  const handleSendToBack = wrapToolbarMouseAction(() => {
     onSendToBack(cable.id);
-  };
+  });
 
-  const handleBringToFront = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
+  const handleBringToFront = wrapToolbarMouseAction(() => {
     onBringToFront(cable.id);
-  };
+  });
 
   return (
     <div

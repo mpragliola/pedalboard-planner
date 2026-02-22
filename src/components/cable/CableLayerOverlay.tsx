@@ -42,6 +42,12 @@ interface CableLayerOverlayProps {
   isModalOpen: boolean;
 }
 
+function isPointInsideElement(element: HTMLElement | null, clientX: number, clientY: number): boolean {
+  if (!element) return false;
+  const rect = element.getBoundingClientRect();
+  return clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom;
+}
+
 export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOverlayProps) {
   const { canvasRef, zoom, pan, spaceDown, gesture } = useCanvas();
   const { objects } = useBoard();
@@ -201,9 +207,8 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
   const handlePointerMove = useCallback(
     (e: React.PointerEvent) => {
       if (isModalOpen || gestureStateRef.current.tag === "pinching") return;
-      /* When pointer moves over Add cable button, release capture so the button can receive the click */
-      const hit = document.elementFromPoint(e.clientX, e.clientY);
-      if (hit && actionsRef.current?.contains(hit)) {
+      // When pointer moves over action buttons, release capture so buttons can receive click/tap.
+      if (isPointInsideElement(actionsRef.current, e.clientX, e.clientY)) {
         pointerCaptureManagerRef.current.release(e.pointerId, e.currentTarget as HTMLElement);
       }
       onPointerMove(e);
@@ -229,13 +234,13 @@ export function CableLayerOverlay({ onFinishDrawing, isModalOpen }: CableLayerOv
       }
 
       // Phase 3: route by pointer-up hit target (actions area vs canvas path commit).
-      // With pointer capture, `e.target` is overlay; elementFromPoint gives actual hit.
-      const hit = document.elementFromPoint(e.clientX, e.clientY);
-      if (hit && actionsRef.current?.contains(hit)) {
+      if (isPointInsideElement(actionsRef.current, e.clientX, e.clientY)) {
         // Allow buttons to receive click by dropping capture when release occurs over actions.
         pointerCaptureManagerRef.current.release(e.pointerId, e.currentTarget as HTMLElement);
         // Only Add button opens modal; Cancel should not.
-        if (addButtonRef.current?.contains(hit) && (hasSegments || hasPreview)) openAddCableModal();
+        if (isPointInsideElement(addButtonRef.current, e.clientX, e.clientY) && (hasSegments || hasPreview)) {
+          openAddCableModal();
+        }
         // Track tap for subsequent double-tap detection.
         if (isPointerUpPrimary(e.button, e.pointerType)) {
           lastTapRef.current = { time: Date.now(), x: e.clientX, y: e.clientY };

@@ -138,9 +138,15 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
     [background]
   );
 
+  const objectSubtypeById = useMemo(() => {
+    const index = new Map<string, "board" | "device">();
+    for (const obj of objects) index.set(obj.id, obj.subtype);
+    return index;
+  }, [objects]);
+
   const isBoardBeingDragged = useMemo(
-    () => Boolean(draggingObjectId && objects.some((obj) => obj.id === draggingObjectId && obj.subtype === "board")),
-    [draggingObjectId, objects]
+    () => (draggingObjectId ? objectSubtypeById.get(draggingObjectId) === "board" : false),
+    [draggingObjectId, objectSubtypeById]
   );
 
   // Scene layout depends on template metadata (dimensions/shapes), so keep the
