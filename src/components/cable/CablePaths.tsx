@@ -3,12 +3,18 @@ import { CONNECTOR_ICON_MAP } from "../../constants";
 import { CABLE_TERMINAL_START_COLOR, CABLE_TERMINAL_END_COLOR } from "../../constants/cables";
 import { DEFAULT_JOIN_RADIUS } from "../../lib/polylinePath";
 import type { Point } from "../../lib/vector";
-import { snapToObjects } from "../../lib/snapToBoundingBox";
 import { templateService } from "../../lib/templateService";
 import { connectorLabelsForCable, type ConnectorLabel } from "../../lib/cableConnectorLabels";
 import { deriveCableDragState, type CableDragState } from "../../lib/cableDrag";
 import { buildCablePathData } from "../../lib/cableStrokePaths";
 import { nearestSegmentIndexForPoint } from "../../lib/cableGeometry";
+import {
+  createConditionalSnapStrategy,
+  createIdentitySnapStrategy,
+  createObjectSnapStrategy,
+  type ModifierSnapContext,
+  type ObjectSnapContext,
+} from "../../lib/snapStrategies";
 import { useBoard } from "../../context/BoardContext";
 import { useCable } from "../../context/CableContext";
 import { useCanvas } from "../../context/CanvasContext";
@@ -17,7 +23,7 @@ import { useCanvasCoords } from "../../hooks/useCanvasCoords";
 import { useCablePhysics } from "../../hooks/useCablePhysics";
 import { useDragState } from "../../hooks/useDragState";
 import * as CP from "../../constants/cablePaths";
-import type { Cable, CanvasObjectType } from "../../types";
+import type { Cable } from "../../types";
 import "./CablePaths.scss";
 
 type PressState = {
@@ -51,6 +57,8 @@ interface CablePathsProps {
   onCablePointerDown: (id: string, e: React.PointerEvent) => void;
 }
 
+type CablePathsSnapContext = ModifierSnapContext & ObjectSnapContext;
+
 /**
  * Renders cables in canvas (world) coordinates inside the viewport so they
  * pan and zoom smoothly with the same CSS transform as the rest of the canvas.
@@ -61,6 +69,25 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
   const { setSelectedCableId } = useSelection();
   const { canvasRef, zoom, pan, pausePanZoom, spaceDown } = useCanvas();
   const { clientToCanvas } = useCanvasCoords(canvasRef, zoom, pan);
+  // Shared cable snap policy:
+  // - SHIFT or META bypasses snapping
+  // - default path snaps to nearest object boundary
+  const snapStrategy = useMemo(
+    () =>
+      createConditionalSnapStrategy<CablePathsSnapContext>(
+        (context) => context.shiftKey || Boolean(context.metaKey),
+        createIdentitySnapStrategy<CablePathsSnapContext>(),
+        createObjectSnapStrategy<CablePathsSnapContext>()
+      ),
+    []
+  );
+  const resolveCableSnapPoint = (point: Point, shiftKey: boolean, metaKey: boolean) =>
+    snapStrategy.snap(point, {
+      shiftKey,
+      metaKey,
+      objects,
+      getObjectDimensions: templateService.getObjectDimensions,
+    });
 
   const dragRef = useRef<CableDragState | null>(null);
   const pressTimerRef = useRef<number | null>(null);
@@ -170,10 +197,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
       clearHandlePress();
       pausePanZoom?.(true);
       const canvasPoint = clientToCanvas(event.clientX, event.clientY);
-      const snapped =
-        event.shiftKey || event.metaKey
-          ? canvasPoint
-          : snapToObjects(canvasPoint.x, canvasPoint.y, objects as CanvasObjectType[], templateService.getObjectDimensions);
+      const snapped = resolveCableSnapPoint(canvasPoint, event.shiftKey, event.metaKey);
       const nextPoints = drag.points.slice();
       nextPoints[drag.handleIndex] = snapped;
       dragRef.current = { ...drag, points: nextPoints };
@@ -199,10 +223,7 @@ export function CablePaths({ cables, visible, opacity = 1, selectedCableId, onCa
     const segIndex = nearestSegmentIndexForPoint(cable.segments, canvasPoint);
     if (segIndex == null) return false;
     const points: Point[] = cable.segments;
-    const snapped =
-      e.shiftKey || e.metaKey
-        ? canvasPoint
-        : snapToObjects(canvasPoint.x, canvasPoint.y, objects as CanvasObjectType[], templateService.getObjectDimensions);
+    const snapped = resolveCableSnapPoint(canvasPoint, e.shiftKey, e.metaKey);
     setFlashPoint({ cableId, point: snapped });
     if (flashTimerRef.current) window.clearTimeout(flashTimerRef.current);
     flashTimerRef.current = window.setTimeout(

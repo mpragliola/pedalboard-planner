@@ -4,6 +4,7 @@ import type { Shape3D } from "../shape3d";
 import type { Wdh } from "../wdh";
 import type { Offset, Point } from "./vector";
 import { isCanvasBackgroundId, type CanvasBackgroundId } from "../constants/backgrounds";
+import { serializeObjectWithStrategies } from "./objectSerializationStrategies";
 
 /** Shape of state persisted to storage (e.g. localStorage). */
 export interface SavedState {
@@ -60,45 +61,19 @@ function num(o: Record<string, unknown>, key: string, fallback = 0): number {
   return typeof v === "number" ? v : fallback;
 }
 
-/** Custom elements have templateId of board-custom or device-custom. */
-function isCustomObject(o: CanvasObjectType): boolean {
-  return o.templateId === "board-custom" || o.templateId === "device-custom";
-}
-
 /** Strip image from all objects; keep name only for custom elements. Omit width/depth/height when template has known dimensions (restored from template on load). Round coordinates to 2 decimals. */
 export function serializeObjects(
   objects: CanvasObjectType[],
   options?: StateSerializationOptions
 ): Record<string, unknown>[] {
-  const resolver = options?.templateResolver;
-  return objects.map((o) => {
-    const { image, name, width, depth, height, pos, shape: _shape, ...rest } = o as CanvasObjectType & {
-      image?: string | null;
-      name?: string;
-      width?: number;
-      depth?: number;
-      height?: number;
-    };
-    const out: Record<string, unknown> = {
-      ...rest,
-      pos: { x: round2(pos.x), y: round2(pos.y) },
-      name: o.name,
-    };
-    const hasKnownTemplateDims = resolver ? resolver.hasKnownTemplateDimensions(o.templateId) : false;
-    if (isCustomObject(o)) {
-      out.width = o.width;
-      out.depth = o.depth;
-      out.height = o.height;
-    } else {
-      delete out.name;
-      if (!hasKnownTemplateDims) {
-        out.width = o.width;
-        out.depth = o.depth;
-        out.height = o.height;
-      }
-    }
-    return out;
-  });
+  // Strategy-based serialization removes inline custom/template branching from this codec
+  // so adding new object categories does not require editing this function.
+  return objects.map((object) =>
+    serializeObjectWithStrategies(object, {
+      templateResolver: options?.templateResolver,
+      round: round2,
+    })
+  );
 }
 
 function serializeCables(cables: Cable[] | undefined): Record<string, unknown>[] | undefined {
