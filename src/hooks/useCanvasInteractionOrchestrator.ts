@@ -1,4 +1,4 @@
-import { useCallback, useEffect, type PointerEvent as ReactPointerEvent } from "react";
+import { useCallback, useRef, type PointerEvent as ReactPointerEvent } from "react";
 import { useCableDrag } from "./useCableDrag";
 import { useCanvasInteractions } from "./useCanvasInteractions";
 import { useCanvasZoomPan } from "./useCanvasZoomPan";
@@ -36,13 +36,12 @@ export function useCanvasInteractionOrchestrator({
   initialPan,
 }: UseCanvasInteractionOrchestratorOptions) {
   const gesture = useCanvasGestureCoordinator();
-  const interactions = useCanvasInteractions();
-  const {
-    setHandlers,
-    handleObjectPointerDown,
-    handleCanvasPointerDown: onCanvasPointerDown,
-    handleCablePointerDown,
-  } = interactions;
+  const clearObjectDragRef = useRef<() => void>(() => {});
+  const clearCableDragRef = useRef<() => void>(() => {});
+  const handlePinchStart = useCallback(() => {
+    clearObjectDragRef.current();
+    clearCableDragRef.current();
+  }, []);
 
   const {
     zoom,
@@ -64,14 +63,9 @@ export function useCanvasInteractionOrchestrator({
   } = useCanvasZoomPan({
     initialZoom,
     initialPan,
-    onPinchStart: interactions.onPinchStart,
+    onPinchStart: handlePinchStart,
     gesture,
   });
-
-  const handleCanvasPointerDown = useCallback(
-    (e: ReactPointerEvent) => onCanvasPointerDown(e, spaceDown),
-    [onCanvasPointerDown, spaceDown]
-  );
 
   const { draggingObjectId, handleObjectDragStart, clearDragState: clearObjectDragState } = useObjectDrag(
     objects,
@@ -80,16 +74,20 @@ export function useCanvasInteractionOrchestrator({
     spaceDown
   );
   const { handleCableDragStart, clearDragState: clearCableDragState } = useCableDrag(cables, setCables, zoom, spaceDown);
+  clearObjectDragRef.current = clearObjectDragState;
+  clearCableDragRef.current = clearCableDragState;
 
-  useEffect(() => {
-    setHandlers({
+  const { handleObjectPointerDown, handleCanvasPointerDown: onCanvasPointerDown, handleCablePointerDown } =
+    useCanvasInteractions({
       objectDragStart: handleObjectDragStart,
       cableDragStart: handleCableDragStart,
-      clearObjectDrag: clearObjectDragState,
-      clearCableDrag: clearCableDragState,
       canvasPanPointerDown,
     });
-  }, [setHandlers, handleObjectDragStart, handleCableDragStart, clearObjectDragState, clearCableDragState, canvasPanPointerDown]);
+
+  const handleCanvasPointerDown = useCallback(
+    (e: ReactPointerEvent) => onCanvasPointerDown(e, spaceDown),
+    [onCanvasPointerDown, spaceDown]
+  );
 
   return {
     draggingObjectId,

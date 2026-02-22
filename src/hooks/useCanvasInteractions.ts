@@ -1,18 +1,11 @@
 /**
  * Canvas interaction mediator.
  *
- * Coordinates pointer-down handlers that span multiple concerns
- * (object drag, cable drag, pan, selection) and ensures mutual
- * exclusion (e.g. pinch clears all drags, clicking empty canvas
- * deselects).
- *
- * Call order in AppContext:
- *   1. useCanvasInteractions()  → provides onPinchStart (ref-stable)
- *   2. useCanvasZoomPan({ onPinchStart })
- *   3. useObjectDrag / useCableDrag
- *   4. interactions.setHandlers(...)  → late-bind drag handlers
+ * Coordinates pointer-down handlers that span selection + drag start + pan.
+ * Handler dependencies are injected as explicit arguments to avoid late-bound
+ * refs and hidden initialization order requirements.
  */
-import { useCallback, useRef } from "react";
+import { useCallback } from "react";
 import { useSelection } from "../context/SelectionContext";
 
 const SELECTABLE_SELECTOR = [
@@ -25,35 +18,18 @@ const SELECTABLE_SELECTOR = [
 interface Handlers {
   objectDragStart: (id: string, e: React.PointerEvent) => void;
   cableDragStart: (id: string, e: React.PointerEvent) => void;
-  clearObjectDrag: () => void;
-  clearCableDrag: () => void;
   canvasPanPointerDown: (e: React.PointerEvent) => void;
 }
 
-export function useCanvasInteractions() {
+export function useCanvasInteractions({ objectDragStart, cableDragStart, canvasPanPointerDown }: Handlers) {
   const { setSelection } = useSelection();
-
-  // ── Late-bound handlers (set after drag hooks are created) ────────────
-  const hRef = useRef<Handlers | null>(null);
-
-  const setHandlers = useCallback((h: Handlers) => {
-    hRef.current = h;
-  }, []);
-
-  // ── Coordinated pointer-down callbacks ────────────────────────────────
-
-  /** Stable callback for useCanvasZoomPan's onPinchStart. */
-  const onPinchStart = useCallback(() => {
-    hRef.current?.clearObjectDrag();
-    hRef.current?.clearCableDrag();
-  }, []);
 
   const handleObjectPointerDown = useCallback(
     (id: string, e: React.PointerEvent) => {
       setSelection({ kind: "object", id });
-      hRef.current?.objectDragStart(id, e);
+      objectDragStart(id, e);
     },
-    [setSelection]
+    [setSelection, objectDragStart]
   );
 
   const handleCanvasPointerDown = useCallback(
@@ -62,23 +38,21 @@ export function useCanvasInteractions() {
         const hit = (e.target as Element | null)?.closest(SELECTABLE_SELECTOR);
         if (!hit) setSelection(null);
       }
-      hRef.current?.canvasPanPointerDown(e);
+      canvasPanPointerDown(e);
     },
-    [setSelection]
+    [setSelection, canvasPanPointerDown]
   );
 
   const handleCablePointerDown = useCallback(
     (id: string, e: React.PointerEvent) => {
       e.stopPropagation();
       setSelection({ kind: "cable", id });
-      hRef.current?.cableDragStart(id, e);
+      cableDragStart(id, e);
     },
-    [setSelection]
+    [setSelection, cableDragStart]
   );
 
   return {
-    setHandlers,
-    onPinchStart,
     handleObjectPointerDown,
     handleCanvasPointerDown,
     handleCablePointerDown,
