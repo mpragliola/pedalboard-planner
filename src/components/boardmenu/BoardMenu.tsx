@@ -9,7 +9,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import type { IconDefinition } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useBoardIo } from "../../context/BoardIoContext";
 import { useConfirmation } from "../../context/ConfirmationContext";
 import { useSettingsModal } from "../../context/SettingsModalContext";
@@ -41,6 +41,19 @@ export function BoardMenu() {
   const [isLoadingFile, setIsLoadingFile] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [openModal, setOpenModal] = useState<"gpt" | "info" | "help" | null>(null);
+
+  const openBoardMenuModal = useCallback(
+    (next: "gpt" | "info" | "help") => {
+      setSettingsOpen(false);
+      setOpenModal(next);
+    },
+    [setSettingsOpen]
+  );
+
+  const openSettingsModal = useCallback(() => {
+    setOpenModal(null);
+    setSettingsOpen(true);
+  }, [setSettingsOpen]);
 
   const handleNewBoard = async () => {
     const confirmed = await requestConfirmation({
@@ -103,28 +116,28 @@ export function BoardMenu() {
       title: "Build price estimate prompt for LLM",
       ariaLabel: "Build price estimate prompt for LLM",
       icon: faWandMagicSparkles,
-      onClick: () => setOpenModal("gpt"),
+      onClick: () => openBoardMenuModal("gpt"),
     },
     {
       key: "info",
       title: "About PedalboardFactory",
       ariaLabel: "About PedalboardFactory",
       icon: faCircleInfo,
-      onClick: () => setOpenModal("info"),
+      onClick: () => openBoardMenuModal("info"),
     },
     {
       key: "help",
       title: "Help and manual",
       ariaLabel: "Help and manual",
       icon: faCircleQuestion,
-      onClick: () => setOpenModal("help"),
+      onClick: () => openBoardMenuModal("help"),
     },
     {
       key: "settings",
       title: "Settings",
       ariaLabel: "Settings",
       icon: faGear,
-      onClick: () => setSettingsOpen(true),
+      onClick: openSettingsModal,
     },
   ];
 
