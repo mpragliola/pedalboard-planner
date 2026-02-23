@@ -29,6 +29,9 @@ vi.mock("../common/Modal", () => ({
 
 describe("GptModal copy timer", () => {
   const writeText = vi.fn().mockResolvedValue(undefined);
+  const flushMicrotasks = async () => {
+    await Promise.resolve();
+  };
 
   beforeEach(() => {
     vi.useFakeTimers();
@@ -40,7 +43,9 @@ describe("GptModal copy timer", () => {
   });
 
   afterEach(() => {
-    vi.runOnlyPendingTimers();
+    act(() => {
+      vi.runOnlyPendingTimers();
+    });
     vi.useRealTimers();
     vi.restoreAllMocks();
   });
@@ -49,26 +54,36 @@ describe("GptModal copy timer", () => {
     render(<GptModal open onClose={vi.fn()} />);
 
     const copyButton = screen.getByRole("button", { name: /copy to clipboard/i });
-    fireEvent.click(copyButton);
+    await act(async () => {
+      fireEvent.click(copyButton);
+      await flushMicrotasks();
+    });
 
     expect(writeText).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("button", { name: /copied!/i })).toBeInTheDocument();
 
-    act(() => {
+    await act(async () => {
       vi.advanceTimersByTime(2000);
+      await flushMicrotasks();
     });
 
     expect(screen.getByRole("button", { name: /copy to clipboard/i })).toBeInTheDocument();
   });
 
-  it("clears pending copy timeout on unmount", () => {
+  it("clears pending copy timeout on unmount", async () => {
     const clearTimeoutSpy = vi.spyOn(globalThis, "clearTimeout");
     const { unmount } = render(<GptModal open onClose={vi.fn()} />);
 
-    fireEvent.click(screen.getByRole("button", { name: /copy to clipboard/i }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /copy to clipboard/i }));
+      await flushMicrotasks();
+    });
     expect(writeText).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("button", { name: /copied!/i })).toBeInTheDocument();
 
-    unmount();
+    act(() => {
+      unmount();
+    });
 
     // Unmount should cancel the pending timer to avoid post-unmount state updates.
     expect(clearTimeoutSpy).toHaveBeenCalled();
