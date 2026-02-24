@@ -99,11 +99,15 @@ describe("GptModal copy timer", () => {
       name: /ask for the best settings/i,
     });
 
-    fireEvent.click(routingCheckbox);
-    fireEvent.click(settingsCheckbox);
+    await act(async () => {
+      fireEvent.click(routingCheckbox);
+      fireEvent.click(settingsCheckbox);
+      await flushMicrotasks();
+    });
 
     const textarea = screen.getByLabelText(/prompt \(you can edit before copying\)/i);
-    expect(textarea).toHaveValue(expect.stringContaining("Suggest the best routing"));
-    expect(textarea).toHaveValue(expect.stringContaining("Suggest best starting settings"));
+    const promptValue = (textarea as HTMLTextAreaElement).value;
+    expect(promptValue).toContain("Suggest the best routing");
+    expect(promptValue).toContain("Suggest best starting settings");
   });
 });

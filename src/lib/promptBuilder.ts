@@ -80,7 +80,7 @@ export class PromptBuilder {
       parts.push("Include cables, velcro and similar materials in the estimate.");
       const cableList = this.getCableList();
       if (cableList) {
-      parts.push("", "Cables:", cableList);
+        parts.push("", "Cables (drawn on canvas):", cableList);
       }
     } else {
       parts.push("Exclude from the estimate: cables, velcro, and similar materials.");
