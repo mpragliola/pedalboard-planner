@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getDirectionalOffset, rectsOverlap } from "./geometry2d";
+import { getDirectionalOffset, rectsOverlap } from "./geometry";
 
 describe("geometry2d helpers", () => {
   it("detects overlapping rects", () => {

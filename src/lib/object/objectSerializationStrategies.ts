@@ -1,4 +1,4 @@
-import type { CanvasObjectType } from "../types";
+import type { CanvasObjectType } from "../../types";
 
 /**
  * Minimal resolver contract needed by serialization strategies.

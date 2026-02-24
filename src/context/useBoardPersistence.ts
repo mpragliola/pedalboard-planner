@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { CanvasBackgroundId } from "../constants/backgrounds";
-import type { SavedState } from "../lib/stateSerialization";
+import type { SavedState } from "../lib/state/stateSerialization";
 import type { Offset } from "../lib/vector";
 import type { CanvasObjectType, Cable } from "../types";
 

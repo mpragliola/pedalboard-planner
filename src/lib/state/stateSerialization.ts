@@ -1,10 +1,10 @@
 /** State serialization + parsing helpers (no storage). */
-import type { CanvasObjectType, Cable } from "../types";
-import type { Shape3D } from "../shape3d";
-import type { Wdh } from "../wdh";
-import type { Offset, Point } from "./vector";
-import { isCanvasBackgroundId, type CanvasBackgroundId } from "../constants/backgrounds";
-import { serializeObjectWithStrategies } from "./objectSerializationStrategies";
+import type { CanvasObjectType, Cable } from "../../types";
+import type { Shape3D } from "../../shape3d";
+import type { Wdh } from "../../wdh";
+import type { Offset, Point } from "../vector";
+import { isCanvasBackgroundId, type CanvasBackgroundId } from "../../constants/backgrounds";
+import { serializeObjectWithStrategies } from "../object/objectSerializationStrategies";
 
 /** Shape of state persisted to storage (e.g. localStorage). */
 export interface SavedState {

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { CanvasObjectType } from "../types";
+import type { CanvasObjectType } from "../../types";
 import {
   createRuntimeTemplateResolver,
   parseStateWithRuntimeTemplates,

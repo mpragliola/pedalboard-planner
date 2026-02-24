@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getObjectAabb, SNAP_TOLERANCE_MM, snapToObjects } from "./snapToBoundingBox";
-import { closestPointOnRectPerimeter } from "./geometry2d";
+import { closestPointOnRectPerimeter } from "./geometry";
 import type { CanvasObjectType } from "../types";
 
 function createObject(overrides: Partial<CanvasObjectType> = {}): CanvasObjectType {

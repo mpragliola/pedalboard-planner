@@ -8,7 +8,7 @@ import {
   deriveTemplateRange,
   filterAndSortBoards,
   filterAndSortDevices,
-} from "../lib/catalogFilters";
+} from "../lib/catalog/catalogFilters";
 import { useStringFilter, useRangeFilter, isFilterActive, resetFilters } from "./useFilterState";
 
 interface UseBoardDeviceFiltersInput {

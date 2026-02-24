@@ -1,5 +1,5 @@
 import { createContext, useContext, type ReactNode } from "react";
-import { TemplateService, templateService } from "../lib/templateService";
+import { TemplateService, templateService } from "../lib/template/templateService";
 
 /**
  * Injection point for template lookup policy/service.

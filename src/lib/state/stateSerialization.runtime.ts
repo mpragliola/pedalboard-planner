@@ -1,4 +1,4 @@
-import { templateService } from "./templateService";
+import { templateService } from "../template/templateService";
 import {
   parseState,
   serializeState,

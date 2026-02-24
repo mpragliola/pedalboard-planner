@@ -1,12 +1,12 @@
 /** Object creation helpers for catalog templates and custom items. */
-import { DEFAULT_OBJECT_COLOR } from "../constants/defaults";
-import { MM_TO_PX } from "../constants/interaction";
-import type { Cable, CanvasObjectType, ConnectorKind, ObjectSubtype } from "../types";
-import type { BoardTemplate } from "../data/boards";
-import type { DeviceTemplate } from "../data/devices";
-import type { Point } from "./vector";
-import type { Shape3D } from "../shape3d";
-import type { ObjectIdGenerator } from "./objectIdGenerator";
+import { DEFAULT_OBJECT_COLOR } from "../../constants/defaults";
+import { MM_TO_PX } from "../../constants/interaction";
+import type { Cable, CanvasObjectType, ConnectorKind, ObjectSubtype } from "../../types";
+import type { BoardTemplate } from "../../data/boards";
+import type { DeviceTemplate } from "../../data/devices";
+import type { Point } from "../vector";
+import type { Shape3D } from "../../shape3d";
+import type { ObjectIdGenerator } from "../object/objectIdGenerator";
 
 const IMAGE_PREFIX: Record<ObjectSubtype, string> = {
   board: "images/boards/",

@@ -1,6 +1,6 @@
 import { parseColor } from "../../lib/color";
 import { normalizeRotation } from "../../lib/geometry";
-import { rectsOverlap, type Rect } from "../../lib/geometry2d";
+import { rectsOverlap, type Rect } from "../../lib/geometry";
 import type { Shape3D } from "../../shape3d";
 import type { CanvasObjectType } from "../../types";
 import {

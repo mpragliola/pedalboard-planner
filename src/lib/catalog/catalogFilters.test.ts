@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { BoardTemplate } from "../data/boards";
-import type { DeviceTemplate } from "../data/devices";
+import type { BoardTemplate } from "../../data/boards";
+import type { DeviceTemplate } from "../../data/devices";
 import {
   applyDimensionFilters,
   applyTextFilter,

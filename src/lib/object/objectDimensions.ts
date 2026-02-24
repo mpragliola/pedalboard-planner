@@ -1,9 +1,9 @@
 /** Low-level template lookup helpers (no object-level business rules). */
-import type { Shape3D } from "../shape3d";
-import { DEVICE_TEMPLATES } from "../data/devices";
-import { BOARD_TEMPLATES } from "../data/boards";
-import { MM_TO_PX } from "../constants/interaction";
-import type { Wdh } from "../wdh";
+import type { Shape3D } from "../../shape3d";
+import { DEVICE_TEMPLATES } from "../../data/devices";
+import { BOARD_TEMPLATES } from "../../data/boards";
+import { MM_TO_PX } from "../../constants/interaction";
+import type { Wdh } from "../../wdh";
 
 /**
  * Build lookup maps from template id to image path and dimensions.

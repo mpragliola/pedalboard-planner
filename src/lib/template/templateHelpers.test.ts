@@ -4,8 +4,8 @@ import {
   createCustomObject,
   createCableFromPoints,
 } from "./templateHelpers";
-import type { BoardTemplate } from "../data/boards";
-import { createObjectIdGenerator } from "./objectIdGenerator";
+import type { BoardTemplate } from "../../data/boards";
+import { createObjectIdGenerator } from "../object/objectIdGenerator";
 
 const boardTemplate: BoardTemplate = {
   id: "board-aclam-s1",

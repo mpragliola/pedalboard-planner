@@ -1,12 +1,12 @@
-import type { CanvasObjectType } from "../types";
-import type { Shape3D } from "../shape3d";
-import type { Wdh } from "../wdh";
+import type { CanvasObjectType } from "../../types";
+import type { Shape3D } from "../../shape3d";
+import type { Wdh } from "../../wdh";
 import {
   getTemplateImage as lookupTemplateImage,
   getTemplateShape as lookupTemplateShape,
   getTemplateWdh as lookupTemplateWdh,
   hasKnownTemplateDimensions as lookupHasKnownTemplateDimensions,
-} from "./objectDimensions";
+} from "../object/objectDimensions";
 
 export interface TemplateLookup {
   getTemplateImage: (templateId?: string) => string | null;

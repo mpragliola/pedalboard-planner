@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { CanvasObjectType } from "../types";
-import { templateService } from "./templateService";
+import type { CanvasObjectType } from "../../types";
+import { templateService } from "../template/templateService";
 
 function makeObject(overrides: Partial<CanvasObjectType> = {}): CanvasObjectType {
   return {

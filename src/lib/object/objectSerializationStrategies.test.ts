@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { CanvasObjectType } from "../types";
+import type { CanvasObjectType } from "../../types";
 import { serializeObjectWithStrategies } from "./objectSerializationStrategies";
 
 function makeObject(overrides: Partial<CanvasObjectType> = {}): CanvasObjectType {

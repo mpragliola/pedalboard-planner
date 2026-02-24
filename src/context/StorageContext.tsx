@@ -1,11 +1,11 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { DEBOUNCE_SAVE_MS } from "../constants/interaction";
-import { StateManager } from "../lib/stateManager";
-import type { SavedState } from "../lib/stateSerialization";
+import { StateManager } from "../lib/state/stateManager";
+import type { SavedState } from "../lib/state/stateSerialization";
 import {
   parseStateWithRuntimeTemplates,
   serializeStateWithRuntimeTemplates,
-} from "../lib/stateSerialization.runtime";
+} from "../lib/state/stateSerialization.runtime";
 
 interface StorageContextValue {
   savedState: SavedState | null;

@@ -4,7 +4,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { parseState, serializeState, type SavedState, type StateTemplateResolver } from "./stateSerialization";
-import type { CanvasObjectType } from "../types";
+import type { CanvasObjectType } from "../../types";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 

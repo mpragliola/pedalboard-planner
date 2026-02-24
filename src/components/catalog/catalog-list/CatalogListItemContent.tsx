@@ -1,5 +1,5 @@
 import { DEFAULT_OBJECT_COLOR } from "../../../constants";
-import { buildCatalogImageSourceSet } from "../../../lib/catalogImageSources";
+import { buildCatalogImageSourceSet } from "../../../lib/catalog/catalogImageSources";
 import type { CatalogListGroupOption, CatalogListOption, CatalogViewMode } from "./types";
 
 type CatalogListRenderableOption = CatalogListOption | CatalogListGroupOption;

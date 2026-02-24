@@ -1,6 +1,6 @@
 /** Object snapping helpers based on axis-aligned bounding boxes. */
 import { normalizeRotation } from "./geometry";
-import { closestPointOnRectPerimeter } from "./geometry2d";
+import { closestPointOnRectPerimeter } from "./geometry";
 import type { CanvasObjectType } from "../types";
 import type { Point } from "./vector";
 

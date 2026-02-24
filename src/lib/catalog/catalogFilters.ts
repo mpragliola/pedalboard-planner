@@ -1,6 +1,6 @@
-import { DEVICE_TYPE_ORDER } from "../constants/catalog";
-import type { BoardTemplate } from "../data/boards";
-import type { DeviceTemplate } from "../data/devices";
+import { DEVICE_TYPE_ORDER } from "../../constants/catalog";
+import type { BoardTemplate } from "../../data/boards";
+import type { DeviceTemplate } from "../../data/devices";
 
 export interface CatalogRangeFilterValue {
   min: string;

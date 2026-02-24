@@ -1,4 +1,4 @@
-import type { CanvasObjectType } from "../types";
+import type { CanvasObjectType } from "../../types";
 
 export interface ObjectIdGenerator {
   nextId: () => string;

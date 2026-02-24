@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Modal } from "../common/Modal";
 import { CABLE_CONNECTOR_TEMPLATES } from "../../constants/cables";
 import type { Cable, ConnectorKind } from "../../types";
-import { createCableFromPoints } from "../../lib/templateHelpers";
+import { createCableFromPoints } from "../../lib/template/templateHelpers";
 import type { Point } from "../../lib/vector";
 import { CableColorSection } from "./addCableModal/CableColorSection";
 import { CableEndpointsSection } from "./addCableModal/CableEndpointsSection";

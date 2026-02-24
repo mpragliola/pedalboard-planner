@@ -1,5 +1,5 @@
 /** Shared helpers for computing 2D axis-aligned bounds from points and rects. */
-import type { Rect } from "./geometry2d";
+import type { Rect } from "./geometry";
 import type { Vec2 } from "./vector";
 
 /** Axis-aligned bounds in 2D space. */
