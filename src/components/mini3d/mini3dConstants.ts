@@ -34,8 +34,8 @@ export const CAMERA_DISTANCE_SCALE_MAX = 1.15;
 // -----------------------------------------------------------------------------
 // Overlay fade-in duration in milliseconds.
 export const OPEN_FADE_MS = 500;
-// Final overlay opacity when open.
-export const OVERLAY_OPACITY = 0.85;
+// Final overlay opacity when open (opaque panel).
+export const OVERLAY_OPACITY = 1;
 // Per-object convergence move duration in milliseconds.
 export const CONVERGENCE_ANIMATION_MS = 600;
 // Stagger delay between object convergence starts in milliseconds.

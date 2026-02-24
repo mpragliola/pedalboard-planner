@@ -51,6 +51,17 @@ type TouchTapCandidate = {
   startedWithSingleTouch: boolean;
 };
 type TouchTap = { time: number; x: number; y: number };
+type OverlayWindowDragState = {
+  pointerId: number;
+  startClientX: number;
+  startClientY: number;
+  startOffsetX: number;
+  startOffsetY: number;
+  startLeft: number;
+  startTop: number;
+  width: number;
+  height: number;
+};
 
 const TAP_MOVE_TOLERANCE_PX = 10;
 const DOUBLE_TAP_TIME_WINDOW_MS = 320;
@@ -101,6 +112,7 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
   const { background } = useUi();
   const {
     showMini3d,
+    setShowMini3d,
     showMini3dFloor,
     showMini3dShadows,
     showMini3dSurfaceDetail,
@@ -125,11 +137,13 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
   const lastTouchTapRef = useRef<TouchTap | null>(null);
   const contextLossCleanupRef = useRef<(() => void) | null>(null);
   const invalidateRef = useRef<(() => void) | null>(null);
+  const overlayDragRef = useRef<OverlayWindowDragState | null>(null);
 
   const [isVisible, setIsVisible] = useState(showMini3d);
   const [phase, setPhase] = useState<OverlayPhase>("closing");
   const [convergenceRunId, setConvergenceRunId] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [overlayOffset, setOverlayOffset] = useState({ x: 0, y: 0 });
   const [canvasFailure, setCanvasFailure] = useState(false);
   const [canvasResetKey, setCanvasResetKey] = useState(0);
 
@@ -272,6 +286,71 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
 
   const toggleFullscreen = useCallback(() => {
     setIsFullscreen((v) => !v);
+  }, []);
+
+  const closeOverlay = useCallback(() => {
+    setShowMini3d(false);
+  }, [setShowMini3d]);
+
+  const clampWindowPosition = useCallback((left: number, top: number, width: number, height: number) => {
+    const maxLeft = Math.max(0, window.innerWidth - width);
+    const maxTop = Math.max(0, window.innerHeight - height);
+    return {
+      left: clamp(left, 0, maxLeft),
+      top: clamp(top, 0, maxTop),
+    };
+  }, []);
+
+  const handleTitleBarPointerDown = useCallback(
+    (e: ReactPointerEvent<HTMLDivElement>) => {
+      if (isFullscreen) return;
+      if (e.button !== 0 && e.pointerType !== "touch") return;
+      const container = containerRef.current;
+      if (!container) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      const rect = container.getBoundingClientRect();
+      overlayDragRef.current = {
+        pointerId: e.pointerId,
+        startClientX: e.clientX,
+        startClientY: e.clientY,
+        startOffsetX: overlayOffset.x,
+        startOffsetY: overlayOffset.y,
+        startLeft: rect.left,
+        startTop: rect.top,
+        width: rect.width,
+        height: rect.height,
+      };
+      trySetPointerCapture(e.currentTarget, e.pointerId);
+    },
+    [isFullscreen, overlayOffset.x, overlayOffset.y]
+  );
+
+  const handleTitleBarPointerMove = useCallback(
+    (e: ReactPointerEvent<HTMLDivElement>) => {
+      const drag = overlayDragRef.current;
+      if (!drag || drag.pointerId !== e.pointerId) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      const nextLeftRaw = drag.startLeft + (e.clientX - drag.startClientX);
+      const nextTopRaw = drag.startTop + (e.clientY - drag.startClientY);
+      const next = clampWindowPosition(nextLeftRaw, nextTopRaw, drag.width, drag.height);
+      setOverlayOffset({
+        x: drag.startOffsetX + (next.left - drag.startLeft),
+        y: drag.startOffsetY + (next.top - drag.startTop),
+      });
+    },
+    [clampWindowPosition]
+  );
+
+  const handleTitleBarPointerUp = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = overlayDragRef.current;
+    if (!drag || drag.pointerId !== e.pointerId) return;
+    e.stopPropagation();
+    overlayDragRef.current = null;
+    tryReleasePointerCapture(e.currentTarget, e.pointerId);
   }, []);
 
   const setDistanceScale = useCallback((nextScale: number) => {
@@ -452,6 +531,8 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
     "--mini3d-overlay-opacity": `${OVERLAY_OPACITY}`,
     "--mini3d-open-fade-ms": `${OPEN_FADE_MS}ms`,
     "--mini3d-close-fade-ms": `${phase === "closing" ? closeFadeMsRef.current : convergenceTotalMs}ms`,
+    "--mini3d-drag-x": `${isFullscreen ? 0 : overlayOffset.x}px`,
+    "--mini3d-drag-y": `${isFullscreen ? 0 : overlayOffset.y}px`,
   };
 
   return (
@@ -470,6 +551,49 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
         onPointerCancel={handlePointerUp}
         onWheel={handleWheel}
       >
+        <div
+          className="mini3d-titlebar"
+          onDoubleClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleFullscreen();
+          }}
+          onPointerDown={handleTitleBarPointerDown}
+          onPointerMove={handleTitleBarPointerMove}
+          onPointerUp={handleTitleBarPointerUp}
+          onPointerCancel={handleTitleBarPointerUp}
+        >
+          <div className="mini3d-titlebar-actions">
+            <button
+              type="button"
+              className="mini3d-titlebar-btn"
+              aria-label={isFullscreen ? "Restore 3D view" : "Maximize 3D view"}
+              title={isFullscreen ? "Restore" : "Maximize"}
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleFullscreen();
+              }}
+            >
+              {isFullscreen ? "❐" : "□"}
+            </button>
+            <button
+              type="button"
+              className="mini3d-titlebar-btn"
+              aria-label="Close 3D view"
+              title="Close"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                closeOverlay();
+              }}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
         {canvasFailure ? (
           <div className="mini3d-fallback">
             <div className="mini3d-fallback__text">
@@ -486,7 +610,7 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
               shadows
               gl={{
                 antialias: !useLowMemoryTextures,
-                alpha: true,
+                alpha: false,
                 ...(isMobile3D && useLowMemoryTextures ? { powerPreference: "low-power" as const } : {}),
               }}
               frameloop={useDemandMode ? "demand" : "always"}
@@ -494,7 +618,7 @@ export function Mini3DOverlay({ onCloseComplete }: Mini3DOverlayProps) {
               onCreated={({ gl, invalidate }) => {
                 invalidateRef.current = invalidate;
                 invalidate();
-                gl.setClearColor("#131a24", 0.1);
+                gl.setClearColor("#131a24", 1);
                 gl.shadowMap.type = THREE.PCFSoftShadowMap;
                 gl.shadowMap.enabled = effectiveShowShadows;
                 const canvas = gl.domElement;
