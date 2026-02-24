@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { connectorLabelsForCable } from "./cableConnectorLabels";
-import type { Cable } from "../types";
+import type { Cable } from "../../types";
 
 function makeCable(overrides: Partial<Cable> = {}): Cable {
   return {

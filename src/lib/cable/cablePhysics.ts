@@ -1,4 +1,4 @@
-import type { Point } from "./vector";
+import type { Point } from "../vector";
 
 export interface CableParticle {
   x: number;

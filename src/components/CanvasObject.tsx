@@ -2,7 +2,7 @@ import type { RefObject } from "react";
 import { DEFAULT_OBJECT_COLOR } from "../constants/defaults";
 import { BASE_URL } from "../constants/runtime";
 import { useTemplateService } from "../context/TemplateServiceContext";
-import { trySetPointerCapture } from "../lib/pointerCapture";
+import { trySetPointerCapture } from "../lib/gesture/pointerCapture";
 import { normalizeRotation } from "../lib/geometry";
 import type { CanvasObjectType } from "../types";
 import "./CanvasObject.scss";

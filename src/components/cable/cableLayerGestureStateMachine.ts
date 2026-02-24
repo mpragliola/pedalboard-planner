@@ -13,7 +13,7 @@ import {
   LATCHED_UNTIL_RELEASE_PINCH_POLICY,
   removePinchPointer,
   type PinchLifecycleState,
-} from "../../lib/pinchLifecycle";
+} from "../../lib/gesture/pinchLifecycle";
 
 export type CableLayerGestureState =
   | {

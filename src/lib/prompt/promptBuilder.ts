@@ -1,5 +1,5 @@
 /** Prompt construction utilities for price-estimation LLM calls. */
-import type { CanvasObjectType, Cable } from "../types";
+import type { CanvasObjectType, Cable } from "../../types";
 
 /** Options controlling prompt detail level and formatting context. */
 export interface PricePromptOptions {

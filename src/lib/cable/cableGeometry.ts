@@ -1,5 +1,5 @@
-import type { Point } from "./vector";
-import { clamp } from "./math";
+import type { Point } from "../vector";
+import { clamp } from "../math";
 
 /**
  * Return the index of the segment [points[i], points[i + 1]] nearest to a point.
