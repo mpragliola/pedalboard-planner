@@ -88,4 +88,22 @@ describe("GptModal copy timer", () => {
     // Unmount should cancel the pending timer to avoid post-unmount state updates.
     expect(clearTimeoutSpy).toHaveBeenCalled();
   });
+
+  it("adds routing/settings guidance to the prompt when checkboxes are enabled", async () => {
+    render(<GptModal open onClose={vi.fn()} />);
+
+    const routingCheckbox = screen.getByRole("checkbox", {
+      name: /ask for the best routing/i,
+    });
+    const settingsCheckbox = screen.getByRole("checkbox", {
+      name: /ask for the best settings/i,
+    });
+
+    fireEvent.click(routingCheckbox);
+    fireEvent.click(settingsCheckbox);
+
+    const textarea = screen.getByLabelText(/prompt \(you can edit before copying\)/i);
+    expect(textarea).toHaveValue(expect.stringContaining("Suggest the best routing"));
+    expect(textarea).toHaveValue(expect.stringContaining("Suggest best starting settings"));
+  });
 });
