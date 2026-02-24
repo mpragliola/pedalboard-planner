@@ -19,6 +19,8 @@ const baseObject = (overrides: Partial<CanvasObjectType> & { id: string; name: s
 const defaultOptions = {
   includeMaterials: false,
   includeCommentsAndTips: false,
+  includeBestRouting: false,
+  includeBestSettings: false,
   location: "",
   cables: [] as Cable[],
   unit: "mm" as const,
@@ -176,6 +178,26 @@ describe("PromptBuilder", () => {
       const pb = new PromptBuilder([], defaultOptions);
       const out = pb.build();
       expect(out).toContain("only provide the price estimate");
+    });
+
+    it("includes best-routing request when enabled", () => {
+      const pb = new PromptBuilder([], {
+        ...defaultOptions,
+        includeBestRouting: true,
+      });
+      const out = pb.build();
+      expect(out).toContain("Suggest the best routing");
+      expect(out).not.toContain("only provide the price estimate");
+    });
+
+    it("includes best-settings request when enabled", () => {
+      const pb = new PromptBuilder([], {
+        ...defaultOptions,
+        includeBestSettings: true,
+      });
+      const out = pb.build();
+      expect(out).toContain("Suggest best starting settings");
+      expect(out).not.toContain("only provide the price estimate");
     });
   });
 });

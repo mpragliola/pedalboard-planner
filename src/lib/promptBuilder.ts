@@ -5,6 +5,8 @@ import type { CanvasObjectType, Cable } from "../types";
 export interface PricePromptOptions {
   includeMaterials: boolean;
   includeCommentsAndTips: boolean;
+  includeBestRouting: boolean;
+  includeBestSettings: boolean;
   location: string;
   cables: Cable[];
   unit: "mm" | "in";
@@ -78,7 +80,7 @@ export class PromptBuilder {
       parts.push("Include cables, velcro and similar materials in the estimate.");
       const cableList = this.getCableList();
       if (cableList) {
-      parts.push("", "Cables (drawn on canvas):", cableList);
+        parts.push("", "Cables (drawn on canvas):", cableList);
       }
     } else {
       parts.push("Exclude from the estimate: cables, velcro, and similar materials.");
@@ -88,13 +90,31 @@ export class PromptBuilder {
     if (location) {
       parts.push("", `Look up prices and stores considering I live in ${location}.`);
     }
+    const includeAdditionalAdvice =
+      this.options.includeCommentsAndTips || this.options.includeBestRouting || this.options.includeBestSettings;
+
+    if (!includeAdditionalAdvice) {
+      parts.push("", "Do not add further details, comments, or suggestions—only provide the price estimate.");
+      return parts.join("\n");
+    }
+
     if (this.options.includeCommentsAndTips) {
       parts.push(
         "",
         "Comment on the configuration and provide comments, suggestions, gotchas (e.g. obsolete or hard-to-find machines), and similar."
       );
-    } else {
-      parts.push("", "Do not add further details, comments, or suggestions—only provide the price estimate.");
+    }
+    if (this.options.includeBestRouting) {
+      parts.push(
+        "",
+        "Suggest the best routing for this rig (signal chain order plus practical cable/power routing) with a short rationale."
+      );
+    }
+    if (this.options.includeBestSettings) {
+      parts.push(
+        "",
+        "Suggest best starting settings for each component (knob positions/parameter ranges where possible) and explain briefly."
+      );
     }
     return parts.join("\n");
   }

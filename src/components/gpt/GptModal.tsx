@@ -24,6 +24,8 @@ export function GptModal({ open, onClose }: GptModalProps) {
   )
   const [includeMaterials, setIncludeMaterials] = useState(false)
   const [includeCommentsAndTips, setIncludeCommentsAndTips] = useState(false)
+  const [includeBestRouting, setIncludeBestRouting] = useState(false)
+  const [includeBestSettings, setIncludeBestSettings] = useState(false)
   const [includeLocation, setIncludeLocation] = useState(false)
   const [location, setLocation] = useState('')
   const [locationLoading, setLocationLoading] = useState(false)
@@ -35,6 +37,8 @@ export function GptModal({ open, onClose }: GptModalProps) {
     const promptBuilder = new PromptBuilder(objects, {
       includeMaterials,
       includeCommentsAndTips,
+      includeBestRouting,
+      includeBestSettings,
       location: includeLocation ? location : '',
       cables,
       unit,
@@ -45,6 +49,8 @@ export function GptModal({ open, onClose }: GptModalProps) {
     objects,
     includeMaterials,
     includeCommentsAndTips,
+    includeBestRouting,
+    includeBestSettings,
     includeLocation,
     location,
     cables,
@@ -164,6 +170,24 @@ export function GptModal({ open, onClose }: GptModalProps) {
             onChange={(e) => setIncludeCommentsAndTips(e.target.checked)}
           />
           <span>Include comments and tips</span>
+        </label>
+
+        <label className="gpt-modal-check">
+          <input
+            type="checkbox"
+            checked={includeBestRouting}
+            onChange={(e) => setIncludeBestRouting(e.target.checked)}
+          />
+          <span>Ask for the best routing (signal and cable/power path)</span>
+        </label>
+
+        <label className="gpt-modal-check">
+          <input
+            type="checkbox"
+            checked={includeBestSettings}
+            onChange={(e) => setIncludeBestSettings(e.target.checked)}
+          />
+          <span>Ask for the best settings (starting values per pedal)</span>
         </label>
       </div>
 

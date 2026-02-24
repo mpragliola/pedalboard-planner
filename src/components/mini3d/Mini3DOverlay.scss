@@ -9,10 +9,13 @@
   height: clamp(vars.$mini3d-height-min, 50vh, vars.$mini3d-height-max);
   top: calc(100vh - vars.$floating-panel-offset - clamp(vars.$mini3d-height-min, 50vh, vars.$mini3d-height-max));
   z-index: vars.$z-mini3d;
-  cursor: pointer;
+  cursor: default;
   touch-action: none;
   opacity: 0;
-  background: rgba(0, 0, 0, 0.001);
+  background: #131a24;
+  border-radius: 6px;
+  overflow: hidden;
+  transform: translate(var(--mini3d-drag-x, 0px), var(--mini3d-drag-y, 0px));
   transform-origin: left bottom;
   transition:
     opacity var(--mini3d-open-fade-ms, 500ms) ease,
@@ -21,7 +24,51 @@
     height 360ms ease,
     left 360ms ease,
     top 360ms ease;
-  will-change: opacity;
+  will-change: opacity, transform;
+}
+
+.mini3d-titlebar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 24px;
+  border-radius: 0;
+  background: rgba(0, 0, 0, 0.5);
+  cursor: move;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 3px;
+  padding-right: 8px;
+  z-index: 2;
+  touch-action: none;
+}
+
+.mini3d-titlebar-actions {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.mini3d-titlebar-btn {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 11px;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+}
+
+.mini3d-titlebar-btn:hover {
+  background: rgba(255, 255, 255, 0.38);
 }
 
 .mini3d-backdrop {
@@ -134,6 +181,8 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.001);
+  background: #131a24;
+  border-radius: 0;
+  transform: none;
   cursor: zoom-out;
 }
