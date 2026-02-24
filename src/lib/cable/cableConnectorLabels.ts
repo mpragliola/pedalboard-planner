@@ -6,8 +6,8 @@ import {
   CABLE_PATHS_LABEL_TEXT_LINE_HEIGHT_MM,
   CABLE_PATHS_LABEL_TEXT_MIN_WIDTH_MM,
   CABLE_PATHS_MIN_SEGMENT_LENGTH,
-} from "../constants/cablePaths";
-import type { Cable } from "../types";
+} from "../../constants/cablePaths";
+import type { Cable } from "../../types";
 import {
   vec2Add,
   vec2Length,
@@ -16,7 +16,7 @@ import {
   vec2Sub,
   type Offset,
   type Point,
-} from "./vector";
+} from "../vector";
 
 /** Connector label geometry and text for one cable endpoint. */
 export interface ConnectorLabel {

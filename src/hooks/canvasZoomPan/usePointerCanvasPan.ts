@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from "react";
-import { addGlobalPointerListeners } from "../../lib/pointerEvents";
+import { addGlobalPointerListeners } from "../../lib/gesture/pointerEvents";
 import type { Offset } from "../../lib/vector";
 import type { CanvasGestureCoordinator } from "../useCanvasGestureCoordinator";
 import {

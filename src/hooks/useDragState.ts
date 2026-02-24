@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { addGlobalPointerListeners } from "../lib/pointerEvents";
+import { addGlobalPointerListeners } from "../lib/gesture/pointerEvents";
 import { vec2Length, vec2Scale, vec2Sub, type Point } from "../lib/vector";
 
 export interface DragStart<T> {

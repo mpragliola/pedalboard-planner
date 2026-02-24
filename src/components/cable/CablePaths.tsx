@@ -2,13 +2,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { CONNECTOR_ICON_MAP } from "../../constants";
 import { CABLE_TERMINAL_START_COLOR, CABLE_TERMINAL_END_COLOR } from "../../constants/cables";
 import { DEFAULT_JOIN_RADIUS } from "../../lib/polylinePath";
-import { tryReleasePointerCapture, trySetPointerCapture } from "../../lib/pointerCapture";
-import { isDoubleTapWithinThreshold } from "../../lib/tapGesture";
+import { tryReleasePointerCapture, trySetPointerCapture } from "../../lib/gesture/pointerCapture";
+import { isDoubleTapWithinThreshold } from "../../lib/gesture/tapGesture";
 import type { Point } from "../../lib/vector";
-import { connectorLabelsForCable, type ConnectorLabel } from "../../lib/cableConnectorLabels";
-import { deriveCableDragState, type CableDragState } from "../../lib/cableDrag";
-import { buildCablePathData } from "../../lib/cableStrokePaths";
-import { nearestSegmentIndexForPoint } from "../../lib/cableGeometry";
+import { connectorLabelsForCable, type ConnectorLabel } from "../../lib/cable/cableConnectorLabels";
+import { deriveCableDragState, type CableDragState } from "../../lib/cable/cableDrag";
+import { buildCablePathData } from "../../lib/cable/cableStrokePaths";
+import { nearestSegmentIndexForPoint } from "../../lib/cable/cableGeometry";
 import {
   createConditionalSnapStrategy,
   createIdentitySnapStrategy,

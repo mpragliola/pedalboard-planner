@@ -5,7 +5,7 @@ import {
   cablePhysicsParticlesToPoints,
   createCablePhysicsState,
   maxPointDelta,
-} from "../lib/cablePhysics";
+} from "../lib/cable/cablePhysics";
 
 /** Suppress React publishes for tiny per-frame movement to reduce render churn. */
 const PUBLISH_DELTA_THRESHOLD = 0.05;

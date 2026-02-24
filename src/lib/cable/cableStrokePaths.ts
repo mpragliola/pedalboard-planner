@@ -1,6 +1,6 @@
-import { buildRoundedPathD, buildSmoothPathD } from "./polylinePath";
+import { buildRoundedPathD, buildSmoothPathD } from "../polylinePath";
 import type { CableSegment } from "./cableDrag";
-import type { Point } from "./vector";
+import type { Point } from "../vector";
 
 export interface BuildCablePathDataParams {
   activePoints: Point[];

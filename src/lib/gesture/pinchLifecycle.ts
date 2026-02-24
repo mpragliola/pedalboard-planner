@@ -56,6 +56,12 @@ export function createInitialPinchLifecycleState(): PinchLifecycleState {
   };
 }
 
+
+/**
+ * Normalize policy values to valid integers with sensible defaults.
+ * - startMin must be at least 2 to allow pinching to start.
+ * - continueMin must be at least 1 to allow pinch to continue after starting.
+ */
 function normalizePolicy(policy: PinchLifecyclePolicy): { startMin: number; continueMin: number } {
   return {
     startMin: Math.max(2, Math.floor(policy.startMinPointers)),

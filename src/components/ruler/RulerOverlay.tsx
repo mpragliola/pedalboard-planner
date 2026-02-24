@@ -4,7 +4,7 @@ import { useCanvas } from "../../context/CanvasContext";
 import { useUi } from "../../context/UiContext";
 import { useRendering } from "../../context/RenderingContext";
 import { useCanvasCoords } from "../../hooks/useCanvasCoords";
-import { tryReleasePointerCapture, trySetPointerCapture } from "../../lib/pointerCapture";
+import { tryReleasePointerCapture, trySetPointerCapture } from "../../lib/gesture/pointerCapture";
 import { formatLength } from "../../lib/rulerFormat";
 import "./RulerOverlay.scss";
 

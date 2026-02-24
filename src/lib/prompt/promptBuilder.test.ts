@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { PromptBuilder } from "./promptBuilder";
-import type { CanvasObjectType, Cable } from "../types";
+import type { CanvasObjectType, Cable } from "../../types";
 
 const baseObject = (overrides: Partial<CanvasObjectType> & { id: string; name: string }): CanvasObjectType =>
   ({

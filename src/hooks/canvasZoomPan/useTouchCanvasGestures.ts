@@ -6,7 +6,7 @@ import {
   createInitialPinchLifecycleState,
   STRICT_TWO_POINTER_PINCH_POLICY,
   syncPinchLifecycle,
-} from "../../lib/pinchLifecycle";
+} from "../../lib/gesture/pinchLifecycle";
 import {
   IDLE_TOUCH_GESTURE_STATE,
   resolvePinchMove,

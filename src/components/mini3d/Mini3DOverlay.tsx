@@ -19,8 +19,8 @@ import { useUi } from "../../context/UiContext";
 import { useMini3d } from "../../context/Mini3dContext";
 import { CANVAS_BACKGROUNDS } from "../../constants/backgrounds";
 import { clamp } from "../../lib/math";
-import { tryReleasePointerCapture, trySetPointerCapture } from "../../lib/pointerCapture";
-import { isDoubleTapWithinThreshold } from "../../lib/tapGesture";
+import { tryReleasePointerCapture, trySetPointerCapture } from "../../lib/gesture/pointerCapture";
+import { isDoubleTapWithinThreshold } from "../../lib/gesture/tapGesture";
 import { Mini3DRootScene, ShadowMapController } from "./Mini3DRootScene";
 import {
   CAMERA_DISTANCE_SCALE_DEFAULT,

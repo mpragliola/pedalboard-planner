@@ -6,8 +6,8 @@ import { useTemplateService } from "../../context/TemplateServiceContext";
 import { buildRoundedPathD, buildSmoothPathD, DEFAULT_JOIN_RADIUS } from "../../lib/polylinePath";
 import {
   createPointerCaptureManager,
-} from "../../lib/pointerCapture";
-import { isDoubleTapWithinThreshold } from "../../lib/tapGesture";
+} from "../../lib/gesture/pointerCapture";
+import { isDoubleTapWithinThreshold } from "../../lib/gesture/tapGesture";
 import { vec2Add, vec2Scale, type Vec2, type Point } from "../../lib/vector";
 import { useCanvasCoords } from "../../hooks/useCanvasCoords";
 import { useCableDraw } from "../../hooks/useCableDraw";
