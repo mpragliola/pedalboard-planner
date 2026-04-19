@@ -20,7 +20,10 @@
     "generate-bg-thumbnails": "npx tsx scripts/generate-background-thumbnails.ts",
     "generate-catalog-thumbnails": "npx tsx scripts/generate-catalog-thumbnails.ts",
     "remove-backup-files": "npx tsx scripts/remove-backup-files.ts",
-    "distribute-images": "pwsh -File scripts/distribute-processed-images.ps1"
+    "distribute-images": "pwsh -File scripts/distribute-processed-images.ps1",
+    "screenshots": "npx tsx scripts/take-screenshots.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -37,6 +40,7 @@
     "three": "^0.182.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
@@ -48,6 +52,7 @@
     "gh-pages": "^6.3.0",
     "image-size": "^1.1.1",
     "jsdom": "^28.0.0",
+    "playwright": "^1.59.1",
     "sass": "^1.97.3",
     "tsx": "^4.7.0",
     "typescript": "^5.3.3",
