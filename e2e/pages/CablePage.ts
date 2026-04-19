@@ -38,7 +38,7 @@ export class CablePage {
   }
 
   async deleteCable(): Promise<void> {
-    await this.page.getByTitle("Delete cable").click();
+    await this.page.locator(".cable-toolbar").getByTitle("Delete").click();
   }
 
   async cycleCableVisibility(): Promise<void> {
