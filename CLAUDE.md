@@ -57,3 +57,8 @@ Consumers use specific hooks (`useBoard()`, `useCanvas()`, etc.) — never impor
 - **Never** hardcode snap tolerance, double-tap threshold, gap, or similar tunables directly in logic — pass as parameters or read from config
 - **Never** break existing localStorage compatibility — keep original `templateId` values in templates
 - Brand device files export `BRAND_DEVICE_TEMPLATES: DeviceTemplate[]` — follow that shape exactly
+
+## Update policy
+
+- Whenever any implementation alters the UI in a significant way for the user, the screenshot pipeline must be updated
+- Evaluate for any implementation if we need to alter, remove or add use cases for unit test and e2e tests.
