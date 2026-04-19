@@ -31,7 +31,29 @@ export class CatalogPage {
   }
 
   async clickItem(index: number): Promise<void> {
-    await this.page.locator(".catalog-panel .catalog-list-item").nth(index).click();
+    // Catalog items require a long-press drag onto the canvas (dnd-kit, 400ms delay).
+    // Get the item's bounding box, then drag to canvas center.
+    const item = this.page.locator(".catalog-panel .catalog-list-item").nth(index);
+    const itemBox = await item.boundingBox();
+    if (!itemBox) throw new Error(`Catalog item ${index} not found`);
+
+    const fromX = itemBox.x + itemBox.width / 2;
+    const fromY = itemBox.y + itemBox.height / 2;
+
+    // Target the canvas center for the drop.
+    const canvas = this.page.locator(".canvas");
+    const canvasBox = await canvas.boundingBox();
+    if (!canvasBox) throw new Error("Canvas not found");
+
+    const toX = canvasBox.x + canvasBox.width / 2;
+    const toY = canvasBox.y + canvasBox.height / 2;
+
+    // Long-press to activate dnd-kit sensor (> 400ms), then drag to canvas.
+    await this.page.mouse.move(fromX, fromY);
+    await this.page.mouse.down();
+    await this.page.waitForTimeout(500); // exceed LONG_PRESS_MS (400ms)
+    await this.page.mouse.move(toX, toY, { steps: 10 });
+    await this.page.mouse.up();
   }
 
   async itemCount(): Promise<number> {
