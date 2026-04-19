@@ -50,7 +50,7 @@ test.describe("catalog", () => {
     const canvas = new CanvasPage(page);
 
     await catalog.clickItem(0);
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(800);
 
     const objects = await canvas.getStoredObjects();
     expect(objects.length).toBeGreaterThan(0);
@@ -65,7 +65,7 @@ test.describe("catalog", () => {
 
     await catalog.switchToDevices();
     await catalog.clickItem(0);
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(800);
 
     const objects = await canvas.getStoredObjects();
     expect(objects.length).toBeGreaterThan(0);

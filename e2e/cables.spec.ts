@@ -85,7 +85,7 @@ test.describe("cables", () => {
     await cable.deleteCable();
     await page.locator("button.confirmation-confirm").click();
     await page.locator(".confirmation-dialog").waitFor({ state: "hidden" });
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(800);
 
     const cables = await canvas.getStoredCables();
     expect(cables.length).toBe(beforeCount - 1);

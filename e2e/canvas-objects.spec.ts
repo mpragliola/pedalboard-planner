@@ -17,7 +17,7 @@ test.describe("canvas objects", () => {
     await expect(canvas.selectionToolbar).toBeVisible();
   });
 
-  test("Escape hides selection toolbar", async ({ page }) => {
+  test("click empty canvas deselects object", async ({ page }) => {
     const app = new AppPage(page);
     await app.goto(BASE_STATE);
     await app.minimizeCatalog();

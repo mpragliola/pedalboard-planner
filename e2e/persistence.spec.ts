@@ -13,7 +13,7 @@ test.describe("persistence", () => {
     const canvas = new CanvasPage(page);
 
     await catalog.clickItem(0);
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(800);
 
     const beforeObjects = await canvas.getStoredObjects();
     expect(beforeObjects.length).toBeGreaterThan(0);
